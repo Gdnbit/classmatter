@@ -1,0 +1,240 @@
+schema_version: 2
+release: class-os-r1
+artifact_role: immutable-signature-canonicalization-and-admission-policy
+design_status: accepted-for-synthetic-development-by-T-REVAL-019-not-production-approved
+production_authorization: false
+
+implementation_baseline:
+  envelope_standard: DSSE-v1
+  python_envelope_implementation: in-toto-3.1.0-backed-by-securesystemslib-1.5.1
+  payload_canonicalization: RFC-8785-JCS-via-rfc8785-0.1.4
+  signature_algorithm_allowlist: [Ed25519]
+  cryptography_implementation: cryptography-50.0.1-via-securesystemslib
+  custom_signature_framing: forbidden
+  signature_input: DSSE-PAE-of-exact-payloadType-and-payload-bytes
+  conformance_vectors: .ai/gates/signature-canonicalization-test-vectors.yaml
+  component_reduction_adr: docs/specs/class-os-v1/architecture-decision.md
+  executable_spike: spikes/signature-envelope
+  no_online_registry_or_signing_service_required: true
+
+ci_attestation_boundary:
+  preferred_for_build-and-evidence-provenance: GitHub-Artifact-Attestations-Sigstore-when-enabled
+  proves: [workflow-identity, repository, commit, build-provenance, artifact-digest]
+  never_proves: [class-os-role, privacy-approval, release-admission, real-data-scope, runtime-authorization]
+  runtime_must_not_depend_on_github_or_transparency-log_availability: true
+
+canonical_payload:
+  transport: DSSE-JSON-envelope-with-base64-encoded-payload-bytes
+  decoded_payload_format: strict-I-JSON-UTF8-without-BOM
+  producer_serialization: RFC-8785-JCS
+  verifier_order: [strict-envelope-parse, verify-DSSE-over-exact-bytes, strict-json-parse-with-duplicate-detection, reject-post-NFC-key-collisions, reproduce-RFC-8785-bytes-exactly, validate-schema-and-policy]
+  unicode_normalization: preserve-signed-string-bytes-per-RFC-8785-never-normalize
+  post_nfc_key_collision_policy: reject-without-rewriting-payload
+  reject: [duplicate-keys, non-string-map-keys, non-finite-numbers, invalid-utf8, non-canonical-json, post-nfc-key-collisions]
+  content_hash: sha256-of-exact-verified-payload-bytes
+  embedded_approval_hashes_are_forbidden_in_immutable_definitions: true
+  self_referential_content_hashes_are_forbidden: true
+
+definition_bundle:
+  manifests:
+    - .ai/gates/signed-artifact-policy.yaml
+    - .ai/gates/signature-canonicalization-test-vectors.yaml
+    - .ai/gates/release-1-requirements.yaml
+    - .ai/gates/release-1-evals.yaml
+    - .ai/gates/release-1-task-definitions.yaml
+    - .ai/gates/release-1-release-gates.yaml
+  bundle_payload: ordered-array-of-path-and-content-sha256-sorted-by-path
+  bundle_hash: sha256-of-rfc8785-bundle-payload
+  approval_state: .ai/gates/release-1-definition-state.yaml
+  definition_state-and-evidence-are-separate-artifacts: true
+  any_definition_change_requires_new_bundle_approval: true
+
+external_role_key_registry:
+  location: outside-application-database-and-repository
+  deployment_form: versioned-read-only-file-in-controlled-deployment-protected-by-os-permissions
+  registry_required_fields: [schema_version, generation, previous_registry_sha256, issued_at, expires_at, keys, issued_artifacts, revoked_artifacts]
+  generation_covers: [role-key-records, issued-artifact-status, revoked-artifact-status]
+  update_rule: next-generation-equals-current-plus-one-and-previous-hash-equals-current-pinned-hash
+  update_authority: verify-with-already-pinned-offline-root-and-require-security-operations-approval
+  rollback_rule: reject-lower-generation-same-generation-different-hash-expired-snapshot-or-incomplete-chain
+  activation: stop-writers-drain-transactions-atomically-replace-protected-pin-and-snapshot-restart-and-verify-before-writes
+  registry_must_be_signed_by_roles: [offline-root, security, operations]
+  registry_quorum: all-listed-roles
+  key_record_required_fields: [key_id, signer_id, role, algorithm, public_key, key_usage, not_before, not_after, status, revoked_at]
+  unique_fields: [key_id, signer_id, public_key]
+  allowed_key_usages: [definition-approval, architecture-approval, gate-report, reference-catalog, shadow-value-decision, scope-setup, scope-allocation-receipt, real-data-admission, state-transition]
+  key_rotation: overlapping-verification-window-with-distinct-key-id
+  revoked_key_policy: signatures-created-at-or-after-revoked-at-invalid-and-all-new-artifacts-rejected
+  compromised_key_policy: revoke-key-revoke-affected-admission-stop-writes-and-reissue-from-clean-root
+
+trust_root:
+  public_root_material_location: offline-read-only-media-plus-out-of-band-deployment-record-outside-repository-and-application-database
+  initial_pin_ceremony: product-security-operations-compare-offline-root-public-key-fingerprints-on-two-independent-channels-and-all-sign-before-registry-load
+  pinned_inputs: [deployment_id, offline_root_key_ids, root_public_key_fingerprints, registry_uri, minimum_registry_generation, registry_sha256, not_before, not_after, ceremony_record_sha256]
+  registry_verification: verify-registry-with-already-pinned-offline-root-public-keys-never-with-keys-discovered-only-inside-registry
+  root_rotation: old-root-and-product-security-operations-all-sign-new-root-set-with-overlap-window-and-monotonic-generation
+  lost_or-compromised-root: stop-writes-revoke-admission-export-under-last-valid-policy-and-run-out-of-band-rebootstrap-with-no-in-app-recovery
+  application_cannot_add_or_replace_root: true
+  r1_limitation: authorized-host-root-or-dba-can-replace-runtime-and-is-a-trusted-operator-not-a-defended-adversary
+
+authorization_matrix:
+  definition_bundle_approval: {roles: [product, privacy, security, engineering], quorum: all-listed-roles, key_usage: definition-approval}
+  architecture_approval: {roles: [product, security, architecture, operations], quorum: all-listed-roles, key_usage: architecture-approval}
+  gate_report: {roles: [release-verifier], quorum: all-listed-roles, key_usage: gate-report}
+  reference_catalog: {roles: [release-verifier], quorum: all-listed-roles, key_usage: reference-catalog}
+  shadow_value_decision: {roles: [product, pilot-owner, release-verifier], quorum: all-listed-roles, key_usage: shadow-value-decision}
+  scope_setup: {roles: [product, privacy, security, operations], quorum: all-listed-roles, key_usage: scope-setup}
+  scope_allocation_receipt:
+    roles: [deployment-runtime]
+    quorum: all-listed-roles
+    key_usage: scope-allocation-receipt
+    key_must_be_pinned_to_deployment_id_and_release_digest: true
+  real_data_admission: {roles: [product, privacy, security, operations], quorum: all-listed-roles, key_usage: real-data-admission}
+  mutable_state_transition: {roles: [release-verifier], quorum: all-listed-roles, key_usage: state-transition}
+
+artifact_type_registry:
+  allowed_issued_types: [definition-bundle-approval, architecture-approval, gate-report, reference-catalog, shadow-value-decision, real-data-scope-setup, scope-allocation-receipt, real-data-admission, state-transition]
+  hard_rejected_types: [architecture-approval-example, real-data-scope-setup-example, real-data-admission-example, example-never-valid]
+  issued_status_required_for_authorization: true
+  example_status_or-repository-path-is-always-rejected-even-with-valid-signature: true
+
+artifact_profiles:
+  definition-bundle-approval:
+    payload_type: application/vnd.class-os.definition-bundle-approval.v1+json
+    lifecycle: reusable-attestation
+    authorization_matrix: definition_bundle_approval
+    required_fields: [definition_bundle_sha256]
+  architecture-approval:
+    payload_type: application/vnd.class-os.architecture-approval.v1+json
+    lifecycle: reusable-attestation
+    authorization_matrix: architecture_approval
+    required_fields: [definition_bundle_sha256, approved_architecture_sha256, approved_adr_sha256, approved_spike_evidence, constraints_sha256]
+  gate-report:
+    payload_type: application/vnd.class-os.gate-report.v1+json
+    lifecycle: reusable-attestation
+    authorization_matrix: gate_report
+    required_fields: [artifact_uri, sha256, produced_at, gate_id, gate_definition_sha256, definition_bundle_sha256, verifier_digest, environment_digest]
+  reference-catalog:
+    payload_type: application/vnd.class-os.reference-catalog.v1+json
+    lifecycle: reusable-attestation
+    authorization_matrix: reference_catalog
+    required_fields: [entries]
+    entry_fields: [artifact_id, artifact_uri]
+    catalog_cannot-reference-itself-or-contain-generic-references: true
+    locator_only_parent_signed_reference_bindings: [artifact_id, artifact_type, sha256]
+    parent_signed_catalog_binding: [artifact_id, artifact_uri, sha256]
+    public_admission_requires_verified_generic_closure-for-nonempty-references: true
+  shadow-value-decision:
+    payload_type: application/vnd.class-os.shadow-value-decision.v1+json
+    lifecycle: reusable-attestation
+    authorization_matrix: shadow_value_decision
+    required_fields: [environment_digest, workspace_id, pilot_owner_id, measurement_protocol_sha256, result, cost_summary_sha256, evidence_index_sha256]
+  real-data-scope-setup:
+    payload_type: application/vnd.class-os.real-data-scope-setup.v1+json
+    lifecycle: one-time-capability
+    authorization_matrix: scope_setup
+    required_fields: [definition_bundle_sha256, environment_digest, deployment_id, owner_ids, workspace_id, candidate_gate_report, pilot_readiness_gate_report, shadow_value_decision, allowed_operation, maximum_allocations, revocation_id]
+  scope-allocation-receipt:
+    payload_type: application/vnd.class-os.scope-allocation-receipt.v1+json
+    lifecycle: reusable-attestation
+    authorization_matrix: scope_allocation_receipt
+    required_fields: [setup_artifact_id, deployment_id, owner_ids, workspace_id, reserved_class_ids, reserved_term_ids, environment_digest, ledger_sequence, ledger_entry_sha256, allocated_at]
+  real-data-admission:
+    payload_type: application/vnd.class-os.real-data-admission.v1+json
+    lifecycle: renewable-authorization
+    authorization_matrix: real_data_admission
+    required_fields: [definition_bundle_sha256, environment_digest, deployment_id, owner_ids, workspace_id, class_ids, term_ids, scope_allocation_receipt, allowed_modules, evidence_references, revocation_id]
+  state-transition:
+    payload_type: application/vnd.class-os.state-transition.v1+json
+    lifecycle: reusable-attestation
+    authorization_matrix: mutable_state_transition
+    required_fields: [state_type, state_sha256, definition_bundle_sha256]
+
+artifact_lifecycle_classes:
+  reusable-attestation:
+    artifact_types: [definition-bundle-approval, architecture-approval, gate-report, reference-catalog, shadow-value-decision, scope-allocation-receipt, state-transition]
+    validation: reusable-until-expired-or-revoked
+    registry_operation: check-issued-and-not-revoked-never-consume
+  renewable-authorization:
+    artifact_types: [real-data-admission]
+    validation: verify-at-load-startup-reload-and-before-every-business-write
+    registry_operation: check-issued-not-expired-not-revoked-never-consume
+  one-time-capability:
+    artifact_types: [real-data-scope-setup]
+    validation: verify-current-issued-not-revoked-snapshot-then-consume-in-local-postgresql-transaction
+    registry_operation: external-check-issued-and-not-revoked-only-never-external-consume
+    local_unique_key: [deployment_id, setup_artifact_id]
+    transaction_members: [setup-consumption, scope-allocation, allocation-ledger, audit, immutable-receipt-payload]
+    retry_semantics: identical-authorized-request-returns-original-local-receipt-without-second-allocation-conflicting-payload-rejected
+    receipt_delivery: sign-committed-immutable-receipt-payload-after-commit-signing-or-response-failure-retries-delivery-only
+    registry_snapshot_binding: record-active-generation-and-hash-in-transaction-no-hot-reload-activation-requires-stop-and-drain
+    distributed_transaction_required: false
+  unknown_lifecycle-or-wrong-registry-operation-fails-closed: true
+
+signed_envelope:
+  envelope_required_fields: [payloadType, payload, signatures]
+  signature_fields: [keyid, sig]
+  keyid_is-untrusted-lookup-hint-never-an-authorization-claim: true
+  signature_input_version: DSSEv1
+  signature_input_byte_layout: DSSE-PAE-as-specified-by-secure-systems-lab
+  signed_payload_required_fields: [schema_version, artifact_type, artifact_id, lifecycle, issued_at, not_before, expires_at, nonce, target_release_digest, target_commit, registry, required_roles, required_key_usage, referenced_artifact_ids]
+  signer-identity-role-key-usage-validity-and-revocation-come-only-from-pinned-external-registry: true
+  artifact_id-and-nonce-must-be-unique: true
+  durable_uniqueness_implementation_owner: T-REVAL-020-and-local-ledger-integration
+  durable_uniqueness_not_proven_by-T-REVAL-019: true
+  durable_uniqueness_development_baseline: PostgreSQL-primary-key-plus-unique-nonce-T-REVAL-020-live-synthetic-drill
+  durable_uniqueness_migration: spikes/signature-envelope/migrations/001_artifact_identity_ledger.sql
+  replay_registry: external-durable-issued-revoked-registry-plus-local-postgresql-one-time-setup-consumption-ledger
+  clock_source: verifier-approved-monotonic-and-wall-clock-pair
+  unknown-payload-type-role-key-usage-algorithm-status-or-field-fails-closed: true
+
+artifact_additional_constraints:
+  shadow-value-decision:
+    allowed_result: [go, change, stop]
+  real-data-scope-setup:
+    fixed_allowed_operation: allocate-workspace-bound-empty-scope-only
+    maximum_allocations: 1
+    referenced_artifact_types: {candidate_gate_report: gate-report, pilot_readiness_gate_report: gate-report, shadow_value_decision: shadow-value-decision}
+    shadow_value_decision_result_required: go
+  scope-allocation-receipt:
+    issuer_role: deployment-runtime
+    forbidden_fields: [student, person_name, record, task, class_business_state, term_business_state]
+    durable_ledger_proof_required: true
+  real-data-admission:
+    all-report-receipt-release-commit-environment-workspace-and-scope-fields-must-match: true
+    receipt_type_required: scope-allocation-receipt
+    receipt_exact_scope_fields: [owner_ids, reserved_class_ids, reserved_term_ids]
+    evidence_reference_types: {candidate_gate_report: gate-report, pilot_readiness_gate_report: gate-report, shadow_value_decision: shadow-value-decision}
+    shadow_value_decision_result_required: go
+    allowed_modules: [roster, fact-events, tasks, timeline-today, exit-export]
+    id-and-module-lists-must-be-nonempty-unique-strings: true
+
+mutable_state_signing:
+  state_payload: rfc8785-canonical-state-object-excluding-state-transition-artifact-field
+  state_sha256: sha256-of-state-payload
+  state_transition_artifact: external-DSSE-envelope-binding-state-sha256-definition-bundle-release-and-target-commit
+  inline_signature_envelope_is_forbidden: true
+  missing-unresolved-or-mismatched-state-transition-artifact-resolves-to-unapproved-or-not-run: true
+
+gate_report_reference_validation:
+  implementation_owner: T-REVAL-020
+  T-REVAL-019-boundary: verifier-port-is-required-and-fails-closed-but-concrete-fetch-hash-DSSE-resolution-is-not-proven-here
+  verifier_port_result: immutable-verified-artifact-reference-with-canonical-payload-type-lifecycle-digest-registry-and-verified-roles
+  parent_requires-expected-artifact-policy-role-quorum-in-verified-roles: true
+  parent_policy_must-use-verified-canonical-payload-never-untrusted-reference-metadata-for-type-result-or-scope: true
+  reference_required_fields: [artifact_id, artifact_uri, sha256, gate_id, gate_definition_sha256, definition_bundle_sha256, verifier_digest, target_release_digest, target_commit, environment_digest]
+  gate_report_scope: release-and-environment-not-workspace
+  slot_gate_ids: {candidate_gate_report: before_release_candidate, pilot_readiness_gate_report: before_pilot_readiness}
+  candidate-and-pilot-must-reference-distinct-artifact-id-and-digest: true
+  verifier_must_fetch-hash-and-validate-referenced-DSSE-artifact: true
+  verifier_must_validate-role-quorum-key-usage-validity-revocation-and-replay: true
+  bare_hash_or-unresolved-uri-is-invalid: true
+  report-release-commit-environment-and-definition-bundle-must-match-target: true
+  lifecycle_class_must-be-reusable-attestation-and-must-not-be-consumed: true
+
+evidence_contracts:
+  task_completion_required_fields: [artifact_uri, sha256, produced_at, task_id, task_definition_sha256, task_body_sha256, target_release_digest, target_commit, verifier_digest, dsse_envelope_uri]
+  eval_run_required_fields: [artifact_uri, sha256, produced_at, eval_id, eval_definition_sha256, runner_digest, target_release_digest, target_commit, environment_digest, dsse_envelope_uri]
+  gate_report_required_fields: [artifact_uri, sha256, produced_at, gate_id, gate_definition_sha256, definition_bundle_sha256, verifier_digest, release_digest, target_commit, environment_digest, dsse_envelope_uri]
+  state_transition_required_fields: [artifact_uri, sha256, produced_at, state_type, state_sha256, definition_bundle_sha256, target_release_digest, target_commit, dsse_envelope_uri]
+  stale-foreign-unsigned-or-plain-string-evidence-is-invalid: true

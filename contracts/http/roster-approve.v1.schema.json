@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "payload_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Payload Hash",
+      "type": "string"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "payload_hash"
+  ],
+  "title": "ApprovalBody",
+  "type": "object"
+}

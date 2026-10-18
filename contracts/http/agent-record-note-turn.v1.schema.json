@@ -1,0 +1,28 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.agent-record-note-request.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "conversation_id": {
+      "format": "uuid",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "text": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "conversation_id",
+    "text"
+  ],
+  "title": "RecordNoteTurnBody",
+  "type": "object"
+}

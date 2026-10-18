@@ -1,0 +1,31 @@
+schema_version: 3
+artifact_role: invalid-dsse-transport-example
+envelope:
+  payloadType: application/vnd.class-os.architecture-approval.v1+json
+  payload: INVALID-BASE64-OF-RFC8785-PAYLOAD-BELOW
+  signatures:
+    - {keyid: UNTRUSTED-LOOKUP-HINT, sig: INVALID-BASE64-SIGNATURE}
+decoded_payload_shape:
+  schema_version: 1
+  artifact_type: architecture-approval-example
+  artifact_id: EXAMPLE-NEVER-VALID
+  lifecycle: reusable-attestation
+  issued_at: NEVER
+  not_before: REQUIRED
+  expires_at: REQUIRED
+  nonce: REQUIRED
+  target_release_digest: REQUIRED
+  target_commit: REQUIRED
+  registry: {generation: REQUIRED, sha256: REQUIRED}
+  required_roles: [architecture, operations, product, security]
+  required_key_usage: architecture-approval
+  referenced_artifact_ids: []
+  release: class-os-r1
+  definition_bundle_sha256: REQUIRED
+  approved_architecture_sha256: REQUIRED
+  approved_adr_sha256: {ADR-001: REQUIRED, ADR-002: REQUIRED, ADR-003: REQUIRED, ADR-004: REQUIRED, ADR-005: REQUIRED, ADR-006: REQUIRED, ADR-007: REQUIRED}
+  approved_spike_evidence: {language_runtime: REQUIRED, agent_runtime: REQUIRED, self_host_resources: REQUIRED, signature_envelope: REQUIRED}
+  constraints_sha256: REQUIRED
+
+# Invalid example. The repository cannot authorize its own architecture. A real
+# external DSSE artifact must bind the final hashes and satisfy the pinned roles.

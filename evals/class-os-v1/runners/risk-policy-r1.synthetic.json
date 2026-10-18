@@ -1,0 +1,22 @@
+{
+  "schema": "class-os.synthetic-risk-policy-definition/v1",
+  "version": "r1.0",
+  "authority": "docs/06-系统设计/API-Tool-MCP契约规范.md#8-risk-policy",
+  "status": "candidate-eval-contract-not-production-approval",
+  "command_floor": {
+    "class.create": "W2",
+    "student.create": "W1",
+    "record.create": "W1",
+    "record.correct": "W2",
+    "task.create": "W1",
+    "exit_export.create": "W2"
+  },
+  "forbidden_r1_commands": ["record.delete", "student.delete", "message.send"],
+  "record_create": {
+    "static_floor": "W1",
+    "discipline_or_talk_or_d3": "W2",
+    "multiple_subjects": "W2",
+    "d4_or_attachment": "reject",
+    "external_or_irreversible": "X-and-reject-in-r1"
+  }
+}

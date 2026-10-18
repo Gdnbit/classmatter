@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.agent.v1",
+      "default": "class-os.agent.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "conversation_id": {
+      "format": "uuid",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "memory": {
+      "const": "ephemeral-not-fact",
+      "default": "ephemeral-not-fact",
+      "title": "Memory",
+      "type": "string"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "expires_at"
+  ],
+  "title": "ConversationResponse",
+  "type": "object"
+}

@@ -1,0 +1,1 @@
+export const persistentWorkspaces = [{ id: "midterm", name: "期中考试", detail: "复习与成绩分析" }, { id: "parents", name: "家长会准备", detail: "材料与沟通安排" }, { id: "seating", name: "座位与分组调整", detail: "预览中的班级安排" }] as const;

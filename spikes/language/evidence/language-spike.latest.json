@@ -1,0 +1,61 @@
+{
+  "contract_response_sha256": "ee727709e2c79b978a15fad082d992f3f61e7b402b2599e94471d91e93521475",
+  "contract_responses_equal": true,
+  "fixture_seed": 20260921,
+  "limitations": [
+    "Synthetic read-only endpoint; no database, TLS, auth, audit store, Agent model or concurrent load.",
+    "Single Windows host observation; numbers compare candidates here and are not production capacity promises.",
+    "RSS is the server process-tree working set after health; shared/runtime pages are not normalized."
+  ],
+  "measurements": {
+    "python-fastapi": {
+      "cold_start_ms_median": 837.832,
+      "cold_start_ms_runs": [
+        900.829,
+        837.832,
+        831.382,
+        822.144,
+        857.824
+      ],
+      "direct_dependency_count": 3,
+      "latency_ms_p50": 14.697,
+      "latency_ms_p95": 24.932,
+      "locked_dependency_count": 24,
+      "request_count": 300,
+      "rss_mb_median": 51.246,
+      "rss_mb_runs": [
+        51.047,
+        51.281,
+        51.246,
+        51.289,
+        51.16
+      ],
+      "source_loc": 101
+    },
+    "typescript-fastify": {
+      "cold_start_ms_median": 569.689,
+      "cold_start_ms_runs": [
+        571.258,
+        569.689,
+        568.054,
+        571.552,
+        562.146
+      ],
+      "direct_dependency_count": 2,
+      "latency_ms_p50": 14.6,
+      "latency_ms_p95": 16.544,
+      "locked_dependency_count": 50,
+      "request_count": 300,
+      "rss_mb_median": 60.266,
+      "rss_mb_runs": [
+        60.094,
+        60.406,
+        60.012,
+        60.375,
+        60.266
+      ],
+      "source_loc": 116
+    }
+  },
+  "schema": "class-os.language-spike-evidence/v1"
+}

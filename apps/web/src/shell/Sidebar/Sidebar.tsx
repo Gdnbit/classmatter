@@ -1,0 +1,253 @@
+import { useEffect, useRef, useState } from "react"
+
+import {
+  Archive,
+  Bot,
+  CalendarClock,
+  ChevronRight,
+  ClipboardList,
+  Database,
+  FolderOpen,
+  Grid2X2,
+  LayoutList,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Settings,
+  Users,
+} from "lucide-react"
+
+import { useConversationStore } from "@/store/ConversationStore"
+
+import { useSessionStore } from "@/store/SessionStore"
+
+import type { Workspace } from "@/shell/types"
+
+import MorePopover from "./MorePopover"
+import { useUiFeedback } from "@/store/UiFeedbackStore"
+const navItems: { label: string; target: Workspace; icon: typeof Grid2X2 }[] = [
+  { label: "总览", target: "dashboard", icon: Grid2X2 },
+  { label: "学生", target: "students", icon: Users },
+  { label: "视图", target: "views", icon: LayoutList },
+  { label: "工作", target: "work", icon: ClipboardList },
+  { label: "数据与内容", target: "data", icon: Database },
+  { label: "自动化", target: "automation", icon: CalendarClock },
+  { label: "设置", target: "settings", icon: Settings },
+]
+
+export default function Sidebar({
+  workspace,
+  setWorkspace,
+}: {
+  workspace: Workspace
+  setWorkspace: (w: Workspace) => void
+}) {
+  const { activeConversationId, setConversation } = useSessionStore()
+  const { createConversation } = useConversationStore()
+  const { openDetail } = useUiFeedback()
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const [search, setSearch] = useState(false)
+  const [query, setQuery] = useState("")
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const closeTimer = useRef<number | undefined>(undefined)
+  const chats = [
+    ["c1", "9月班级工作整理", "刚刚", "今天"],
+    ["c2", "合成学生02座位调整", "10:20", "今天"],
+    ["c3", "期初家校沟通", "昨天", "昨天"],
+    ["c4", "月考成绩分析", "9月3日", "过去7天"],
+    ["c5", "周五班会准备", "9月2日", "过去7天"],
+    ["c6", "期中考试安排", "8月31日", "过去7天"],
+    ["c7", "家长会材料整理", "8月30日", "过去7天"],
+  ] as const
+  const filteredChats = chats.filter(([, title]) => title.includes(query))
+  const main = navItems.filter((x) =>
+    ["总览", "学生", "工作"].includes(x.label),
+  )
+  const extras = [
+    ["视图", "views", LayoutList, "切换班级数据投影"],
+    ["数据与内容", "data", Database, "整理文件与候选内容"],
+    ["AI 待处理", "inbox", Bot, "审核需要确认的候选"],
+    ["自动化", "automation", CalendarClock, "查看计划与运行记录"],
+    ["知识库", "knowledge", Archive, "引用规章与模板"],
+    ["报告与导出", "reports", FolderOpen, "生成可审阅材料"],
+    ["设置", "settings", Settings, "管理 ClassMatter 偏好"],
+  ] as const
+  const scheduleClose = () => {
+    if (!pinned)
+      closeTimer.current = window.setTimeout(() => setMoreOpen(false), 150)
+  }
+  const cancelClose = () => {
+    if (closeTimer.current) window.clearTimeout(closeTimer.current)
+  }
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMoreOpen(false)
+        setSearch(false)
+        setQuery("")
+      }
+    }
+    window.addEventListener("keydown", key)
+    return () => window.removeEventListener("keydown", key)
+  }, [])
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-scroll">
+        <button
+          className="scope"
+          onClick={() =>
+            openDetail({
+              eyebrow: "当前工作范围",
+              title: "合成演示学校 · 合成演示班",
+              description: "切换范围时，页面、对话和工具上下文会同步更新。",
+              sections: [
+                { label: "学期", value: "2026–2027学年上学期" },
+                { label: "我的角色", value: "班主任" },
+              ],
+              actions: [{ label: "保持当前范围", tone: "primary" }],
+            })
+          }
+        >
+          <strong>合成演示学校</strong>
+          <span>合成演示班 · 2026–2027学年上学期</span>
+        </button>
+        <button
+          className="new-chat"
+          onClick={() => {
+            setWorkspace("conversation")
+            setConversation(createConversation())
+          }}
+        >
+          <Plus size={17} />
+          新对话
+        </button>
+        <div className={`sidebar-search ${search ? "active" : ""}`}>
+          <Search size={16} />
+          {search ? (
+            <input
+              autoFocus
+              aria-label="搜索聊天和内容"
+              placeholder="搜索聊天和内容"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          ) : (
+            <button onClick={() => setSearch(true)}>搜索</button>
+          )}
+          {search && (
+            <button
+              className="search-close"
+              onClick={() => {
+                setSearch(false)
+                setQuery("")
+              }}
+            >
+              取消
+            </button>
+          )}
+        </div>
+        <nav className="workspace-nav" aria-label="主要工作组件">
+          {main.map(({ label, target, icon: Icon }) => (
+            <button
+              key={label}
+              onClick={() => setWorkspace(target)}
+              className={workspace === target ? "nav-active" : ""}
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </button>
+          ))}
+          <button
+            ref={triggerRef}
+            onPointerEnter={() => {
+              cancelClose()
+              setMoreOpen(true)
+            }}
+          onPointerLeave={scheduleClose}
+          onClick={() => {
+            const next = !pinned
+            setPinned(next)
+            setMoreOpen(next)
+          }}
+            aria-expanded={moreOpen}
+          >
+            <MoreHorizontal size={17} />
+            <span>更多</span>
+            <ChevronRight size={14} />
+          </button>
+        </nav>
+        {!query && (
+          <section className="persistent-workspace">
+            <p className="side-kicker">工作空间</p>
+            {["期中考试", "家长会准备", "座位与分组调整"].map((name, i) => (
+              <button key={name} onClick={() => setWorkspace("work")}>
+                <span className="status-ring" />
+                {name}
+                <small>{i === 0 ? "4 项任务" : ""}</small>
+              </button>
+            ))}
+          </section>
+        )}
+        <section className="chat-history">
+          <p className="side-kicker">
+            {query ? `搜索结果 · ${filteredChats.length}` : "聊天"}
+          </p>
+          {["今天", "昨天", "过去7天"].map((group) => {
+            const groupChats = filteredChats.filter((c) => c[3] === group)
+            return groupChats.length ? (
+              <div className="chat-group" key={group}>
+                <small>{group}</small>
+                {groupChats.map(([id, title, time]) => (
+                  <button
+                    key={id}
+                    className={
+                      activeConversationId === id &&
+                      workspace === "conversation"
+                        ? "conversation-item active"
+                        : "conversation-item"
+                    }
+                    onClick={() => {
+                      setConversation(id)
+                      setWorkspace("conversation")
+                      setSearch(false)
+                      setQuery("")
+                    }}
+                  >
+                    <span>{title}</span>
+                    <small>{time}</small>
+                    <MoreHorizontal className="chat-more" size={15} />
+                  </button>
+                ))}
+              </div>
+            ) : null
+          })}
+          {query && filteredChats.length === 0 && (
+            <p className="sidebar-empty">没有找到相关对话</p>
+          )}
+        </section>
+      </div>
+      <button className="user-area" onClick={() => setWorkspace("settings")}>
+        <span className="avatar">班</span>
+        <span>
+          班主任<small>合成演示学校</small>
+        </span>
+        <MoreHorizontal size={17} />
+      </button>
+      {moreOpen && (
+        <MorePopover
+          trigger={triggerRef.current}
+          pinned={pinned}
+          onEnter={cancelClose}
+          onLeave={scheduleClose}
+          onClose={() => {
+            setPinned(false)
+            setMoreOpen(false)
+          }}
+          onSelect={setWorkspace}
+          extras={extras}
+        />
+      )}
+    </aside>
+  )
+}

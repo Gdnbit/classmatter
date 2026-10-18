@@ -1,0 +1,97 @@
+name: ClassMatter synthetic and public-content checks (not release admission)
+
+"on":
+  push:
+    branches: [main, "codex/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: synthetic-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    name: Static, contracts and Web / ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      PYTHONUTF8: "1"
+      UV_NO_PROGRESS: "1"
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13.12"
+      - name: Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "22.20.0"
+      - name: uv
+        uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
+        with:
+          version: "0.11.7"
+          enable-cache: false
+      - name: Verifier dependencies
+        run: python -m pip install -r scripts/requirements-verify.txt
+      - name: Reviewed public contents and pinned secret scan
+        run: |
+          python scripts/public_guard.py
+          if ($LASTEXITCODE -ne 0) { throw 'Unreviewed public content' }
+          python scripts/scan_public.py --history
+          if ($LASTEXITCODE -ne 0) { throw 'Unresolved secret finding' }
+      - name: Repository pnpm version
+        run: npm install --global pnpm@11.19.0
+      - name: Canonical SDD, development scope, fixtures and links
+        run: |
+          foreach ($suite in @('self', 'eval-meta', 'gate-graph', 'task-graph', 'development', 'fixtures', 'docs')) {
+            & ./scripts/verify.ps1 -Suite $suite
+            if ($LASTEXITCODE -ne 0) { throw "Verification failed: $suite" }
+          }
+      - name: Verifier negative and portability tests
+        run: python -m unittest discover -s scripts/tests -p 'test_*.py' -v
+      - name: Locked backend contracts and non-database tests
+        run: pwsh -NoProfile -File ./scripts/verify.ps1 -Suite backend
+      - name: Locked Web install
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+      - name: Web typecheck and build
+        run: pwsh -NoProfile -File ./scripts/verify.ps1 -Suite web
+
+      - name: Official PostgreSQL 18.6 binaries (Linux only)
+        if: matrix.os == 'ubuntu-24.04'
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl --fail --silent --show-error --output /usr/share/postgresql-common/pgdg/class-os-postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          sudo install -m 0644 infra/ci/pgdg.sources /etc/apt/sources.list.d/class-os-pgdg.sources
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y postgresql-18=18.6-1.pgdg24.04+2
+          ci_pg_version=$(/usr/lib/postgresql/18/bin/postgres --version)
+          [[ "$ci_pg_version" == "postgres (PostgreSQL) 18.6"* ]]
+      - name: Existing Playwright Chromium (Linux only)
+        if: matrix.os == 'ubuntu-24.04'
+        working-directory: apps/web
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Disposable real PostgreSQL and browser regression (Linux only)
+        if: matrix.os == 'ubuntu-24.04'
+        run: pwsh -NoProfile -File ./scripts/verify.ps1 -Suite db -PostgresRoot /usr/lib/postgresql/18/bin
+
+# Deliberately not verify all: Windows PG/Edge/DPAPI and all spike drills,
+# formal target-bound evals remain separate. No deployment or promotion.

@@ -1,0 +1,53 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.term-metadata.v1",
+      "default": "class-os.term-metadata.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "start_date": {
+      "format": "date",
+      "title": "Start Date",
+      "type": "string"
+    },
+    "end_date": {
+      "format": "date",
+      "title": "End Date",
+      "type": "string"
+    },
+    "version": {
+      "exclusiveMaximum": 2147483647,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "class_id",
+    "term_id",
+    "name",
+    "start_date",
+    "end_date",
+    "version"
+  ],
+  "title": "TermMetadataResponse",
+  "type": "object"
+}

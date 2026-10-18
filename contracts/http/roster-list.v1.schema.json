@@ -1,0 +1,59 @@
+{
+  "$defs": {
+    "StudentView": {
+      "additionalProperties": false,
+      "properties": {
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "status": {
+          "default": "active",
+          "enum": [
+            "active",
+            "inactive"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "student_id",
+        "name",
+        "version"
+      ],
+      "title": "StudentView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.roster.v1",
+      "default": "class-os.roster.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "data": {
+      "items": {
+        "$ref": "#/$defs/StudentView"
+      },
+      "title": "Data",
+      "type": "array"
+    }
+  },
+  "required": [
+    "data"
+  ],
+  "title": "RosterResponse",
+  "type": "object"
+}

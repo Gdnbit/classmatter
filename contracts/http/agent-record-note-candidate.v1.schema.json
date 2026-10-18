@@ -1,0 +1,48 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.record-note-candidate.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "const": "unverified-user-note",
+      "title": "Status",
+      "type": "string"
+    },
+    "note_quote": {
+      "maxLength": 1000,
+      "minLength": 1,
+      "title": "Note Quote",
+      "type": "string"
+    },
+    "source_start": {
+      "maximum": 1999,
+      "minimum": 0,
+      "title": "Source Start",
+      "type": "integer"
+    },
+    "source_end": {
+      "maximum": 2000,
+      "minimum": 1,
+      "title": "Source End",
+      "type": "integer"
+    },
+    "source_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Source Hash",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "note_quote",
+    "source_start",
+    "source_end",
+    "source_hash"
+  ],
+  "title": "RecordNoteCandidateResponse",
+  "type": "object"
+}

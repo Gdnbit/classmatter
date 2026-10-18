@@ -1,0 +1,109 @@
+schema_version: 2
+release: class-os-r1
+artifact_role: mutable-task-run-state
+definition_manifest: .ai/gates/release-1-task-definitions.yaml
+definition_sha256: null
+definition_bundle_sha256: null
+target_release_digest: null
+target_commit: null
+signature_policy: .ai/gates/signed-artifact-policy.yaml
+default_status: planned
+tasks:
+  - {task_id: T-RGOV-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RGOV-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RGOV-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RGOV-004, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RGOV-005, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RGOV-006, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-004, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-005, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-006, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-007, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-008, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-009, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-010, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-011, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-012, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-013, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-014, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-015, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-016, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-017, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-018, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-019, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-020, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-021, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-022, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-023, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-024, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REVAL-025, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RSPK-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RSPK-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RSPK-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-004, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-005, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-006, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-007, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-008, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-009, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-010, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-011, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-012, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-013, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-014, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-015, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-016, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-017, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-018, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RPLT-019, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-004, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-005, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-006, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-007, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-008, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-009, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-010, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-011, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-012, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RDOM-013, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RLIFE-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RLIFE-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RLIFE-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RLIFE-004, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RLIFE-005, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RWEB-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RWEB-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RWEB-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RWEB-004, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RWEB-005, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RWEB-006, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RAGT-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RAGT-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RAGT-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RAGT-004, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REXP-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REXP-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-REXP-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-ROPS-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-ROPS-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-ROPS-003, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-ROPS-004, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-ROPS-005, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-ROPS-006, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-ROPS-007, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RREL-001, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RREL-002, status: planned, target_commit: null, evidence: null}
+  - {task_id: T-RREL-003, status: planned, target_commit: null, evidence: null}
+state_transition_artifact: null
+
+# This file carries mutable state only. Task dependencies, trace mappings,
+# evidence contracts and source-row hashes live in immutable definitions/policy.

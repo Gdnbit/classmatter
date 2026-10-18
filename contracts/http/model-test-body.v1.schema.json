@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {
+      "format": "uuid",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "confirm_network": {
+      "const": true,
+      "title": "Confirm Network",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "candidate_id",
+    "version",
+    "request_id",
+    "confirm_network"
+  ],
+  "title": "ModelTestBody",
+  "type": "object"
+}

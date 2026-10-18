@@ -1,0 +1,58 @@
+{
+  "$defs": {
+    "ErrorDetail": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "enum": [
+            "local_boundary_rejected",
+            "invalid_request",
+            "not_found",
+            "method_not_allowed",
+            "internal_error",
+            "identity_rejected",
+            "business_rejected",
+            "identity_already_committed",
+            "AUDIT_UNAVAILABLE"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "const": "Request rejected.",
+          "default": "Request rejected.",
+          "title": "Message",
+          "type": "string"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "ErrorDetail",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.error.v1",
+      "default": "class-os.error.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "error": {
+      "$ref": "#/$defs/ErrorDetail"
+    }
+  },
+  "required": [
+    "request_id",
+    "error"
+  ],
+  "title": "ErrorResponse",
+  "type": "object"
+}

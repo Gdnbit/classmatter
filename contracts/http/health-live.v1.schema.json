@@ -1,0 +1,31 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.health.v1",
+      "default": "class-os.health.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "service": {
+      "const": "class-os-api",
+      "default": "class-os-api",
+      "title": "Service",
+      "type": "string"
+    },
+    "mode": {
+      "const": "synthetic-development",
+      "default": "synthetic-development",
+      "title": "Mode",
+      "type": "string"
+    },
+    "status": {
+      "const": "alive",
+      "default": "alive",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "title": "LiveResponse",
+  "type": "object"
+}

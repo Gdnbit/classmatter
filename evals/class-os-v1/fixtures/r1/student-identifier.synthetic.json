@@ -1,0 +1,63 @@
+{
+  "data": {
+    "identifiers": [
+      {
+        "authority": "synthetic-school-a",
+        "identifier_id": "889ca839-aec1-5e69-8b33-b12cc660eca1",
+        "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+        "type": "school_number",
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "value": "SYN-A-0001"
+      },
+      {
+        "authority": "synthetic-exam-a",
+        "identifier_id": "9381440f-4354-5094-a7e0-0c3c2c1e649a",
+        "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+        "type": "exam_number",
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "value": "EX-A-0101"
+      },
+      {
+        "authority": "synthetic-school-a",
+        "expected_resolution": "duplicate_candidate_no_merge",
+        "identifier_id": "9cb12b6f-082f-5c5e-963f-70414659fa18",
+        "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+        "type": "school_number",
+        "valid_from": "2026-09-01",
+        "valid_to": null,
+        "value": "SYN-A-0001"
+      }
+    ],
+    "students": [
+      {
+        "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+        "display_name": "合成学生甲",
+        "status": "active",
+        "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+        "term_id": "b35babf5-4f8f-53db-809c-3f923b537fd8",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      },
+      {
+        "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+        "display_name": "合成学生乙",
+        "status": "active",
+        "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+        "term_id": "b35babf5-4f8f-53db-809c-3f923b537fd8",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      }
+    ]
+  },
+  "meta": {
+    "clock": "2026-09-01T08:00:00+08:00",
+    "contains_real_person_data": false,
+    "provenance": "deterministic-fixture-factory",
+    "purpose": "student-identifier-conflict",
+    "schema": "class-os.synthetic-fixture/v1",
+    "seed": 20260921,
+    "synthetic": true
+  }
+}

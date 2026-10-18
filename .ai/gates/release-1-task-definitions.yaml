@@ -1,0 +1,870 @@
+schema_version: 2
+release: class-os-r1
+artifact_role: immutable-task-definition
+source: docs/specs/class-os-v1/release-1-atomic-tasks.md
+state_manifest: .ai/gates/release-1-tasks.yaml
+approval_state: .ai/gates/release-1-definition-state.yaml
+signature_policy: .ai/gates/signed-artifact-policy.yaml
+policy:
+  every_source_task_exactly_once: true
+  dependency_ids_are_explicit_and_markdown_ranges_are_not_machine_inputs: true
+  eval_ids_exactly_equal_full_source_row_expansion: true
+  rule_ids_exactly_equal_full_source_row_expansion: true
+  requirement_ids_include_explicit_row_ids_and_reverse_coverage_projection: true
+  missing_or_extra_mapping_fails_gate: true
+  dependency_must_exist_and_graph_must_be_acyclic: true
+  complete_task_requires_all_transitive_dependencies_complete: true
+  source_row_hash_change_requires_new_definition_bundle_approval: true
+  allowed_state_statuses: [planned, in-progress, blocked, complete]
+task_body_hash_contract:
+  source_unit: complete-markdown-table-row-for-task-id
+  normalization: strict-utf8-nfc-lf-and-trim-trailing-whitespace
+  algorithm: sha256
+  runner_must_recompute_before_any_task_or_gate_transition: true
+task_definitions:
+  - task_id: T-RGOV-001
+    source_line: 19
+    effort_days: 1
+    goal: "指定数据控制、处理、安全、支持和审批责任人"
+    depends_on: []
+    requirement_ids: [NFR-PRV-001]
+    rule_ids: []
+    eval_ids: [E-PRV-005, E-PRV-006]
+    task_body_sha256: 3e3fc7820dd521a77b2f4954ce47066a99d923855566603af6c370072b10ce3b
+  - task_id: T-RGOV-002
+    source_line: 20
+    effort_days: 1
+    goal: "批准目的、合法依据、数据主体权利流程"
+    depends_on: [T-RGOV-001]
+    requirement_ids: [NFR-PRV-001]
+    rule_ids: [R-PRV-005, R-PRV-006]
+    eval_ids: [E-PRV-005, E-PRV-006, E-PRV-007, E-PRV-008]
+    task_body_sha256: 987bcd161bfa9135d6b1a091f2da8f65e27fe4d28ba7ceb57f363e0149ff6c4c
+  - task_id: T-RGOV-003
+    source_line: 21
+    effort_days: 1
+    goal: "完成处理方和模型供应商准入"
+    depends_on: [T-RGOV-001]
+    requirement_ids: [NFR-PRV-002]
+    rule_ids: []
+    eval_ids: [E-PRV-009, E-PRV-010, E-PRV-011]
+    task_body_sha256: fbab322136e949d855b7675c7d62788aced268998bf2e9a4cc5b36be24d9c7d5
+  - task_id: T-RGOV-004
+    source_line: 22
+    effort_days: 1
+    goal: "冻结 Release 1 边界和非目标"
+    depends_on: [T-RGOV-002, T-RGOV-003]
+    requirement_ids: []
+    rule_ids: []
+    eval_ids: [E-SCOPE-001, E-SCOPE-002, E-TASK-001]
+    task_body_sha256: a96ccca218a0b0cf4ed36b07b4fa41fdef431cda614ae8263e02904d79c78577
+  - task_id: T-RGOV-005
+    source_line: 23
+    effort_days: 1
+    goal: "批准 setup/admission artifact 的签发、密钥与撤回仪式"
+    depends_on: [T-RGOV-001, T-RGOV-002, T-RGOV-003, T-RGOV-004]
+    requirement_ids: [FR-AGT-003, FR-PLT-006, NFR-PRV-005]
+    rule_ids: [R-ADM-001]
+    eval_ids: [E-ADM-004, E-ADM-007, E-ADM-008, E-ADM-009, E-GATE-002]
+    task_body_sha256: b395465ee63e6e867c12a9814d27d3509d485eb20006f392fe05ce354d203037
+  - task_id: T-RGOV-006
+    source_line: 24
+    effort_days: 1
+    goal: "审批并签发 R1 架构决定 artifact"
+    depends_on: [T-RGOV-004, T-RSPK-001, T-RSPK-003, T-REVAL-012]
+    requirement_ids: []
+    rule_ids: []
+    eval_ids: [E-ARCH-002]
+    task_body_sha256: 68600255dc3f61b4c2de061c9bc4e5aae17dd5d0ed79328b4a9f637907661534
+  - task_id: T-REVAL-001
+    source_line: 25
+    effort_days: 2
+    goal: "建立最小 verify 与 manifest schema/唯一性校验"
+    depends_on: [T-RGOV-004]
+    requirement_ids: []
+    rule_ids: []
+    eval_ids: [E-GATE-001, E-GATE-002]
+    task_body_sha256: a7d29f8e77666ee9e659f8725b1366df192e2047786a78d0f16ee7b96f752589
+  - task_id: T-REVAL-002
+    source_line: 26
+    effort_days: 2
+    goal: "建立确定性合成 fixture 工厂"
+    depends_on: [T-REVAL-001]
+    requirement_ids: [NFR-SEC-001, NFR-SEC-004, NFR-SEC-005]
+    rule_ids: []
+    eval_ids: [E-PRV-003, E-SEC-005]
+    task_body_sha256: 29594baf368ae652b982b6305b141f8831193159b21c2f032ae3df4eaac3a771
+  - task_id: T-REVAL-003
+    source_line: 27
+    effort_days: 2
+    goal: "实现 workspace、敏感审计和批准核心规格 runner"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, FR-EVT-001, FR-EXP-003, FR-PLT-001, FR-PLT-003, NFR-PRV-003, NFR-SEC-002, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AUTH-001, E-AUTH-003, E-AGT-015, E-AGT-018, E-AGT-020, E-RISK-001, E-RISK-002, E-RISK-003, E-RISK-004, E-RISK-005, E-AUD-001, E-AUD-002, E-AUD-003, E-AUD-004]
+    task_body_sha256: 403413efbd15cbd1d381b2145a19168fb03ebc48890e5db72410da948a6c01ce
+  - task_id: T-REVAL-004
+    source_line: 28
+    effort_days: 2
+    goal: "实现本地草稿、身份和事实领域规格 runner"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [FR-CLS-002, FR-CLS-007, FR-EVT-001, FR-EVT-002, FR-EVT-003, FR-EVT-005, FR-EVT-006, FR-TSK-001, FR-TSK-004, NFR-REL-002, NFR-REL-005, NFR-UX-005]
+    rule_ids: []
+    eval_ids: [E-LOCAL-001, E-LOCAL-002, E-LOCAL-003, E-LOCAL-004, E-LOCAL-005, E-ID-001, E-ID-002, E-ID-003, E-ID-004, E-TIME-001, E-TIME-002, E-EVT-001, E-EVT-002, E-EVT-003, E-EVT-004, E-ATT-001, E-LEAVE-001, E-HWK-001]
+    task_body_sha256: 1575a9de07ba8929caddc1d2b62f5b06984ed4f5ff7b24a710306bc7613b2419
+  - task_id: T-REVAL-005
+    source_line: 29
+    effort_days: 2
+    goal: "实现最小退出规格 runner"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [FR-EXP-001, FR-EXP-003]
+    rule_ids: []
+    eval_ids: [E-EXIT-001, E-EXP-001, E-EXP-002, E-EXP-003, E-EXP-004, E-EXP-005]
+    task_body_sha256: b825382de1ef05cf7c50e8814b51162c8eae0988a0bf69d9ac2e7c3eb84e43ac
+  - task_id: T-REVAL-006
+    source_line: 30
+    effort_days: 1
+    goal: "在 CI 强制报告三种 eval 状态"
+    depends_on: [T-RPLT-002, T-REVAL-003, T-REVAL-004, T-REVAL-005, T-REVAL-007, T-REVAL-008, T-REVAL-009, T-REVAL-010, T-REVAL-011, T-REVAL-012, T-REVAL-013, T-REVAL-014, T-REVAL-015, T-REVAL-016, T-REVAL-017, T-REVAL-018, T-REVAL-019, T-REVAL-020, T-REVAL-021, T-REVAL-022, T-REVAL-023, T-REVAL-024, T-REVAL-025]
+    requirement_ids: []
+    rule_ids: []
+    eval_ids: [E-TASK-001, E-GATE-002]
+    task_body_sha256: 9f9ba06d3035025906e37d03b4d7720500b42a9b5c464648a89716575bb5681c
+  - task_id: T-REVAL-007
+    source_line: 31
+    effort_days: 2
+    goal: "实现会话、写审计、幂等与 owner 生命周期规格 runner"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [FR-PLT-001, FR-PLT-002, FR-PLT-007, NFR-REL-001, NFR-SEC-002, NFR-SEC-004, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AUTH-005, E-AUTH-007, E-AUTH-009, E-AUTH-010, E-AUTH-011, E-AUTH-012, E-AUTH-013, E-AUTH-015, E-AUTH-016, E-AUTH-017, E-AUTH-018, E-SEC-002, E-CMD-001, E-CMD-002, E-CMD-003, E-CMD-004]
+    task_body_sha256: 7e2f593de062f730cc6116fb132d7dd1aed13486a4e7364b32e31b1b91d174a5
+  - task_id: T-REVAL-008
+    source_line: 32
+    effort_days: 3
+    goal: "实现批准、Agent/worker/语音边界与两阶段真实准入 runner"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, FR-PLT-006, NFR-MNT-002, NFR-PRV-002, NFR-PRV-005, NFR-UX-003, NFR-UX-006]
+    rule_ids: []
+    eval_ids: [E-AGT-015, E-AGT-016, E-AGT-017, E-AGT-018, E-AGT-019, E-AGT-020, E-AGT-021, E-AGT-022, E-AGT-023, E-AGT-024, E-AGT-025, E-PRV-013, E-PRV-014, E-ADM-001, E-ADM-002, E-ADM-003, E-ADM-004, E-ADM-005, E-ADM-006, E-ADM-007, E-ADM-008, E-ADM-009]
+    task_body_sha256: 1d12d448246253b9f47498b094481d061c132f805fdb1ae1afcc6fa2588b0ce6
+  - task_id: T-REVAL-009
+    source_line: 33
+    effort_days: 2
+    goal: "补齐 R1 数据最小化与处理器隐私规格"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-PRV-002, NFR-SEC-004]
+    rule_ids: []
+    eval_ids: [E-PRV-001, E-PRV-003, E-PRV-009, E-PRV-010, E-PRV-011, E-PRV-012]
+    task_body_sha256: abbc8f8e31455b5d7758330f93b03a18377212dd09bfef6aef8e716f384db53b
+  - task_id: T-REVAL-010
+    source_line: 34
+    effort_days: 1
+    goal: "补齐命令响应丢失可靠性规格"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-REL-002]
+    rule_ids: []
+    eval_ids: [E-OPS-001, E-OPS-003]
+    task_body_sha256: d6c0fc563b0e9a7e23cecf284142049f20a938a65157fb265c5d64ec32b315f3
+  - task_id: T-REVAL-011
+    source_line: 35
+    effort_days: 2
+    goal: "补齐 R1 Web 与人工价值/确认协议"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-UX-001, NFR-UX-003]
+    rule_ids: []
+    eval_ids: [E-WEB-002, E-WEB-003, E-WEB-004, E-UX-001, E-UX-006]
+    task_body_sha256: 8847f31d4be57ccb5927a33e5f9cbb453a2e95f6c53ab6260f2982d26de70f3a
+  - task_id: T-REVAL-012
+    source_line: 36
+    effort_days: 2
+    goal: "补齐 R1 范围、架构与开发环境规格"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [FR-AGT-009, NFR-MNT-004]
+    rule_ids: []
+    eval_ids: [E-SCOPE-001, E-SCOPE-002, E-ARCH-001, E-ARCH-002, E-DEV-001]
+    task_body_sha256: 6d71f0c96ab43e0df5fd37acaca3a2c19388ca54c7044e7394a6f764f038f213
+  - task_id: T-REVAL-013
+    source_line: 37
+    effort_days: 2
+    goal: "补齐 R1 安全 executable specs"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-SEC-001, NFR-SEC-005]
+    rule_ids: []
+    eval_ids: [E-SEC-001, E-SEC-005, E-SEC-006, E-SEC-007]
+    task_body_sha256: c03731673d862a3181ed4ef53082e8f4f5596f607b6e0390e643f5ff54adeaf0
+  - task_id: T-REVAL-014
+    source_line: 38
+    effort_days: 2
+    goal: "补齐 R1 可观测 executable specs"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-OBS-001, NFR-OBS-002, NFR-OBS-003]
+    rule_ids: []
+    eval_ids: [E-OBS-001, E-OBS-002, E-OBS-003, E-OBS-004]
+    task_body_sha256: 6250a8920bcaeb599c04a4fba06617a6e865adfbf06de6f746008f8b75667f3d
+  - task_id: T-REVAL-015
+    source_line: 39
+    effort_days: 2
+    goal: "补齐 R1 迁移 executable specs"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-MNT-001, NFR-REL-004]
+    rule_ids: []
+    eval_ids: [E-MIG-001, E-MIG-002, E-MIG-003, E-MIG-004, E-MIG-005]
+    task_body_sha256: a889d173d66b00c9a601496e9d7a7edecbaa210583d7f6a389cfb4566d77c4ba
+  - task_id: T-REVAL-016
+    source_line: 40
+    effort_days: 1
+    goal: "补齐 R1 a11y 人工与自动协议"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-UX-004]
+    rule_ids: []
+    eval_ids: [E-A11Y-002, E-A11Y-003]
+    task_body_sha256: 6cde740980f560beb6594e72f6fcefcbc474f0601a83740bff33dd58935ead37
+  - task_id: T-REVAL-017
+    source_line: 41
+    effort_days: 2
+    goal: "补齐 R1 性能 executable specs"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-PERF-002, NFR-PERF-004]
+    rule_ids: []
+    eval_ids: [E-PERF-003, E-PERF-004, E-PERF-006, E-PERF-007]
+    task_body_sha256: 6c84726373f9805af54e09b46ad82b39ab34d50fde8b1ab1ea369b0e3e3583a5
+  - task_id: T-REVAL-018
+    source_line: 42
+    effort_days: 2
+    goal: "补齐无外发与降级 executable specs"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [FR-COM-002, FR-PLT-005, NFR-MNT-001, NFR-REL-002]
+    rule_ids: []
+    eval_ids: [E-REP-008, E-LOCAL-005, E-OPS-008]
+    task_body_sha256: 6eecef2b60d32af06c6b23b21424a2b7253da635e0034fa7cef5faaaa6e1791c
+  - task_id: T-REVAL-019
+    source_line: 43
+    effort_days: 3
+    goal: "先验证成熟签名方案并实现最小证据验证"
+    depends_on: [T-REVAL-001]
+    requirement_ids: []
+    rule_ids: []
+    eval_ids: [E-GATE-002]
+    task_body_sha256: 19d15b56261fb91dfb5560522a9cfb5a2c93695efac128d248fe750fde49bc48
+  - task_id: T-REVAL-020
+    source_line: 44
+    effort_days: 2
+    goal: "实现 task↔requirement↔eval、DAG、闭包与三态校验"
+    depends_on: [T-REVAL-001, T-REVAL-019]
+    requirement_ids: []
+    rule_ids: []
+    eval_ids: [E-TASK-001, E-GATE-001, E-GATE-002]
+    task_body_sha256: 903d5daad641d5a93d4c965089ee84a1374cbd64a3a8f0c3e818405da2f05ec0
+  - task_id: T-REVAL-021
+    source_line: 45
+    effort_days: 2
+    goal: "补齐备份、坏备份与跨主机恢复规格"
+    depends_on: [T-REVAL-002, T-RSPK-003]
+    requirement_ids: [NFR-OPS-001, NFR-OPS-002, NFR-REL-003]
+    rule_ids: []
+    eval_ids: [E-OPS-005, E-OPS-006, E-OPS-007, E-OPS-011]
+    task_body_sha256: da326c04830f2d689d943c5e100656ac80e6cb0060bd8a3706529fa06591bb6c
+  - task_id: T-REVAL-022
+    source_line: 46
+    effort_days: 2
+    goal: "补齐安装、升级与环境故障规格"
+    depends_on: [T-REVAL-002, T-RSPK-003]
+    requirement_ids: [NFR-OPS-001, NFR-OPS-002, NFR-OPS-003, NFR-OPS-004, NFR-REL-004]
+    rule_ids: []
+    eval_ids: [E-OPS-009, E-OPS-010, E-OPS-012]
+    task_body_sha256: 707a9bdce070dc307b1cef4778efff05c0feb69a91008075af577182f8677080
+  - task_id: T-REVAL-023
+    source_line: 47
+    effort_days: 1
+    goal: "补齐支持包与退役规格"
+    depends_on: [T-REVAL-002, T-RSPK-003]
+    requirement_ids: [NFR-OPS-002, NFR-OPS-003, NFR-OPS-004]
+    rule_ids: []
+    eval_ids: [E-OPS-013, E-OPS-014]
+    task_body_sha256: 692a4ca7a007d0ea9553c713a52b59c241e2de66a98967f1cba28febd8b80713
+  - task_id: T-REVAL-024
+    source_line: 48
+    effort_days: 2
+    goal: "补齐权利请求与生命周期规格"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [FR-CLS-003, FR-EXP-004, NFR-PRV-001, NFR-PRV-004]
+    rule_ids: []
+    eval_ids: [E-PRV-005, E-PRV-006, E-PRV-007, E-PRV-008, E-RET-001, E-RET-002, E-RET-003, E-RET-004]
+    task_body_sha256: 891d126353343f6ee744d91c7c9e3aa00fec37fb3f6ddef8dbf93d1660b3184f
+  - task_id: T-REVAL-025
+    source_line: 49
+    effort_days: 1
+    goal: "补齐包含启动成本的价值协议"
+    depends_on: [T-REVAL-002]
+    requirement_ids: []
+    rule_ids: []
+    eval_ids: [E-VALUE-001]
+    task_body_sha256: 3d2c370bb077a282a719ea6c1cd1dc9cd16ceb8dfc90ffdfe4c7832f618739f2
+  - task_id: T-RSPK-001
+    source_line: 55
+    effort_days: 2
+    goal: "比较单语言与双语言实现边界并收口技术栈 ADR"
+    depends_on: [T-RGOV-004]
+    requirement_ids: [FR-AGT-009]
+    rule_ids: []
+    eval_ids: [E-ARCH-001, E-ARCH-002]
+    task_body_sha256: eeda8208f902a2e488c10a5eaeebfb5acdebee91a3396c247fe4f6a77e358194
+  - task_id: T-RSPK-002
+    source_line: 56
+    effort_days: 2
+    goal: "验证只读/草稿 Agent adapter 的隔离与降级"
+    depends_on: [T-RGOV-003, T-REVAL-008]
+    requirement_ids: [FR-AGT-001, FR-AGT-002, FR-AGT-006, FR-AGT-010, NFR-PRV-003, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AGT-001, E-AGT-002, E-AGT-009, E-AGT-010, E-AGT-011, E-AGT-012, E-AGT-013, E-AGT-014, E-AUD-002]
+    task_body_sha256: f92b41dfd2786a1196ded4d39a183b118c8e444d8db9baf3ec84d0d8ec8a438a
+  - task_id: T-RSPK-003
+    source_line: 57
+    effort_days: 2
+    goal: "测量单机自托管资源与故障恢复"
+    depends_on: [T-REVAL-002]
+    requirement_ids: [NFR-OPS-001, NFR-OPS-002, NFR-OPS-003, NFR-REL-003]
+    rule_ids: []
+    eval_ids: [E-OPS-009, E-OPS-011, E-OPS-012]
+    task_body_sha256: 3b45add74e62e739d65a144408afa0b2874cb3d4aa0f6d86cd4db93e20b507cb
+  - task_id: T-RPLT-001
+    source_line: 58
+    effort_days: 1
+    goal: "初始化单仓、编码和目录边界"
+    depends_on: [T-RGOV-006]
+    requirement_ids: [NFR-MNT-004]
+    rule_ids: []
+    eval_ids: [E-ARCH-002, E-SCOPE-001, E-DEV-001]
+    task_body_sha256: 3c7a70e7f4c82b982b316ce2f638c41cb2358a14a04228278f47100c954938d6
+  - task_id: T-RPLT-002
+    source_line: 59
+    effort_days: 2
+    goal: "扩展跨平台 `verify` 唯一入口"
+    depends_on: [T-RPLT-001, T-REVAL-001]
+    requirement_ids: [NFR-MNT-004]
+    rule_ids: []
+    eval_ids: [E-TASK-001, E-DEV-001]
+    task_body_sha256: 761b88e7d1759973845d8e60ce4dbdd04fdefa890fe3a0d252eecc6aa18cd3d4
+  - task_id: T-RPLT-003
+    source_line: 60
+    effort_days: 2
+    goal: "建立 PostgreSQL 迁移和测试库"
+    depends_on: [T-RPLT-002]
+    requirement_ids: [NFR-REL-004]
+    rule_ids: []
+    eval_ids: [E-MIG-001, E-MIG-003]
+    task_body_sha256: 6de4d029a965de85138be021965bf89beb34903460198f85f25f3f115e275416
+  - task_id: T-RPLT-004
+    source_line: 61
+    effort_days: 2
+    goal: "实现单 owner workspace 与 scope"
+    depends_on: [T-RPLT-003, T-REVAL-003]
+    requirement_ids: [FR-PLT-001, FR-PLT-003, NFR-SEC-002]
+    rule_ids: []
+    eval_ids: [E-AUTH-001]
+    task_body_sha256: 7dac10006ae7787e327613a28a56b26d4a76f758b495b4d198970de33120cb53
+  - task_id: T-RPLT-005
+    source_line: 62
+    effort_days: 2
+    goal: "实现安全会话与再认证"
+    depends_on: [T-RPLT-004, T-REVAL-007]
+    requirement_ids: [FR-PLT-002, NFR-SEC-002]
+    rule_ids: []
+    eval_ids: [E-AUTH-005, E-AUTH-007, E-SEC-002]
+    task_body_sha256: a0f844ec34c8ffa39530d7f7758975a1ffeb7a9c7f3d6679ebcf5d2b40c2f7ab
+  - task_id: T-RPLT-006
+    source_line: 63
+    effort_days: 2
+    goal: "实现写前审计与事务绑定"
+    depends_on: [T-RPLT-004, T-REVAL-007]
+    requirement_ids: [NFR-REL-001, NFR-SEC-006]
+    rule_ids: [R-AUD-001]
+    eval_ids: [E-CMD-004]
+    task_body_sha256: 935e0866605542c6854d1232cab67fbe17737285713e1bf014661a1d1ca58d1c
+  - task_id: T-RPLT-007
+    source_line: 64
+    effort_days: 2
+    goal: "实现敏感读响应前持久审计"
+    depends_on: [T-RPLT-006, T-REVAL-003]
+    requirement_ids: [FR-EXP-003, NFR-PRV-003, NFR-SEC-006]
+    rule_ids: [R-AUD-001]
+    eval_ids: [E-AUD-001, E-AUD-002, E-AUD-003, E-AUD-004]
+    task_body_sha256: 42d06199314782b94b06990c00eedc41eca3a64ab71ac72c63da352915ab42a2
+  - task_id: T-RPLT-008
+    source_line: 65
+    effort_days: 2
+    goal: "实现幂等命令收据"
+    depends_on: [T-RPLT-006, T-REVAL-007]
+    requirement_ids: [NFR-REL-001]
+    rule_ids: []
+    eval_ids: [E-CMD-001, E-CMD-002, E-CMD-003]
+    task_body_sha256: d3e47e72186e021cb9708a1dbdffccabfe2b1ce2443a2a65549c1abc8211cf2d
+  - task_id: T-RPLT-009
+    source_line: 66
+    effort_days: 2
+    goal: "实现 W2 Approval application orchestrator"
+    depends_on: [T-RPLT-010, T-RPLT-015, T-RPLT-016, T-REVAL-008]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, NFR-MNT-002, NFR-REL-001, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AGT-021, E-AGT-022, E-AGT-023, E-AGT-024, E-CMD-003, E-CMD-004]
+    task_body_sha256: 4c8bf6004de7848b729193e5967111fea004f169a43ee1e6930051136c8f1f87
+  - task_id: T-RPLT-010
+    source_line: 67
+    effort_days: 2
+    goal: "实现单调动态风险评估器"
+    depends_on: [T-REVAL-003]
+    requirement_ids: [FR-AGT-003, FR-EVT-001]
+    rule_ids: [R-RISK-001]
+    eval_ids: [E-RISK-001, E-RISK-002, E-RISK-003, E-RISK-004, E-RISK-005]
+    task_body_sha256: 7186c802f1a25d76f63cd3adb9fb9ecadac0768103529c50656f82d4f46b13a4
+  - task_id: T-RPLT-011
+    source_line: 68
+    effort_days: 1
+    goal: "建立脱敏遥测与关联 ID"
+    depends_on: [T-RPLT-006, T-REVAL-009]
+    requirement_ids: [NFR-OBS-001, NFR-OBS-002, NFR-OBS-003, NFR-SEC-004]
+    rule_ids: []
+    eval_ids: [E-PRV-003, E-OBS-001, E-OBS-002, E-OBS-003, E-OBS-004]
+    task_body_sha256: 05052be3503a984233ca20c4ff49c143559b0900f30b74b71b0fc10d269a5b9b
+  - task_id: T-RPLT-012
+    source_line: 69
+    effort_days: 3
+    goal: "实现 BCG 内两阶段 workspace-bound scope bootstrap 与 real-data admission verifier"
+    depends_on: [T-RGOV-005, T-REVAL-008, T-RPLT-006]
+    requirement_ids: [FR-AGT-003, FR-PLT-006, NFR-PRV-005]
+    rule_ids: [R-ADM-001]
+    eval_ids: [E-ADM-001, E-ADM-002, E-ADM-003, E-ADM-004, E-ADM-005, E-ADM-006, E-ADM-007, E-ADM-008, E-ADM-009]
+    task_body_sha256: 32019486a80dea770dedb5e7ac198536809b8c4054631a5bb19e89b50180c8cd
+  - task_id: T-RPLT-013
+    source_line: 70
+    effort_days: 2
+    goal: "实现首次 owner bootstrap"
+    depends_on: [T-RPLT-003, T-RPLT-018, T-REVAL-007]
+    requirement_ids: [FR-PLT-001, FR-PLT-002, FR-PLT-007, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AUTH-009, E-AUTH-010, E-AUTH-018]
+    task_body_sha256: 3f3b447d9ac5879aac2ee9835cb3de3ba006f6d1e81f7d322bc35e6767abf4da
+  - task_id: T-RPLT-014
+    source_line: 71
+    effort_days: 2
+    goal: "实现离线码恢复兑换、凭据轮换与全会话吊销"
+    depends_on: [T-RPLT-019, T-REVAL-007]
+    requirement_ids: [FR-PLT-002, FR-PLT-007, NFR-SEC-004, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AUTH-011, E-AUTH-012, E-AUTH-013, E-AUTH-015, E-AUTH-016, E-AUTH-017, E-AUTH-018]
+    task_body_sha256: 923120d0f69a7952c12340d0d45eb4c3537bc27e9327e96d1bdb7d7e9cb59fe0
+  - task_id: T-RPLT-015
+    source_line: 72
+    effort_days: 2
+    goal: "实现 Approval proposal/receipt 状态机"
+    depends_on: [T-RPLT-008, T-REVAL-003]
+    requirement_ids: [FR-AGT-004, FR-AGT-005]
+    rule_ids: []
+    eval_ids: [E-AGT-018, E-AGT-020, E-AGT-024]
+    task_body_sha256: f7f8268952659d4186437f7f84eaa29a3ab41e47ae501987d5e9265ae93ffe0b
+  - task_id: T-RPLT-016
+    source_line: 73
+    effort_days: 2
+    goal: "实现私有 approval endpoint 绑定"
+    depends_on: [T-RPLT-005, T-RPLT-015, T-REVAL-008]
+    requirement_ids: [FR-AGT-004, FR-AGT-005, NFR-UX-003]
+    rule_ids: []
+    eval_ids: [E-AGT-015, E-AGT-016, E-AGT-017, E-AGT-018, E-AGT-019, E-AGT-020]
+    task_body_sha256: 52d0279442ae8557aeea810208437c6e8a72720baecc16b0ae87b5b6e6aa663e
+  - task_id: T-RPLT-017
+    source_line: 74
+    effort_days: 2
+    goal: "强制所有业务写 adapter 经过 Business Command Gateway"
+    depends_on: [T-RPLT-006, T-RPLT-008, T-RPLT-009, T-RPLT-012, T-REVAL-008]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, FR-PLT-006, NFR-MNT-002, NFR-PRV-005, NFR-REL-001, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AGT-021, E-AGT-022, E-AGT-023, E-AGT-024, E-AGT-025, E-ADM-009, E-CMD-001, E-CMD-002, E-CMD-003, E-CMD-004]
+    task_body_sha256: 697576428b2413d632e9670b5691f7fbe938e95828ef0dac6dccb24ff1c0b5c1
+  - task_id: T-RPLT-018
+    source_line: 75
+    effort_days: 2
+    goal: "实现 Identity Security Command Boundary"
+    depends_on: [T-RPLT-006, T-RPLT-008, T-REVAL-007]
+    requirement_ids: [FR-PLT-001, FR-PLT-002, FR-PLT-007, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AUTH-009, E-AUTH-010, E-AUTH-015, E-AUTH-018]
+    task_body_sha256: ca77d4da3c9f5f568c6a1b55f6ce60a74385b34cf742b8098e5493b4a416fd47
+  - task_id: T-RPLT-019
+    source_line: 76
+    effort_days: 2
+    goal: "实现离线恢复码生成、单次显示与哈希存储"
+    depends_on: [T-RPLT-013, T-RPLT-018]
+    requirement_ids: [FR-PLT-007, NFR-SEC-004]
+    rule_ids: []
+    eval_ids: [E-AUTH-015, E-AUTH-016, E-AUTH-017]
+    task_body_sha256: 589d6b7da6e72f8be6e59ad5fe3691ed615b8bb91fe284ec660f21bed17c7a38
+  - task_id: T-RDOM-001
+    source_line: 82
+    effort_days: 1
+    goal: "定义 `[valid_from, valid_to)` 时间语义"
+    depends_on: [T-RPLT-003, T-REVAL-004]
+    requirement_ids: [NFR-REL-005]
+    rule_ids: [R-TIME-001]
+    eval_ids: [E-TIME-001, E-TIME-002]
+    task_body_sha256: 8f720897e76f055ca74d39b91fd83e8dde487e9c1bea3536841309abee6ed9af
+  - task_id: T-RDOM-002
+    source_line: 83
+    effort_days: 2
+    goal: "实现 Class、Term、Student 聚合"
+    depends_on: [T-RDOM-001, T-RPLT-004]
+    requirement_ids: [FR-CLS-001, FR-CLS-003]
+    rule_ids: []
+    eval_ids: [E-CLS-001, E-ROS-001, E-ROS-004]
+    task_body_sha256: 20b24d12a217f64d02aebd31dd4a96b34836c649b4e9214e303a349f3c9f7772
+  - task_id: T-RDOM-003
+    source_line: 84
+    effort_days: 2
+    goal: "实现多源 StudentIdentifier"
+    depends_on: [T-RDOM-002, T-REVAL-004]
+    requirement_ids: [FR-CLS-002, FR-CLS-007]
+    rule_ids: [R-ID-001]
+    eval_ids: [E-ID-001, E-ID-002, E-ID-003]
+    task_body_sha256: f3823d2b0ccf756947c75bb1f60830e9180e56d528a3dfdcced0a63db1960f4a
+  - task_id: T-RDOM-004
+    source_line: 85
+    effort_days: 1
+    goal: "实现重复候选但禁止合并"
+    depends_on: [T-RDOM-003, T-REVAL-004]
+    requirement_ids: [FR-CLS-002, FR-CLS-007]
+    rule_ids: []
+    eval_ids: [E-ID-003, E-ID-004]
+    task_body_sha256: b8a5f39ff91396eb6936add29a50012c263b10c7992ff30cf3304de0443bdada
+  - task_id: T-RDOM-005
+    source_line: 86
+    effort_days: 2
+    goal: "实现花名册 repository"
+    depends_on: [T-RDOM-003, T-REVAL-004]
+    requirement_ids: [FR-CLS-003, FR-EXP-004, NFR-PRV-004]
+    rule_ids: []
+    eval_ids: [E-ROS-001, E-ROS-002, E-ROS-003, E-ROS-004, E-RET-001]
+    task_body_sha256: 090d1cd542efb7b09d364d75d91c67580d47cc4799387a0ef7b7fed4ccb5f807
+  - task_id: T-RDOM-006
+    source_line: 87
+    effort_days: 2
+    goal: "实现事实型 Record 聚合与 repository"
+    depends_on: [T-RDOM-002, T-RDOM-001]
+    requirement_ids: [FR-EVT-005, FR-EVT-006, FR-TSK-004]
+    rule_ids: []
+    eval_ids: [E-ATT-001, E-LEAVE-001, E-HWK-001]
+    task_body_sha256: 86084a8436d986611aabc72ad487de737a9c9ee2d02d528f213e64a52cc46417
+  - task_id: T-RDOM-007
+    source_line: 88
+    effort_days: 2
+    goal: "实现请假关联 Command handler"
+    depends_on: [T-RDOM-006, T-RPLT-017]
+    requirement_ids: [FR-AGT-004, FR-EVT-006, NFR-MNT-002]
+    rule_ids: []
+    eval_ids: [E-LEAVE-001, E-AGT-021, E-AGT-022]
+    task_body_sha256: c493b6a33272ba14370a45f3e86ef6462bcf0fca5b78841d11df2b5442ecd664
+  - task_id: T-RDOM-008
+    source_line: 89
+    effort_days: 2
+    goal: "实现作业事实 Command handler"
+    depends_on: [T-RDOM-006, T-RPLT-017]
+    requirement_ids: [FR-AGT-004, FR-EVT-005, NFR-MNT-002]
+    rule_ids: []
+    eval_ids: [E-HWK-001, E-AGT-021, E-AGT-022]
+    task_body_sha256: e384a6d3fadc736e6abae14133052c2392bd47802bfcb84e1b7d34db06a0257b
+  - task_id: T-RDOM-009
+    source_line: 90
+    effort_days: 2
+    goal: "实现简单 Task 聚合与 repository"
+    depends_on: [T-RDOM-002, T-REVAL-004]
+    requirement_ids: [FR-TSK-001, FR-TSK-002, NFR-REL-001]
+    rule_ids: []
+    eval_ids: [E-EVT-004, E-TSK-001, E-CMD-003]
+    task_body_sha256: 6af55503e73c754853720d8949b059697854a671363b2abe981bed241b6a0ac8
+  - task_id: T-RDOM-010
+    source_line: 91
+    effort_days: 2
+    goal: "实现 Timeline 与 Today 查询"
+    depends_on: [T-RDOM-005, T-RDOM-006, T-RDOM-007, T-RDOM-008, T-RDOM-009, T-RPLT-007]
+    requirement_ids: [FR-EVT-001, FR-EVT-002, FR-EVT-005, FR-TSK-001, FR-TSK-004, NFR-PRV-003, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AUD-001, E-EVT-001, E-EVT-004, E-ATT-001]
+    task_body_sha256: 8b3c6a54dc3bd16b6ae83599818bff0a0225b8f77fe138831813e1dab397459e
+  - task_id: T-RDOM-011
+    source_line: 92
+    effort_days: 2
+    goal: "实现 Class/Term/Student Command handlers"
+    depends_on: [T-RDOM-002, T-RDOM-003, T-RDOM-004, T-RDOM-005, T-RPLT-017]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, FR-CLS-003, NFR-MNT-002]
+    rule_ids: []
+    eval_ids: [E-ROS-001, E-ROS-002, E-ROS-003, E-ROS-004, E-AGT-021, E-AGT-022, E-AGT-023, E-AGT-024]
+    task_body_sha256: 2a9c4e003844c4347febcea2283b6a695d6878f0f2e5b65d7a3f0446425b5a47
+  - task_id: T-RDOM-012
+    source_line: 93
+    effort_days: 2
+    goal: "实现通用事实 Record Command handlers"
+    depends_on: [T-RDOM-006, T-RPLT-017]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, FR-EVT-001, FR-EVT-002, FR-EVT-003, FR-TSK-004, NFR-MNT-002]
+    rule_ids: []
+    eval_ids: [E-EVT-001, E-EVT-002, E-EVT-003, E-RISK-001, E-RISK-002, E-RISK-003, E-RISK-004, E-RISK-005, E-AGT-021, E-AGT-022, E-AGT-023, E-AGT-024]
+    task_body_sha256: f73c822e53917aa84add0a11a5d71cd6c64f45cccb961c0350d89530b0ea9478
+  - task_id: T-RDOM-013
+    source_line: 94
+    effort_days: 2
+    goal: "实现 Task Command handlers"
+    depends_on: [T-RDOM-009, T-RPLT-017]
+    requirement_ids: [FR-TSK-001, NFR-REL-001, NFR-REL-002]
+    rule_ids: []
+    eval_ids: [E-EVT-004, E-CMD-001, E-CMD-002, E-CMD-003, E-OPS-001, E-OPS-003]
+    task_body_sha256: e158e5c28f4e418cbe07049a1dc4d84c6fb4ddfcb5c721e5a7f3f28b4f3e6b58
+  - task_id: T-RLIFE-001
+    source_line: 100
+    effort_days: 2
+    goal: "建立 schema 驱动 R1 store inventory/locator"
+    depends_on: [T-RGOV-002, T-RPLT-003]
+    requirement_ids: [FR-EXP-004, NFR-PRV-004]
+    rule_ids: []
+    eval_ids: [E-RET-002, E-RET-004]
+    task_body_sha256: 14eadc2cfa368dc64b0f9f168f84df3d31f4a7dd046d88c2a1984f79167e7a34
+  - task_id: T-RLIFE-002
+    source_line: 101
+    effort_days: 2
+    goal: "实现停用/归档领域语义"
+    depends_on: [T-RLIFE-001, T-RDOM-011]
+    requirement_ids: [FR-CLS-003, FR-EXP-004, NFR-PRV-004]
+    rule_ids: [R-RET-001, R-RET-002]
+    eval_ids: [E-RET-001, E-ROS-004]
+    task_body_sha256: 4357faf08c82f80b02f80b7e4a88c2774c35ea247eb36738c045946be5c719ae
+  - task_id: T-RLIFE-003
+    source_line: 102
+    effort_days: 3
+    goal: "实现权利请求 case 与逐 store 处置账本"
+    depends_on: [T-RLIFE-001, T-RPLT-017, T-RPLT-018]
+    requirement_ids: [FR-EXP-004, NFR-PRV-001, NFR-PRV-004]
+    rule_ids: []
+    eval_ids: [E-PRV-006, E-PRV-007, E-PRV-008, E-RET-002, E-RET-004]
+    task_body_sha256: 89aa8804b72e3a59afccf40cf1bcaf8c246637335f25e14cf8f0c1eef02bc6e0
+  - task_id: T-RLIFE-004
+    source_line: 103
+    effort_days: 2
+    goal: "实现 restriction/delete tombstone 与恢复/导入重放"
+    depends_on: [T-RLIFE-003, T-ROPS-006]
+    requirement_ids: [FR-EXP-001, FR-EXP-004, NFR-PRV-004, NFR-REL-003]
+    rule_ids: []
+    eval_ids: [E-RET-003, E-EXIT-001, E-OPS-006, E-OPS-007]
+    task_body_sha256: 0eb7ef66209fdd99813509974a7bea40cba4ee72be2d2a045a010e03ccad1d63
+  - task_id: T-RLIFE-005
+    source_line: 104
+    effort_days: 2
+    goal: "实现 candidate-time 实际 store inventory scanner 与双向核对器"
+    depends_on: [T-RLIFE-001, T-RPLT-014, T-RPLT-015, T-RPLT-017, T-RPLT-019, T-RAGT-003, T-REXP-002, T-ROPS-005]
+    requirement_ids: [FR-EXP-004, NFR-PRV-004]
+    rule_ids: []
+    eval_ids: [E-RET-002, E-RET-004, E-TASK-001, E-GATE-002]
+    task_body_sha256: 78c5159719fa47fe8b3c6d78f3227f4dcc58fa8fd2a73e87c5f4fd52f77b5a5a
+  - task_id: T-RWEB-001
+    source_line: 110
+    effort_days: 2
+    goal: "实现移动优先 shell 与登录"
+    depends_on: [T-RPLT-005, T-RPLT-014, T-REVAL-008, T-REVAL-011]
+    requirement_ids: [FR-PLT-002, FR-PLT-007, NFR-PRV-002, NFR-SEC-004, NFR-SEC-006, NFR-UX-004, NFR-UX-006]
+    rule_ids: []
+    eval_ids: [E-AUTH-005, E-AUTH-007, E-AUTH-011, E-AUTH-012, E-AUTH-013, E-AUTH-015, E-AUTH-016, E-AUTH-017, E-AUTH-018, E-PRV-013, E-PRV-014, E-A11Y-002, E-A11Y-003]
+    task_body_sha256: cd084492d6d33137c101ec18267aea1814fd62bb3319d355cda09ad9c9652e29
+  - task_id: T-RWEB-002
+    source_line: 111
+    effort_days: 2
+    goal: "实现花名册列表与编辑"
+    depends_on: [T-RDOM-010, T-RDOM-011, T-RWEB-001]
+    requirement_ids: [FR-CLS-003, FR-EXP-004, NFR-PRV-004]
+    rule_ids: []
+    eval_ids: [E-ROS-001, E-ROS-002, E-ROS-003, E-ROS-004, E-RET-001]
+    task_body_sha256: b3f6e7996841f839384b5b9f228ced48937feb1a499cadb9d3e5ad7d819697c5
+  - task_id: T-RWEB-003
+    source_line: 112
+    effort_days: 3
+    goal: "实现事实事件表单"
+    depends_on: [T-RDOM-007, T-RDOM-008, T-RDOM-012, T-RWEB-001, T-RWEB-005]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, FR-EVT-005, FR-EVT-006, FR-TSK-004, NFR-MNT-002, NFR-REL-002, NFR-UX-003, NFR-UX-005]
+    rule_ids: []
+    eval_ids: [E-LOCAL-001, E-LOCAL-002, E-LOCAL-003, E-LOCAL-004, E-LOCAL-005, E-ATT-001, E-LEAVE-001, E-HWK-001, E-AGT-016, E-AGT-017, E-AGT-018, E-AGT-019, E-AGT-020, E-AGT-021, E-AGT-022, E-AGT-023, E-AGT-024]
+    task_body_sha256: 1726949ff88dade25e8e3e1952b518fd6f7d2489c506c3262ce80621549c0f23
+  - task_id: T-RWEB-004
+    source_line: 113
+    effort_days: 2
+    goal: "实现 Today/Timeline 和任务操作"
+    depends_on: [T-RDOM-010, T-RDOM-013, T-RWEB-001]
+    requirement_ids: [FR-EVT-001, FR-EVT-002, FR-TSK-001, FR-TSK-004, NFR-PRV-003, NFR-SEC-006, NFR-UX-001]
+    rule_ids: []
+    eval_ids: [E-EVT-001, E-EVT-004, E-AUD-001, E-WEB-002, E-WEB-003, E-WEB-004]
+    task_body_sha256: 7b01e3433add069a9c634f0930950784767318c2d76bca69e61e767f89d87429
+  - task_id: T-RWEB-005
+    source_line: 114
+    effort_days: 3
+    goal: "实现可信批准卡"
+    depends_on: [T-RPLT-009, T-RPLT-016, T-RWEB-001, T-REVAL-008]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, FR-EVT-001, NFR-MNT-002, NFR-UX-003]
+    rule_ids: []
+    eval_ids: [E-AGT-015, E-AGT-016, E-AGT-017, E-AGT-018, E-AGT-019, E-AGT-020, E-AGT-021, E-AGT-022, E-AGT-023, E-AGT-024, E-RISK-001, E-RISK-002, E-RISK-003, E-RISK-004, E-RISK-005]
+    task_body_sha256: ce04eaae01607c92e897f51733f5ae9fa14fd0ef5ca85d01c653f7c0ab49d5b3
+  - task_id: T-RWEB-006
+    source_line: 115
+    effort_days: 2
+    goal: "实现 Class/Term 建立、切换与归档界面"
+    depends_on: [T-RDOM-011, T-RWEB-001, T-RWEB-005]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-AGT-005, FR-CLS-001, NFR-MNT-002, NFR-UX-003]
+    rule_ids: []
+    eval_ids: [E-CLS-001, E-AGT-016, E-AGT-017, E-AGT-018, E-AGT-019, E-AGT-020, E-AGT-021, E-AGT-022, E-AGT-023, E-AGT-024]
+    task_body_sha256: 3161fcf460da096ea007ad0e7068bfdf0d13dad5162d775bebaf1977d7f46f82
+  - task_id: T-RAGT-001
+    source_line: 116
+    effort_days: 2
+    goal: "定义只读与草稿 Tool schemas"
+    depends_on: [T-RDOM-005, T-RDOM-006, T-RDOM-007, T-RDOM-008, T-RDOM-009, T-RDOM-010, T-REVAL-008, T-REVAL-012]
+    requirement_ids: [FR-AGT-001, FR-AGT-002, FR-AGT-004, FR-AGT-010]
+    rule_ids: []
+    eval_ids: [E-AGT-001, E-AGT-002, E-AGT-011, E-AGT-015]
+    task_body_sha256: 8e9a7fd57ca151687587070629c9c6f095ed71e74da2bf4cbe01ab2374d46676
+  - task_id: T-RAGT-002
+    source_line: 117
+    effort_days: 2
+    goal: "实现 Tool Gateway 投影与审计"
+    depends_on: [T-RAGT-001, T-RPLT-007]
+    requirement_ids: [FR-AGT-001, FR-AGT-002, FR-AGT-010, NFR-PRV-003, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AGT-001, E-AGT-009, E-AGT-010, E-AGT-011, E-AGT-012, E-AUD-001, E-AUD-002]
+    task_body_sha256: d35e2fc6d6cd7d89ec347f600bcd1559586cdfd1c7bbad9d64f6f2d384a58327
+  - task_id: T-RAGT-003
+    source_line: 118
+    effort_days: 3
+    goal: "接入可替换 Agent runtime 与 fake"
+    depends_on: [T-RAGT-002, T-RSPK-002]
+    requirement_ids: [FR-AGT-006, FR-PLT-005, NFR-MNT-001]
+    rule_ids: []
+    eval_ids: [E-AGT-013, E-AGT-014, E-OPS-008]
+    task_body_sha256: 5f1f879b46b0dda37d88e5a5d1e63ff6c42995c2645062b64eff20f3dba95076
+  - task_id: T-RAGT-004
+    source_line: 119
+    effort_days: 2
+    goal: "实现查询与事件草稿 Skill"
+    depends_on: [T-RAGT-003, T-RWEB-003, T-REVAL-008]
+    requirement_ids: [FR-AGT-001, FR-AGT-002, FR-AGT-006, FR-AGT-010, NFR-PRV-003, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-AGT-001, E-AGT-002, E-AGT-009, E-AGT-010, E-AGT-011, E-AGT-012, E-AGT-013, E-AGT-014, E-AUD-002]
+    task_body_sha256: a2db27644505fd153c3775fd7f02f751a09edd2394a69e2070659b2c2c7eb3ea
+  - task_id: T-REXP-001
+    source_line: 125
+    effort_days: 2
+    goal: "定义最小退出包 schema 与版本"
+    depends_on: [T-RDOM-003, T-RDOM-006, T-RDOM-009, T-RLIFE-001, T-REVAL-005]
+    requirement_ids: [FR-EXP-001, FR-EXP-003]
+    rule_ids: [R-EXIT-001]
+    eval_ids: [E-EXP-001, E-EXP-003, E-EXIT-001]
+    task_body_sha256: 2be5899ad978b90af738f8a48d1145295558f89fffb19a5a7f95f91abfca6b1f
+  - task_id: T-REXP-002
+    source_line: 126
+    effort_days: 3
+    goal: "实现授权导出、worker 与审计"
+    depends_on: [T-REXP-001, T-RPLT-007, T-RPLT-017]
+    requirement_ids: [FR-AGT-003, FR-AGT-004, FR-EXP-003, NFR-MNT-002, NFR-PRV-003, NFR-SEC-006]
+    rule_ids: []
+    eval_ids: [E-EXP-003, E-EXP-004, E-EXP-005, E-AUD-003, E-AGT-025]
+    task_body_sha256: 1f9c11e3eb3c653664a2eb245c8a19cd2e6ace92d1d068af29bfb9ea39213872
+  - task_id: T-REXP-003
+    source_line: 127
+    effort_days: 3
+    goal: "实现干净环境导入往返与退役证明验证器"
+    depends_on: [T-REXP-002, T-REVAL-005]
+    requirement_ids: [FR-EXP-001, FR-EXP-004, NFR-PRV-004]
+    rule_ids: []
+    eval_ids: [E-EXIT-001, E-EXP-001, E-EXP-002, E-RET-003]
+    task_body_sha256: c43943a01d60792c90e1068a9b6a91c25ddaf83f6e56a513f9fe3f1bf2e73076
+  - task_id: T-ROPS-001
+    source_line: 128
+    effort_days: 2
+    goal: "构建固定单机容器拓扑"
+    depends_on: [T-RSPK-003, T-RPLT-011, T-REVAL-010]
+    requirement_ids: [NFR-OPS-001, NFR-OPS-002, NFR-REL-003, NFR-SEC-001]
+    rule_ids: []
+    eval_ids: [E-OPS-009, E-OPS-011, E-SEC-007]
+    task_body_sha256: dd94eee864f0484d62063502d7a4c4b1089a7cf032ba3cf097071175f5862a75
+  - task_id: T-ROPS-002
+    source_line: 129
+    effort_days: 2
+    goal: "实现 install 与 doctor"
+    depends_on: [T-ROPS-001, T-REVAL-005]
+    requirement_ids: [NFR-OPS-001, NFR-OPS-002, NFR-OPS-003]
+    rule_ids: []
+    eval_ids: [E-OPS-009, E-OPS-012]
+    task_body_sha256: 5579b3725e7cd5e230560445bf568de3b81f181c3c2c38113f40f5e1d0e5aa66
+  - task_id: T-ROPS-003
+    source_line: 130
+    effort_days: 2
+    goal: "实现加密备份生成与保留"
+    depends_on: [T-ROPS-001, T-REXP-003]
+    requirement_ids: [NFR-REL-003]
+    rule_ids: []
+    eval_ids: [E-OPS-005, E-OPS-007]
+    task_body_sha256: 1f61735a80b3c559171be691c63cff23da209a73022808705f6ac8fc51cd7afe
+  - task_id: T-ROPS-004
+    source_line: 131
+    effort_days: 3
+    goal: "实现升级 dry-run 与回滚"
+    depends_on: [T-ROPS-002, T-ROPS-003]
+    requirement_ids: [NFR-OPS-002, NFR-OPS-004, NFR-REL-004]
+    rule_ids: []
+    eval_ids: [E-OPS-010, E-MIG-001, E-MIG-002, E-MIG-003, E-MIG-004]
+    task_body_sha256: 077d5097e941ceb53b07bb3ccda981a0512863c37ab4d4a0b5ccd53bf1b46bbf
+  - task_id: T-ROPS-005
+    source_line: 132
+    effort_days: 2
+    goal: "实现磁盘/证书告警与脱敏支持包"
+    depends_on: [T-ROPS-002]
+    requirement_ids: [NFR-OBS-003, NFR-OPS-003]
+    rule_ids: []
+    eval_ids: [E-OPS-012, E-OPS-013, E-OBS-003]
+    task_body_sha256: 30988c3ca99cab56d8b9ed4c37d13755a22d0f9b0947d07e7c562eee41188b42
+  - task_id: T-ROPS-006
+    source_line: 133
+    effort_days: 3
+    goal: "实现隔离主机恢复与应用完整性校验"
+    depends_on: [T-ROPS-003, T-REXP-003]
+    requirement_ids: [NFR-OPS-001, NFR-OPS-002, NFR-REL-003]
+    rule_ids: []
+    eval_ids: [E-OPS-006, E-OPS-007, E-OPS-011]
+    task_body_sha256: 292a3c0b6b731f9c9d626ccb7ee7d01ff9150f41daf0e1a9d38e4a7c82d883ae
+  - task_id: T-ROPS-007
+    source_line: 134
+    effort_days: 2
+    goal: "实现安全卸载与退役"
+    depends_on: [T-ROPS-002, T-REXP-003, T-RLIFE-003]
+    requirement_ids: [FR-EXP-001, FR-EXP-004, NFR-OPS-002, NFR-OPS-004, NFR-PRV-004]
+    rule_ids: []
+    eval_ids: [E-EXIT-001, E-OPS-014, E-RET-002, E-RET-004]
+    task_body_sha256: fbc51e9868405b4534bfaad04c338297d2aaa62c2a86d0b6c3326f1c2a30a36d
+  - task_id: T-RREL-001
+    source_line: 135
+    effort_days: 2
+    goal: "组装 Release 1 候选并执行全门禁"
+    depends_on: [T-REVAL-006, T-RPLT-012, T-RPLT-014, T-RPLT-017, T-RLIFE-001, T-RLIFE-002, T-RLIFE-003, T-RLIFE-004, T-RLIFE-005, T-RWEB-002, T-RWEB-003, T-RWEB-004, T-RWEB-005, T-RWEB-006, T-RAGT-004, T-REXP-003, T-ROPS-001, T-ROPS-002, T-ROPS-003, T-ROPS-004, T-ROPS-005, T-ROPS-006, T-ROPS-007]
+    requirement_ids: [FR-EXP-004, NFR-PRV-004, NFR-SEC-001, NFR-SEC-005]
+    rule_ids: []
+    eval_ids: [E-SEC-005, E-SEC-006, E-RET-002, E-RET-004, E-TASK-001, E-GATE-002]
+    task_body_sha256: bcd83783c48677326fbfd3aedd92a1f7aaa375cb116e7eb41c300bdb1818660e
+  - task_id: T-RREL-002
+    source_line: 136
+    effort_days: 2
+    goal: "完成合成数据 shadow 与净减负测量"
+    depends_on: [T-RREL-001]
+    requirement_ids: [NFR-UX-001]
+    rule_ids: []
+    eval_ids: [E-VALUE-001, E-UX-001]
+    task_body_sha256: d3a7cb71644a0b6b9c1321e6d2abed3236256b6877b476c1d5eb8187bc8bdd64
+  - task_id: T-RREL-003
+    source_line: 137
+    effort_days: 3
+    goal: "执行两阶段最小真实试点准入与退出演练"
+    depends_on: [T-RGOV-001, T-RGOV-002, T-RGOV-003, T-RGOV-004, T-RGOV-005, T-RPLT-012, T-RLIFE-004, T-RREL-002, T-ROPS-001, T-ROPS-002, T-ROPS-003, T-ROPS-004, T-ROPS-005, T-ROPS-006, T-ROPS-007]
+    requirement_ids: [FR-AGT-003, FR-PLT-006, NFR-OPS-001, NFR-OPS-002, NFR-OPS-003, NFR-OPS-004, NFR-PRV-005, NFR-REL-003, NFR-REL-004]
+    rule_ids: []
+    eval_ids: [E-SCOPE-002, E-ADM-001, E-ADM-002, E-ADM-003, E-ADM-004, E-ADM-005, E-ADM-006, E-ADM-007, E-ADM-008, E-ADM-009, E-OPS-009, E-OPS-010, E-OPS-011, E-OPS-012, E-OPS-013, E-OPS-014]
+    task_body_sha256: a9bbb924d6f95a68469903e5929ab8ee42e7ad423b9b292bb89b0d9099fea67b

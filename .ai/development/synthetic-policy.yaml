@@ -1,0 +1,13 @@
+schema_version: 1
+profile: synthetic-development-v1
+release: class-os-r1
+owner_development_approved: true
+authorization_record: docs/changes/2026-10-08-synthetic-development-admission.md
+data_mode: synthetic-only
+bind_host: 127.0.0.1
+model_provider: fake
+real_data_allowed: false
+production_credentials_allowed: false
+public_exposure_allowed: false
+agent_business_write_allowed: false
+release_promotion_allowed: false

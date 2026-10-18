@@ -1,0 +1,94 @@
+{
+  "$defs": {
+    "ModelControlBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "enum": [
+            "model_configuration.save",
+            "model_configuration.clear"
+          ],
+          "title": "Command",
+          "type": "string"
+        },
+        "candidate_id": {
+          "format": "uuid",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 0,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "enum": [
+                "chat-completions",
+                "responses"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Protocol"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model"
+        },
+        "base_url": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Base Url"
+        }
+      },
+      "required": [
+        "command",
+        "candidate_id",
+        "expected_version",
+        "protocol",
+        "model",
+        "base_url"
+      ],
+      "title": "ModelControlBody",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.model-staged.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "command": {
+      "$ref": "#/$defs/ModelControlBody"
+    }
+  },
+  "required": [
+    "schema_version",
+    "command"
+  ],
+  "title": "ModelStaged",
+  "type": "object"
+}

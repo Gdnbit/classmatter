@@ -1,0 +1,32 @@
+{
+  "configurations": {
+    "capability-filter-plus-jev-plus-main": {
+      "status": "not-run-no-calibrated-provider-run"
+    },
+    "jev-plus-main": {
+      "status": "not-run-no-calibrated-provider-run"
+    },
+    "main-model-only": {
+      "status": "not-run-no-calibrated-provider-run"
+    }
+  },
+  "corpus": {
+    "case_count": 320,
+    "provenance": "synthetic-only",
+    "sha256": "36de45766afc04f748c01c184ceeb6438fa5507132692180c3f950e0187490d5"
+  },
+  "decision": "jev-disabled-until-calibrated-net-benefit-is-proven",
+  "deterministic_safety": {
+    "business_commit_count": 0,
+    "case_count": 320,
+    "fail_closed_count": 120,
+    "unsafe_visible_count": 0
+  },
+  "limitations": [
+    "No provider credential was available; no semantic routing quality, latency, token or API-cost claim is made.",
+    "Synthetic templated Chinese corpus is architecture-spike evidence, not teacher-research evidence.",
+    "Deterministic capability filtering proves visibility safety only, not intent understanding."
+  ],
+  "provider_runs_supplied": false,
+  "schema": "class-os.agent-routing-spike-evidence/v1"
+}

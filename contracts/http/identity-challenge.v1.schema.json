@@ -1,0 +1,23 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.identity.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "csrf_token": {
+      "maxLength": 128,
+      "minLength": 32,
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "title": "Csrf Token",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "csrf_token"
+  ],
+  "title": "IdentityChallenge",
+  "type": "object"
+}

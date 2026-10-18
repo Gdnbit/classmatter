@@ -1,0 +1,9 @@
+ClassMatter
+Copyright 2026 Gdnbit
+
+The project's own code is licensed under the Apache License, Version 2.0.
+Third-party components retain their respective licenses and copyright notices;
+see THIRD_PARTY_NOTICES.md and third_party/dependency-licenses.json.
+
+This notice does not imply endorsement by any dependency author, school,
+model provider, or design-tool vendor. Pre-alpha; synthetic development only.

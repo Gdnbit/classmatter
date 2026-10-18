@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "format": "uuid",
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "approval": {
+      "anyOf": [
+        {
+          "format": "password",
+          "maxLength": 128,
+          "minLength": 32,
+          "type": "string",
+          "writeOnly": true
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Approval"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "idempotency_key"
+  ],
+  "title": "CommitBody",
+  "type": "object"
+}

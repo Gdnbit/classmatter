@@ -1,0 +1,121 @@
+schema_version: 2
+release: class-os-r1
+artifact_role: immutable-requirement-definition
+source: docs/specs/class-os-v1/requirements.md
+approval_state: .ai/gates/release-1-definition-state.yaml
+signature_policy: .ai/gates/signed-artifact-policy.yaml
+policy:
+  every_requirement_exactly_once: true
+  partial_inclusion_forbidden: true
+  unknown_id_fails_gate: true
+
+included:
+  - FR-PLT-001
+  - FR-PLT-002
+  - FR-PLT-003
+  - FR-PLT-005
+  - FR-PLT-006
+  - FR-PLT-007
+  - FR-CLS-001
+  - FR-CLS-002
+  - FR-CLS-003
+  - FR-CLS-007
+  - FR-EVT-001
+  - FR-EVT-002
+  - FR-EVT-003
+  - FR-EVT-005
+  - FR-EVT-006
+  - FR-TSK-001
+  - FR-TSK-002
+  - FR-TSK-004
+  - FR-COM-002
+  - FR-AGT-001
+  - FR-AGT-002
+  - FR-AGT-003
+  - FR-AGT-004
+  - FR-AGT-005
+  - FR-AGT-006
+  - FR-AGT-009
+  - FR-AGT-010
+  - FR-EXP-001
+  - FR-EXP-003
+  - FR-EXP-004
+  - NFR-SEC-001
+  - NFR-SEC-002
+  - NFR-SEC-004
+  - NFR-SEC-005
+  - NFR-SEC-006
+  - NFR-PRV-001
+  - NFR-PRV-002
+  - NFR-PRV-003
+  - NFR-PRV-004
+  - NFR-PRV-005
+  - NFR-REL-001
+  - NFR-REL-002
+  - NFR-REL-003
+  - NFR-REL-004
+  - NFR-REL-005
+  - NFR-PERF-002
+  - NFR-PERF-004
+  - NFR-UX-001
+  - NFR-UX-003
+  - NFR-UX-004
+  - NFR-UX-005
+  - NFR-UX-006
+  - NFR-OBS-001
+  - NFR-OBS-002
+  - NFR-OBS-003
+  - NFR-MNT-001
+  - NFR-MNT-002
+  - NFR-MNT-004
+  - NFR-OPS-001
+  - NFR-OPS-002
+  - NFR-OPS-003
+  - NFR-OPS-004
+
+excluded:
+  FR-PLT-004: multi-role_and_break_glass_deferred
+  FR-CLS-004: full_student_360_domains_not_in_r1
+  FR-CLS-005: multi_class_and_term_handoff_deferred
+  FR-CLS-006: guardian_data_not_collected_in_r1
+  FR-IMP-001: all_file_import_deferred
+  FR-IMP-002: all_file_import_deferred
+  FR-IMP-003: all_file_import_deferred
+  FR-IMP-004: all_file_import_deferred
+  FR-IMP-005: all_file_import_deferred
+  FR-IMP-006: all_file_import_deferred
+  FR-EVT-004: attachments_not_in_r1
+  FR-EVT-007: bulk_attendance_and_rates_deferred
+  FR-TSK-003: automatic_task_suggestions_deferred
+  FR-TSK-005: reminder_engine_deferred
+  FR-GRD-001: grades_not_in_r1
+  FR-GRD-002: grades_not_in_r1
+  FR-GRD-003: grades_not_in_r1
+  FR-GRD-004: grades_not_in_r1
+  FR-GRD-005: grades_not_in_r1
+  FR-GRD-006: grades_not_in_r1
+  FR-GRD-007: grades_not_in_r1
+  FR-SEA-001: seating_not_in_r1
+  FR-SEA-002: seating_not_in_r1
+  FR-SEA-003: seating_not_in_r1
+  FR-SEA-004: seating_not_in_r1
+  FR-GRP-001: groups_and_duty_not_in_r1
+  FR-POS-001: positions_not_in_r1
+  FR-POS-002: positions_not_in_r1
+  FR-DOR-001: dormitory_not_in_r1
+  FR-DOR-002: dormitory_not_in_r1
+  FR-DOR-003: dormitory_not_in_r1
+  FR-DOR-004: dormitory_not_in_r1
+  FR-REP-001: formal_reports_not_in_r1
+  FR-REP-002: formal_reports_not_in_r1
+  FR-REP-003: formal_reports_not_in_r1
+  FR-COM-001: generated_outbound_content_not_in_r1
+  FR-COM-003: communication_state_tracking_not_in_r1
+  FR-AGT-007: external_mcp_not_in_r1
+  FR-AGT-008: external_mcp_not_in_r1
+  FR-EXP-002: office_and_print_formats_need_sample_gate
+  NFR-SEC-003: no_upload_surface_in_r1_and_absence_is_tested
+  NFR-PERF-001: full_v1_scale_contains_excluded_domains
+  NFR-PERF-003: import_performance_not_applicable
+  NFR-UX-002: desktop_bulk_workbench_not_in_r1
+  NFR-MNT-003: adapters_for_excluded_email_mcp_and_office_integrations_deferred

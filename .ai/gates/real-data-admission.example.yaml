@@ -1,0 +1,36 @@
+schema_version: 3
+artifact_role: invalid-dsse-transport-example
+envelope:
+  payloadType: application/vnd.class-os.real-data-admission.v1+json
+  payload: INVALID-BASE64-OF-RFC8785-PAYLOAD-BELOW
+  signatures:
+    - {keyid: UNTRUSTED-LOOKUP-HINT, sig: INVALID-BASE64-SIGNATURE}
+decoded_payload_shape:
+  schema_version: 1
+  artifact_type: real-data-admission-example
+  artifact_id: EXAMPLE-NEVER-VALID
+  lifecycle: renewable-authorization
+  issued_at: NEVER
+  not_before: REQUIRED
+  expires_at: REQUIRED
+  nonce: REQUIRED
+  target_release_digest: REQUIRED
+  target_commit: REQUIRED
+  definition_bundle_sha256: REQUIRED
+  environment_digest: REQUIRED
+  registry: {generation: REQUIRED, sha256: REQUIRED}
+  required_roles: [operations, privacy, product, security]
+  required_key_usage: real-data-admission
+  referenced_artifact_ids: []
+  deployment_id: REQUIRED
+  owner_ids: []
+  workspace_id: REQUIRED
+  class_ids: []
+  term_ids: []
+  scope_allocation_receipt: {artifact_id: REQUIRED, artifact_uri: REQUIRED, sha256: REQUIRED}
+  allowed_modules: [roster, fact-events, tasks, timeline-today, exit-export]
+  evidence_references: {}
+  revocation_id: REQUIRED
+
+# Invalid example. A real admission is checked for expiry/revocation at startup,
+# reload and before every business write. It is renewable and never consumed.

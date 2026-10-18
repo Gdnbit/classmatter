@@ -1,0 +1,53 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "command": {
+      "const": "student.update_name",
+      "title": "Command",
+      "type": "string"
+    },
+    "student_id": {
+      "format": "uuid",
+      "title": "Student Id",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "expected_version": {
+      "minimum": 1,
+      "title": "Expected Version",
+      "type": "integer"
+    },
+    "previous_name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Previous Name",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "command",
+    "student_id",
+    "class_id",
+    "term_id",
+    "expected_version",
+    "previous_name",
+    "name"
+  ],
+  "title": "StudentNameBody",
+  "type": "object"
+}

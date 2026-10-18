@@ -1,0 +1,264 @@
+schema_version: 2
+release: class-os-r1
+artifact_role: immutable-eval-definition
+run_state_manifest: .ai/gates/release-1-eval-state.yaml
+approval_state: .ai/gates/release-1-definition-state.yaml
+signature_policy: .ai/gates/signed-artifact-policy.yaml
+policy:
+  all_required_must_be_implemented_green_for_real_pilot: true
+  executable_spec_is_not_green: true
+  missing_runner_or_signed_run_state_evidence_fails_applicable_gate: true
+  ex_r1_is_container_not_trace_key: true
+  manifest_shrink_or_mapping_change_requires_new_signed_approval: true
+  required_before_unknown_value_fails_schema: true
+  inline_evidence_is_deprecated_must_remain_null_and_is_never_authoritative: true
+  implemented_green_is_read_only_from_signed_run_state_manifest: true
+  spec_status_allowed_values: [catalogued, executable-spec]
+  r1_spec_status_authoritative_here_and_case_catalog_must_match: true
+run_state_contract:
+  allowed_statuses: [not-run, running, blocked, failed, implemented-green]
+  omitted_eval_resolves_to: not-run
+  implemented_green_requires_signed_evidence_contract: eval_run_required_fields
+  stale_or_foreign_definition_runner_release_commit_or_environment_fails: true
+required_before_enum:
+  - every-merge
+  - first-feature-task
+  - domain
+  - platform-write
+  - login
+  - install
+  - approval
+  - first-command
+  - first-w2-command
+  - first-student-read
+  - roster
+  - events
+  - tasks
+  - event-web
+  - web-shell
+  - agent
+  - external-provider
+  - exit-export
+  - any-real-write
+  - release
+  - shadow
+  - real-pilot
+  - expansion
+selector_semantics:
+  capability_labels_are_not_ordered_by_string: true
+  release_candidate_excludes_labels: [shadow, real-pilot, expansion]
+  real_pilot_includes_every_required_eval: true
+  unknown_label_fails_closed: true
+
+required_evals:
+  - {eval_id: E-AUTH-001, applicable: true, reason: workspace_isolation, spec_status: executable-spec, runner: "verify integration --id E-AUTH-001", required_before: platform-write, evidence: null}
+  - {eval_id: E-AUTH-003, applicable: true, reason: server_side_auth, spec_status: catalogued, runner: null, required_before: platform-write, evidence: null}
+  - {eval_id: E-AUTH-005, applicable: true, reason: session_expiry, spec_status: executable-spec, runner: "verify security --group session-csrf-r1", required_before: login, evidence: null}
+  - {eval_id: E-AUTH-007, applicable: true, reason: login_rate_limit, spec_status: executable-spec, runner: "verify security --group session-csrf-r1", required_before: login, evidence: null}
+  - {eval_id: E-AUTH-009, applicable: true, reason: first_owner_bootstrap, spec_status: executable-spec, runner: "verify security recovery --group owner-lifecycle-r1", required_before: install, evidence: null}
+  - {eval_id: E-AUTH-010, applicable: true, reason: bootstrap_replay, spec_status: executable-spec, runner: "verify security recovery --group owner-lifecycle-r1", required_before: install, evidence: null}
+  - {eval_id: E-AUTH-011, applicable: true, reason: recovery_non_enumeration, spec_status: executable-spec, runner: "verify security recovery --group owner-lifecycle-r1", required_before: real-pilot, evidence: null}
+  - {eval_id: E-AUTH-012, applicable: true, reason: recovery_session_revocation, spec_status: executable-spec, runner: "verify security recovery --group owner-lifecycle-r1", required_before: real-pilot, evidence: null}
+  - {eval_id: E-AUTH-013, applicable: true, reason: recovery_token_attack, spec_status: executable-spec, runner: "verify security recovery --group owner-lifecycle-r1", required_before: real-pilot, evidence: null}
+  - {eval_id: E-AUTH-015, applicable: true, reason: recovery_requires_offline_code_without_enumeration, spec_status: executable-spec, runner: "verify security recovery --group owner-lifecycle-r1", required_before: login, evidence: null}
+  - {eval_id: E-AUTH-016, applicable: true, reason: recovery_rotation_and_full_revocation, spec_status: executable-spec, runner: "verify security recovery --group owner-lifecycle-r1", required_before: login, evidence: null}
+  - {eval_id: E-AUTH-017, applicable: true, reason: recovery_replay_bruteforce_binding_and_no_leak, spec_status: executable-spec, runner: "verify security recovery --group owner-lifecycle-r1", required_before: login, evidence: null}
+  - {eval_id: E-AUTH-018, applicable: true, reason: identity_security_boundary_no_bypass, spec_status: executable-spec, runner: "verify architecture security --group identity-boundary-r1", required_before: login, evidence: null}
+  - {eval_id: E-CMD-001, applicable: true, reason: idempotent_replay, spec_status: executable-spec, runner: "verify integration --group command-atomicity-r1", required_before: first-command, evidence: null}
+  - {eval_id: E-CMD-002, applicable: true, reason: idempotency_conflict, spec_status: executable-spec, runner: "verify integration --group command-atomicity-r1", required_before: first-command, evidence: null}
+  - {eval_id: E-CMD-003, applicable: true, reason: optimistic_version, spec_status: executable-spec, runner: "verify integration --group command-atomicity-r1", required_before: first-command, evidence: null}
+  - {eval_id: E-CMD-004, applicable: true, reason: audit_write_atomicity, spec_status: executable-spec, runner: "verify integration --group command-atomicity-r1", required_before: first-command, evidence: null}
+  - {eval_id: E-AGT-001, applicable: true, reason: minimal_query_projection, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AGT-002, applicable: true, reason: draft_has_no_side_effect, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AGT-009, applicable: true, reason: prompt_cannot_lower_policy, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AGT-010, applicable: true, reason: data_is_not_instruction, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AGT-011, applicable: true, reason: no_arbitrary_url_file_sql, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AGT-012, applicable: true, reason: tool_output_not_system_policy, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AGT-013, applicable: true, reason: timeout_not_success, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AGT-014, applicable: true, reason: ungrounded_fact_blocked, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AGT-015, applicable: true, reason: no_approve_tool, spec_status: executable-spec, runner: "verify contract --id E-AGT-015", required_before: approval, evidence: null}
+  - {eval_id: E-AGT-016, applicable: true, reason: approval_csrf, spec_status: executable-spec, runner: "verify e2e --group approval-ui-attacks-r1", required_before: approval, evidence: null}
+  - {eval_id: E-AGT-017, applicable: true, reason: approval_clickjacking, spec_status: executable-spec, runner: "verify e2e --group approval-ui-attacks-r1", required_before: approval, evidence: null}
+  - {eval_id: E-AGT-018, applicable: true, reason: approval_client_binding, spec_status: executable-spec, runner: "verify integration --group approval-binding", required_before: approval, evidence: null}
+  - {eval_id: E-AGT-019, applicable: true, reason: strong_reauth, spec_status: executable-spec, runner: "verify e2e --group approval-ui-attacks-r1", required_before: approval, evidence: null}
+  - {eval_id: E-AGT-020, applicable: true, reason: approval_once, spec_status: executable-spec, runner: "verify integration --group approval-binding", required_before: approval, evidence: null}
+  - {eval_id: E-AGT-021, applicable: true, reason: rest_commit_without_receipt, spec_status: executable-spec, runner: "verify e2e --group approval-ui-attacks-r1", required_before: first-w2-command, evidence: null}
+  - {eval_id: E-AGT-022, applicable: true, reason: internal_adapter_bypass, spec_status: executable-spec, runner: "verify architecture --group command-boundary-r1", required_before: first-command, evidence: null}
+  - {eval_id: E-AGT-023, applicable: true, reason: client_risk_downgrade, spec_status: executable-spec, runner: "verify unit --group risk-policy-v1", required_before: first-command, evidence: null}
+  - {eval_id: E-AGT-024, applicable: true, reason: receipt_cross_command_replay, spec_status: executable-spec, runner: "verify integration --group approval-binding", required_before: first-w2-command, evidence: null}
+  - {eval_id: E-AGT-025, applicable: true, reason: business_worker_and_all_adapter_bypass, spec_status: executable-spec, runner: "verify architecture security --group business-command-boundary-r1", required_before: first-command, evidence: null}
+  - {eval_id: E-RISK-001, applicable: true, reason: risk_static_floor, spec_status: executable-spec, runner: "verify unit --group risk-policy-v1", required_before: first-command, evidence: null}
+  - {eval_id: E-RISK-002, applicable: true, reason: d3_escalation, spec_status: executable-spec, runner: "verify unit --group risk-policy-v1", required_before: first-command, evidence: null}
+  - {eval_id: E-RISK-003, applicable: true, reason: d4_rejected, spec_status: executable-spec, runner: "verify unit --group risk-policy-v1", required_before: first-command, evidence: null}
+  - {eval_id: E-RISK-004, applicable: true, reason: batch_escalation, spec_status: executable-spec, runner: "verify unit --group risk-policy-v1", required_before: first-command, evidence: null}
+  - {eval_id: E-RISK-005, applicable: true, reason: external_or_irreversible_x, spec_status: executable-spec, runner: "verify unit --group risk-policy-v1", required_before: first-command, evidence: null}
+  - {eval_id: E-AUD-001, applicable: true, reason: d2_plus_read_fail_closed, spec_status: executable-spec, runner: "verify integration --id E-AUD-001", required_before: first-student-read, evidence: null}
+  - {eval_id: E-AUD-002, applicable: true, reason: model_projection_audit, spec_status: executable-spec, runner: "verify contract --group agent-boundary-r1", required_before: agent, evidence: null}
+  - {eval_id: E-AUD-003, applicable: true, reason: export_audit_fail_closed, spec_status: catalogued, runner: null, required_before: exit-export, evidence: null}
+  - {eval_id: E-AUD-004, applicable: true, reason: audit_query_is_authorized_and_audited, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-ID-001, applicable: true, reason: multi_source_identifier, spec_status: executable-spec, runner: "verify unit --group student-identifier-r1", required_before: roster, evidence: null}
+  - {eval_id: E-ID-002, applicable: true, reason: identifier_validity, spec_status: executable-spec, runner: "verify unit --group student-identifier-r1", required_before: roster, evidence: null}
+  - {eval_id: E-ID-003, applicable: true, reason: identifier_conflict_no_merge, spec_status: executable-spec, runner: "verify unit --group student-identifier-r1", required_before: roster, evidence: null}
+  - {eval_id: E-ID-004, applicable: true, reason: keep_separate_decision, spec_status: catalogued, runner: null, required_before: roster, evidence: null}
+  - {eval_id: E-CLS-001, applicable: true, reason: class_term_context_and_archive, spec_status: catalogued, runner: null, required_before: roster, evidence: null}
+  - {eval_id: E-EVT-001, applicable: true, reason: create_fact_and_show, spec_status: executable-spec, runner: "verify e2e --group fact-loop-r1", required_before: events, evidence: null}
+  - {eval_id: E-EVT-002, applicable: true, reason: event_idempotency, spec_status: executable-spec, runner: "verify e2e --group fact-loop-r1", required_before: events, evidence: null}
+  - {eval_id: E-EVT-003, applicable: true, reason: inference_not_fact, spec_status: executable-spec, runner: "verify e2e --group fact-loop-r1", required_before: events, evidence: null}
+  - {eval_id: E-EVT-004, applicable: true, reason: event_task_trace, spec_status: executable-spec, runner: "verify e2e --group fact-loop-r1", required_before: tasks, evidence: null}
+  - {eval_id: E-TSK-001, applicable: true, reason: task_state_deadline_and_evidence, spec_status: catalogued, runner: null, required_before: tasks, evidence: null}
+  - {eval_id: E-ATT-001, applicable: true, reason: attendance_facts_only, spec_status: executable-spec, runner: "verify unit --group fact-events-r1", required_before: events, evidence: null}
+  - {eval_id: E-LEAVE-001, applicable: true, reason: leave_chain, spec_status: executable-spec, runner: "verify unit --group fact-events-r1", required_before: events, evidence: null}
+  - {eval_id: E-HWK-001, applicable: true, reason: homework_facts_only, spec_status: executable-spec, runner: "verify unit --group fact-events-r1", required_before: events, evidence: null}
+  - {eval_id: E-TIME-001, applicable: true, reason: adjacent_intervals, spec_status: executable-spec, runner: "verify unit --group temporal-interval-r1", required_before: domain, evidence: null}
+  - {eval_id: E-TIME-002, applicable: true, reason: future_and_correction_intervals, spec_status: executable-spec, runner: "verify unit --group temporal-interval-r1", required_before: domain, evidence: null}
+  - {eval_id: E-LOCAL-001, applicable: true, reason: no_persistent_d2_draft, spec_status: executable-spec, runner: "verify e2e --group local-draft-r1", required_before: event-web, evidence: null}
+  - {eval_id: E-LOCAL-002, applicable: true, reason: logout_clears_memory_draft, spec_status: executable-spec, runner: "verify e2e --group local-draft-r1", required_before: event-web, evidence: null}
+  - {eval_id: E-LOCAL-003, applicable: true, reason: browser_storage_empty, spec_status: executable-spec, runner: "verify e2e --group local-draft-r1", required_before: event-web, evidence: null}
+  - {eval_id: E-LOCAL-004, applicable: true, reason: shared_browser_isolation, spec_status: executable-spec, runner: "verify e2e --group local-draft-r1", required_before: event-web, evidence: null}
+  - {eval_id: E-PRV-013, applicable: true, reason: no_voice_or_audio_surface, spec_status: executable-spec, runner: "verify e2e security --group voice-text-only-r1", required_before: web-shell, evidence: null}
+  - {eval_id: E-PRV-014, applicable: true, reason: no_external_transcription, spec_status: executable-spec, runner: "verify e2e security --group voice-text-only-r1", required_before: web-shell, evidence: null}
+  - {eval_id: E-RET-001, applicable: true, reason: deactivate_not_delete, spec_status: executable-spec, runner: "verify integration --group lifecycle-r1", required_before: roster, evidence: null}
+  - {eval_id: E-RET-002, applicable: true, reason: exact_commit_actual_store_inventory_and_rights_ledger, spec_status: executable-spec, runner: "verify integration gate --group lifecycle-r1", required_before: release, evidence: null}
+  - {eval_id: E-RET-003, applicable: true, reason: backup_tombstone_replay, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-RET-004, applicable: true, reason: retention_exception_and_inventory_exact_commit, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-EXIT-001, applicable: true, reason: minimum_exit_roundtrip, spec_status: executable-spec, runner: "verify recovery --id E-EXIT-001", required_before: any-real-write, evidence: null}
+  - {eval_id: E-EXP-001, applicable: true, reason: exit_manifest_schema_scope_and_checksum, spec_status: executable-spec, runner: "verify recovery --group minimum-exit-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-EXP-002, applicable: true, reason: clean_environment_exit_roundtrip, spec_status: executable-spec, runner: "verify recovery --group minimum-exit-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-EXP-005, applicable: true, reason: export_access_expiry_and_revocation, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-ADM-001, applicable: true, reason: synthetic_default, spec_status: executable-spec, runner: "verify security integration --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-ADM-002, applicable: true, reason: admission_scope_binding, spec_status: executable-spec, runner: "verify security integration --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-ADM-003, applicable: true, reason: admission_expiry_revocation, spec_status: executable-spec, runner: "verify security integration --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-ADM-004, applicable: true, reason: app_cannot_sign, spec_status: executable-spec, runner: "verify security integration --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-ADM-005, applicable: true, reason: fixture_provenance, spec_status: executable-spec, runner: "verify security integration --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-ADM-006, applicable: true, reason: example_artifact_never_authorizes, spec_status: executable-spec, runner: "verify security integration --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-ADM-007, applicable: true, reason: setup_capability_allocates_empty_scope_only, spec_status: executable-spec, runner: "verify security integration --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-ADM-008, applicable: true, reason: allocation_and_signed_gate_report_chain_binding, spec_status: executable-spec, runner: "verify security integration --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-ADM-009, applicable: true, reason: only_workspace_bound_scope_allocation_command_is_pre_admission, spec_status: executable-spec, runner: "verify security architecture --group real-data-admission-r1", required_before: any-real-write, evidence: null}
+  - {eval_id: E-OPS-009, applicable: true, reason: clean_install_doctor, spec_status: executable-spec, runner: "verify recovery --group self-host-r1", required_before: release, evidence: null}
+  - {eval_id: E-OPS-010, applicable: true, reason: upgrade_rollback, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-OPS-011, applicable: true, reason: host_loss_rebuild, spec_status: executable-spec, runner: "verify recovery --group self-host-r1", required_before: real-pilot, evidence: null}
+  - {eval_id: E-OPS-012, applicable: true, reason: disk_and_certificate, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-OPS-013, applicable: true, reason: support_bundle_redaction, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-OPS-014, applicable: true, reason: safe_retirement, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-SEC-001, applicable: true, reason: injection_baseline, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-SEC-002, applicable: true, reason: csrf_baseline, spec_status: executable-spec, runner: "verify security --group session-csrf-r1", required_before: login, evidence: null}
+  - {eval_id: E-SEC-005, applicable: true, reason: secret_and_pii_scan, spec_status: catalogued, runner: null, required_before: every-merge, evidence: null}
+  - {eval_id: E-SEC-006, applicable: true, reason: sbom_and_vulnerability, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-SEC-007, applicable: true, reason: transport_storage_and_key_controls, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-WEB-002, applicable: true, reason: mobile_critical_path, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-WEB-003, applicable: true, reason: network_loss_unknown_state_and_retry, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-WEB-004, applicable: true, reason: background_and_expired_session_sensitive_view, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-A11Y-002, applicable: true, reason: screen_reader_event_and_approval, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-PERF-006, applicable: true, reason: r1_read_latency_fixture, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-PERF-007, applicable: true, reason: r1_write_confirmation_latency, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-PERF-003, applicable: true, reason: agent_first_feedback, spec_status: catalogued, runner: null, required_before: agent, evidence: null}
+  - {eval_id: E-OBS-001, applicable: true, reason: correlation_without_payload, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-VALUE-001, applicable: true, reason: net_burden_reduction, spec_status: executable-spec, runner: manual-protocol, required_before: expansion, evidence: null}
+  - {eval_id: E-ARCH-001, applicable: true, reason: single_agent_registration, spec_status: catalogued, runner: null, required_before: agent, evidence: null}
+  - {eval_id: E-ARCH-002, applicable: true, reason: signed_architecture_approval_matches_current_hashes, spec_status: catalogued, runner: null, required_before: first-feature-task, evidence: null}
+  - {eval_id: E-SCOPE-001, applicable: true, reason: excluded_routes_absent, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-SCOPE-002, applicable: true, reason: r1_pilot_profile_surface_absence, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-DEV-001, applicable: true, reason: clean_environment_single_verify_entry, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-TASK-001, applicable: true, reason: atomic_task_and_gate_lint, spec_status: catalogued, runner: null, required_before: first-feature-task, evidence: null}
+  - {eval_id: E-GATE-001, applicable: true, reason: required_before_enum_and_selector_mutation, spec_status: catalogued, runner: null, required_before: first-feature-task, evidence: null}
+  - {eval_id: E-GATE-002, applicable: true, reason: signed_gate_definition_anti_shrink, spec_status: catalogued, runner: null, required_before: first-feature-task, evidence: null}
+  - {eval_id: E-ROS-001, applicable: true, reason: single_student_identity_across_r1_modules, spec_status: executable-spec, runner: "verify contract --group roster-r1", required_before: roster, evidence: null}
+  - {eval_id: E-ROS-002, applicable: true, reason: same_name_distinct_stable_identifiers, spec_status: executable-spec, runner: "verify contract --group roster-r1", required_before: roster, evidence: null}
+  - {eval_id: E-ROS-003, applicable: true, reason: ambiguous_identity_no_write, spec_status: executable-spec, runner: "verify contract --group roster-r1", required_before: roster, evidence: null}
+  - {eval_id: E-ROS-004, applicable: true, reason: deactivate_preserves_history, spec_status: executable-spec, runner: "verify contract --group roster-r1", required_before: roster, evidence: null}
+  - {eval_id: E-REP-008, applicable: true, reason: no_outbound_tool, spec_status: catalogued, runner: null, required_before: agent, evidence: null}
+  - {eval_id: E-EXP-003, applicable: true, reason: default_export_minimization, spec_status: catalogued, runner: null, required_before: exit-export, evidence: null}
+  - {eval_id: E-EXP-004, applicable: true, reason: sensitive_export_preview_and_audit, spec_status: catalogued, runner: null, required_before: exit-export, evidence: null}
+  - {eval_id: E-PRV-001, applicable: true, reason: model_projection_minimization, spec_status: catalogued, runner: null, required_before: agent, evidence: null}
+  - {eval_id: E-PRV-003, applicable: true, reason: pii_free_logs_and_fixtures, spec_status: catalogued, runner: null, required_before: every-merge, evidence: null}
+  - {eval_id: E-PRV-005, applicable: true, reason: authorization_revocation, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-PRV-006, applicable: true, reason: subject_access_export, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-PRV-007, applicable: true, reason: correction_propagation, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-PRV-008, applicable: true, reason: deletion_or_restriction_request, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-PRV-009, applicable: true, reason: processor_exit, spec_status: catalogued, runner: null, required_before: external-provider, evidence: null}
+  - {eval_id: E-PRV-010, applicable: true, reason: narrative_reidentification, spec_status: catalogued, runner: null, required_before: agent, evidence: null}
+  - {eval_id: E-PRV-011, applicable: true, reason: d3_d4_external_model_block, spec_status: catalogued, runner: null, required_before: agent, evidence: null}
+  - {eval_id: E-PRV-012, applicable: true, reason: processor_fields_approved, spec_status: catalogued, runner: null, required_before: external-provider, evidence: null}
+  - {eval_id: E-OPS-001, applicable: true, reason: retry_after_lost_response, spec_status: catalogued, runner: null, required_before: first-command, evidence: null}
+  - {eval_id: E-OPS-003, applicable: true, reason: retry_after_commit, spec_status: catalogued, runner: null, required_before: first-command, evidence: null}
+  - {eval_id: E-OPS-005, applicable: true, reason: backup_generation, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-OPS-006, applicable: true, reason: isolated_restore, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-OPS-007, applicable: true, reason: corrupt_backup_rejected, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-OPS-008, applicable: true, reason: model_outage_core_available, spec_status: catalogued, runner: null, required_before: agent, evidence: null}
+  - {eval_id: E-LOCAL-005, applicable: true, reason: weak_network_unknown_state, spec_status: catalogued, runner: null, required_before: event-web, evidence: null}
+  - {eval_id: E-MIG-001, applicable: true, reason: empty_db_migration, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-MIG-002, applicable: true, reason: previous_release_upgrade, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-MIG-003, applicable: true, reason: interrupted_migration, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-MIG-004, applicable: true, reason: client_compatibility_window, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-MIG-005, applicable: true, reason: tool_schema_compatibility, spec_status: catalogued, runner: null, required_before: agent, evidence: null}
+  - {eval_id: E-PERF-004, applicable: true, reason: concurrent_read_and_draft, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-UX-001, applicable: true, reason: mobile_fact_capture_value, spec_status: catalogued, runner: null, required_before: shadow, evidence: null}
+  - {eval_id: E-UX-006, applicable: true, reason: approval_comprehension, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-A11Y-003, applicable: true, reason: zoom_and_narrow_screen, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-OBS-002, applicable: true, reason: error_metric_trace_consistency, spec_status: catalogued, runner: null, required_before: release, evidence: null}
+  - {eval_id: E-OBS-003, applicable: true, reason: pii_free_alert, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+  - {eval_id: E-OBS-004, applicable: true, reason: no_student_risk_profile_metric, spec_status: catalogued, runner: null, required_before: real-pilot, evidence: null}
+
+requirement_coverage:
+  FR-PLT-001: [E-AUTH-001, E-AUTH-009]
+  FR-PLT-002: [E-AUTH-005, E-AUTH-007, E-AUTH-009, E-AUTH-010, E-AUTH-011, E-AUTH-012, E-AUTH-013]
+  FR-PLT-003: [E-AUTH-001, E-AUTH-003]
+  FR-PLT-005: [E-OPS-008]
+  FR-PLT-006: [E-ADM-001, E-ADM-002, E-ADM-003, E-ADM-004, E-ADM-005, E-ADM-006, E-ADM-007, E-ADM-008, E-ADM-009]
+  FR-PLT-007: [E-AUTH-015, E-AUTH-016, E-AUTH-017, E-AUTH-018]
+  FR-CLS-001: [E-CLS-001]
+  FR-CLS-002: [E-ID-001, E-ID-002, E-ID-003]
+  FR-CLS-003: [E-ROS-004, E-RET-001]
+  FR-CLS-007: [E-ID-003, E-ID-004]
+  FR-EVT-001: [E-EVT-001, E-RISK-003]
+  FR-EVT-002: [E-EVT-001]
+  FR-EVT-003: [E-EVT-003]
+  FR-EVT-005: [E-ATT-001, E-HWK-001]
+  FR-EVT-006: [E-LEAVE-001]
+  FR-TSK-001: [E-EVT-004]
+  FR-TSK-002: [E-TSK-001]
+  FR-TSK-004: [E-EVT-001, E-ATT-001]
+  FR-COM-002: [E-REP-008]
+  FR-AGT-001: [E-AGT-001, E-AGT-011]
+  FR-AGT-002: [E-AGT-001, E-AGT-009]
+  FR-AGT-003: [E-RISK-001, E-RISK-002, E-RISK-003, E-RISK-004, E-RISK-005, E-AGT-023, E-AGT-025, E-ADM-009]
+  FR-AGT-004: [E-AGT-015, E-AGT-021, E-AGT-022, E-AGT-025]
+  FR-AGT-005: [E-AGT-016, E-AGT-017, E-AGT-018, E-AGT-019, E-AGT-020, E-AGT-024]
+  FR-AGT-006: [E-AGT-013, E-AGT-014]
+  FR-AGT-009: [E-ARCH-001]
+  FR-AGT-010: [E-AGT-009, E-AGT-010, E-AGT-011, E-AGT-012]
+  FR-EXP-001: [E-EXIT-001]
+  FR-EXP-003: [E-EXP-003, E-EXP-004, E-AUD-003]
+  FR-EXP-004: [E-RET-001, E-RET-002, E-RET-003, E-RET-004]
+  NFR-SEC-001: [E-SEC-005, E-SEC-007]
+  NFR-SEC-002: [E-AUTH-001, E-AUTH-003, E-SEC-002]
+  NFR-SEC-004: [E-PRV-001, E-PRV-003, E-AUTH-017]
+  NFR-SEC-005: [E-SEC-005]
+  NFR-SEC-006: [E-AUD-001, E-AUD-002, E-AUD-003, E-AUD-004, E-CMD-004, E-AUTH-018]
+  NFR-PRV-001: [E-PRV-005, E-PRV-006, E-PRV-007, E-PRV-008]
+  NFR-PRV-002: [E-PRV-009, E-PRV-010, E-PRV-011, E-PRV-012, E-PRV-014]
+  NFR-PRV-003: [E-AUD-001, E-AUD-002, E-AUD-003, E-AUD-004]
+  NFR-PRV-004: [E-RET-001, E-RET-002, E-RET-003, E-RET-004]
+  NFR-PRV-005: [E-ADM-001, E-ADM-002, E-ADM-003, E-ADM-004, E-ADM-006, E-ADM-007, E-ADM-008, E-ADM-009]
+  NFR-REL-001: [E-CMD-001, E-CMD-002, E-CMD-003, E-CMD-004]
+  NFR-REL-002: [E-OPS-001, E-OPS-003, E-LOCAL-005]
+  NFR-REL-003: [E-OPS-005, E-OPS-006, E-OPS-007, E-OPS-011]
+  NFR-REL-004: [E-OPS-010, E-MIG-001, E-MIG-002, E-MIG-003, E-MIG-004]
+  NFR-REL-005: [E-TIME-001, E-TIME-002]
+  NFR-PERF-002: [E-PERF-006, E-PERF-007, E-PERF-004]
+  NFR-PERF-004: [E-PERF-003]
+  NFR-UX-001: [E-WEB-002, E-UX-001]
+  NFR-UX-003: [E-UX-006, E-AGT-019]
+  NFR-UX-004: [E-A11Y-002, E-A11Y-003]
+  NFR-UX-005: [E-LOCAL-001, E-LOCAL-002, E-LOCAL-003, E-LOCAL-004]
+  NFR-UX-006: [E-PRV-013, E-PRV-014]
+  NFR-OBS-001: [E-OBS-001]
+  NFR-OBS-002: [E-OBS-002, E-OBS-004]
+  NFR-OBS-003: [E-OBS-003]
+  NFR-MNT-001: [E-MIG-005, E-OPS-008]
+  NFR-MNT-002: [E-AGT-022, E-AGT-025]
+  NFR-MNT-004: [E-DEV-001]
+  NFR-OPS-001: [E-OPS-009, E-OPS-011]
+  NFR-OPS-002: [E-OPS-009, E-OPS-010, E-OPS-011, E-OPS-014]
+  NFR-OPS-003: [E-OPS-012, E-OPS-013]
+  NFR-OPS-004: [E-OPS-010, E-OPS-014]

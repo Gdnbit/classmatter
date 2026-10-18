@@ -1,0 +1,44 @@
+/* Attention-first home and multimodal composer — Codex-inspired interaction contract. */
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.conversation-scroll{display:flex;flex-direction:column}
+.conversation:not(.active) .conversation-head,.conversation:not(.active) .ambient{max-width:950px}
+.conversation:not(.active) .ambient{flex:1;align-content:start;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:clamp(38px,5vw,76px);row-gap:28px;margin-top:58px;margin-bottom:clamp(34px,6vh,72px)}
+.conversation:not(.active) .ambient section{min-width:0;min-height:190px}
+.conversation:not(.active) .ambient button{padding:8px 0;gap:10px}
+.conversation:not(.active) .ambient button svg{flex:0 0 auto;margin-top:2px}
+.composer-wrap>.chips{margin:0 0 9px 4px}
+.composer-wrap>.chips button{display:none}
+.composer{position:relative;min-height:118px;border-radius:18px;padding:10px 12px 9px;display:flex;flex-direction:column;align-items:stretch;overflow:visible;box-shadow:0 8px 28px rgba(34,50,39,.08)}
+.composer textarea{width:100%;min-height:58px;max-height:150px;flex:1 1 auto;padding:8px 5px 5px;line-height:1.55}
+.composer-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px}
+.compose-tools,.composer-actions{display:flex;align-items:center;gap:3px;padding:0}
+.compose-tools button,.composer-actions>button{display:grid;place-items:center;border:0;background:transparent;color:#59645d;border-radius:999px;padding:7px}
+.compose-tools button:hover,.composer-actions>button:hover{background:#eef2ed;color:#214f43}
+.tool-policy{font-size:11px;color:#66736a;padding:0 7px;border-left:1px solid #e0e5df;margin-left:2px}
+.model-switch{display:flex!important;align-items:center!important;gap:3px!important;font-size:11px;color:#59645d!important;padding:7px 8px!important}
+.voice-workspace-trigger,.send{width:36px;height:36px;padding:0!important;margin:0 0 0 2px!important;color:#fff!important;background:#347e70!important}
+.voice-workspace-trigger:hover,.send:hover{background:#28695d!important;color:#fff!important}
+.composer.dragging{border-color:#498f7c;box-shadow:0 0 0 4px rgba(73,143,124,.12),0 8px 28px rgba(34,50,39,.08)}
+.composer-drop-overlay{position:absolute;z-index:8;inset:7px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px dashed #599886;border-radius:13px;background:rgba(242,249,245,.96);color:#296c5b;font-size:12px;font-weight:600}
+.composer-menu,.model-menu{position:absolute;z-index:20;background:#fff;border:1px solid var(--line,#d8dfd8);box-shadow:0 16px 38px rgba(29,45,34,.14)}
+.composer-menu.add-menu{left:0;bottom:132px;width:210px;border-radius:12px;padding:7px}
+.model-menu{right:44px;bottom:132px;width:230px;border-radius:12px;padding:7px}
+.model-menu>p{margin:5px 9px 7px;color:#8a938c;font-size:10px;letter-spacing:.04em}
+.model-menu>button{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;border:0;background:transparent;border-radius:8px;padding:9px;text-align:left;color:#3e4c42}
+.model-menu>button:hover{background:#eef3ee}
+.model-menu span{min-width:0}.model-menu strong,.model-menu small{display:block}.model-menu strong{font-size:12px}.model-menu small{margin-top:3px;color:#7a867d;font-size:10px}
+.voice-workspace-panel{border:1px solid #d5ddd6;background:#fff;border-radius:14px;padding:12px 13px;margin-bottom:8px;box-shadow:0 10px 28px rgba(31,48,36,.08)}
+.voice-workspace-panel>div{display:flex;align-items:center;gap:9px}.voice-workspace-panel strong,.voice-workspace-panel small{display:block}.voice-workspace-panel strong{font-size:12px;color:#334138}.voice-workspace-panel small{font-size:10px;color:#7a867e;margin-top:2px}.voice-workspace-panel p{font-size:11px;color:#68756b;margin:10px 0}.voice-orb{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#e5f1ec;color:#26705e}.voice-workspace-panel .panel-close{margin-left:auto;border:0;background:transparent;color:#718077;padding:6px}.voice-start{display:inline-flex;align-items:center;gap:6px;border:0;background:#2f7465;color:white;border-radius:999px;padding:7px 11px;font-size:11px}
+.attachment,.voice-state{border-radius:10px;margin-bottom:8px}
+
+@media(max-width:767px){
+  .conversation:not(.active) .ambient{grid-template-columns:1fr;gap:25px;margin-top:34px;margin-bottom:38px}
+  .conversation:not(.active) .ambient section{min-height:0}
+  .composer{min-height:108px;border-radius:16px;padding:8px 9px}
+  .composer textarea{min-height:52px}
+  .tool-policy{display:none}
+  .model-switch{max-width:118px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .composer-menu.add-menu,.model-menu{bottom:121px}
+  .model-menu{right:0;width:min(230px,calc(100vw - 36px))}
+  .composer-wrap>.chips button{display:none}
+}

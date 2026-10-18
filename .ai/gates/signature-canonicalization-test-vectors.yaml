@@ -1,0 +1,42 @@
+schema_version: 2
+release: class-os-r1
+artifact_role: immutable-signature-conformance-vectors
+envelope_standard: DSSE-v1
+signature_algorithm: Ed25519
+sources:
+  dsse: https://github.com/secure-systems-lab/dsse/blob/master/protocol.md
+  rfc_8032: https://www.rfc-editor.org/rfc/rfc8032.html#section-7.1
+  rfc_8785: https://www.rfc-editor.org/rfc/rfc8785.html
+
+vectors:
+  - vector_id: TV-DSSE-PAE-001
+    source: DSSE-v1-reference-vector
+    payload_type_utf8: http://example.com/HelloWorld
+    payload_utf8: hello world
+    expected_pae_utf8: DSSEv1 29 http://example.com/HelloWorld 11 hello world
+  - vector_id: TV-ED25519-RFC8032-001
+    source: RFC-8032-section-7.1-test-1
+    secret_key_hex: 9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60
+    public_key_hex: d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a
+    message_hex: ""
+    expected_signature_hex: e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b
+    key_material_classification: public-official-test-vector-never-production-secret
+  - vector_id: TV-JCS-RFC8785-001
+    source: RFC-8785-section-3.2.2
+    source_json: '{"numbers":[333333333.33333329,1E30,4.50,2e-3,0.000000000000000000000000001],"string":"€$\u000f\nA''B\"\\\"/","literals":[null,true,false]}'
+    expected_jcs_utf8: '{"literals":[null,true,false],"numbers":[333333333.3333333,1e+30,4.5,0.002,1e-27],"string":"€$\u000f\nA''B\"\\\"/"}'
+  - vector_id: TV-JCS-RFC8785-SORT-001
+    source: RFC-8785-section-3.2.3
+    expected_property_order: [U+000D, U+0031, U+0080, U+00F6, U+20AC, U+1F600, U+FB33]
+  - vector_id: TV-JSON-DUPLICATE-001
+    source_json: '{"a":1,"a":2}'
+    expected_result: reject-before-canonicalization
+  - vector_id: TV-JSON-NFC-COLLISION-001
+    source_json_description: two-map-keys-U+00E9-and-U+0065-U+0301
+    expected_result: reject-post-NFC-key-collision-without-normalizing-signed-bytes
+  - vector_id: TV-ADMISSION-MUTATIONS-001
+    mutations: [payload-byte, payload-type, signature-byte, validly-resigned-target-commit, validly-resigned-release-digest, validly-resigned-definition-bundle, validly-resigned-environment, validly-resigned-deployment, validly-resigned-workspace, missing-required-field, unknown-field, duplicate-json-key, nfc-key-collision, self-reference, reference-cycle, unresolved-reference, missing-role, duplicate-principal, missing-key-status, inactive-key, inactive-root-key, revoked-key, revoked-artifact, wrong-key-usage, wrong-root, missing-registry-role, old-registry, same-generation-different-hash, broken-previous-hash, registry-rotation, invalid-scope-setup-operation, invalid-scope-setup-allocation-count, missing-reference-verifier, nested-reference-binding-mismatch, referenced-artifact-type-mismatch, referenced-payload-digest-mismatch, referenced-role-quorum-mismatch, receipt-owner-mismatch, receipt-class-scope-mismatch, receipt-term-scope-mismatch, unknown-admission-module, nested-shadow-non-go, invalid-shadow-result, receipt-forbidden-business-content, mutable-state-hash-mismatch, renewable-artifact-consumed, one-time-fake-idempotent-retry, one-time-fake-conflicting-retry]
+    expected_result: every-mutation-fails-closed
+
+# These are immutable definitions, not approval evidence. The executable spike
+# reproduces official vectors; production keys and signatures are never stored here.

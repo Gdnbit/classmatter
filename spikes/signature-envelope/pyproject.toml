@@ -1,0 +1,22 @@
+[project]
+name = "class-os-signature-envelope-spike"
+version = "0.0.0"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+  "cryptography==50.0.1",
+  "in-toto==3.1.0",
+  "psycopg[binary]==3.3.6",
+  "rfc8785==0.1.4",
+  "securesystemslib[crypto]==1.5.1",
+]
+
+[dependency-groups]
+dev = [
+  "pyyaml==6.0.3",
+  "pytest==9.0.3",
+  "psutil==7.1.3",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

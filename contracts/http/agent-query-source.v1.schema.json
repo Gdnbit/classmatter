@@ -1,0 +1,39 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "entity": {
+      "const": "query_receipt",
+      "default": "query_receipt",
+      "title": "Entity",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "version": {
+      "const": 1,
+      "default": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "projection_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Projection Hash",
+      "type": "string"
+    },
+    "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "projection_hash",
+    "as_of"
+  ],
+  "title": "QueryReceiptReference",
+  "type": "object"
+}

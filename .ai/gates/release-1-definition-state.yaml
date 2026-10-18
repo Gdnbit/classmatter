@@ -1,0 +1,18 @@
+schema_version: 1
+release: class-os-r1
+artifact_role: mutable-definition-approval-state
+signature_policy: .ai/gates/signed-artifact-policy.yaml
+definition_bundle_sha256: null
+approval_status: pending
+approval_artifact: null
+definitions:
+  - {path: .ai/gates/signed-artifact-policy.yaml, content_sha256: null}
+  - {path: .ai/gates/signature-canonicalization-test-vectors.yaml, content_sha256: null}
+  - {path: .ai/gates/release-1-requirements.yaml, content_sha256: null}
+  - {path: .ai/gates/release-1-evals.yaml, content_sha256: null}
+  - {path: .ai/gates/release-1-task-definitions.yaml, content_sha256: null}
+  - {path: .ai/gates/release-1-release-gates.yaml, content_sha256: null}
+state_transition_artifact: null
+
+# Hashes and approval live here, never inside the immutable definitions they
+# approve. All null values mean no definition bundle is currently approved.

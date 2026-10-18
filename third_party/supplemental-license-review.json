@@ -1,0 +1,30 @@
+{
+  "package": "logfire-api",
+  "version": "5.1.0",
+  "sdist_sha256": "16abf9d7d35e08cda2dab66fd0883cabaa4d4206f3dcea0f5967dbc823f01d6d",
+  "notices": [],
+  "status": "SUPPLEMENTED_FROM_EXACT_UPSTREAM_TAGS_NOT_A_BINARY_DISTRIBUTION_CLEARANCE",
+  "upstream_release_notices": [
+    {
+      "name": "logfire-api",
+      "version": "5.1.0",
+      "url": "https://raw.githubusercontent.com/pydantic/logfire/v5.1.0/LICENSE",
+      "path": "licenses/upstream/logfire-api-5.1.0/LICENSE.txt",
+      "sha256": "035507b8a1e787a16c7f138f092557a30a8ee9cc9cef6e84d11546ee3b9a45cd"
+    },
+    {
+      "name": "@rolldown/binding-win32-x64-msvc",
+      "version": "1.0.0-rc.12",
+      "url": "https://raw.githubusercontent.com/rolldown/rolldown/v1.0.0-rc.12/LICENSE",
+      "path": "licenses/upstream/_rolldown_binding-win32-x64-msvc-1.0.0-rc.12/LICENSE.txt",
+      "sha256": "23ecfff35a5a2e80d92142f75228912c3b1abc4b5a8337a821ff4397e2f9f734"
+    },
+    {
+      "name": "@rolldown/binding-win32-x64-msvc",
+      "version": "1.0.0-rc.12",
+      "url": "https://raw.githubusercontent.com/rolldown/rolldown/v1.0.0-rc.12/THIRD-PARTY-LICENSE",
+      "path": "licenses/upstream/_rolldown_binding-win32-x64-msvc-1.0.0-rc.12/THIRD-PARTY-LICENSE.txt",
+      "sha256": "a877291d800ed43692f3f9ae09d8e01cc6f7293ad39d43896059c188ffbb8b7c"
+    }
+  ]
+}

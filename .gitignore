@@ -1,0 +1,52 @@
+# JavaScript / TypeScript
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+
+# Tests and reports
+coverage/
+.coverage
+test-results/
+playwright-report/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Runtime data
+*.db
+*.sqlite
+*.sqlite3
+data/
+# Frozen prototype source modules are code, not runtime data.
+!apps/web/src/data/
+apps/web/src/data/*
+!apps/web/src/data/*.ts
+!apps/web/src/data/*.tsx
+uploads/
+.local-runtime/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Private publication evidence is never a source-release input.
+/release-audit/
+/handoff/
+/docs.zip
+/.ai/audit/
+/.ai/progress.md
+/.ai/pipeline-state.md

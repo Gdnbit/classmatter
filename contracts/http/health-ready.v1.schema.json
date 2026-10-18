@@ -1,0 +1,81 @@
+{
+  "$defs": {
+    "Components": {
+      "additionalProperties": false,
+      "properties": {
+        "database": {
+          "default": "not_configured",
+          "enum": [
+            "not_configured",
+            "connected",
+            "unverified"
+          ],
+          "title": "Database",
+          "type": "string"
+        },
+        "identity": {
+          "default": "not_configured",
+          "enum": [
+            "not_configured",
+            "connected",
+            "unverified"
+          ],
+          "title": "Identity",
+          "type": "string"
+        },
+        "business_gateways": {
+          "default": "not_configured",
+          "enum": [
+            "not_configured",
+            "connected",
+            "unverified"
+          ],
+          "title": "Business Gateways",
+          "type": "string"
+        }
+      },
+      "title": "Components",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.health.v1",
+      "default": "class-os.health.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "service": {
+      "const": "class-os-api",
+      "default": "class-os-api",
+      "title": "Service",
+      "type": "string"
+    },
+    "mode": {
+      "const": "synthetic-development",
+      "default": "synthetic-development",
+      "title": "Mode",
+      "type": "string"
+    },
+    "status": {
+      "default": "not_ready",
+      "enum": [
+        "not_ready",
+        "ready"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "components": {
+      "$ref": "#/$defs/Components",
+      "default": {
+        "database": "not_configured",
+        "identity": "not_configured",
+        "business_gateways": "not_configured"
+      }
+    }
+  },
+  "title": "ReadyResponse",
+  "type": "object"
+}

@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "command": {
+      "const": "student.create",
+      "title": "Command",
+      "type": "string"
+    },
+    "student_id": {
+      "format": "uuid",
+      "title": "Student Id",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "expected_class_version": {
+      "minimum": 1,
+      "title": "Expected Class Version",
+      "type": "integer"
+    },
+    "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    }
+  },
+  "required": [
+    "command",
+    "student_id",
+    "class_id",
+    "term_id",
+    "expected_class_version",
+    "name"
+  ],
+  "title": "StudentBody",
+  "type": "object"
+}

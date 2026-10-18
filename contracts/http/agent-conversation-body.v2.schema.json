@@ -1,0 +1,28 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.agent-conversation-request.v2",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "student_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Student Id"
+    }
+  },
+  "required": [
+    "schema_version",
+    "student_id"
+  ],
+  "title": "ScopedConversationBody",
+  "type": "object"
+}

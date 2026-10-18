@@ -1,0 +1,34 @@
+{
+  "binary_archive_sha256": "1df55002afe95b945d934c078b13e82c1603fa546731e511d068aa983b4ead28",
+  "business_commit_via_agent": 0,
+  "environment_findings": {
+    "database_outage": "failed-closed",
+    "docker_desktop": "blocked-host-stale-inference-socket-error-1920",
+    "non_ascii_cluster_path": "rejected-by-windows-postgresql-build"
+  },
+  "limitations": [
+    "Portable PostgreSQL-only drill; Docker Desktop was unavailable because of a host runtime socket failure.",
+    "No API, Web, object store, TLS, auth, concurrent load, real data or production retention policy.",
+    "Single Windows host measurements are not production capacity or RTO commitments."
+  ],
+  "measurements": {
+    "backup_bytes": 3287,
+    "backup_ms": 371.419,
+    "backup_sha256": "44ef450e1805408facb1e5af6d3ad5d1d031e092f78cb34d3ce9828bf20842e6",
+    "cold_start_ms": 407.006,
+    "cpu_probe_wall_ms": 830.544,
+    "host_cpu_percent_during_probe": 29.8,
+    "postgres_process_tree_rss_mb": 124.582,
+    "primary_data_mb": 47.677,
+    "restart_ms": 299.516,
+    "restore_cluster_start_ms": 405.572,
+    "restore_ms": 114.577
+  },
+  "outage_failed_closed": true,
+  "postgres_version": "postgres (PostgreSQL) 18.6",
+  "restart_content_equal": true,
+  "restore_content_equal": true,
+  "schema": "class-os.self-host-spike-evidence/v1",
+  "synthetic_only": true,
+  "task_row_count": 2
+}

@@ -1,0 +1,36 @@
+schema_version: 3
+artifact_role: invalid-dsse-transport-example
+envelope:
+  payloadType: application/vnd.class-os.real-data-scope-setup.v1+json
+  payload: INVALID-BASE64-OF-RFC8785-PAYLOAD-BELOW
+  signatures:
+    - {keyid: UNTRUSTED-LOOKUP-HINT, sig: INVALID-BASE64-SIGNATURE}
+decoded_payload_shape:
+  schema_version: 1
+  artifact_type: real-data-scope-setup-example
+  artifact_id: EXAMPLE-NEVER-VALID
+  lifecycle: one-time-capability
+  issued_at: NEVER
+  not_before: REQUIRED
+  expires_at: REQUIRED
+  nonce: REQUIRED
+  target_release_digest: REQUIRED
+  target_commit: REQUIRED
+  definition_bundle_sha256: REQUIRED
+  environment_digest: REQUIRED
+  registry: {generation: REQUIRED, sha256: REQUIRED}
+  required_roles: [operations, privacy, product, security]
+  required_key_usage: scope-setup
+  referenced_artifact_ids: []
+  deployment_id: REQUIRED
+  owner_ids: []
+  workspace_id: REQUIRED
+  allowed_operation: allocate-workspace-bound-empty-scope-only
+  maximum_allocations: 1
+  candidate_gate_report: {artifact_id: REQUIRED, artifact_uri: REQUIRED, sha256: REQUIRED}
+  pilot_readiness_gate_report: {artifact_id: REQUIRED, artifact_uri: REQUIRED, sha256: REQUIRED}
+  shadow_value_decision: {artifact_id: REQUIRED, artifact_uri: REQUIRED, sha256: REQUIRED, result: REQUIRED}
+  revocation_id: REQUIRED
+
+# Invalid example. A valid setup is verified as DSSE, bound to a pinned registry,
+# then consumed once with scope allocation in one local PostgreSQL transaction.

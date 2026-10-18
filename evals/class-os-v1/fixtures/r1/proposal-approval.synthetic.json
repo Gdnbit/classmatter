@@ -1,0 +1,35 @@
+{
+  "data": {
+    "approval_requests": [
+      {
+        "approval_request_id": "42a476d6-7c41-5b21-aa03-63f609fa85ea",
+        "client_id": "4451133a-b60e-5be3-9e9e-46bbb5705cae",
+        "csrf_nonce": "synthetic-nonce-a",
+        "expected_outcome": "consume_once_if_all_bindings_match",
+        "proposal_id": "96e1a86a-064c-560c-9d93-7957fb2a740d",
+        "session_id": "938d2c4c-4e79-5ae4-beef-7b479c71425e"
+      }
+    ],
+    "proposals": [
+      {
+        "actor_id": "925a7d49-07ea-5652-9640-567aa467780b",
+        "expires_at": "2026-09-01T08:15:00+08:00",
+        "proposal_hash": "23bd10593372c6ce1d9b3bf7e0c0d8605b3def8b066cade61eb849c484c85ed6",
+        "proposal_id": "96e1a86a-064c-560c-9d93-7957fb2a740d",
+        "risk": "W2",
+        "state": "pending",
+        "target_ref": "572bb91f-b9c1-57b2-a2ea-63c6ee5eb8da",
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      }
+    ]
+  },
+  "meta": {
+    "clock": "2026-09-01T08:00:00+08:00",
+    "contains_real_person_data": false,
+    "provenance": "deterministic-fixture-factory",
+    "purpose": "proposal-approval-binding",
+    "schema": "class-os.synthetic-fixture/v1",
+    "seed": 20260921,
+    "synthetic": true
+  }
+}

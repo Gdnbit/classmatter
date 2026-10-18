@@ -1,0 +1,1427 @@
+{
+  "schema_version": 1,
+  "visible_source_old_brand_paths": [],
+  "note": "Legacy protocol/import/env/path/task names are intentional; ordinary Chinese workspace nouns are not a product brand. Uppercase ClassMatter typography is a display style.",
+  "records": [
+    {
+      "path": ".ai/development/synthetic-policy.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/architecture-approval.example.yaml",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/real-data-admission.example.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/real-data-scope-setup.example.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/release-1-definition-state.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/release-1-eval-state.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/release-1-evals.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/release-1-release-gate-state.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/release-1-release-gates.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/release-1-requirements.yaml",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/release-1-task-definitions.yaml",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/release-1-tasks.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/signature-canonicalization-test-vectors.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/signed-artifact-policy.yaml",
+      "occurrences": 12,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".ai/gates/signed-envelope.example.yaml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".gitattributes",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": ".github/workflows/synthetic-ci.yml",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "AGENTS.md",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "BRAND_MIGRATION_MATRIX.md",
+      "occurrences": 8,
+      "classification": "SINGLE_MIGRATION_EXPLANATION"
+    },
+    {
+      "path": "README.md",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "SECRET_SCAN_REVIEW.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/PROTOTYPE_BASELINE.md",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/README.md",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/App.tsx",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/registry/surfaceRegistry.ts",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/R1App.tsx",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/agent-conversation-validators.cjs",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/agent-conversation.ts",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/api.ts",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/command-receipts-validators.cjs",
+      "occurrences": 12,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/command-receipts.ts",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/identity-validators.cjs",
+      "occurrences": 18,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/identity.ts",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/model-configuration-validator.cjs",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/model-configuration.ts",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/runtime/term-metadata.ts",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/shell/AppShell.tsx",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/src/types/surfaceIds.ts",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/tests/agent-conversation.mjs",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/tests/api-errors.mjs",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/tests/command-receipts.mjs",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/tests/identity.mjs",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/tests/local-time.mjs",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/tests/model-configuration.mjs",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/tests/runtime.mjs",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "apps/web/tests/term-metadata.mjs",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/README.md",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/env.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0001_database_state.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0002_identity.py",
+      "occurrences": 27,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0003_roster_gateway.py",
+      "occurrences": 42,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0004_activity.py",
+      "occurrences": 35,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0005_agent_audit.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0006_exit.py",
+      "occurrences": 15,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0007_identity_lifecycle.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0008_identifier_interval.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0009_task_edit.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0010_audit_query.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0011_command_status.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0012_model_configuration.py",
+      "occurrences": 13,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0013_logout_receipt.py",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0014_identity_operation_receipt.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0015_student_name.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/migrations/versions/0016_term_metadata.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/db/run-tests.ps1",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/export_contracts.py",
+      "occurrences": 12,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/local.py",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/pyproject.toml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/serve.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/application/activity.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/application/agent_tool_contracts.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/application/audit.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/application/identity.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/application/model_configuration.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/application/roster.py",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/domain/exit_package.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/domain/record_note.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/activity.py",
+      "occurrences": 31,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/agent.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/agent_memory.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/exit_package.py",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/identity.py",
+      "occurrences": 24,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/local_runtime.py",
+      "occurrences": 37,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/model_configuration.py",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/model_control.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/model_provider.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/model_secrets.py",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/operator_backup.py",
+      "occurrences": 16,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/persistence/database.py",
+      "occurrences": 11,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/persistence/role_guards.py",
+      "occurrences": 16,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/persistence/schema_inventory.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/infrastructure/roster.py",
+      "occurrences": 31,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/agent.py",
+      "occurrences": 10,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/app.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/contracts.py",
+      "occurrences": 10,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/exit_package.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/identity.py",
+      "occurrences": 15,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/identity_contracts.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/model_configuration.py",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/roster.py",
+      "occurrences": 30,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/http/settings.py",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/operator/doctor.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/src/class_os/interfaces/operator/support.py",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/conftest.py",
+      "occurrences": 10,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_0015_to_0016_upgrade.py",
+      "occurrences": 17,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_activity_domain.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_activity_gateway.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_agent.py",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_agent_api_protocol.py",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_agent_memory.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_agent_memory_expiry.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_agent_record_note.py",
+      "occurrences": 15,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_agent_student_scope.py",
+      "occurrences": 13,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_agent_tool_contracts.py",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_api.py",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_audit_unavailable.py",
+      "occurrences": 12,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_authorization_guard.py",
+      "occurrences": 11,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_business_audit.py",
+      "occurrences": 15,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_business_mutation_receipt.py",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_command_status.py",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_database.py",
+      "occurrences": 22,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_doctor.py",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_exit_gateway.py",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_exit_package.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_exit_read_limits.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_exit_semantics.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_fault_boundary.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identifier_correction.py",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity.py",
+      "occurrences": 17,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity_audit_classification.py",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity_audit_receipt.py",
+      "occurrences": 15,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity_contracts.py",
+      "occurrences": 11,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity_http.py",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity_lifecycle.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity_lifecycle_http.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity_mutation_receipt.py",
+      "occurrences": 15,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_identity_operation_receipt.py",
+      "occurrences": 11,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_local_runtime.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_logout_receipt.py",
+      "occurrences": 18,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_model_configuration.py",
+      "occurrences": 12,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_model_control.py",
+      "occurrences": 20,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_model_secrets.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_operator_backup.py",
+      "occurrences": 14,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_operator_support.py",
+      "occurrences": 12,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_preview_integrity.py",
+      "occurrences": 10,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_query_snapshot.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_readiness_permissions.py",
+      "occurrences": 21,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_record_note.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_recovery_role_guards.py",
+      "occurrences": 45,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_risk.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_roster_domain.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_roster_gateway.py",
+      "occurrences": 16,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_roster_http.py",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_runtime.py",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_schema_inventory.py",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_student_name.py",
+      "occurrences": 25,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_task_edit.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_temporal.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_term_metadata.py",
+      "occurrences": 24,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_web.py",
+      "occurrences": 8,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/tests/test_work_snapshot.py",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/uv.lock",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "backend/verify_exit.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/README.md",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/activity.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/agent-conversation-body.v2.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/agent-conversation.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/agent-conversation.v2.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/agent-record-note-candidate.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/agent-record-note-turn.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/business-audit.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/class-history.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/command-status.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/duplicate-list.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/error.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/health-live.v1.schema.json",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/health-ready.v1.schema.json",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/identifier-list.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/identity-challenge.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/identity-kit-session.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/identity-logout-receipt.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/identity-operation-receipt.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/identity-session.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/identity-signed-out.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/model-configuration.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/model-staged.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/model-status.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/roster-context.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/roster-list.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/roster-preview.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/roster-receipt.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/synthetic-core-exit.v1.schema.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/http/term-metadata.v1.schema.json",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/operator/support.v1.schema.json",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/tools/attention-list.v1.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/tools/record-note-draft.v1.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "contracts/tools/task-draft.v1.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/ENGINEERING_OVERVIEW.md",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/README.md",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/specs/class-os-v1/architecture-decision.md",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/specs/class-os-v1/architecture.md",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/specs/class-os-v1/long-term-requirements.md",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/specs/class-os-v1/module-boundaries.md",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/specs/class-os-v1/release-1-atomic-tasks.md",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/specs/class-os-v1/requirements.md",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/specs/class-os-v1/rule-trace.md",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "docs/specs/class-os-v1/tasks.md",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/candidates/architecture-approval-binding.synthetic.md",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/cases/open-world-evolution.md",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/fixtures/r1/audit-failure.synthetic.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/fixtures/r1/canonical-r1.synthetic.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/fixtures/r1/fact-events.synthetic.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/fixtures/r1/proposal-approval.synthetic.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/fixtures/r1/student-identifier.synthetic.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/fixtures/r1/workspace-isolation.synthetic.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/runners/risk-policy-r1.synthetic.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "evals/class-os-v1/runners/security.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "infra/ci/pgdg.sources",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "scripts/generate_synthetic_fixtures.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "scripts/tests/test_ci_workflow.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "scripts/tests/test_security_eval_runner.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "scripts/tests/test_synthetic_development.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "scripts/tests/test_verify_manifests.py",
+      "occurrences": 5,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "scripts/verify.ps1",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "scripts/verify_manifests.py",
+      "occurrences": 16,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "scripts/verify_synthetic_development.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/adapter.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/boundary.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/browser/index.html",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/browser/network.test.mjs",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/browser/package.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/browser_fixture.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/dependency_inventory.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/evidence/dependency-inventory.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/evidence/routing-eval.latest.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/evidence/sbom.cdx.json",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/pyproject.toml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/routing_eval.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/telemetry.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/tests/test_agent_boundary.py",
+      "occurrences": 7,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/tests/test_live_events.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/tests/test_live_tcp.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/transport.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/agent-read-draft/uv.lock",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/language/benchmark.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/language/evidence/language-spike.latest.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/language/python/app.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/language/python/pyproject.toml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/language/python/uv.lock",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/language/typescript/package.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/language/typescript/server.mjs",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/.env.example",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/README.md",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/compose.yaml",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/evidence/self-host-spike.latest.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/portable_recovery.py",
+      "occurrences": 4,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/pyproject.toml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/run.ps1",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/tests/test_portable_recovery.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/self-host/uv.lock",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/README.md",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/architecture_binding.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/evidence.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/evidence/postgres-identity-ledger.latest.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/evidence/scope-allocation.latest.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/evidence/signature-envelope.latest.json",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/migrations/001_artifact_identity_ledger.sql",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/migrations/002_scope_allocation.schema.json",
+      "occurrences": 35,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/migrations/002_scope_allocation.sql",
+      "occurrences": 42,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/postgres_identity_ledger.py",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/postgres_ledger_drill.py",
+      "occurrences": 24,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/pyproject.toml",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/reference_resolver.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/scope_allocation.py",
+      "occurrences": 16,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/scope_allocation_drill.py",
+      "occurrences": 10,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/scope_allocation_evidence.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/scope_allocation_schema.py",
+      "occurrences": 9,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/signature_envelope.py",
+      "occurrences": 3,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/tests/test_admission.py",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/tests/test_architecture_binding.py",
+      "occurrences": 6,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/tests/test_postgres_identity_ledger.py",
+      "occurrences": 2,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/tests/test_reference_resolver.py",
+      "occurrences": 14,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/tests/test_scope_allocation.py",
+      "occurrences": 33,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    },
+    {
+      "path": "spikes/signature-envelope/uv.lock",
+      "occurrences": 1,
+      "classification": "PRESERVED_FOR_COMPATIBILITY"
+    }
+  ]
+}

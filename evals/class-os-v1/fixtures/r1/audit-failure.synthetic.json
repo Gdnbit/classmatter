@@ -1,0 +1,38 @@
+{
+  "data": {
+    "audit_events": [
+      {
+        "action": "record.create.synthetic",
+        "actor_id": "925a7d49-07ea-5652-9640-567aa467780b",
+        "audit_event_id": "3ae995d6-3ae2-5e19-94fb-c9ebf634efb2",
+        "correlation_id": "15c19a63-c9fe-56fb-9bf8-796391be158d",
+        "occurred_at": "2026-09-01T08:00:00+08:00",
+        "payload_included": false,
+        "resource_ref": "572bb91f-b9c1-57b2-a2ea-63c6ee5eb8da",
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      },
+      {
+        "action": "student.read.synthetic",
+        "actor_id": "925a7d49-07ea-5652-9640-567aa467780b",
+        "audit_event_id": "73ef44f6-7236-5684-bef1-04ed08562119",
+        "correlation_id": "c0ba9843-561d-5535-8fe5-b6cc61766a80",
+        "expected_outcome": "fail_closed_before_response",
+        "fault": "durable_audit_unavailable",
+        "occurred_at": "2026-09-01T08:02:00+08:00",
+        "payload_included": false,
+        "resource_ref": "724e36db-5e37-5742-a940-a1054f1d0358",
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      }
+    ],
+    "projection_release_expected": false
+  },
+  "meta": {
+    "clock": "2026-09-01T08:00:00+08:00",
+    "contains_real_person_data": false,
+    "provenance": "deterministic-fixture-factory",
+    "purpose": "audit-fail-closed",
+    "schema": "class-os.synthetic-fixture/v1",
+    "seed": 20260921,
+    "synthetic": true
+  }
+}

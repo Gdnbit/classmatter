@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:18.6-bookworm
+    environment:
+      POSTGRES_DB: class_os
+      POSTGRES_USER: class_os
+      POSTGRES_PASSWORD: ${CLASS_OS_POSTGRES_PASSWORD:?set CLASS_OS_POSTGRES_PASSWORD outside Git}
+    ports:
+      - "127.0.0.1:${CLASS_OS_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - class_os_postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U class_os -d class_os"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+volumes:
+  class_os_postgres_data:

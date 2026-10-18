@@ -1,0 +1,203 @@
+{
+  "approval_requests": [
+    {
+      "approval_request_id": "42a476d6-7c41-5b21-aa03-63f609fa85ea",
+      "client_id": "4451133a-b60e-5be3-9e9e-46bbb5705cae",
+      "csrf_nonce": "synthetic-nonce-a",
+      "expected_outcome": "consume_once_if_all_bindings_match",
+      "proposal_id": "96e1a86a-064c-560c-9d93-7957fb2a740d",
+      "session_id": "938d2c4c-4e79-5ae4-beef-7b479c71425e"
+    }
+  ],
+  "audit_events": [
+    {
+      "action": "record.create.synthetic",
+      "actor_id": "925a7d49-07ea-5652-9640-567aa467780b",
+      "audit_event_id": "3ae995d6-3ae2-5e19-94fb-c9ebf634efb2",
+      "correlation_id": "15c19a63-c9fe-56fb-9bf8-796391be158d",
+      "occurred_at": "2026-09-01T08:00:00+08:00",
+      "payload_included": false,
+      "resource_ref": "572bb91f-b9c1-57b2-a2ea-63c6ee5eb8da",
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    },
+    {
+      "action": "student.read.synthetic",
+      "actor_id": "925a7d49-07ea-5652-9640-567aa467780b",
+      "audit_event_id": "73ef44f6-7236-5684-bef1-04ed08562119",
+      "correlation_id": "c0ba9843-561d-5535-8fe5-b6cc61766a80",
+      "expected_outcome": "fail_closed_before_response",
+      "fault": "durable_audit_unavailable",
+      "occurred_at": "2026-09-01T08:02:00+08:00",
+      "payload_included": false,
+      "resource_ref": "724e36db-5e37-5742-a940-a1054f1d0358",
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    }
+  ],
+  "classes": [
+    {
+      "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+      "display_name": "合成七年级甲班",
+      "version": 1,
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    },
+    {
+      "class_id": "c0b643c6-ea84-5141-b898-f122edce7718",
+      "display_name": "合成七年级甲班",
+      "version": 1,
+      "workspace_id": "de1e3e99-ab2f-5402-a010-70178811d1cb"
+    }
+  ],
+  "meta": {
+    "clock": "2026-09-01T08:00:00+08:00",
+    "contains_real_person_data": false,
+    "provenance": "deterministic-fixture-factory",
+    "purpose": "canonical-r1-eval-bundle",
+    "schema": "class-os.synthetic-fixture/v1",
+    "seed": 20260921,
+    "synthetic": true
+  },
+  "proposals": [
+    {
+      "actor_id": "925a7d49-07ea-5652-9640-567aa467780b",
+      "expires_at": "2026-09-01T08:15:00+08:00",
+      "proposal_hash": "23bd10593372c6ce1d9b3bf7e0c0d8605b3def8b066cade61eb849c484c85ed6",
+      "proposal_id": "96e1a86a-064c-560c-9d93-7957fb2a740d",
+      "risk": "W2",
+      "state": "pending",
+      "target_ref": "572bb91f-b9c1-57b2-a2ea-63c6ee5eb8da",
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    }
+  ],
+  "records": [
+    {
+      "correlation_id": "15c19a63-c9fe-56fb-9bf8-796391be158d",
+      "kind": "attendance_late_fact",
+      "occurred_at": "2026-09-01T07:55:00+08:00",
+      "record_id": "572bb91f-b9c1-57b2-a2ea-63c6ee5eb8da",
+      "recorded_at": "2026-09-01T08:00:00+08:00",
+      "source": "trusted-ui-synthetic",
+      "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+      "version": 1,
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    },
+    {
+      "correlation_id": "15c19a63-c9fe-56fb-9bf8-796391be158d",
+      "kind": "homework_missing_fact",
+      "occurred_at": "2026-09-01T07:50:00+08:00",
+      "record_id": "11f2c9aa-c32a-52a0-9598-53b38b4e8037",
+      "recorded_at": "2026-09-01T08:01:00+08:00",
+      "source": "trusted-ui-synthetic",
+      "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+      "version": 1,
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    },
+    {
+      "corrects_or_follows": "11f2c9aa-c32a-52a0-9598-53b38b4e8037",
+      "correlation_id": "15c19a63-c9fe-56fb-9bf8-796391be158d",
+      "kind": "homework_submitted_fact",
+      "occurred_at": "2026-09-01T09:05:00+08:00",
+      "record_id": "e3ab3af8-3cf8-5b25-97a5-c25288e0c36c",
+      "recorded_at": "2026-09-01T09:06:00+08:00",
+      "source": "trusted-ui-synthetic",
+      "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+      "version": 1,
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    }
+  ],
+  "student_identifiers": [
+    {
+      "authority": "synthetic-school-a",
+      "identifier_id": "889ca839-aec1-5e69-8b33-b12cc660eca1",
+      "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+      "type": "school_number",
+      "valid_from": "2026-09-01",
+      "valid_to": null,
+      "value": "SYN-A-0001"
+    },
+    {
+      "authority": "synthetic-exam-a",
+      "identifier_id": "9381440f-4354-5094-a7e0-0c3c2c1e649a",
+      "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+      "type": "exam_number",
+      "valid_from": "2026-09-01",
+      "valid_to": null,
+      "value": "EX-A-0101"
+    },
+    {
+      "authority": "synthetic-school-a",
+      "expected_resolution": "duplicate_candidate_no_merge",
+      "identifier_id": "9cb12b6f-082f-5c5e-963f-70414659fa18",
+      "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+      "type": "school_number",
+      "valid_from": "2026-09-01",
+      "valid_to": null,
+      "value": "SYN-A-0001"
+    }
+  ],
+  "students": [
+    {
+      "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+      "display_name": "合成学生甲",
+      "status": "active",
+      "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+      "term_id": "b35babf5-4f8f-53db-809c-3f923b537fd8",
+      "version": 1,
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    },
+    {
+      "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+      "display_name": "合成学生乙",
+      "status": "active",
+      "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+      "term_id": "b35babf5-4f8f-53db-809c-3f923b537fd8",
+      "version": 1,
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    },
+    {
+      "class_id": "c0b643c6-ea84-5141-b898-f122edce7718",
+      "display_name": "合成学生甲",
+      "status": "active",
+      "student_id": "978c2ee2-ce31-5f45-a0e2-24313987db9c",
+      "term_id": "0274dea5-3c9d-5f44-86d6-e9a8453174a0",
+      "version": 1,
+      "workspace_id": "de1e3e99-ab2f-5402-a010-70178811d1cb"
+    }
+  ],
+  "tasks": [
+    {
+      "due_at": "2026-09-01T17:00:00+08:00",
+      "responsibility_state": "owner_confirmed",
+      "source_ref": "572bb91f-b9c1-57b2-a2ea-63c6ee5eb8da",
+      "state": "open",
+      "task_id": "1af454a4-d081-514b-8957-d28dc358608e",
+      "version": 1,
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    }
+  ],
+  "terms": [
+    {
+      "label": "合成学期甲",
+      "term_id": "b35babf5-4f8f-53db-809c-3f923b537fd8",
+      "valid_from": "2026-09-01",
+      "valid_to": "2027-02-01",
+      "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+    },
+    {
+      "label": "合成学期甲",
+      "term_id": "0274dea5-3c9d-5f44-86d6-e9a8453174a0",
+      "valid_from": "2026-09-01",
+      "valid_to": "2027-02-01",
+      "workspace_id": "de1e3e99-ab2f-5402-a010-70178811d1cb"
+    }
+  ],
+  "workspace_a": {
+    "label": "合成工作区甲",
+    "owner_id": "925a7d49-07ea-5652-9640-567aa467780b",
+    "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+  },
+  "workspace_b": {
+    "label": "合成工作区乙",
+    "owner_id": "1d7089c5-e07f-529f-8c2d-4989422388ac",
+    "workspace_id": "de1e3e99-ab2f-5402-a010-70178811d1cb"
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "$defs": {
+    "IdentitySubject": {
+      "additionalProperties": false,
+      "properties": {
+        "owner_id": {
+          "format": "uuid",
+          "title": "Owner Id",
+          "type": "string"
+        },
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "owner_id",
+        "workspace_id"
+      ],
+      "title": "IdentitySubject",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.identity.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "csrf_token": {
+      "maxLength": 128,
+      "minLength": 32,
+      "pattern": "^[A-Za-z0-9_-]+$",
+      "title": "Csrf Token",
+      "type": "string"
+    },
+    "subject": {
+      "$ref": "#/$defs/IdentitySubject"
+    },
+    "recovery_codes": {
+      "items": {
+        "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.[A-Za-z0-9_-]{32}$",
+        "type": "string"
+      },
+      "maxItems": 5,
+      "minItems": 5,
+      "title": "Recovery Codes",
+      "type": "array",
+      "uniqueItems": true
+    }
+  },
+  "required": [
+    "schema_version",
+    "csrf_token",
+    "subject",
+    "recovery_codes"
+  ],
+  "title": "IdentityKitSession",
+  "type": "object"
+}

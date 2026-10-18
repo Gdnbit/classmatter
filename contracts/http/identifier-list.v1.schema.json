@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "IdentifierView": {
+      "additionalProperties": false,
+      "properties": {
+        "identifier_id": {
+          "format": "uuid",
+          "title": "Identifier Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "authority": {
+          "title": "Authority",
+          "type": "string"
+        },
+        "identifier_type": {
+          "enum": [
+            "school_number",
+            "exam_number"
+          ],
+          "title": "Identifier Type",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        },
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valid To"
+        }
+      },
+      "required": [
+        "identifier_id",
+        "student_id",
+        "authority",
+        "identifier_type",
+        "value",
+        "valid_from",
+        "valid_to"
+      ],
+      "title": "IdentifierView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.roster.v1",
+      "default": "class-os.roster.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "data": {
+      "items": {
+        "$ref": "#/$defs/IdentifierView"
+      },
+      "title": "Data",
+      "type": "array"
+    }
+  },
+  "required": [
+    "data"
+  ],
+  "title": "IdentifierResponse",
+  "type": "object"
+}

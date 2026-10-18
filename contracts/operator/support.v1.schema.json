@@ -1,0 +1,217 @@
+{
+  "$defs": {
+    "HealthChecks": {
+      "additionalProperties": false,
+      "properties": {
+        "live": {
+          "enum": [
+            "ok",
+            "unavailable",
+            "invalid_response"
+          ],
+          "title": "Live",
+          "type": "string"
+        },
+        "ready": {
+          "enum": [
+            "ok",
+            "unavailable",
+            "invalid_response",
+            "not_ready"
+          ],
+          "title": "Ready",
+          "type": "string"
+        }
+      },
+      "required": [
+        "live",
+        "ready"
+      ],
+      "title": "HealthChecks",
+      "type": "object"
+    },
+    "HealthSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "class-os.local-diagnostics.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "profile": {
+          "const": "synthetic-development",
+          "title": "Profile",
+          "type": "string"
+        },
+        "checks": {
+          "$ref": "#/$defs/HealthChecks"
+        },
+        "ready": {
+          "title": "Ready",
+          "type": "boolean"
+        },
+        "complete_operator_check": {
+          "const": false,
+          "title": "Complete Operator Check",
+          "type": "boolean"
+        },
+        "next_step": {
+          "enum": [
+            "none",
+            "start-local-api",
+            "check-owned-database-and-explicit-migration",
+            "check-local-service-contract"
+          ],
+          "title": "Next Step",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "profile",
+        "checks",
+        "ready",
+        "complete_operator_check",
+        "next_step"
+      ],
+      "title": "HealthSummary",
+      "type": "object"
+    },
+    "Versions": {
+      "additionalProperties": false,
+      "properties": {
+        "python": {
+          "maxLength": 16,
+          "pattern": "^(?:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}|unavailable|unverified)$",
+          "title": "Python",
+          "type": "string"
+        },
+        "backend": {
+          "maxLength": 16,
+          "pattern": "^(?:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}|unavailable|unverified)$",
+          "title": "Backend",
+          "type": "string"
+        },
+        "pydantic_ai": {
+          "maxLength": 16,
+          "pattern": "^(?:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}|unavailable|unverified)$",
+          "title": "Pydantic Ai",
+          "type": "string"
+        },
+        "openai": {
+          "maxLength": 16,
+          "pattern": "^(?:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}|unavailable|unverified)$",
+          "title": "Openai",
+          "type": "string"
+        },
+        "pydantic": {
+          "maxLength": 16,
+          "pattern": "^(?:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}|unavailable|unverified)$",
+          "title": "Pydantic",
+          "type": "string"
+        },
+        "fastapi": {
+          "maxLength": 16,
+          "pattern": "^(?:[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}|unavailable|unverified)$",
+          "title": "Fastapi",
+          "type": "string"
+        }
+      },
+      "required": [
+        "python",
+        "backend",
+        "pydantic_ai",
+        "openai",
+        "pydantic",
+        "fastapi"
+      ],
+      "title": "Versions",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.synthetic-support.v1",
+      "default": "class-os.synthetic-support.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "profile": {
+      "const": "synthetic-development",
+      "default": "synthetic-development",
+      "title": "Profile",
+      "type": "string"
+    },
+    "scope": {
+      "const": "health-and-versions-only",
+      "default": "health-and-versions-only",
+      "title": "Scope",
+      "type": "string"
+    },
+    "platform": {
+      "enum": [
+        "windows",
+        "posix",
+        "unknown"
+      ],
+      "title": "Platform",
+      "type": "string"
+    },
+    "build_identity": {
+      "const": "unverified",
+      "default": "unverified",
+      "title": "Build Identity",
+      "type": "string"
+    },
+    "versions_scope": {
+      "const": "operator-process-not-server",
+      "default": "operator-process-not-server",
+      "title": "Versions Scope",
+      "type": "string"
+    },
+    "health": {
+      "$ref": "#/$defs/HealthSummary"
+    },
+    "versions": {
+      "$ref": "#/$defs/Versions"
+    },
+    "business_data_collected": {
+      "const": false,
+      "default": false,
+      "title": "Business Data Collected",
+      "type": "boolean"
+    },
+    "secrets_collected": {
+      "const": false,
+      "default": false,
+      "title": "Secrets Collected",
+      "type": "boolean"
+    },
+    "logs_collected": {
+      "const": false,
+      "default": false,
+      "title": "Logs Collected",
+      "type": "boolean"
+    },
+    "uploaded": {
+      "const": false,
+      "default": false,
+      "title": "Uploaded",
+      "type": "boolean"
+    },
+    "complete_support_bundle": {
+      "const": false,
+      "default": false,
+      "title": "Complete Support Bundle",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "platform",
+    "health",
+    "versions"
+  ],
+  "title": "SupportReport",
+  "type": "object"
+}

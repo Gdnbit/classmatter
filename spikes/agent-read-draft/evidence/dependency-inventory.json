@@ -1,0 +1,165 @@
+{
+  "lock_sha256": "75d36b32093eadea7353e0659df26d1a270c299da10d68bbe003e3e604eddd0e",
+  "marker_excluded_on_target": [
+    {
+      "name": "httpx2-jsfetch",
+      "version": "1.0"
+    }
+  ],
+  "not_allowlisted": [],
+  "packages": [
+    {
+      "license_expression": "MIT",
+      "name": "ag-ui-protocol",
+      "project_url": null,
+      "version": "0.1.22"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "annotated-types",
+      "project_url": "Homepage, https://github.com/annotated-types/annotated-types",
+      "version": "0.8.0"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "anyio",
+      "project_url": "Documentation, https://anyio.readthedocs.io/en/latest/",
+      "version": "4.15.1"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "genai-prices",
+      "project_url": "Homepage, https://github.com/pydantic/genai-prices",
+      "version": "0.1.13"
+    },
+    {
+      "license_expression": "ISC",
+      "name": "griffelib",
+      "project_url": null,
+      "version": "2.3.0"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "h11",
+      "project_url": null,
+      "version": "0.16.0"
+    },
+    {
+      "license_expression": "BSD-3-Clause",
+      "name": "httpcore2",
+      "project_url": "Changelog, https://github.com/pydantic/httpx2/blob/main/src/httpcore2/CHANGELOG.md",
+      "version": "2.13.0"
+    },
+    {
+      "license_expression": "BSD-3-Clause",
+      "name": "httpx2",
+      "project_url": "Changelog, https://github.com/pydantic/httpx2/blob/main/src/httpx2/CHANGELOG.md",
+      "version": "2.13.0"
+    },
+    {
+      "license_expression": "BSD-3-Clause",
+      "name": "idna",
+      "project_url": "Changelog, https://github.com/kjd/idna/blob/master/HISTORY.md",
+      "version": "3.20"
+    },
+    {
+      "license_expression": "Apache-2.0",
+      "name": "importlib-metadata",
+      "project_url": "Source, https://github.com/python/importlib_metadata",
+      "version": "8.7.1"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "logfire-api",
+      "project_url": null,
+      "version": "5.1.0"
+    },
+    {
+      "license_expression": "Apache-2.0",
+      "name": "opentelemetry-api",
+      "project_url": "Homepage, https://github.com/open-telemetry/opentelemetry-python/tree/main/opentelemetry-api",
+      "version": "1.38.0"
+    },
+    {
+      "license_expression": "Apache-2.0",
+      "name": "opentelemetry-sdk",
+      "project_url": "Homepage, https://github.com/open-telemetry/opentelemetry-python/tree/main/opentelemetry-sdk",
+      "version": "1.38.0"
+    },
+    {
+      "license_expression": "Apache-2.0",
+      "name": "opentelemetry-semantic-conventions",
+      "project_url": "Homepage, https://github.com/open-telemetry/opentelemetry-python/tree/main/opentelemetry-semantic-conventions",
+      "version": "0.59b0"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "pydantic",
+      "project_url": "Homepage, https://github.com/pydantic/pydantic",
+      "version": "2.13.5"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "pydantic-ai-slim",
+      "project_url": "Homepage, https://github.com/pydantic/pydantic-ai/tree/main/pydantic_ai_slim",
+      "version": "2.53.0"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "pydantic-core",
+      "project_url": "Funding, https://github.com/sponsors/samuelcolvin",
+      "version": "2.46.5"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "pydantic-graph",
+      "project_url": "Homepage, https://pydantic.dev/docs/ai/graph/graph/",
+      "version": "2.53.0"
+    },
+    {
+      "license_expression": "BSD-3-Clause",
+      "name": "starlette",
+      "project_url": "Homepage, https://github.com/Kludex/starlette",
+      "version": "1.6.0"
+    },
+    {
+      "license_expression": "Apache 2.0",
+      "name": "tenacity",
+      "project_url": null,
+      "version": "9.1.4"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "truststore",
+      "project_url": "Documentation, https://truststore.readthedocs.io",
+      "version": "0.10.4"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "typesafe-sdk",
+      "project_url": "Homepage, https://typesafe.ai",
+      "version": "0.7.0"
+    },
+    {
+      "license_expression": "PSF-2.0",
+      "name": "typing-extensions",
+      "project_url": "Bug Tracker, https://github.com/python/typing_extensions/issues",
+      "version": "4.16.0"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "typing-inspection",
+      "project_url": "Homepage, https://github.com/pydantic/typing-inspection",
+      "version": "0.4.4"
+    },
+    {
+      "license_expression": "MIT",
+      "name": "zipp",
+      "project_url": "Source, https://github.com/jaraco/zipp",
+      "version": "4.1.0"
+    }
+  ],
+  "schema": "class-os.dependency-inventory/v1",
+  "source": "evidence/sbom.cdx.json",
+  "unknown_licenses": []
+}

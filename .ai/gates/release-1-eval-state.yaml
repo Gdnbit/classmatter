@@ -1,0 +1,16 @@
+schema_version: 2
+release: class-os-r1
+artifact_role: mutable-eval-run-state
+definition_manifest: .ai/gates/release-1-evals.yaml
+definition_sha256: null
+target_release_digest: null
+target_commit: null
+default_run_status: not-run
+default_evidence: null
+overrides: []
+signature_policy: .ai/gates/signed-artifact-policy.yaml
+state_transition_artifact: null
+
+# No override is present: all required evals are currently `not-run` and none
+# are green. Definition maturity (`catalogued`/`executable-spec`) lives in the
+# immutable definition manifest and never counts as run success.

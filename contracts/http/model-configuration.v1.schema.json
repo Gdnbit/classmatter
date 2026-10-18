@@ -1,0 +1,80 @@
+{
+  "$defs": {
+    "ModelConfigurationBody": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/Protocol"
+        },
+        "model": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "base_url": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Base Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "protocol",
+        "model",
+        "base_url"
+      ],
+      "title": "ModelConfigurationBody",
+      "type": "object"
+    },
+    "Protocol": {
+      "enum": [
+        "chat-completions",
+        "responses"
+      ],
+      "title": "Protocol",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.model-configuration.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "const": "syntax-valid-not-enabled",
+      "title": "Status",
+      "type": "string"
+    },
+    "configuration": {
+      "$ref": "#/$defs/ModelConfigurationBody"
+    },
+    "persisted": {
+      "const": false,
+      "title": "Persisted",
+      "type": "boolean"
+    },
+    "enabled": {
+      "const": false,
+      "title": "Enabled",
+      "type": "boolean"
+    },
+    "network_tested": {
+      "const": false,
+      "title": "Network Tested",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema_version",
+    "status",
+    "configuration",
+    "persisted",
+    "enabled",
+    "network_tested"
+  ],
+  "title": "ModelConfigurationResponse",
+  "type": "object"
+}

@@ -1,0 +1,52 @@
+{
+  "$defs": {
+    "DuplicateView": {
+      "additionalProperties": false,
+      "properties": {
+        "left_student_id": {
+          "format": "uuid",
+          "title": "Left Student Id",
+          "type": "string"
+        },
+        "right_student_id": {
+          "format": "uuid",
+          "title": "Right Student Id",
+          "type": "string"
+        },
+        "reason": {
+          "const": "identifier_conflict",
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "left_student_id",
+        "right_student_id",
+        "reason"
+      ],
+      "title": "DuplicateView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.roster.v1",
+      "default": "class-os.roster.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "data": {
+      "items": {
+        "$ref": "#/$defs/DuplicateView"
+      },
+      "title": "Data",
+      "type": "array"
+    }
+  },
+  "required": [
+    "data"
+  ],
+  "title": "DuplicateResponse",
+  "type": "object"
+}

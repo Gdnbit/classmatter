@@ -1,0 +1,53 @@
+{
+  "$defs": {
+    "Protocol": {
+      "enum": [
+        "chat-completions",
+        "responses"
+      ],
+      "title": "Protocol",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "protocol": {
+      "$ref": "#/$defs/Protocol"
+    },
+    "model": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Model",
+      "type": "string"
+    },
+    "base_url": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Base Url",
+      "type": "string"
+    },
+    "expected_version": {
+      "exclusiveMaximum": 2147483647,
+      "minimum": 0,
+      "title": "Expected Version",
+      "type": "integer"
+    },
+    "api_key": {
+      "format": "password",
+      "maxLength": 2048,
+      "minLength": 1,
+      "title": "Api Key",
+      "type": "string",
+      "writeOnly": true
+    }
+  },
+  "required": [
+    "protocol",
+    "model",
+    "base_url",
+    "expected_version",
+    "api_key"
+  ],
+  "title": "ModelStageBody",
+  "type": "object"
+}

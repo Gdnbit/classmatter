@@ -1,0 +1,43 @@
+{
+  "schema_version": "class-os.tool-contract.v1",
+  "version": 1,
+  "name": "task_draft",
+  "mode": "draft",
+  "kind": "function",
+  "strict": null,
+  "description": "Build an ephemeral editable task draft. Never saves, approves, or commits.",
+  "parameters_json_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "title": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "title"
+    ],
+    "type": "object"
+  },
+  "purpose": "Build one ephemeral task candidate for an existing trusted UI form, not a fact or assignment.",
+  "required_boundary": "authorized-ephemeral-agent-context",
+  "reads": [],
+  "steps": [
+    "validate-title-with-owning-domain",
+    "build-one-in-memory-candidate",
+    "handoff-to-trusted-ui"
+  ],
+  "output": "Uncommitted status/title to SDK; fixed CreateTask candidate to UI. Domain name rule limits title to 80 characters.",
+  "side_effect": "ephemeral-candidate-only",
+  "confirmation": "trusted-UI-review-preview-and-required-approval-before-BCG-commit; no-Agent-approval",
+  "forbidden": [
+    "repository-access",
+    "saved-fact",
+    "accepted-handoff",
+    "approval",
+    "business-write",
+    "sql",
+    "ddl"
+  ],
+  "failure": "fail-run-without-answer-draft-or-new-history; no-automatic-retry-or-commit",
+  "idempotency": "one-candidate-per-run; not-a-durable-command-or-replayable-receipt"
+}

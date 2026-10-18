@@ -1,0 +1,47 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.identity-operation-receipt.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "action": {
+      "enum": [
+        "bootstrap",
+        "login",
+        "reauthenticate",
+        "logout_all",
+        "recovery_reissue",
+        "recovery_exchange",
+        "recovery_complete"
+      ],
+      "title": "Action",
+      "type": "string"
+    },
+    "status": {
+      "const": "committed",
+      "title": "Status",
+      "type": "string"
+    },
+    "result_replayable": {
+      "const": false,
+      "title": "Result Replayable",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "schema_version",
+    "request_id",
+    "action",
+    "status",
+    "result_replayable"
+  ],
+  "title": "IdentityOperationReceipt",
+  "type": "object"
+}

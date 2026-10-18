@@ -1,0 +1,35 @@
+{
+  "cleanup_completed_before_evidence_write": true,
+  "five_member_row_counts": [
+    15,
+    15,
+    15,
+    15,
+    15
+  ],
+  "five_table_projection_sha256": "46bf8444cda3961a7a2eec005e9552524c582034d5801bfb1bf40342b3e47688",
+  "limitations": [
+    "One isolated local PostgreSQL cluster and synthetic setup records only.",
+    "VerifiedSetup input is a trusted-port test fixture, not live DSSE approval or production signing.",
+    "This is transaction evidence, not complete E-ADM-001—009 or BCG adapter-bypass evidence."
+  ],
+  "live_test_result": "28 passed in 6.13s",
+  "migration_sha256": "8841db30afb298719f30ece5f21cc9c46c806769f735e21adbe775d2fd367d13",
+  "outage_failed_closed": true,
+  "postgres_version": "postgres (PostgreSQL) 18.6",
+  "production_authorization": false,
+  "psycopg_version": "3.3.6",
+  "restart_projection_equal": true,
+  "schema": "class-os.synthetic-scope-allocation-transaction-evidence/v1",
+  "schema_contract_sha256": "93abf618b561c378145a0d85ba2fed843269e47f4a51a152848f2d4dc6a847b1",
+  "source_sha256": {
+    "../self-host/portable_recovery.py": "76f8ca8d62447c8a4ecb8f99a31ccb1d448c433784113589bd910aaf2a539a42",
+    "scope_allocation.py": "e1f69858d5bbc2855ce96a11d182a8e03ef23b18a99001efa49a11c78056a702",
+    "scope_allocation_drill.py": "775836e9aa2fa2d497355f16066550def882ba55a950e3fc7cdbbc74ea101639",
+    "scope_allocation_evidence.py": "64f471611f2373caba1ff70f11f01f2dc9ecea0fa3ba53a7a266fd4f429b5591",
+    "scope_allocation_schema.py": "9a8a0e3068996f8c2f3206d910f074fbc2916128421aad6f7634197445b2f872",
+    "tests/test_scope_allocation.py": "bdc3814ea0ec17ed83a86ed4b9cfd2ed82cc426f935c1eb0f4634e8957a2ff79",
+    "tests/test_scope_allocation_evidence.py": "43d38e940a8bc8815298ebb79aa72c7e71493c439366ed5d2d1818af46cb8191"
+  },
+  "synthetic_only": true
+}

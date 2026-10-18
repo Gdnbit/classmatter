@@ -1,0 +1,37 @@
+{
+  "$defs": {
+    "Protocol": {
+      "enum": [
+        "chat-completions",
+        "responses"
+      ],
+      "title": "Protocol",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "protocol": {
+      "$ref": "#/$defs/Protocol"
+    },
+    "model": {
+      "maxLength": 128,
+      "minLength": 1,
+      "title": "Model",
+      "type": "string"
+    },
+    "base_url": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Base Url",
+      "type": "string"
+    }
+  },
+  "required": [
+    "protocol",
+    "model",
+    "base_url"
+  ],
+  "title": "ModelConfigurationBody",
+  "type": "object"
+}

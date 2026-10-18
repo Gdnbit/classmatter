@@ -1,0 +1,1 @@
+export type Workspace = "conversation" | "dashboard" | "students" | "views" | "work" | "data" | "roster" | "spreadsheet" | "document" | "seat" | "dorm" | "group" | "inbox" | "automation" | "knowledge" | "reports" | "settings";

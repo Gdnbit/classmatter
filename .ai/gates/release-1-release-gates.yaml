@@ -1,0 +1,89 @@
+schema_version: 2
+release: class-os-r1
+artifact_role: immutable-release-gate-definition
+state_manifest: .ai/gates/release-1-release-gate-state.yaml
+approval_state: .ai/gates/release-1-definition-state.yaml
+signature_policy: .ai/gates/signed-artifact-policy.yaml
+task_definition_manifest: .ai/gates/release-1-task-definitions.yaml
+task_state_manifest: .ai/gates/release-1-tasks.yaml
+eval_definition_manifest: .ai/gates/release-1-evals.yaml
+eval_state_manifest: .ai/gates/release-1-eval-state.yaml
+
+global_conditions:
+  - definition_bundle_signature_matches_current_canonical_bundle_hash
+  - every_external_state_transition_artifact_matches_canonical_state_definition_bundle_release_and_target_commit
+  - required_task_evidence_conforms_to_signed_artifact_policy
+  - required_eval_evidence_binds_definition_runner_release_commit_and_environment
+  - task_definition_dag_is_acyclic_and_markdown_task_body_hashes_match
+  - unknown_field_role_stage_task_eval_or_artifact_fails_closed
+
+before_feature_task:
+  required_task_roots: [T-RGOV-004, T-REVAL-001, T-REVAL-002, T-REVAL-019, T-REVAL-020, T-RGOV-006]
+  required_eval_selector:
+    include_required_before: [first-feature-task]
+    unknown_required_before: fail
+  additional_conditions:
+    - exact_requirement_and_eval_definitions_approved
+    - architecture_approval_is_external_and_binds_architecture_adr_001_through_007_spikes_constraints_release_and_time
+    - adr_006_is_not_pending_or_unapproved
+    - every_feature_task_referenced_eval_is_executable_spec
+
+before_release_candidate:
+  required_task_roots: [T-REVAL-006, T-RPLT-012, T-RPLT-014, T-RPLT-017, T-RLIFE-001, T-RLIFE-002, T-RLIFE-003, T-RLIFE-004, T-RLIFE-005, T-RWEB-002, T-RWEB-003, T-RWEB-004, T-RWEB-005, T-RWEB-006, T-RAGT-004, T-REXP-003, T-ROPS-001, T-ROPS-002, T-ROPS-003, T-ROPS-004, T-ROPS-005, T-ROPS-006, T-ROPS-007]
+  required_eval_selector:
+    include: all_required_evals
+    exclude_required_before: [shadow, real-pilot, expansion]
+    unknown_required_before: fail
+  additional_conditions:
+    - every_selected_eval_is_implemented_green_with_exact_target_evidence
+    - actual_store_inventory_scanner_runs_inside_this_gate_against_exact_target_commit
+    - generated_inventory_and_approved_lifecycle_matrix_match_bidirectionally
+    - inventory_evidence_target_commit_equals_candidate_target_commit
+    - no_previously_generated_inventory_can_be_reused
+  produces_signed_gate_report: true
+
+before_pilot_readiness:
+  purpose: prove_full_release_readiness_before_scope_setup_or_admission_is_issued
+  required_task_roots: [T-RGOV-001, T-RGOV-002, T-RGOV-003, T-RGOV-004, T-RGOV-005, T-RLIFE-004, T-RREL-001, T-RREL-002, T-ROPS-001, T-ROPS-002, T-ROPS-003, T-ROPS-004, T-ROPS-005, T-ROPS-006, T-ROPS-007]
+  required_eval_selector:
+    include: all_required_evals
+    exclude_required_before: []
+    unknown_required_before: fail
+  additional_conditions:
+    - before_release_candidate_report_is_fetched_hashed_and_signature_validated
+    - shadow_and_value_decision_is_go_and_binds_same_target_commit
+    - every_required_eval_is_implemented_green_for_exact_target
+    - governance_processor_backup_restore_upgrade_retirement_and_exit_evidence_is_current
+    - no_scope_setup_or_real_data_admission_artifact_is_required_to_compute_readiness
+  produces_signed_gate_report: true
+
+before_any_real_write:
+  purpose: final_runtime_gate_after_empty_scope_allocation_and_external_admission
+  required_task_roots: [T-RREL-001, T-RREL-002, T-RPLT-012, T-RLIFE-005]
+  required_eval_selector:
+    include_required_before_exactly: any-real-write
+    expected_eval_ids: [E-EXIT-001, E-EXP-001, E-EXP-002, E-ADM-001, E-ADM-002, E-ADM-003, E-ADM-004, E-ADM-005, E-ADM-006, E-ADM-007, E-ADM-008, E-ADM-009]
+    expected_count: 12
+    unknown_required_before: fail
+  required_prior_reports: [before_release_candidate, before_pilot_readiness, shadow-value-decision]
+  required_external_artifacts: [scope-allocation-receipt, real-data-admission]
+  additional_conditions:
+    - every_selector_result_exactly_equals_expected_eval_ids_and_is_implemented_green
+    - candidate_and_pilot_readiness_reports_are_fetched_hashed_and_fully_signature_validated
+    - bare_attacker_chosen_or_unresolved_report_hash_is_invalid
+    - shadow_value_decision_is_go_and_signature_valid_for_same_target_commit
+    - scope_allocation_receipt_resolves_to_a_valid_single_consumed_setup_capability_that_binds_candidate_pilot_readiness_shadow_value_workspace_and_allocates_only_a_non-pii-scope-ledger
+    - admission_artifact_binds_all_reports_allocation_release_deployment_owner_workspace_class_term_modules_expiry_and_target_commit
+    - artifact_roles_quorum_key_usage_validity_revocation_and_replay_registry_all_validate
+    - exact_target_commit_store_inventory_is_current
+  runtime_mode_if_and_only_if_passed: approved-real-pilot
+  evaluate_at_startup_artifact_reload_and_before_every_business_write: true
+  setup_artifact_template: .ai/gates/real-data-scope-setup.example.yaml
+  admission_artifact_template: .ai/gates/real-data-admission.example.yaml
+  produces_signed_gate_report: true
+
+on_admission_expiry_revocation_report_or_scope_mismatch:
+  disable_business_writes: true
+  real_data_authorized_resolves_false: true
+  preserve_authorized_exit_export: true
+  emit_security_audit_without_student_payload: true

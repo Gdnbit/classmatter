@@ -1,0 +1,1 @@
+export const classContext = { schoolId: "synthetic-demo-school", classId: "synthetic-demo-class", termId: "2026-2027-s1", schoolName: "合成演示学校", className: "合成演示班", termName: "2026–2027学年上学期" } as const;

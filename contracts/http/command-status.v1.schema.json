@@ -1,0 +1,77 @@
+{
+  "$defs": {
+    "StatusReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "receipt_id": {
+          "format": "uuid",
+          "title": "Receipt Id",
+          "type": "string"
+        },
+        "resource_id": {
+          "format": "uuid",
+          "title": "Resource Id",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "receipt_id",
+        "resource_id",
+        "version"
+      ],
+      "title": "StatusReceipt",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.command-status.v1",
+      "default": "class-os.command-status.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "payload_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Payload Hash",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "committed",
+        "not_committed",
+        "unavailable"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "receipt": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/StatusReceipt"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "proposal_id",
+    "payload_hash",
+    "status",
+    "receipt"
+  ],
+  "title": "CommandStatusResponse",
+  "type": "object"
+}

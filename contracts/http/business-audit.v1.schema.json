@@ -1,0 +1,171 @@
+{
+  "$defs": {
+    "AuditEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "action": {
+          "enum": [
+            "command.preview",
+            "command.approve",
+            "command.reject",
+            "command.commit",
+            "command.status",
+            "roster.list",
+            "class.context",
+            "class.history",
+            "identifier.list",
+            "duplicate.list",
+            "activity.today",
+            "student.timeline",
+            "agent.run.started",
+            "agent.run.completed",
+            "agent.run.failed",
+            "agent.run.cancelled",
+            "exit.summary",
+            "exit.download",
+            "audit.list",
+            "model.config.read",
+            "model.test.started",
+            "model.test.completed",
+            "model.test.failed",
+            "model.enable",
+            "model.disable",
+            "model.invoke"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "allowed",
+            "denied"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "proposal_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Proposal Id"
+        },
+        "payload_hash": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Payload Hash"
+        },
+        "receipt_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Receipt Id"
+        },
+        "resource_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resource Id"
+        },
+        "resource_version": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resource Version"
+        }
+      },
+      "required": [
+        "event_id",
+        "action",
+        "outcome",
+        "occurred_at",
+        "proposal_id",
+        "payload_hash",
+        "receipt_id",
+        "resource_id",
+        "resource_version"
+      ],
+      "title": "AuditEntry",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.business-audit.v1",
+      "default": "class-os.business-audit.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "as_of": {
+      "format": "date-time",
+      "title": "As Of",
+      "type": "string"
+    },
+    "entries": {
+      "items": {
+        "$ref": "#/$defs/AuditEntry"
+      },
+      "maxItems": 100,
+      "title": "Entries",
+      "type": "array"
+    },
+    "truncated": {
+      "title": "Truncated",
+      "type": "boolean"
+    },
+    "partial_history": {
+      "const": true,
+      "title": "Partial History",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "as_of",
+    "entries",
+    "truncated",
+    "partial_history"
+  ],
+  "title": "AuditResponse",
+  "type": "object"
+}

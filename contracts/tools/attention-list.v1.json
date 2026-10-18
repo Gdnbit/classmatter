@@ -1,0 +1,37 @@
+{
+  "schema_version": "class-os.tool-contract.v1",
+  "version": 1,
+  "name": "attention_list",
+  "mode": "read",
+  "kind": "function",
+  "strict": null,
+  "description": "Read fresh authorized class work; no student narratives or sensitive record text.",
+  "parameters_json_schema": {
+    "additionalProperties": false,
+    "properties": {},
+    "type": "object"
+  },
+  "purpose": "Read current class or explicitly selected student work counts with a durable query receipt.",
+  "required_boundary": "query-gateway",
+  "reads": [
+    "current-authorized-work-projection"
+  ],
+  "steps": [
+    "revalidate-bound-scope",
+    "query-and-audit",
+    "return-fixed-counts-and-source-receipt"
+  ],
+  "output": "WorkSnapshot.tool_payload; internal identity and record text excluded.",
+  "side_effect": "no-business-write",
+  "confirmation": "none-for-read; scope is teacher-selected, never model-selected",
+  "forbidden": [
+    "repository-access",
+    "scope-retarget",
+    "approval",
+    "business-write",
+    "sql",
+    "ddl"
+  ],
+  "failure": "fail-run-without-answer-draft-or-new-history; no-class-fallback-or-automatic-retry",
+  "idempotency": "fresh-authorized-read-not-replay-of-history; durable-read-audit-is-appended"
+}

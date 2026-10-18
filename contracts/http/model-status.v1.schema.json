@@ -1,0 +1,112 @@
+{
+  "$defs": {
+    "ModelConfigurationBody": {
+      "additionalProperties": false,
+      "properties": {
+        "protocol": {
+          "$ref": "#/$defs/Protocol"
+        },
+        "model": {
+          "maxLength": 128,
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        },
+        "base_url": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Base Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "protocol",
+        "model",
+        "base_url"
+      ],
+      "title": "ModelConfigurationBody",
+      "type": "object"
+    },
+    "Protocol": {
+      "enum": [
+        "chat-completions",
+        "responses"
+      ],
+      "title": "Protocol",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.model-status.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "storage_available": {
+      "title": "Storage Available",
+      "type": "boolean"
+    },
+    "version": {
+      "minimum": 0,
+      "title": "Version",
+      "type": "integer"
+    },
+    "candidate_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Candidate Id"
+    },
+    "configuration": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ModelConfigurationBody"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "key_configured": {
+      "title": "Key Configured",
+      "type": "boolean"
+    },
+    "network_permitted": {
+      "title": "Network Permitted",
+      "type": "boolean"
+    },
+    "test_passed": {
+      "title": "Test Passed",
+      "type": "boolean"
+    },
+    "mode": {
+      "enum": [
+        "offline",
+        "configured-api",
+        "stale"
+      ],
+      "title": "Mode",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "storage_available",
+    "version",
+    "candidate_id",
+    "configuration",
+    "key_configured",
+    "network_permitted",
+    "test_passed",
+    "mode"
+  ],
+  "title": "ModelStatus",
+  "type": "object"
+}

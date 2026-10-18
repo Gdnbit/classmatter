@@ -1,0 +1,25 @@
+schema_version: 1
+release: class-os-r1
+artifact_role: mutable-release-gate-state
+definition_manifest: .ai/gates/release-1-release-gates.yaml
+definition_sha256: null
+definition_bundle_sha256: null
+target_release_digest: null
+target_commit: null
+implementation_authorized: false
+real_data_authorized: false
+gate_runs:
+  before_feature_task: {status: not-run, report: null}
+  before_release_candidate: {status: not-run, report: null}
+  before_pilot_readiness: {status: not-run, report: null}
+  before_any_real_write: {status: not-run, report: null}
+external_artifacts:
+  architecture_approval: null
+  shadow_value_decision: null
+  scope_setup: null
+  allocation_receipt: null
+  real_data_admission: null
+state_transition_artifact: null
+
+# Authorization booleans are verifier-derived outputs. Editing this state file
+# cannot authorize anything; unsigned or mismatched state always resolves false.

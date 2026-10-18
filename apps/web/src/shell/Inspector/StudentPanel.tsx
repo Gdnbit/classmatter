@@ -1,0 +1,1 @@
+export default function StudentPanel({activeStudent,onSelect}:any){return <section className="current-object"><p className="inspect-label">当前对象</p><div><span className="avatar large">{activeStudent.name[0]}</span><strong>{activeStudent.name}<small>{activeStudent.id} · {activeStudent.seat}</small></strong></div><button onClick={()=>onSelect(null)}>清除选择</button></section>}

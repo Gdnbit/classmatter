@@ -1,0 +1,934 @@
+{
+  "$defs": {
+    "ExitAuditReference": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "event_id": {
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "actor_id": {
+          "format": "uuid",
+          "title": "Actor Id",
+          "type": "string"
+        },
+        "purpose": {
+          "title": "Purpose",
+          "type": "string"
+        },
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "outcome": {
+          "title": "Outcome",
+          "type": "string"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "proposal_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Proposal Id"
+        },
+        "payload_hash": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Payload Hash"
+        },
+        "receipt_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Receipt Id"
+        },
+        "resource_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resource Id"
+        },
+        "resource_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Resource Version"
+        },
+        "class_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Class Id"
+        },
+        "term_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Term Id"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "event_id",
+        "actor_id",
+        "purpose",
+        "action",
+        "outcome",
+        "occurred_at",
+        "proposal_id",
+        "payload_hash",
+        "receipt_id",
+        "resource_id",
+        "resource_version",
+        "class_id",
+        "term_id"
+      ],
+      "title": "ExitAuditReference",
+      "type": "object"
+    },
+    "ExitCore": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace": {
+          "items": {
+            "$ref": "#/$defs/workspaceExitRow"
+          },
+          "maxItems": 10000,
+          "title": "Workspace",
+          "type": "array"
+        },
+        "academic_term": {
+          "items": {
+            "$ref": "#/$defs/academic_termExitRow"
+          },
+          "maxItems": 10000,
+          "title": "Academic Term",
+          "type": "array"
+        },
+        "school_class": {
+          "items": {
+            "$ref": "#/$defs/school_classExitRow"
+          },
+          "maxItems": 10000,
+          "title": "School Class",
+          "type": "array"
+        },
+        "student": {
+          "items": {
+            "$ref": "#/$defs/studentExitRow"
+          },
+          "maxItems": 10000,
+          "title": "Student",
+          "type": "array"
+        },
+        "enrollment": {
+          "items": {
+            "$ref": "#/$defs/enrollmentExitRow"
+          },
+          "maxItems": 10000,
+          "title": "Enrollment",
+          "type": "array"
+        },
+        "student_identifier": {
+          "items": {
+            "$ref": "#/$defs/student_identifierExitRow"
+          },
+          "maxItems": 10000,
+          "title": "Student Identifier",
+          "type": "array"
+        },
+        "record_revision": {
+          "items": {
+            "$ref": "#/$defs/record_revisionExitRow"
+          },
+          "maxItems": 10000,
+          "title": "Record Revision",
+          "type": "array"
+        },
+        "manual_task": {
+          "items": {
+            "$ref": "#/$defs/manual_taskExitRow"
+          },
+          "maxItems": 10000,
+          "title": "Manual Task",
+          "type": "array"
+        }
+      },
+      "required": [
+        "workspace",
+        "academic_term",
+        "school_class",
+        "student",
+        "enrollment",
+        "student_identifier",
+        "record_revision",
+        "manual_task"
+      ],
+      "title": "ExitCore",
+      "type": "object"
+    },
+    "LifecycleStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "complete": {
+          "const": false,
+          "title": "Complete",
+          "type": "boolean"
+        },
+        "missing": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing",
+          "type": "array"
+        }
+      },
+      "required": [
+        "complete",
+        "missing"
+      ],
+      "title": "LifecycleStatus",
+      "type": "object"
+    },
+    "academic_termExitRow": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "start_date": {
+          "format": "date",
+          "title": "Start Date",
+          "type": "string"
+        },
+        "end_date": {
+          "format": "date",
+          "title": "End Date",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "created_by": {
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        },
+        "updated_by": {
+          "format": "uuid",
+          "title": "Updated By",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "term_id",
+        "name",
+        "start_date",
+        "end_date",
+        "status",
+        "version",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "academic_termExitRow",
+      "type": "object"
+    },
+    "enrollmentExitRow": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "enrollment_id": {
+          "format": "uuid",
+          "title": "Enrollment Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valid To"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "created_by": {
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        },
+        "updated_by": {
+          "format": "uuid",
+          "title": "Updated By",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "enrollment_id",
+        "student_id",
+        "class_id",
+        "term_id",
+        "valid_from",
+        "valid_to",
+        "status",
+        "version",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "enrollmentExitRow",
+      "type": "object"
+    },
+    "manual_taskExitRow": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "student_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Student Id"
+        },
+        "source_record_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Record Id"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Due At"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence": {
+          "title": "Evidence",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "created_by": {
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        },
+        "updated_by": {
+          "format": "uuid",
+          "title": "Updated By",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "task_id",
+        "class_id",
+        "term_id",
+        "title",
+        "student_id",
+        "source_record_id",
+        "due_at",
+        "status",
+        "evidence",
+        "version",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "manual_taskExitRow",
+      "type": "object"
+    },
+    "record_revisionExitRow": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "record_id": {
+          "format": "uuid",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "recorded_by": {
+          "format": "uuid",
+          "title": "Recorded By",
+          "type": "string"
+        },
+        "fact_text": {
+          "title": "Fact Text",
+          "type": "string"
+        },
+        "observation_text": {
+          "title": "Observation Text",
+          "type": "string"
+        },
+        "source": {
+          "title": "Source",
+          "type": "string"
+        },
+        "related_record_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Related Record Id"
+        },
+        "revision_kind": {
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "revision_reason": {
+          "title": "Revision Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "record_id",
+        "version",
+        "class_id",
+        "term_id",
+        "student_id",
+        "kind",
+        "occurred_at",
+        "recorded_at",
+        "recorded_by",
+        "fact_text",
+        "observation_text",
+        "source",
+        "related_record_id",
+        "revision_kind",
+        "revision_reason"
+      ],
+      "title": "record_revisionExitRow",
+      "type": "object"
+    },
+    "school_classExitRow": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "created_by": {
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        },
+        "updated_by": {
+          "format": "uuid",
+          "title": "Updated By",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "class_id",
+        "term_id",
+        "name",
+        "status",
+        "version",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "school_classExitRow",
+      "type": "object"
+    },
+    "studentExitRow": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "created_by": {
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        },
+        "updated_by": {
+          "format": "uuid",
+          "title": "Updated By",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "student_id",
+        "name",
+        "status",
+        "version",
+        "created_by",
+        "updated_by",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "studentExitRow",
+      "type": "object"
+    },
+    "student_identifierExitRow": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "identifier_id": {
+          "format": "uuid",
+          "title": "Identifier Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "authority": {
+          "title": "Authority",
+          "type": "string"
+        },
+        "identifier_type": {
+          "title": "Identifier Type",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        },
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Valid To"
+        },
+        "created_by": {
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "identifier_id",
+        "student_id",
+        "authority",
+        "identifier_type",
+        "value",
+        "valid_from",
+        "valid_to",
+        "created_by",
+        "created_at"
+      ],
+      "title": "student_identifierExitRow",
+      "type": "object"
+    },
+    "workspaceExitRow": {
+      "additionalProperties": false,
+      "properties": {
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "data_mode": {
+          "title": "Data Mode",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "data_mode",
+        "created_at"
+      ],
+      "title": "workspaceExitRow",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.synthetic-core-exit.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "purpose": {
+      "const": "synthetic-core-recovery",
+      "title": "Purpose",
+      "type": "string"
+    },
+    "workspace_id": {
+      "format": "uuid",
+      "title": "Workspace Id",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "actor_refs": {
+      "items": {
+        "format": "uuid",
+        "type": "string"
+      },
+      "maxItems": 1,
+      "minItems": 1,
+      "title": "Actor Refs",
+      "type": "array"
+    },
+    "core": {
+      "$ref": "#/$defs/ExitCore"
+    },
+    "audit_refs": {
+      "items": {
+        "$ref": "#/$defs/ExitAuditReference"
+      },
+      "maxItems": 10000,
+      "title": "Audit Refs",
+      "type": "array"
+    },
+    "core_checksum": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Core Checksum",
+      "type": "string"
+    },
+    "package_checksum": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Package Checksum",
+      "type": "string"
+    },
+    "nonportable": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Nonportable",
+      "type": "array"
+    },
+    "lifecycle_status": {
+      "$ref": "#/$defs/LifecycleStatus"
+    }
+  },
+  "required": [
+    "schema_version",
+    "purpose",
+    "workspace_id",
+    "created_at",
+    "actor_refs",
+    "core",
+    "audit_refs",
+    "core_checksum",
+    "package_checksum",
+    "nonportable",
+    "lifecycle_status"
+  ],
+  "title": "ExitPackageResponse",
+  "type": "object"
+}

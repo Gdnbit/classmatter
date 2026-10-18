@@ -1,0 +1,432 @@
+{
+  "schema_version": 1,
+  "reviewed": [
+    {
+      "path": "apps/web/tests/runtime.mjs",
+      "line": 78,
+      "rule": "email-shape",
+      "line_sha256": "ee323a020e44d2310badd59d7611d8cfd296dac5bdf441811218e75632a86549",
+      "reason": "Reserved example/synthetic test email domain; no real project account."
+    },
+    {
+      "path": "backend/tests/test_database.py",
+      "line": 12,
+      "rule": "email-shape",
+      "line_sha256": "9de457043651456b575411c22137c7cfa1a35532c71e315bb2f699e360d0b567",
+      "reason": "Reserved example/synthetic test email domain; no real project account."
+    },
+    {
+      "path": "backend/tests/test_model_configuration.py",
+      "line": 64,
+      "rule": "email-shape",
+      "line_sha256": "0d5b8df2c86468d520964b35115e3994f0b0ea36ab32d24131b63365d9f59a25",
+      "reason": "Reserved example/synthetic test email domain; no real project account."
+    },
+    {
+      "path": "backend/tests/test_model_configuration.py",
+      "line": 142,
+      "rule": "email-shape",
+      "line_sha256": "6dc8b2eee8e4e77dd063c33f21f358b815c19a1be11466b688dfbc869b45bd36",
+      "reason": "Reserved example/synthetic test email domain; no real project account."
+    },
+    {
+      "path": "scripts/public_guard.py",
+      "line": 18,
+      "rule": "conversation-link",
+      "line_sha256": "16681ae447185151a1b75e45d8496086198e30df2f1c0fa821fdb4d4ceb5f967",
+      "reason": "Literal detector definition, not a conversation URL or identifier."
+    },
+    {
+      "path": "scripts/tests/test_generate_synthetic_fixtures.py",
+      "line": 75,
+      "rule": "phone-shape",
+      "line_sha256": "a3924964df847b9996619fa23d3559cd332d067bf82d10ec9382a2e012dd1da3",
+      "reason": "Existing synthetic privacy-detector test/definition; no imported human record."
+    },
+    {
+      "path": "scripts/tests/test_generate_synthetic_fixtures.py",
+      "line": 75,
+      "rule": "email-shape",
+      "line_sha256": "a3924964df847b9996619fa23d3559cd332d067bf82d10ec9382a2e012dd1da3",
+      "reason": "Reserved example/synthetic test email domain; no real project account."
+    },
+    {
+      "path": "scripts/tests/test_generate_synthetic_fixtures.py",
+      "line": 76,
+      "rule": "national-id-shape",
+      "line_sha256": "77b2365887c685a402c6ea16cdf902e89894660c7c423e943cb299fe8a534387",
+      "reason": "Existing synthetic privacy-detector test/definition; no imported human record."
+    },
+    {
+      "path": "scripts/verify-docs.ps1",
+      "line": 33,
+      "rule": "conversation-link",
+      "line_sha256": "3c33b86523ac9ba47ddaf2ffa2ec945da0be42b866f9820d343142200da906d8",
+      "reason": "Existing URL-scheme detector, not a real source conversation."
+    },
+    {
+      "path": "spikes/signature-envelope/tests/test_architecture_binding.py",
+      "line": 60,
+      "rule": "email-shape",
+      "line_sha256": "e38dd0b6de2a64ca4c4fda0c3d65c89c9dbc36d3fdd6f44475b07e188950033d",
+      "reason": "Reserved example/synthetic test email domain; no real project account."
+    },
+    {
+      "path": "spikes/signature-envelope/tests/test_architecture_binding.py",
+      "line": 166,
+      "rule": "email-shape",
+      "line_sha256": "056fbe3c114ee113d40c808b50219c126cc3f9563ea108bb888c577893e00914",
+      "reason": "Reserved example/synthetic test email domain; no real project account."
+    },
+    {
+      "path": "third_party/licenses/npm/_jridgewell_gen-mapping-0.3.13/LICENSE",
+      "line": 1,
+      "rule": "email-shape",
+      "line_sha256": "747930dadf592fa70b9f90368d6402241abc2a2aeda2ffc27c8f45c8560ee011",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/_jridgewell_remapping-2.3.5/LICENSE",
+      "line": 1,
+      "rule": "email-shape",
+      "line_sha256": "747930dadf592fa70b9f90368d6402241abc2a2aeda2ffc27c8f45c8560ee011",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/_jridgewell_resolve-uri-3.1.2/LICENSE",
+      "line": 1,
+      "rule": "email-shape",
+      "line_sha256": "39443438cab51aaeb0519b7477d8865ab2b9c9c3e3871a37f2fa88359993206a",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/_jridgewell_sourcemap-codec-1.5.5/LICENSE",
+      "line": 1,
+      "rule": "email-shape",
+      "line_sha256": "747930dadf592fa70b9f90368d6402241abc2a2aeda2ffc27c8f45c8560ee011",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/_jridgewell_trace-mapping-0.3.31/LICENSE",
+      "line": 1,
+      "rule": "email-shape",
+      "line_sha256": "747930dadf592fa70b9f90368d6402241abc2a2aeda2ffc27c8f45c8560ee011",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/eventsource-parser-4.1.1/LICENSE",
+      "line": 3,
+      "rule": "email-shape",
+      "line_sha256": "c61437c23750ed193ed5972f58f342f2a25c42a5579ef796073a2a8d84944ee6",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/jiti-2.6.1/LICENSE",
+      "line": 3,
+      "rule": "email-shape",
+      "line_sha256": "a953dc87e41b6bf293360c6f50fde4a24939adbb15a0149bd0eb099bc84d0413",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/nanoid-3.3.11/LICENSE",
+      "line": 3,
+      "rule": "email-shape",
+      "line_sha256": "83cf270374dae999026511d0eaf9345a8288a3db181138a3b02d4de55f516d57",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/postcss-8.5.8/LICENSE",
+      "line": 3,
+      "rule": "email-shape",
+      "line_sha256": "872b93440456936ac709bd70da818919734006de56061c49f8a9321d359cc929",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/require-from-string-2.0.2/license",
+      "line": 3,
+      "rule": "email-shape",
+      "line_sha256": "5356f2260ecac79a489f436fdd73cf80a9c585c8bc1dd0c1714d804ea4775935",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 36,
+      "rule": "email-shape",
+      "line_sha256": "d961b7daf0614effdf78ecc059faf781495a0bb16fe9e029412f81805893d306",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 63,
+      "rule": "email-shape",
+      "line_sha256": "7c8964eb8badab0411abfd4da4459682a303ede1d96750a60a5437e9af224940",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 432,
+      "rule": "email-shape",
+      "line_sha256": "45c4ff620713637dc1290ff9e8f3f7e521c7c318a6182054a481e37bc8d8cc37",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 487,
+      "rule": "email-shape",
+      "line_sha256": "45c4ff620713637dc1290ff9e8f3f7e521c7c318a6182054a481e37bc8d8cc37",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 504,
+      "rule": "email-shape",
+      "line_sha256": "e8a955d6560f8f3c0c3de095fcd08fb59dc812ec793fe6633d741aef92dca0e5",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 626,
+      "rule": "email-shape",
+      "line_sha256": "e11404613274c3f53a4d9aec0a51a98dacab444da9c456e4958371db75c97276",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 656,
+      "rule": "email-shape",
+      "line_sha256": "34475f704053c4ac82e98132408f526b39c4f619dc49f092a47bbd4fd5181b1c",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 744,
+      "rule": "email-shape",
+      "line_sha256": "32c4a5845e8db20f3fb72207c81c340f54b341c17e1197332118bc49287daf51",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 916,
+      "rule": "email-shape",
+      "line_sha256": "5311a8e6141e33b3cfbc922cc7c25796a1225558d8da291b7d6afebda22245d7",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 944,
+      "rule": "email-shape",
+      "line_sha256": "d7af7d07c11149bd60e000b05aa9d05385ecd2c24ebfd4cc7caa380d492cea70",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1097,
+      "rule": "email-shape",
+      "line_sha256": "0908bf4f34b896194d2e297f878f578418f0c7c94eb92facecc6d2890a46a4c7",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1379,
+      "rule": "email-shape",
+      "line_sha256": "248f06bdf44603f8d27e1785f7248631c871f2b911306a96f6e2385afa9edd22",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1408,
+      "rule": "email-shape",
+      "line_sha256": "4d41ca2d7c479877b37ca80844fe186c769351a03f3d7becdabbf5cdc434915e",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1466,
+      "rule": "email-shape",
+      "line_sha256": "80b21faa32ece1dccf9153dcb98cc404d64a4e403f7df607a1d1b306c4a068c5",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1496,
+      "rule": "email-shape",
+      "line_sha256": "c55c6b3471239f1322f487dd78645ffcda7735483b6de766709ccef02da59b29",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1526,
+      "rule": "email-shape",
+      "line_sha256": "0bf6699a5251d81a185ed243bae07d1e6b6315320dd9a798f08a7e3571a32fb2",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1527,
+      "rule": "email-shape",
+      "line_sha256": "f8930a3bb75cff5bd6a43b4769927bc439e467dee959bb84e41dc650fc95bd7f",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1555,
+      "rule": "email-shape",
+      "line_sha256": "30d813c70437f8d44416178146900421b07213391674c8f7e584550bdad978af",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1584,
+      "rule": "email-shape",
+      "line_sha256": "e77152e0824aa608df47b6b23225637713ab5e18c65c936283f0bd7f117e4ff7",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1585,
+      "rule": "email-shape",
+      "line_sha256": "5311a8e6141e33b3cfbc922cc7c25796a1225558d8da291b7d6afebda22245d7",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1615,
+      "rule": "email-shape",
+      "line_sha256": "80b21faa32ece1dccf9153dcb98cc404d64a4e403f7df607a1d1b306c4a068c5",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1697,
+      "rule": "email-shape",
+      "line_sha256": "fce94e18a79d4ea0df2288eed09a633d9e5aca52a2a57afa2f5e5ccfc92a2246",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1725,
+      "rule": "email-shape",
+      "line_sha256": "c243c57cb7d2800bdf419bdc5dfd3ad051633403d58f1afb6ecd8471d56123f3",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1766,
+      "rule": "email-shape",
+      "line_sha256": "b0a22df52f1e51309b538ec9878e9d1ee41c56d607c35f929e09f42cf69b967c",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1822,
+      "rule": "email-shape",
+      "line_sha256": "b6ec525426eb97b35b5bf382bff29f149709c6985f079b2990845d16c3c3091a",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1852,
+      "rule": "email-shape",
+      "line_sha256": "94a08740bbcda9587b8115d7f2f18cfe8c98112a7892824f00688ac7c0801abc",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1913,
+      "rule": "email-shape",
+      "line_sha256": "1ca44022e6173e2536b79993e01a55f96bb78b2849f89e4c2d5e52d4740cbea1",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1942,
+      "rule": "email-shape",
+      "line_sha256": "5feb6cd75e3613b698274489f69117c7ddf97294ecb845787403536092258103",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1959,
+      "rule": "email-shape",
+      "line_sha256": "05c78f5dbe4e4b908f276b469e2e44ca4f1cd9e0b079e8670b3abe169a31e897",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1998,
+      "rule": "email-shape",
+      "line_sha256": "e77152e0824aa608df47b6b23225637713ab5e18c65c936283f0bd7f117e4ff7",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 1999,
+      "rule": "email-shape",
+      "line_sha256": "71d06555faacc02dea52626f7894c473026757b90fe263b2bdc7c0198544b25a",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 2093,
+      "rule": "email-shape",
+      "line_sha256": "aa337e97513a2091e43c20a18ec7395414296ff84dd03e4444e31d2d3c9b46a0",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 2123,
+      "rule": "email-shape",
+      "line_sha256": "6c49f1f6777305d06c1d98d5a00f298e6c47cac751ab517b1d5e8f5cc36c3bae",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/npm/vite-8.0.5/LICENSE.md",
+      "line": 2211,
+      "rule": "email-shape",
+      "line_sha256": "8c00f67a6c33b39e9f426faead6d7e4ca46161e287e8ef95e3f1990e791f3f93",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/python/h11-0.16.0/0.txt",
+      "line": 3,
+      "rule": "email-shape",
+      "line_sha256": "433bac7b6413069ef4e18b0d4583c2a32b774e7202a195bc23697b1244a6abdf",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/python/python-dateutil-2.9.0.post0/0.txt",
+      "line": 1,
+      "rule": "email-shape",
+      "line_sha256": "8312ea75840956eddf80f7b148e39c93b1470730bb58c1ea8af63a0e8c950e54",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/python/python-dateutil-2.9.0.post0/0.txt",
+      "line": 22,
+      "rule": "email-shape",
+      "line_sha256": "8f36f5eee23cebea867a5290582a548949635399005c5e977bdcbff764cce9c7",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/python/python-dateutil-2.9.0.post0/0.txt",
+      "line": 23,
+      "rule": "email-shape",
+      "line_sha256": "be21e2cfa04e375a3f359e650d5f2220c1eb3844d4dd6bc649f7e6423d1c9c37",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/python/python-dateutil-2.9.0.post0/0.txt",
+      "line": 24,
+      "rule": "email-shape",
+      "line_sha256": "ee0ee7e4b5344d2dce2e449a4f2d8a74f901586fac638b204c06e17eba3cbd42",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/python/python-dateutil-2.9.0.post0/0.txt",
+      "line": 25,
+      "rule": "email-shape",
+      "line_sha256": "b567882c16d0727a9ab06c911ecac8f769da430eb32a04ca63846df740dc69d5",
+      "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    }
+  ]
+}

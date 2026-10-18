@@ -1,0 +1,70 @@
+{
+  "$defs": {
+    "HistoricalClass": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "term_name": {
+          "title": "Term Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "name",
+        "term_name",
+        "version",
+        "status"
+      ],
+      "title": "HistoricalClass",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.roster.v1",
+      "default": "class-os.roster.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "data": {
+      "items": {
+        "$ref": "#/$defs/HistoricalClass"
+      },
+      "title": "Data",
+      "type": "array"
+    }
+  },
+  "required": [
+    "data"
+  ],
+  "title": "HistoryResponse",
+  "type": "object"
+}

@@ -1,0 +1,47 @@
+{
+  "schema_version": "class-os.tool-contract.v1",
+  "version": 1,
+  "name": "record_note_draft",
+  "mode": "record-note-draft",
+  "kind": "function",
+  "strict": null,
+  "description": "Quote this user's current message verbatim into one unverified note candidate. Never chooses a student, time or fact type, saves, approves, or commits.",
+  "parameters_json_schema": {
+    "additionalProperties": false,
+    "properties": {
+      "note_quote": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "note_quote"
+    ],
+    "type": "object"
+  },
+  "purpose": "Excerpt current user-authored notes for manual Record review, never invent or verify a fact.",
+  "required_boundary": "authorized-ephemeral-agent-context",
+  "reads": [
+    "current-user-message-verbatim-only"
+  ],
+  "steps": [
+    "verify-verbatim-current-message-span",
+    "bind-code-point-span-and-sha256",
+    "handoff-to-trusted-record-form"
+  ],
+  "output": "Unverified note quote/span/hash candidate, without student, event time, type, record ID or command. Quote is limited to 1000 code points.",
+  "side_effect": "ephemeral-candidate-only",
+  "confirmation": "teacher-selects-student-type-time-and-reviews-edits-text-before-original-BCG-preview-and-confirmation",
+  "forbidden": [
+    "invention",
+    "history-as-source",
+    "identity-resolution",
+    "inferred-event-time",
+    "saved-fact",
+    "approval",
+    "business-write",
+    "sql",
+    "ddl"
+  ],
+  "failure": "fail-run-without-answer-draft-or-new-history; no-automatic-retry-or-commit",
+  "idempotency": "one-candidate-per-run; no-durable-command-or-verified-fact"
+}

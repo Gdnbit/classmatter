@@ -1,0 +1,53 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "command": {
+      "const": "class.create",
+      "title": "Command",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "term_name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Term Name",
+      "type": "string"
+    },
+    "start_date": {
+      "format": "date",
+      "title": "Start Date",
+      "type": "string"
+    },
+    "end_date": {
+      "format": "date",
+      "title": "End Date",
+      "type": "string"
+    }
+  },
+  "required": [
+    "command",
+    "class_id",
+    "term_id",
+    "name",
+    "term_name",
+    "start_date",
+    "end_date"
+  ],
+  "title": "ClassBody",
+  "type": "object"
+}

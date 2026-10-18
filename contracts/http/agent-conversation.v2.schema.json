@@ -1,0 +1,58 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.agent-conversation.v2",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "conversation_id": {
+      "format": "uuid",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "memory": {
+      "const": "ephemeral-not-fact",
+      "title": "Memory",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "student_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Student Id"
+    }
+  },
+  "required": [
+    "schema_version",
+    "conversation_id",
+    "expires_at",
+    "memory",
+    "class_id",
+    "term_id",
+    "student_id"
+  ],
+  "title": "ScopedConversationResponse",
+  "type": "object"
+}

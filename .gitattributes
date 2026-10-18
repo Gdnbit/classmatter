@@ -1,0 +1,18 @@
+# Publication hashes describe audited bytes: do not rewrite legacy files at checkout.
+# This preserves existing LF/CRLF bytes, rather than migrating their encoding/EOL.
+* -text
+# These generated fixtures have an exact-byte contract, including LF.
+# Do not normalize unrelated source or historical documents.
+evals/class-os-v1/fixtures/r1/*.synthetic.json text eol=lf
+# Standalone validator drift checking is also exact-byte across checkouts.
+apps/web/src/runtime/identity-validators.cjs text eol=lf
+apps/web/src/runtime/model-configuration-validator.cjs text eol=lf
+apps/web/src/runtime/agent-conversation-validators.cjs text eol=lf
+apps/web/src/runtime/command-receipts-validators.cjs text eol=lf
+# New release inventories are deterministic LF, not a legacy-source conversion.
+PUBLIC*.json text eol=lf
+SECRET_SCAN_REVIEW.json text eol=lf
+third_party/*.json text eol=lf
+# Preserve upstream legal notice bytes; do not reformat their CRLF/trailing spaces.
+# Exact notice and public-manifest hashes still detect any content mutation.
+third_party/licenses/** -text whitespace=cr-at-eol,-blank-at-eol,-blank-at-eof

@@ -1,0 +1,9 @@
+{
+  "name": "class-os-synthetic-stream-browser-spike",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.12" },
+  "scripts": { "test": "node --test client.test.mjs" },
+  "dependencies": { "eventsource-parser": "4.1.1" }
+}

@@ -1,0 +1,80 @@
+{
+  "data": {
+    "records": [
+      {
+        "correlation_id": "15c19a63-c9fe-56fb-9bf8-796391be158d",
+        "kind": "attendance_late_fact",
+        "occurred_at": "2026-09-01T07:55:00+08:00",
+        "record_id": "572bb91f-b9c1-57b2-a2ea-63c6ee5eb8da",
+        "recorded_at": "2026-09-01T08:00:00+08:00",
+        "source": "trusted-ui-synthetic",
+        "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      },
+      {
+        "correlation_id": "15c19a63-c9fe-56fb-9bf8-796391be158d",
+        "kind": "homework_missing_fact",
+        "occurred_at": "2026-09-01T07:50:00+08:00",
+        "record_id": "11f2c9aa-c32a-52a0-9598-53b38b4e8037",
+        "recorded_at": "2026-09-01T08:01:00+08:00",
+        "source": "trusted-ui-synthetic",
+        "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      },
+      {
+        "corrects_or_follows": "11f2c9aa-c32a-52a0-9598-53b38b4e8037",
+        "correlation_id": "15c19a63-c9fe-56fb-9bf8-796391be158d",
+        "kind": "homework_submitted_fact",
+        "occurred_at": "2026-09-01T09:05:00+08:00",
+        "record_id": "e3ab3af8-3cf8-5b25-97a5-c25288e0c36c",
+        "recorded_at": "2026-09-01T09:06:00+08:00",
+        "source": "trusted-ui-synthetic",
+        "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      }
+    ],
+    "students": [
+      {
+        "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+        "display_name": "合成学生甲",
+        "status": "active",
+        "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+        "term_id": "b35babf5-4f8f-53db-809c-3f923b537fd8",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      },
+      {
+        "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+        "display_name": "合成学生乙",
+        "status": "active",
+        "student_id": "383b2592-ce58-5770-aec1-80d17e2f9763",
+        "term_id": "b35babf5-4f8f-53db-809c-3f923b537fd8",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      }
+    ],
+    "tasks": [
+      {
+        "due_at": "2026-09-01T17:00:00+08:00",
+        "responsibility_state": "owner_confirmed",
+        "source_ref": "572bb91f-b9c1-57b2-a2ea-63c6ee5eb8da",
+        "state": "open",
+        "task_id": "1af454a4-d081-514b-8957-d28dc358608e",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      }
+    ]
+  },
+  "meta": {
+    "clock": "2026-09-01T08:00:00+08:00",
+    "contains_real_person_data": false,
+    "provenance": "deterministic-fixture-factory",
+    "purpose": "fact-event-task-timeline",
+    "schema": "class-os.synthetic-fixture/v1",
+    "seed": 20260921,
+    "synthetic": true
+  }
+}

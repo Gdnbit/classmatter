@@ -1,0 +1,938 @@
+{
+  "$defs": {
+    "ChangeTaskBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "enum": [
+            "task.update",
+            "task.complete",
+            "task.cancel"
+          ],
+          "title": "Command",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "not-started",
+            "in-progress",
+            "waiting",
+            "done",
+            "cancelled"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Evidence",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "change_due_date": {
+          "default": false,
+          "title": "Change Due Date",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "command",
+        "task_id",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "status"
+      ],
+      "title": "ChangeTaskBody",
+      "type": "object"
+    },
+    "ClassBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "class.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "term_name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Term Name",
+          "type": "string"
+        },
+        "start_date": {
+          "format": "date",
+          "title": "Start Date",
+          "type": "string"
+        },
+        "end_date": {
+          "format": "date",
+          "title": "End Date",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "class_id",
+        "term_id",
+        "name",
+        "term_name",
+        "start_date",
+        "end_date"
+      ],
+      "title": "ClassBody",
+      "type": "object"
+    },
+    "ClassChangeBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "enum": [
+            "class.update",
+            "class.archive"
+          ],
+          "title": "Command",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "name"
+      ],
+      "title": "ClassChangeBody",
+      "type": "object"
+    },
+    "DeactivateBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "student.deactivate",
+          "title": "Command",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "command",
+        "student_id",
+        "class_id",
+        "term_id",
+        "expected_version"
+      ],
+      "title": "DeactivateBody",
+      "type": "object"
+    },
+    "ExitBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "exit_export.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "export_id": {
+          "format": "uuid",
+          "title": "Export Id",
+          "type": "string"
+        },
+        "expected_core_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Expected Core Hash",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "export_id",
+        "expected_core_hash"
+      ],
+      "title": "ExitBody",
+      "type": "object"
+    },
+    "IdentifierBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "student.update_identifier",
+          "title": "Command",
+          "type": "string"
+        },
+        "identifier_id": {
+          "format": "uuid",
+          "title": "Identifier Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "authority": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Authority",
+          "type": "string"
+        },
+        "identifier_type": {
+          "enum": [
+            "school_number",
+            "exam_number"
+          ],
+          "title": "Identifier Type",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        },
+        "valid_from": {
+          "format": "date-time",
+          "title": "Valid From",
+          "type": "string"
+        },
+        "valid_to": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Valid To"
+        },
+        "supersedes_identifier_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Supersedes Identifier Id"
+        }
+      },
+      "required": [
+        "command",
+        "identifier_id",
+        "student_id",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "authority",
+        "identifier_type",
+        "value",
+        "valid_from"
+      ],
+      "title": "IdentifierBody",
+      "type": "object"
+    },
+    "ModelControlBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "enum": [
+            "model_configuration.save",
+            "model_configuration.clear"
+          ],
+          "title": "Command",
+          "type": "string"
+        },
+        "candidate_id": {
+          "format": "uuid",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 0,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "protocol": {
+          "anyOf": [
+            {
+              "enum": [
+                "chat-completions",
+                "responses"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Protocol"
+        },
+        "model": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Model"
+        },
+        "base_url": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Base Url"
+        }
+      },
+      "required": [
+        "command",
+        "candidate_id",
+        "expected_version",
+        "protocol",
+        "model",
+        "base_url"
+      ],
+      "title": "ModelControlBody",
+      "type": "object"
+    },
+    "RecordBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "record.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "record_id": {
+          "format": "uuid",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "attendance_late_fact",
+            "attendance_absent_fact",
+            "leave_requested_fact",
+            "leave_approved_fact",
+            "leave_returned_fact",
+            "homework_missing_fact",
+            "homework_submitted_fact",
+            "ordinary_fact",
+            "teacher_observation",
+            "discipline_fact",
+            "conversation_fact"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "fact_text": {
+          "maxLength": 2000,
+          "title": "Fact Text",
+          "type": "string"
+        },
+        "observation_text": {
+          "maxLength": 2000,
+          "title": "Observation Text",
+          "type": "string"
+        },
+        "related_record_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Related Record Id"
+        }
+      },
+      "required": [
+        "command",
+        "record_id",
+        "class_id",
+        "term_id",
+        "student_id",
+        "kind",
+        "occurred_at",
+        "fact_text",
+        "observation_text"
+      ],
+      "title": "RecordBody",
+      "type": "object"
+    },
+    "ReviseBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "enum": [
+            "record.correct",
+            "record.supersede"
+          ],
+          "title": "Command",
+          "type": "string"
+        },
+        "record_id": {
+          "format": "uuid",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "fact_text": {
+          "maxLength": 2000,
+          "title": "Fact Text",
+          "type": "string"
+        },
+        "observation_text": {
+          "maxLength": 2000,
+          "title": "Observation Text",
+          "type": "string"
+        },
+        "reason": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "record_id",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "fact_text",
+        "observation_text",
+        "reason"
+      ],
+      "title": "ReviseBody",
+      "type": "object"
+    },
+    "StudentBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "student.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_class_version": {
+          "minimum": 1,
+          "title": "Expected Class Version",
+          "type": "integer"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "student_id",
+        "class_id",
+        "term_id",
+        "expected_class_version",
+        "name"
+      ],
+      "title": "StudentBody",
+      "type": "object"
+    },
+    "StudentNameBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "student.update_name",
+          "title": "Command",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "previous_name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Previous Name",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "student_id",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "previous_name",
+        "name"
+      ],
+      "title": "StudentNameBody",
+      "type": "object"
+    },
+    "TaskBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "task.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "student_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Student Id"
+        },
+        "source_record_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Record Id"
+        }
+      },
+      "required": [
+        "command",
+        "task_id",
+        "class_id",
+        "term_id",
+        "title"
+      ],
+      "title": "TaskBody",
+      "type": "object"
+    },
+    "TermBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "term.update",
+          "title": "Command",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "previous_name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Previous Name",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "previous_start_date": {
+          "format": "date",
+          "title": "Previous Start Date",
+          "type": "string"
+        },
+        "start_date": {
+          "format": "date",
+          "title": "Start Date",
+          "type": "string"
+        },
+        "previous_end_date": {
+          "format": "date",
+          "title": "Previous End Date",
+          "type": "string"
+        },
+        "end_date": {
+          "format": "date",
+          "title": "End Date",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "previous_name",
+        "name",
+        "previous_start_date",
+        "start_date",
+        "previous_end_date",
+        "end_date"
+      ],
+      "title": "TermBody",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.roster.v1",
+      "default": "class-os.roster.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "payload_hash": {
+      "title": "Payload Hash",
+      "type": "string"
+    },
+    "risk": {
+      "enum": [
+        "W1",
+        "W2"
+      ],
+      "title": "Risk",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "payload": {
+      "discriminator": {
+        "mapping": {
+          "class.archive": "#/$defs/ClassChangeBody",
+          "class.create": "#/$defs/ClassBody",
+          "class.update": "#/$defs/ClassChangeBody",
+          "exit_export.create": "#/$defs/ExitBody",
+          "model_configuration.clear": "#/$defs/ModelControlBody",
+          "model_configuration.save": "#/$defs/ModelControlBody",
+          "record.correct": "#/$defs/ReviseBody",
+          "record.create": "#/$defs/RecordBody",
+          "record.supersede": "#/$defs/ReviseBody",
+          "student.create": "#/$defs/StudentBody",
+          "student.deactivate": "#/$defs/DeactivateBody",
+          "student.update_identifier": "#/$defs/IdentifierBody",
+          "student.update_name": "#/$defs/StudentNameBody",
+          "task.cancel": "#/$defs/ChangeTaskBody",
+          "task.complete": "#/$defs/ChangeTaskBody",
+          "task.create": "#/$defs/TaskBody",
+          "task.update": "#/$defs/ChangeTaskBody",
+          "term.update": "#/$defs/TermBody"
+        },
+        "propertyName": "command"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ClassBody"
+        },
+        {
+          "$ref": "#/$defs/StudentBody"
+        },
+        {
+          "$ref": "#/$defs/ClassChangeBody"
+        },
+        {
+          "$ref": "#/$defs/TermBody"
+        },
+        {
+          "$ref": "#/$defs/StudentNameBody"
+        },
+        {
+          "$ref": "#/$defs/DeactivateBody"
+        },
+        {
+          "$ref": "#/$defs/IdentifierBody"
+        },
+        {
+          "$ref": "#/$defs/RecordBody"
+        },
+        {
+          "$ref": "#/$defs/ReviseBody"
+        },
+        {
+          "$ref": "#/$defs/TaskBody"
+        },
+        {
+          "$ref": "#/$defs/ChangeTaskBody"
+        },
+        {
+          "$ref": "#/$defs/ExitBody"
+        },
+        {
+          "$ref": "#/$defs/ModelControlBody"
+        }
+      ],
+      "title": "Payload"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "payload_hash",
+    "risk",
+    "expires_at",
+    "payload"
+  ],
+  "title": "PreviewResponse",
+  "type": "object"
+}

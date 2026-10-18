@@ -1,0 +1,225 @@
+{
+  "$defs": {
+    "ActivityData": {
+      "additionalProperties": false,
+      "properties": {
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        },
+        "records": {
+          "items": {
+            "$ref": "#/$defs/RecordView"
+          },
+          "title": "Records",
+          "type": "array"
+        },
+        "tasks": {
+          "items": {
+            "$ref": "#/$defs/TaskView"
+          },
+          "title": "Tasks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "as_of",
+        "records",
+        "tasks"
+      ],
+      "title": "ActivityData",
+      "type": "object"
+    },
+    "RecordView": {
+      "additionalProperties": false,
+      "properties": {
+        "record_id": {
+          "format": "uuid",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "recorded_at": {
+          "format": "date-time",
+          "title": "Recorded At",
+          "type": "string"
+        },
+        "fact_text": {
+          "title": "Fact Text",
+          "type": "string"
+        },
+        "observation_text": {
+          "title": "Observation Text",
+          "type": "string"
+        },
+        "source": {
+          "const": "trusted-ui-synthetic",
+          "title": "Source",
+          "type": "string"
+        },
+        "related_record_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Related Record Id"
+        },
+        "revision_kind": {
+          "enum": [
+            "create",
+            "correct",
+            "supersede"
+          ],
+          "title": "Revision Kind",
+          "type": "string"
+        },
+        "revision_reason": {
+          "title": "Revision Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_id",
+        "version",
+        "student_id",
+        "kind",
+        "occurred_at",
+        "recorded_at",
+        "fact_text",
+        "observation_text",
+        "source",
+        "related_record_id",
+        "revision_kind",
+        "revision_reason"
+      ],
+      "title": "RecordView",
+      "type": "object"
+    },
+    "TaskView": {
+      "additionalProperties": false,
+      "properties": {
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "student_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Student Id"
+        },
+        "source_record_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Record Id"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Due At"
+        },
+        "status": {
+          "enum": [
+            "not-started",
+            "in-progress",
+            "waiting",
+            "done",
+            "cancelled"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence": {
+          "title": "Evidence",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "integer"
+        },
+        "overdue": {
+          "title": "Overdue",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "task_id",
+        "title",
+        "student_id",
+        "source_record_id",
+        "due_at",
+        "status",
+        "evidence",
+        "version",
+        "overdue"
+      ],
+      "title": "TaskView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.activity.v1",
+      "default": "class-os.activity.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "data": {
+      "$ref": "#/$defs/ActivityData"
+    }
+  },
+  "required": [
+    "data"
+  ],
+  "title": "ActivityResponse",
+  "type": "object"
+}

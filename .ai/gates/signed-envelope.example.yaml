@@ -1,0 +1,26 @@
+schema_version: 2
+artifact_role: invalid-dsse-envelope-example
+envelope:
+  payloadType: application/vnd.class-os.example-never-valid.v1+json
+  payload: INVALID-BASE64-PAYLOAD
+  signatures:
+    - {keyid: UNTRUSTED-LOOKUP-HINT, sig: INVALID-BASE64-SIGNATURE}
+decoded_payload_shape:
+  schema_version: 1
+  artifact_type: example-never-valid
+  artifact_id: EXAMPLE-NEVER-VALID
+  lifecycle: reusable-attestation
+  issued_at: NEVER
+  not_before: REQUIRED
+  expires_at: REQUIRED
+  nonce: REQUIRED
+  target_release_digest: REQUIRED
+  target_commit: REQUIRED
+  registry: {generation: REQUIRED, sha256: REQUIRED}
+  required_roles: []
+  required_key_usage: REQUIRED
+  referenced_artifact_ids: []
+
+# DSSE authenticates exact payloadType and decoded payload bytes. Role, signer,
+# usage, validity and revocation come from the pinned external registry, never
+# from unsigned signature metadata. Repository examples are always rejected.

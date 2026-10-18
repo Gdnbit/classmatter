@@ -1,0 +1,36 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "class-os.identity-logout-receipt.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "action": {
+      "const": "logout",
+      "title": "Action",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "committed",
+        "not_committed"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "request_id",
+    "action",
+    "status"
+  ],
+  "title": "IdentityLogoutReceipt",
+  "type": "object"
+}

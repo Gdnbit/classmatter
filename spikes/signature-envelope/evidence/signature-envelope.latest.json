@@ -1,0 +1,100 @@
+{
+  "coverage": {
+    "negative_classes": [
+      "payload/payloadType/signature mutation",
+      "target commit and definition hash mutation",
+      "duplicate key and NFC collision",
+      "self reference",
+      "missing role and duplicate principal",
+      "wrong key usage and revoked key/artifact",
+      "missing required signed field",
+      "old/same-generation/broken-chain registry",
+      "expiry",
+      "wrong lifecycle and consumption",
+      "one-time lifecycle fake idempotency and conflict (not transaction evidence)",
+      "wrong root and missing registry quorum",
+      "validly re-signed stale or foreign trusted context",
+      "strict per-artifact required and unknown fields",
+      "reference cycle and unresolved reference",
+      "key status required and inactive key quorum denial",
+      "scope setup operation/allocation and external reference-verifier fail-closed port",
+      "nested admission receipt/report context binding",
+      "receipt owner/class/term scope, reference type/digest and closed module-set mismatch",
+      "referenced artifact policy-role quorum mismatch",
+      "setup and admission shadow decisions require a verified go result",
+      "shadow decision enum and receipt forbidden business content",
+      "mutable state content-hash and verified transition binding",
+      "concrete rooted URI scheme/authority/traversal/size/UTF-8/duplicate-envelope rejection",
+      "fetched payload digest, DSSE signature, expected type and trusted-context mismatch",
+      "recursive concrete-reference cycle, depth and node bounds",
+      "artifact-id and nonce collision through an explicit non-durable test ledger",
+      "candidate/pilot gate identity, distinctness and release-level versus workspace-level scope",
+      "opened-handle identity and concurrent resolver-session isolation",
+      "PostgreSQL concurrent idempotency, artifact-id/nonce conflicts, rollback, restart persistence and outage fail-closed",
+      "generic closure direct-admission bypass, missing/tampered/swapped catalog, wrong target type/digest, revoked/expired catalog or target, and concurrent root sessions",
+      "Windows real junction and final-component post-precheck junction replacement rejected by native handle reparse check"
+    ],
+    "official_vectors": [
+      "DSSE PAE",
+      "RFC 8032 Ed25519 test 1",
+      "RFC 8785 sample and property ordering"
+    ]
+  },
+  "data_mode": "synthetic-only",
+  "decision": "accept-dsse-rfc8785-ed25519-for-development",
+  "decision_date": "2026-09-22",
+  "definition_hashes": {
+    ".ai/gates/signature-canonicalization-test-vectors.yaml": "ba893d3c62da84b2f26492c9f44f2f7f25f6cb034b8d1c1160fb292da938f85f",
+    ".ai/gates/signed-artifact-policy.yaml": "13fb4be25d5d4be3091312735d88a2fd7de64d2c35715e306cb332359f8f2fef",
+    "spikes/signature-envelope/migrations/001_artifact_identity_ledger.sql": "2a30f831557ac18627a05199c4553e612fda84279c597d6a888e143375f16f8f"
+  },
+  "dependency_versions": {
+    "cryptography": "50.0.1",
+    "in-toto": "3.1.0",
+    "psycopg": "3.3.6",
+    "rfc8785": "0.1.4",
+    "securesystemslib": "1.5.1"
+  },
+  "follow_on_task_ids": [
+    "T-REVAL-020"
+  ],
+  "licenses": {
+    "cryptography": "Apache-2.0 OR BSD-3-Clause",
+    "in-toto": "Apache-2.0",
+    "psycopg": "LGPL-3.0-only",
+    "rfc8785": "Apache-2.0",
+    "securesystemslib": "MIT"
+  },
+  "not_runtime_components": [
+    "online signing service",
+    "online key registry service",
+    "Sigstore transparency log dependency",
+    "per-artifact approval microservice"
+  ],
+  "official_sources": {
+    "dsse": "https://github.com/secure-systems-lab/dsse/blob/master/protocol.md",
+    "github_attestations": "https://docs.github.com/en/actions/concepts/security/artifact-attestations",
+    "rfc8032": "https://www.rfc-editor.org/rfc/rfc8032.html#section-7.1",
+    "rfc8785": "https://www.rfc-editor.org/rfc/rfc8785.html"
+  },
+  "production_authorization": false,
+  "proven_components": [
+    "one local verifier library",
+    "one independently root/quorum-verified role-key registry snapshot",
+    "table-driven artifact policy and trusted context binding",
+    "verified nested-artifact result contract with type, digest, lifecycle and exact scope binding",
+    "bounded rooted artifact-store fetch with strict envelope parse, payload digest and DSSE/policy verification",
+    "recursive nested-reference cycle/depth/node limits and fail-closed identity-ledger port",
+    "PostgreSQL database-enforced durable artifact-id and nonce uniqueness with concurrent/restart/outage evidence",
+    "parent-signed generic ID/type/digest and catalog binding with DSSE-verified locator-only catalog closure",
+    "Windows flat-root final-component CreateFileW no-follow and same-handle reparse/containment checks under protected-root assumption"
+  ],
+  "removed_component": "CLASS-OS-SIGNATURE-V1 custom byte framing",
+  "required_but_not_proven_here": [
+    "protected production root-pin installation and rotation ceremony",
+    "PostgreSQL transaction for setup consumption, allocation, ledger, audit and immutable receipt",
+    "production artifact-root ACL, parent-namespace protection, rotation and deployment self-check"
+  ],
+  "schema_version": 1,
+  "task_id": "T-REVAL-019"
+}

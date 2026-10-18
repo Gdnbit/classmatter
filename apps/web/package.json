@@ -1,0 +1,38 @@
+{
+  "name": "@classmatter/web",
+  "private": true,
+  "version": "1.0.0",
+  "packageManager": "pnpm@11.19.0",
+  "engines": {
+    "node": ">=22 <25"
+  },
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/generate-identity.mjs --check && node scripts/generate-model-configuration.mjs --check && node scripts/generate-agent-conversation.mjs --check && node scripts/generate-command-receipts.mjs --check && vite",
+    "build": "node scripts/generate-identity.mjs --check && node scripts/generate-model-configuration.mjs --check && node scripts/generate-agent-conversation.mjs --check && node scripts/generate-command-receipts.mjs --check && vite build",
+    "typecheck": "node scripts/generate-identity.mjs --check && node scripts/generate-model-configuration.mjs --check && node scripts/generate-agent-conversation.mjs --check && node scripts/generate-command-receipts.mjs --check && node --test tests/identity.mjs tests/model-configuration.mjs tests/agent-conversation.mjs tests/command-receipts.mjs tests/api-errors.mjs tests/local-time.mjs tests/term-metadata.mjs && tsc --noEmit",
+    "preview": "vite preview",
+    "format": "oxfmt"
+  },
+  "dependencies": {
+    "eventsource-parser": "4.1.1",
+    "lucide-react": "^1.41.0",
+    "luxon": "3.7.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "ajv": "8.17.1",
+    "@playwright/test": "1.64.0",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/luxon": "3.7.6",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.0.0",
+    "oxfmt": "^0.2.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "vite": "^8.0.5"
+  }
+}

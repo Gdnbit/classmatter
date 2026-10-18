@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Class OS · 合成事件流验收</title>
+<style>body{font:16px system-ui;margin:40px auto;max-width:900px;padding:0 24px;color:#24332c;background:white}button{padding:12px 20px;cursor:pointer}li{margin:14px 0}pre{white-space:pre-wrap;background:#f2f4f3;padding:20px}small{color:#53665c}</style>
+<h1>Class OS · 合成事件流验收</h1>
+<p>仅隔离测试，不是正式产品界面。FunctionModel 替身 · 无真实数据 · 无数据库写入。</p>
+<button id="run">运行固定验收</button>
+<p id="summary" role="status" aria-live="polite">尚未运行</p>
+<ol id="results"></ol>
+<pre id="live" aria-live="polite">运行后逐条显示生命周期事件</pre>
+<small>不保存 capability、正文或真实用户信息。关闭页面不代表正式业务状态已恢复。</small>
+<script nonce="__NONCE__" type="importmap">{"imports":{"eventsource-parser":"/spike/assets/vendor/index.js"}}</script>
+<script nonce="__NONCE__" type="application/json" id="config">__CONFIG__</script>
+<script type="module" src="/spike/assets/runner.mjs"></script>
+</html>

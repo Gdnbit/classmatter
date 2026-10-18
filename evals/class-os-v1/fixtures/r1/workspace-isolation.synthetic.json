@@ -1,0 +1,60 @@
+{
+  "data": {
+    "classes": [
+      {
+        "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+        "display_name": "合成七年级甲班",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      },
+      {
+        "class_id": "c0b643c6-ea84-5141-b898-f122edce7718",
+        "display_name": "合成七年级甲班",
+        "version": 1,
+        "workspace_id": "de1e3e99-ab2f-5402-a010-70178811d1cb"
+      }
+    ],
+    "cross_workspace_expected_outcome": "forbidden_not_found_safe",
+    "students": [
+      {
+        "class_id": "7808f5ba-2034-5448-8ed0-1bb1ca2afa91",
+        "display_name": "合成学生甲",
+        "status": "active",
+        "student_id": "724e36db-5e37-5742-a940-a1054f1d0358",
+        "term_id": "b35babf5-4f8f-53db-809c-3f923b537fd8",
+        "version": 1,
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      },
+      {
+        "class_id": "c0b643c6-ea84-5141-b898-f122edce7718",
+        "display_name": "合成学生甲",
+        "status": "active",
+        "student_id": "978c2ee2-ce31-5f45-a0e2-24313987db9c",
+        "term_id": "0274dea5-3c9d-5f44-86d6-e9a8453174a0",
+        "version": 1,
+        "workspace_id": "de1e3e99-ab2f-5402-a010-70178811d1cb"
+      }
+    ],
+    "workspaces": [
+      {
+        "label": "合成工作区甲",
+        "owner_id": "925a7d49-07ea-5652-9640-567aa467780b",
+        "workspace_id": "fbe426a9-03a1-57d7-a9ad-30181603cc75"
+      },
+      {
+        "label": "合成工作区乙",
+        "owner_id": "1d7089c5-e07f-529f-8c2d-4989422388ac",
+        "workspace_id": "de1e3e99-ab2f-5402-a010-70178811d1cb"
+      }
+    ]
+  },
+  "meta": {
+    "clock": "2026-09-01T08:00:00+08:00",
+    "contains_real_person_data": false,
+    "provenance": "deterministic-fixture-factory",
+    "purpose": "workspace-isolation",
+    "schema": "class-os.synthetic-fixture/v1",
+    "seed": 20260921,
+    "synthetic": true
+  }
+}
