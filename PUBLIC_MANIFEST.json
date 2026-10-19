@@ -78,16 +78,16 @@
       "sha256": "077a04a3f165aa86879c25faba6f5c214488d6dcdd0418599633675b459f06f4"
     },
     "README.md": {
-      "sha256": "77fefedc88e75619bbb17c88b676e0f08e862c1d77d8bd151c2489b6758fa383"
+      "sha256": "9003299633b7f1d1d4cd0c60d0374020ac70cf65df6b17d7283efa9a52da9107"
     },
     "README_EN.md": {
-      "sha256": "d30b90fca42da4ee8e9809683046953816d8fbd752fcb133b4e424fd2af760ff"
+      "sha256": "7e5c6fefb60d37736d6d60db8069a7eef355d21f6614cffa46d6d64f9b0ca67d"
     },
     "SECRET_SCAN_REVIEW.json": {
       "sha256": "9a0d9c5eb4dcd43f5d09006dafd35bfacff2ed92f95a3f492608114fd8e112b8"
     },
     "SECURITY.md": {
-      "sha256": "aa2b0423d8f3a1081c666c28ad55844060a813746a1fe71c020771f2c83e06d5"
+      "sha256": "a01aa939e57b66ca64e80c91216ab046d8eb20eb0e19e60f6de04a8649f729eb"
     },
     "THIRD_PARTY_NOTICES.md": {
       "sha256": "4d4bec36a80589a75a8468048b4e26845f119c200fdfc5519786d617d5a6c260"
@@ -898,10 +898,10 @@
       "sha256": "ebd1b8b3f025618b6bac39a90d986c089638454b51d97f4ef515eed68c6e855f"
     },
     "docs/OPEN_SOURCE_READINESS.md": {
-      "sha256": "2fccc0a81e7cb7719263097271f7353d8aa450c905e80b700807a1c2e0fb6a2c"
+      "sha256": "3369909f6cf0235f1897ac295a87755a6dc9cea941d2f66e9b69f9300c002157"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "a5c7cedfa4a4aa22061b7d78d7d58e4f1ded1bc76f4e3748667c87db6952543d"
+      "sha256": "a5a2a033eeb4904aa8fc3eebb20b9d211773414c2163d06b956d2786249b442c"
     },
     "docs/README.md": {
       "sha256": "c7680ca632dcb00fd08ebd08e537b5a2671c0d8ef5d88aee02098907bde3915f"
