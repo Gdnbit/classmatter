@@ -26,4 +26,4 @@ Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任�
 
 保留 107 项需求、147 项 Eval、94 个原子任务及其源行哈希；合成开发准入不代表正式 task/eval promotion。`scripts/verify.ps1` 为统一入口，`all` 包括 disposable PG/浏览器与 spikes；正式 security target 与真实数据/发布签名另受 Gate 管理。
 
-本公开候选不携带原历史、原始访谈、私人指令、个人截图、旧档案或运行数据。原子任务表与机器 Gate 保持原字节，避免更名破坏哈希；其历史字样只是技术兼容。依赖及来源权利必须单独核验，公开状态以 [readiness](OPEN_SOURCE_READINESS.md) 为准。
+本公开仓库不携带原开发仓库历史、原始访谈、私人指令、个人截图、旧档案或运行数据。原子任务表与机器 Gate 保持原字节，避免更名破坏哈希；其历史字样只是技术兼容。依赖及来源权利必须单独核验，公开状态以 [readiness](OPEN_SOURCE_READINESS.md) 为准。

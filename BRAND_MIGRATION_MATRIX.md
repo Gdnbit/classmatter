@@ -1,6 +1,6 @@
 # ClassMatter brand and compatibility matrix
 
-Public brand: **班事有谱 · ClassMatter**. Formerly Class OS / class-teacher-workbench. The new GitHub name is a plan, not an existing or authorized public remote.
+Public brand: **班事有谱 · ClassMatter**. Formerly Class OS / class-teacher-workbench. The independent public GitHub repository is **Gdnbit/classmatter**; the original development repository remains Private.
 
 | Surface | Status | Reason / validation |
 |---|---|---|
@@ -18,7 +18,7 @@ Public brand: **班事有谱 · ClassMatter**. Formerly Class OS / class-teacher
 | `docs/specs/class-os-v1/`, frozen atomic-task table wording | PRESERVED_FOR_COMPATIBILITY | Paths and full rows are used by verifiers; historical technical words are not new public marketing |
 | Synthetic-policy authorization record path | PRESERVED_FOR_COMPATIBILITY | Fixed verifier anchor; content replaced with non-identifying technical summary, not original instructions |
 | Local-runtime path, backups, DPAPI | PRESERVED_FOR_COMPATIBILITY | Never touch user instances, credentials or stored data for branding |
-| Original Git history and remote URL | DEFERRED_WITH_REASON | Private source untouched; candidate inherits none, no push configured |
+| Original Git history and remote URL | PRESERVED_PRIVATELY | Private source untouched; public repository was created from a separate clean initial commit, with no inherited source refs |
 | New Python distribution name | DEFERRED_WITH_REASON | No functional benefit without package/version diagnostic migration; preserve lock and runtime behavior |
 | Logo and screenshot set | DEFERRED_WITH_REASON | Text brand is sufficient; no unreviewed visual assets published |
 
