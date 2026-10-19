@@ -1,5 +1,7 @@
 # ClassMatter public candidate audit
 
+> **Current visibility (2026-10-19):** The repository is now **Public / Pre-alpha**. The audit below describes the earlier isolated private candidate and should be read as a historical snapshot, not as a live statement of visibility or an approval of formal R1, deployment, or real-data handling.
+
 This is a safe summary, not private evidence or an anonymity guarantee. **Isolated Private GitHub candidate, Pre-alpha / synthetic-only; Public visibility and GitHub Release have not been authorized.** The owner selected Apache-2.0/Gdnbit attribution and confirmed project/prototype redistribution rights.
 
 Source was exported through a SHA-locked private allowlist to a new local directory with no original Git history or remote, then committed once into an isolated Private GitHub repository. Its initial commit has no parents; the original source repository remains Private. Private research, source ledgers, images, archives, operational logs and databases are not transferred. Useful product conclusions are abstracted without quotations, interview dates or private source IDs. Explicitly synthetic demo labels replace unverified prototype name/school provenance.
