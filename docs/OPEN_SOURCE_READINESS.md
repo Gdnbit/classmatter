@@ -1,5 +1,9 @@
 # ClassMatter publication readiness
 
+> **Current status (2026-10-19):** GitHub currently shows this repository as **Public / Pre-alpha**. The private-publication workflow below is retained as a historical record from before the visibility change. Its private-status wording is no longer current. Public source availability does not imply formal R1 acceptance, production deployment, or approval to process real student data.
+
+## Historical preparation record
+
 **Private Pre-alpha candidate — PUSHED TO AN ISOLATED PRIVATE REPOSITORY; PUBLICATION NOT AUTHORIZED.** This repository has one independent initial commit, with no inherited source-repository history. No GitHub Release or Public visibility change has been approved. The original development repository remains private and unchanged.
 
 The owner selected Apache-2.0, Gdnbit copyright attribution, and confirmed redistribution rights for project/prototype code. Root LICENSE and NOTICE are present. The complete local Windows engineering suite passed; Windows and Ubuntu remote CI checks passed on the isolated private initial commit (see [public audit](PUBLIC_AUDIT.md) for exact scope and limitations). Private GitHub artifacts are inaccessible through the connector and are not transferred; available run/job metadata and logs were separately inspected. No trademark clearance is claimed. Do not reuse a private repository's platform history for this candidate.
