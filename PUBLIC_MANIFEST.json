@@ -1057,7 +1057,7 @@
       "sha256": "32fe60502d9b9587797f4022d9e50751f29eefa17b4087ae2cb31638a7d31796"
     },
     "scripts/tests/test_ci_workflow.py": {
-      "sha256": "3877d89b99808255044abb1d3e581239e8f0ea0ff6b36339e98b2c1bb00d6fe6"
+      "sha256": "1c839bf737aa27cc6d0ffa8e18275e7d4a37b99e8ccfcd73884ceddd5bf3090c"
     },
     "scripts/tests/test_generate_synthetic_fixtures.py": {
       "sha256": "6c1074c4227fea921b9096e6b2f563499c2851bf80f0976b32655cf59b5ba478",

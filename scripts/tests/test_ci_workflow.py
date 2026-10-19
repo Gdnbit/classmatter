@@ -1,4 +1,4 @@
-"""CI is a read-only engineering baseline, never synthetic release authority."""
+"""GitHub Actions must keep publication checks mandatory and CI read-only."""
 import copy
 from pathlib import Path
 import re
@@ -9,36 +9,69 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[2]
+ACTION = re.compile(r"(?:actions/(?:checkout|setup-python|setup-node)|astral-sh/setup-uv)@[0-9a-f]{40}")
 
 
 def validate(document):
-    if set(document.get("jobs", {})) != {"baseline"}:
-        raise ValueError("Only the declared baseline job")
+    jobs = document.get("jobs", {})
+    if set(jobs) != {"public-safety", "baseline"}:
+        raise ValueError("Only mandatory public-safety and conditional full baseline jobs")
     if document.get("permissions") != {"contents": "read"}:
         raise ValueError("Read-only workflow required")
-    if set(document.get("on", {})) != {"push", "pull_request", "workflow_dispatch"}:
+    events = document.get("on", {})
+    if set(events) != {"push", "pull_request", "workflow_dispatch"}:
         raise ValueError("No elevated pull request or chained workflow trigger")
-    job = document["jobs"]["baseline"]
-    if job.get("permissions") or job.get("continue-on-error") or job.get("environment"):
-        raise ValueError("No elevated permissions, deployment or suppressed failure")
-    if job["strategy"]["matrix"]["os"] != ["ubuntu-24.04", "windows-2025"]:
+    if events["push"] != {"branches": ["main"]}:
+        raise ValueError("No duplicate feature branch push builds")
+    if document.get("concurrency", {}).get("cancel-in-progress") is not True:
+        raise ValueError("Stale runs must be cancellable")
+
+    safety, full = jobs["public-safety"], jobs["baseline"]
+    if safety.get("if") or safety.get("needs"):
+        raise ValueError("Public safety must never be conditional on another job")
+    if safety.get("runs-on") != "ubuntu-24.04":
+        raise ValueError("Mandatory public checks must run on Ubuntu")
+    if safety.get("outputs", {}).get("docs_only") != "${{ steps.scope.outputs.docs_only }}":
+        raise ValueError("Explicit classifier output required")
+
+    if full.get("needs") != "public-safety":
+        raise ValueError("Full baseline must depend on mandatory public safety")
+    if full.get("if") != "needs.public-safety.outputs.docs_only != 'true'":
+        raise ValueError("Only the reviewed docs-only decision may skip full engineering")
+    if full["strategy"].get("fail-fast") is not False or full["strategy"]["matrix"]["os"] != ["ubuntu-24.04", "windows-2025"]:
         raise ValueError("Declared cross-host baseline required")
-    steps = job["steps"]
-    for step in steps:
-        if step.get("continue-on-error"):
-            raise ValueError("Failure must remain visible")
-        action = step.get("uses")
-        if action and not re.fullmatch(r"(?:actions/(?:checkout|setup-python|setup-node)|astral-sh/setup-uv)@[0-9a-f]{40}", action):
-            raise ValueError("Reviewed SHA-pinned action required")
-    if steps[0]["with"] != {"persist-credentials": False, "fetch-depth": 0}:
-        raise ValueError("No persisted credentials; scan all reachable publication history")
+
+    for name, job in jobs.items():
+        if any(job.get(key) for key in ("permissions", "continue-on-error", "environment")):
+            raise ValueError("No elevated permissions, deployment or suppressed failure")
+        steps = job["steps"]
+        if not steps or steps[0].get("with") != {"persist-credentials": False, "fetch-depth": 0}:
+            raise ValueError("No persisted credentials; full reachable history is mandatory")
+        for step in steps:
+            if step.get("continue-on-error"):
+                raise ValueError("Failure must remain visible")
+            action = step.get("uses")
+            if action and not ACTION.fullmatch(action):
+                raise ValueError("Reviewed SHA-pinned action required")
+
     serialized = yaml.safe_dump(document)
     if "secrets." in serialized or "-Suite all" in serialized or "-Suite security" in serialized:
-        raise ValueError("Not a secret-enabled or formal-release job")
-    runs = "\n".join(step.get("run", "") for step in steps)
-    required = ("--frozen-lockfile", "-Suite backend", "-Suite web", "-Suite db", "unittest discover", "task-graph", "development", "fixtures", "docs", "scripts/public_guard.py", "scripts/scan_public.py --history")
-    if any(command not in runs for command in required):
-        raise ValueError("Baseline verification missing")
+        raise ValueError("Not a secret-enabled or formal-release workflow")
+
+    public_steps = safety["steps"]
+    if sum(step.get("id") == "scope" and "scripts/ci_change_scope.py" in step.get("run", "") for step in public_steps) != 1:
+        raise ValueError("A single fail-closed scope classifier is required")
+    public_commands = "\n".join(step.get("run", "") for step in public_steps)
+    for command in ("scripts/public_guard.py --require-license", "scripts/scan_public.py --history",
+                    "test_ci_change_scope.py", "-Suite docs"):
+        if command not in public_commands:
+            raise ValueError("Mandatory publication/documentation check missing: " + command)
+
+    baseline_commands = "\n".join(step.get("run", "") for step in full["steps"])
+    for command in ("--frozen-lockfile", "-Suite backend", "-Suite web", "-Suite db",
+                    "unittest discover", "task-graph", "development", "fixtures", "eval-meta", "gate-graph"):
+        if command not in baseline_commands:
+            raise ValueError("Full engineering verification missing: " + command)
 
 
 class CiWorkflowTests(unittest.TestCase):
@@ -76,8 +109,8 @@ class CiWorkflowTests(unittest.TestCase):
         self.assertIn("Signed-By: /usr/share/postgresql-common/pgdg/class-os-postgresql.asc", repository)
 
     def test_elevated_permission_rejected(self):
-        for mutate in (lambda document: document["permissions"].update(contents="write"),
-                       lambda document: document["jobs"].update(deploy={"permissions": {"contents": "write"}})):
+        for mutate in (lambda d: d["permissions"].update(contents="write"),
+                       lambda d: d["jobs"].update(deploy={"permissions": {"contents": "write"}})):
             document = copy.deepcopy(self.document)
             mutate(document)
             with self.assertRaises(ValueError):
@@ -89,7 +122,7 @@ class CiWorkflowTests(unittest.TestCase):
             validate(self.document)
 
     def test_floating_action_rejected(self):
-        self.document["jobs"]["baseline"]["steps"][0]["uses"] = "actions/checkout@v7"
+        self.document["jobs"]["public-safety"]["steps"][0]["uses"] = "actions/checkout@v7"
         with self.assertRaises(ValueError):
             validate(self.document)
 
@@ -109,13 +142,37 @@ class CiWorkflowTests(unittest.TestCase):
             validate(self.document)
 
     def test_missing_publication_guard_rejected(self):
-        for step in self.document["jobs"]["baseline"]["steps"]:
+        for step in self.document["jobs"]["public-safety"]["steps"]:
             if "scripts/public_guard.py" in step.get("run", ""):
                 step["run"] = "echo missing-check"
         with self.assertRaises(ValueError):
             validate(self.document)
 
+    def test_missing_history_secret_scan_rejected(self):
+        for step in self.document["jobs"]["public-safety"]["steps"]:
+            if "scripts/scan_public.py --history" in step.get("run", ""):
+                step["run"] = step["run"].replace("scripts/scan_public.py --history", "scripts/scan_public.py")
+        with self.assertRaises(ValueError):
+            validate(self.document)
+
+    def test_missing_classifier_rejected(self):
+        for step in self.document["jobs"]["public-safety"]["steps"]:
+            if step.get("id") == "scope":
+                step["run"] = "echo docs_only=true"
+        with self.assertRaises(ValueError):
+            validate(self.document)
+
+    def test_public_safety_conditional_rejected(self):
+        self.document["jobs"]["public-safety"]["if"] = "false"
+        with self.assertRaises(ValueError):
+            validate(self.document)
+
+    def test_full_baseline_bypass_rejected(self):
+        self.document["jobs"]["baseline"]["if"] = "false"
+        with self.assertRaises(ValueError):
+            validate(self.document)
+
     def test_shallow_history_rejected(self):
-        self.document["jobs"]["baseline"]["steps"][0]["with"]["fetch-depth"] = 1
+        self.document["jobs"]["public-safety"]["steps"][0]["with"]["fetch-depth"] = 1
         with self.assertRaises(ValueError):
             validate(self.document)
