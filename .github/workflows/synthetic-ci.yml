@@ -1,8 +1,9 @@
 name: ClassMatter synthetic and public-content checks (not release admission)
 
 "on":
+  # PRs run once; we no longer duplicate push+PR builds for codex/** branches.
   push:
-    branches: [main, "codex/**"]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -14,8 +15,47 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  public-safety:
+    name: Public content, secrets and docs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: "3.13.12"
+      - name: Classify documentation-only changes (fail closed)
+        id: scope
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          CI_HEAD: ${{ github.sha }}
+          CI_BEFORE: ${{ github.event.before }}
+          CI_PR_BASE: ${{ github.event.pull_request.base.sha }}
+        run: |
+          python scripts/ci_change_scope.py --event "$CI_EVENT" --head "$CI_HEAD" \
+            --before "$CI_BEFORE" --pr-base "$CI_PR_BASE" --github-output "$GITHUB_OUTPUT"
+      - name: CI scope regression tests
+        run: python -m unittest discover -s scripts/tests -p 'test_ci_change_scope.py' -v
+      - name: Reviewed public contents and pinned history secret scan
+        run: |
+          python scripts/public_guard.py --require-license
+          python scripts/scan_public.py --history
+      - name: Markdown UTF-8 and link validation
+        run: pwsh -NoProfile -File ./scripts/verify.ps1 -Suite docs
+
   baseline:
-    name: Static, contracts and Web / ${{ matrix.os }}
+    name: Full engineering / ${{ matrix.os }}
+    needs: public-safety
+    if: needs.public-safety.outputs.docs_only != 'true'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 20
     strategy:
@@ -49,17 +89,11 @@ jobs:
           enable-cache: false
       - name: Verifier dependencies
         run: python -m pip install -r scripts/requirements-verify.txt
-      - name: Reviewed public contents and pinned secret scan
-        run: |
-          python scripts/public_guard.py
-          if ($LASTEXITCODE -ne 0) { throw 'Unreviewed public content' }
-          python scripts/scan_public.py --history
-          if ($LASTEXITCODE -ne 0) { throw 'Unresolved secret finding' }
       - name: Repository pnpm version
         run: npm install --global pnpm@11.19.0
-      - name: Canonical SDD, development scope, fixtures and links
+      - name: Canonical SDD, development scope and fixtures
         run: |
-          foreach ($suite in @('self', 'eval-meta', 'gate-graph', 'task-graph', 'development', 'fixtures', 'docs')) {
+          foreach ($suite in @('self', 'eval-meta', 'gate-graph', 'task-graph', 'development', 'fixtures')) {
             & ./scripts/verify.ps1 -Suite $suite
             if ($LASTEXITCODE -ne 0) { throw "Verification failed: $suite" }
           }
@@ -93,5 +127,6 @@ jobs:
         if: matrix.os == 'ubuntu-24.04'
         run: pwsh -NoProfile -File ./scripts/verify.ps1 -Suite db -PostgresRoot /usr/lib/postgresql/18/bin
 
-# Deliberately not verify all: Windows PG/Edge/DPAPI and all spike drills,
-# formal target-bound evals remain separate. No deployment or promotion.
+# Manual runs and ambiguous changes always take the full route.
+# Skipping the baseline never skips the SHA-256 public guard, history secret
+# scan, or Markdown validation. No deployment or release authorization.

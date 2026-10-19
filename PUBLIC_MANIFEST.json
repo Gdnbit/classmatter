@@ -51,7 +51,7 @@
       "sha256": "c5b195dd96f32a9f0156dafbe8a6438a7d28e33d7ce151f9b75f5dec3361ee3b"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "36485fc3dec0a2510f0fe6a3f8b7824dbdb2afc0eac8a296f3483c0b827f67d9"
+      "sha256": "774c0ae897d4d363aa5f23e7cf0cf938a9426b0d91dd0284c8f69535fac5454b"
     },
     ".gitignore": {
       "sha256": "dfa0bb56fe82d7a5e310b58ca0d1948ceb13c3e09db894a8e4ab1f8b21ed2f7b"
@@ -1036,7 +1036,7 @@
       "sha256": "c5ccebbfa6d96a72c5bb748070d21630150f5d6940dc53207b338943a4f6becc"
     },
     "scripts/README.md": {
-      "sha256": "fbaa93c829a504751ce88fbc07cf396e435920979b900237daeb3b5c8fe6328e"
+      "sha256": "4461cf5c34e262f6eb6a238c8e6707b5167aff9b7c1bdc57f2bd3c91b754ff34"
     },
     "scripts/generate_synthetic_fixtures.py": {
       "sha256": "c8ad345bd8258d575186bd3b49348e6a96207623f086dc6f0a7e37895e7b8fbc"
@@ -2028,6 +2028,12 @@
     },
     "third_party/supplemental-license-review.json": {
       "sha256": "339532c31fda00b2a65a17c5b27001815344c6fdab953a3d543d80ac94497903"
+    },
+    "scripts/ci_change_scope.py": {
+      "sha256": "adc54882dd375752ccbb87c5c83541d3034bc08a49a25880424df5da9732ac71"
+    },
+    "scripts/tests/test_ci_change_scope.py": {
+      "sha256": "f3353464cb5a15ee76e5baacc8d2661fe5ffccaff0dc3a2d3f672d3ed5871570"
     }
   }
 }
