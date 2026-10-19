@@ -8,7 +8,7 @@ An AI-assisted workspace for class records, follow-up tasks, timelines, and trac
 
 Owner setup/login → classroom/roster → typed records and tasks → Today/student timeline → correction preview and explicit approval → versioned audit. The optional Pydantic AI adapter provides queries and drafts, not business-write or approval tools. User triage is not organizational assignment or a liability determination. AI inference never automatically becomes a canonical fact.
 
-Windows  + PowerShell 7, Node 22–24, pnpm 11.19.0, Python 3.13, uv 0.11.7 and PostgreSQL 18.6 binaries are required for the persistent local entry point. DPAPI protects local secrets; this is not a production or portable cross-host deployment template. See the [Chinese installation commands](README.md), [backend guide](backend/README.md) and [engineering map](docs/ENGINEERING_OVERVIEW.md).
+Windows + PowerShell 7, Node 22–24, pnpm 11.19.0, Python 3.13, uv 0.11.7 and PostgreSQL 18.6 binaries are required for the persistent local entry point. DPAPI protects local secrets; this is not a production or portable cross-host deployment template. See the [Chinese installation commands](README.md), [backend guide](backend/README.md) and [engineering map](docs/ENGINEERING_OVERVIEW.md).
 
 Real-provider quality, representative teacher research, full lifecycle/recovery and formal release admission remain incomplete. Passing synthetic tests does not approve real data or production use.
 
