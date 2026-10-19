@@ -1,108 +1,133 @@
-# ClassMatter · 班事有谱
+<div align="center">
 
-**Every class matter matters.**
+<h1>ClassMatter · 班事有谱</h1>
 
-**An Agent-native Personal Class OS for homeroom teachers.** ClassMatter turns scattered observations, notes, messages and follow-ups into a coherent, traceable working context: what happened, what needs attention, what changed, and what was actually done.
+<p><strong>Every class matter matters.</strong></p>
 
-[简体中文](README.md) · [Our philosophy](#six-product-principles) · [Product](#from-a-single-record-to-a-class-workspace) · [Architecture](#agent-native-without-ceding-authority-to-the-model) · [Quick start](#quick-start) · [Docs](#documentation)
+<p>An <strong>Agent-native Personal Class OS</strong> for homeroom teachers.<br>Turn scattered records and follow-ups into coherent, traceable working memory.</p>
 
-> **Open Source · Pre-alpha · Apache-2.0.** The public repository contains a runnable synthetic-data development edition. Use of real student records or production operation requires separate admission.
+<p>
+<a href="README.md">简体中文</a> ·
+<a href="#-product-philosophy">Philosophy</a> ·
+<a href="#-capabilities">Capabilities</a> ·
+<a href="#-system-design">Architecture</a> ·
+<a href="#-quick-start">Quick Start</a> ·
+<a href="#-documentation">Docs</a>
+</p>
 
-## Why ClassMatter?
+<p>
+<a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-64748b"></a>
+<a href=".github/workflows/synthetic-ci.yml"><img alt="Synthetic CI" src="https://github.com/Gdnbit/classmatter/actions/workflows/synthetic-ci.yml/badge.svg"></a>
+<img alt="Stage: Pre-alpha" src="https://img.shields.io/badge/stage-pre--alpha-64748b">
+</p>
 
-A homeroom teacher's job is not a collection of isolated forms. A late arrival, an absence, a conversation, or a missing assignment may lead to a next action, a deadline, a handoff, or a later correction. Yet much of that context lives across spreadsheets, messages, paper notes and someone's memory.
+</div>
 
-**We want the work to have a memory without making the teacher its storage engine.**
+---
 
-ClassMatter starts with an actionable, reviewable thread: **record → follow-up → Today → Student Timeline → correction and audit**. It is designed around continuity and accountability, not just digitizing a notebook.
+## ✦ Why ClassMatter?
 
-## Six product principles
+A homeroom teacher manages more than forms and spreadsheets. An absence, conversation or new instruction may lead to a follow-up, deadline, handoff or later correction.
 
-### 01 · The unit of work is a matter, not a table
+The real challenge is often **fragmented information, disconnected actions, unclear responsibility and lost context**.
 
-An event has a subject, source, time and meaning; some events produce tasks; tasks have outcomes. A useful workspace preserves those relationships so information can be used again, not merely stored once.
+> **ClassMatter is an external working memory for class affairs.** Instead of creating another ledger to maintain, we want every record to become a useful starting point for the next action.
 
-### 02 · Reduce passive responsibility pressure, not just typing time
+<div align="center">
 
-Notification overload, unclear ownership, missing handoffs and retrospective accountability are major sources of hidden work. Our priority questions are: **what happened, what action is required, why, by whom, by when, what is its status, and where is the evidence?**
+**Record → Task → Today → Student Timeline → Correction & Audit**
 
-An incoming message is not itself an accepted responsibility. The system supports understanding and traceability without assigning organizational or legal responsibility on the teacher's behalf.
+</div>
 
-### 03 · Facts, observations and AI inferences carry different authority
+## ✦ Product philosophy
 
-The model distinguishes **Domain Fact, Observation, Claim, Evidence, Derived Signal, AI Inference and Draft**. A model-generated hypothesis must not become a formal fact simply because it appeared in chat or memory.
+Six principles shape how ClassMatter works and how it grows.
 
-Likewise, working context, conversation memory, knowledge, RAG indexes and canonical business data have different roles. Sources, validity and version matter.
+| | |
+| :--- | :--- |
+| **01 · Work around the matter** <p>Not another table</p> | Connect records, subjects, sources, time, tasks and outcomes. A matter should remain actionable after its first entry. |
+| **02 · Reduce passive responsibility pressure** <p>More than fewer clicks</p> | Clarify what needs action, why, who owns it, when it is due and where the evidence lives. An incoming message is not an accepted responsibility. |
+| **03 · Keep epistemic boundaries** <p>Evidence is not inference</p> | Domain Fact, Observation, Claim, Evidence, AI Inference and Draft are not interchangeable. Chat memory must not turn a hypothesis into a formal fact. |
+| **04 · AI helps; people decide** <p>Assistance is not authority</p> | The Agent can retrieve, explain and draft. Trusted gateways own permissions, deterministic rules, risk, approval and committed changes. |
+| **05 · Grow from a stable core** <p>Governed, not improvised</p> | Evolve from Stable Kernel through Domain Packs and Controlled Extensions; no unbounded fact table or Agent-driven schema mutation. |
+| **06 · Optimize for net burden** <p>Not demo speed</p> | Measure review, error correction, backlog, onboarding and maintenance alongside time saved. Remove automation that does not deliver net value. |
 
-### 04 · AI understands and assists; domain rules decide
+**The goal is not to make teachers remember more. It is to give important work a reliable place to live.**
 
-AI is useful for understanding language, retrieving authorized context, explaining and drafting. Deterministic domain code owns validation, calculations and versioning. Trusted UI and gateways own permissions, risk, confirmation and business changes.
+<details>
+<summary><strong>Why isn't AI memory the source of truth?</strong></summary>
 
-**The Agent is neither the system of record nor the authorizer.** Core workflows must keep working when the model is unavailable.
+Context, conversation memory, Knowledge/RAG and Domain Fact have different authority, origin, purpose and lifecycle. Models can help interpret information; durable facts require stable domain rules, source tracking, versioning and governed corrections.
 
-### 05 · Start with a stable core; evolve through governed domains
+See [long-term requirements](docs/specs/class-os-v1/long-term-requirements.md) and [architecture decisions](docs/specs/class-os-v1/architecture-decision.md).
 
-The long-term model follows **Stable Kernel → Domain Pack → Controlled Extension → Promotion**. Shared semantics cover scope, identity, temporal relationships, evidence and permissions. Specific domains—records, tasks, grades, seating and more—build on them.
+</details>
 
-No unbounded JSON fact warehouse and no autonomous Agent DDL. OCR, ASR, RAG, workflow engines and solvers remain replaceable capabilities, not owners of business truth.
+## ✦ Capabilities
 
-### 06 · Optimize for net burden, not demo speed
+### The working record-to-follow-up slice
 
-Saving a minute of typing is not a win if it creates five minutes of verification, an overflowing review queue, or hidden operational risk. Our **Net Burden** perspective accounts for correction, onboarding, maintenance, error rates, safety and real outcomes.
+| Scenario | Implemented engineering |
+| :--- | :--- |
+| **Class workspace** | Single-owner local login, class/term and student roster |
+| **Structured records** | Typed student events, stable IDs and source/time context |
+| **Follow-up and recall** | Task, Today and Student Timeline |
+| **Trusted correction** | Preview, risk-dependent approval, version control and audit |
+| **Agent assistance** | Replaceable Pydantic AI query/draft adapter; no autonomous approval or canonical writes |
 
-A feature with no sustained net value should be redesigned, narrowed or removed—even if its demo looks impressive.
+These behaviors are backed by source, contracts, migrations and synthetic regression tests, not just UI mockups.
 
-## From a single record to a class workspace
+### A full Class OS direction
 
-| Scenario | Product direction |
-| --- | --- |
-| Workspace and roster | Establish a consistent class, term and student identity context |
-| Daily records | Keep typed facts with time and source rather than unstructured fragments |
-| Tasks and Today | Turn follow-ups into an actionable view of the next step |
-| Student Timeline | Reconstruct context and progress over time |
-| Corrections and audit | Preview and approve changes as needed; preserve versions and traceability |
-| AI-assisted work | Ground queries and drafts in authorized data without autonomous approval or formal writes |
-| Expanding domains | Grades, seating, dormitory, reports, communication and governed capture/collaboration |
+**Class operations:** imports, grades and analysis, seating, dormitories and groups.  
+**Coordination:** reports, communication drafts, handoffs, commitments, cases and workflows.  
+**Intelligence:** channel capture, entity resolution, Knowledge/RAG and governed domain extensions.
 
-**Implemented vertical slice:** single-owner local workspace, class/term/roster, typed records, tasks, Today, Student Timeline, correction preview/approval, audit/version handling, and a replaceable Pydantic AI query/draft adapter. These are supported by code, migrations, contracts and synthetic integration tests.
+The wider [v1 requirements](docs/specs/class-os-v1/requirements.md) and [long-term direction](docs/specs/class-os-v1/long-term-requirements.md) are a product blueprint, not a claim that every module already ships.
 
-**Full product blueprint:** import and analysis, constraint-based arrangements, reporting, communication, knowledge and memory boundaries, capture/entity resolution, workflow and multi-role collaboration. They are designed in the project specifications, not represented as already shipping features.
+## ✦ System design
 
-See [Requirements](docs/specs/class-os-v1/requirements.md), [Business Flows](docs/specs/class-os-v1/business-flow.md), [Long-term Evolution](docs/specs/class-os-v1/long-term-requirements.md) and [Release 1 scope](docs/specs/class-os-v1/release-1-manifest.md).
-
-## Agent-native without ceding authority to the model
+### Agent-native without giving the model business authority
 
 ```mermaid
-flowchart TD
-    U["Teacher · Web / Today / Timeline"] --> API["Typed API"]
-    U --> A["AI Assistant · read / draft"]
-    A --> T["Controlled Tool / Agent Adapter"]
-    T --> Q["Query Gateway · scoped reads"]
+flowchart LR
+    U["Teacher · Today / Timeline"] --> API["Trusted Web / API"]
+    U --> AI["Agent · read / draft"]
+    AI --> Q["Query Gateway"]
     API --> Q
-    API --> B["Business Command Gateway · writes"]
+    API --> B["Business Command Gateway"]
     API --> I["Identity Security Boundary"]
-    Q --> D["Application / Domain · rules and facts"]
-    B --> P["Validate → risk → preview / approval → idempotent commit"]
-    P --> D
-    I --> ID["Identity and sessions"]
-    D --> PG[("PostgreSQL · versions and audit")]
-    ID --> PG
+    Q --> D["Domain · facts and rules"]
+    B --> V["Validate → preview → approve → commit"]
+    V --> D
+    D --> DB[("PostgreSQL · version and audit")]
+    I --> DB
 ```
 
-The system uses **React 19 / TypeScript / Vite / Tailwind CSS** and **Python 3.13 / FastAPI / PostgreSQL 18**, built as a layered modular monolith with an optional Pydantic AI adapter. Internal `class_os` identifiers remain for compatibility.
+**The model interprets; the domain validates; the teacher decides.**
 
-See [Architecture](docs/specs/class-os-v1/architecture.md), [Architecture Decisions](docs/specs/class-os-v1/architecture-decision.md) and [Engineering Overview](docs/ENGINEERING_OVERVIEW.md).
+| Layer | Technology and design |
+| :--- | :--- |
+| **Web** | React 19 · TypeScript · Vite · Tailwind CSS |
+| **Backend** | Python 3.13 · FastAPI · PostgreSQL 18 |
+| **Agent** | Pydantic AI · Tool / provider adapters · read/draft boundary |
+| **Architecture** | Layered modular monolith · QG / BCG / ISB · idempotency and audit |
+| **Quality** | Contracts and evals · disposable real-DB regression · Windows / Ubuntu CI |
 
-## Quick start
+[Architecture](docs/specs/class-os-v1/architecture.md) · [ADRs](docs/specs/class-os-v1/architecture-decision.md) · [Engineering overview](docs/ENGINEERING_OVERVIEW.md)
 
-The supported persistent local runtime currently requires **Windows and DPAPI**, with PowerShell 7, Node.js 22–24, pnpm 11.19.0, Python 3.13, uv 0.11.7 and PostgreSQL 18.6 binaries.
+## ✦ Quick start
+
+The supported persistent local runtime currently targets **Windows** with PowerShell 7, Node.js 22–24, pnpm 11.19.0, Python 3.13, uv 0.11.7 and PostgreSQL 18.6 binaries. Local credentials use DPAPI.
 
 ```powershell
+# Build web
 cd apps/web
 pnpm install --frozen-lockfile
 pnpm typecheck
 pnpm build
 
+# Initialize and serve
 cd ../../backend
 uv sync --frozen
 uv run --frozen python local.py init --pg-root '<PostgreSQL18 installation directory>'
@@ -111,25 +136,41 @@ uv run --frozen python local.py bootstrap
 uv run --frozen python local.py serve
 ```
 
-Open **http://127.0.0.1:8000**. Keep credentials and recovery codes out of Git. Stop the owned database with `uv run --frozen python local.py stop`. Existing installations require an explicit migration; do not copy `.local-runtime/` between machines. The Vite mock (`VITE_CLASS_OS_DEMO=true`) is not the persistent service.
+Open **http://127.0.0.1:8000**. Stop the owned database with `uv run --frozen python local.py stop`. Keep recovery codes and secrets outside Git.
 
-## Engineering and project stage
+<details>
+<summary><strong>Verification, mock mode and supported boundaries</strong></summary>
 
 ```powershell
 python scripts/public_guard.py --require-license
+pwsh ./scripts/verify.ps1 -Suite docs
+pwsh ./scripts/verify.ps1 -Suite web
+pwsh ./scripts/verify.ps1 -Suite backend
 pwsh ./scripts/verify.ps1 -Suite all -PostgresRoot '<PostgreSQL18 installation directory>'
 ```
 
-The repo includes pinned dependencies, Windows/Ubuntu CI, contract tests, disposable real PostgreSQL and browser regressions, and a SHA-256 allowlist for every public file. See [Public Audit](docs/PUBLIC_AUDIT.md).
+The full suite requires disposable PostgreSQL, browser and relevant spike dependencies. Vite alone is not the persistent service; `VITE_CLASS_OS_DEMO=true` enables synthetic mock mode. Existing installations require explicit migration; do not copy `.local-runtime/` across hosts.
 
-The public edition is **Pre-alpha / synthetic development**. Production, real-student-data processing, formal R1, representative teacher validation and cross-host recovery require separate evidence and admission. The product vision is broader than the current verified feature slice.
+The open-source edition is **Pre-alpha · Synthetic Development**. Real student records, production deployments, formal R1 approval and complete cross-host exit/recovery require separate evidence and admission.
 
-## Documentation
+</details>
 
-[Product Requirements](docs/specs/class-os-v1/requirements.md) · [Business Flows](docs/specs/class-os-v1/business-flow.md) · [Long-term Requirements](docs/specs/class-os-v1/long-term-requirements.md) · [Value and Acceptance](docs/specs/class-os-v1/acceptance.md) · [Release Scope](docs/specs/class-os-v1/release-1-manifest.md) · [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md)
+## ✦ Documentation
+
+| Explore | Start here |
+| :--- | :--- |
+| **Product and workflows** | [Requirements](docs/specs/class-os-v1/requirements.md) · [Business flows](docs/specs/class-os-v1/business-flow.md) |
+| **Architecture choices** | [Architecture](docs/specs/class-os-v1/architecture.md) · [ADRs](docs/specs/class-os-v1/architecture-decision.md) |
+| **Long-term direction and value** | [Evolution](docs/specs/class-os-v1/long-term-requirements.md) · [Acceptance](docs/specs/class-os-v1/acceptance.md) |
+| **Contribution and security** | [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Public audit](docs/PUBLIC_AUDIT.md) |
 
 ---
 
-**ClassMatter is not about making teachers remember more. It's about giving important work a traceable place to live.**
+<div align="center">
 
-Project-owned code is licensed under [Apache-2.0](LICENSE), Copyright 2026 Gdnbit; third-party terms are listed in [NOTICE](NOTICE) and [THIRD_PARTY_NOTICES](THIRD_PARTY_NOTICES.md). This is an independently exported public repository without the original private development history or private research material.
+<strong>Not more to remember. A better place for important work to live.</strong>
+
+<p><sub>Open Source · Apache-2.0 · Copyright © 2026 Gdnbit<br>
+<a href="LICENSE">License</a> · <a href="NOTICE">Notices</a> · <a href="README.md">简体中文</a></sub></p>
+
+</div>
