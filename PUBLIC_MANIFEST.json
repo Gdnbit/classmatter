@@ -78,10 +78,10 @@
       "sha256": "077a04a3f165aa86879c25faba6f5c214488d6dcdd0418599633675b459f06f4"
     },
     "README.md": {
-      "sha256": "00cd503f375a6816f655275a2c9ef05c441cdebdb91a93d763ce865d4b093555"
+      "sha256": "90692aeaa9aba782e5ce31b740b1af66a64b32d08b2fdf311dcc1f8e17b8eea9"
     },
     "README_EN.md": {
-      "sha256": "1ea98f588c9b1f11e2798e45baf8bbae5ddecfda07d8876552ce94e965cd0e7b"
+      "sha256": "705cb8a189342d111b5e419c08f6f89edb37451e6370f1137151c646f50bf73c"
     },
     "SECRET_SCAN_REVIEW.json": {
       "sha256": "9a0d9c5eb4dcd43f5d09006dafd35bfacff2ed92f95a3f492608114fd8e112b8"
@@ -904,7 +904,7 @@
       "sha256": "686f1d295a1ea1ffcb04406f3adbdebcdb670144b04f9ce98df3df052eae646e"
     },
     "docs/README.md": {
-      "sha256": "c7680ca632dcb00fd08ebd08e537b5a2671c0d8ef5d88aee02098907bde3915f"
+      "sha256": "3ac67afdd41334d855b2575ef94182a0bbb889ba76c7051d1ee61d4cf23378ca"
     },
     "docs/changes/2026-10-08-synthetic-development-admission.md": {
       "sha256": "d67c0a71f21431a90f84301ceae2ce790f8a0aeb120052840b0b6032731a9f40"
@@ -922,7 +922,7 @@
       "sha256": "47cc5567587112c7adbafcb04f102930bd2c563a73d68771ed036401eafff76f"
     },
     "docs/specs/class-os-v1/business-flow.md": {
-      "sha256": "f719782caaba03ffa8da593da9e3c03289ec0f807234c80e58628ef55632c387"
+      "sha256": "f7e028de9ab858815af0507ad2317e256cb7b0045265494a463d2d91935e0a89"
     },
     "docs/specs/class-os-v1/long-term-requirements.md": {
       "sha256": "a7f1f0273811c299ae6f78450a3c132a0cf76ee54333a97711e121267bf64c2c"
@@ -2028,6 +2028,12 @@
     },
     "third_party/supplemental-license-review.json": {
       "sha256": "339532c31fda00b2a65a17c5b27001815344c6fdab953a3d543d80ac94497903"
+    },
+    "docs/product/scenario-catalog.md": {
+      "sha256": "4ea91f7cebc704a7ee6da380f815a01c7ee80449ec1d4f487131b4871fe285b0"
+    },
+    "docs/product/student-safety-and-duty-workflows.md": {
+      "sha256": "25ca0883ce65886171f053de92bebf456e009b484a08b1068aac539f4f506703"
     }
   }
 }
