@@ -155,3 +155,7 @@ followup_at / case_status / closure_reason / version / audit_ref
 > ClassMatter 探索把班主任的零散事务转化为可追溯的事实、任务和跟进链路。更长期的方向是帮助学校及教师在真实职责和权限边界内进行事件跟进、异常信息协同与过程复盘。它不保证预测事故，也不取代学校的应急处置、专业心理服务或法律责任判断。
 
 相关： [场景全景](scenario-catalog.md) · [完整 v1 业务流程](../specs/class-os-v1/business-flow.md) · [R1 清单](../specs/class-os-v1/release-1-manifest.md) · [长期需求](../specs/class-os-v1/long-term-requirements.md)。
+
+## 10. 法律规范和司法类案的审查前提
+
+本工作流仅是业务假设，必须遵循[规则依据层级与追溯机制](legal-evidence-and-rule-hierarchy.md)：优先核对现行法律法规、教育部门有效规章及适用地方规范，单独核对司法解释、最高法指导性案例和具有可比争点的生效类案，最后映射校方正式值班、报告、转介、接收和应急制度。不得从单一判例或学校惯例推定全国通用的责任标准，更不能由 AI 宣布个人已免责。
