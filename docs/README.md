@@ -7,6 +7,7 @@
 
 这两份文档不包含具体个人/学校/学生资料，不代表学校授权或真实用户验收。R1 manifest、107 个规格需求、Eval/Task/Gate 均不因此扩张。
 
+- [法律、案例、规章与校规的效力核验和规则追溯](product/legal-evidence-and-rule-hierarchy.md)：Discovery / Future，含已核对的官方规范、来源元数据与上线拒绝门。
 - [工程边界与代码地图](ENGINEERING_OVERVIEW.md)
 - [发行审查状态](OPEN_SOURCE_READINESS.md)
 - [公开安全审计](PUBLIC_AUDIT.md)
