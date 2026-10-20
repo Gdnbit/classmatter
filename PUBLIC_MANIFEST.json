@@ -78,10 +78,10 @@
       "sha256": "077a04a3f165aa86879c25faba6f5c214488d6dcdd0418599633675b459f06f4"
     },
     "README.md": {
-      "sha256": "90692aeaa9aba782e5ce31b740b1af66a64b32d08b2fdf311dcc1f8e17b8eea9"
+      "sha256": "b2bb198daaf1ef33a0d4f1ba4f5d5a2c66a9098f25fd1e3a493bd2f516b203a1"
     },
     "README_EN.md": {
-      "sha256": "705cb8a189342d111b5e419c08f6f89edb37451e6370f1137151c646f50bf73c"
+      "sha256": "7d213a326aea84fa283def16b98588c91678cd5f1e4bc8bff61e79e0d7e29fbb"
     },
     "SECRET_SCAN_REVIEW.json": {
       "sha256": "9a0d9c5eb4dcd43f5d09006dafd35bfacff2ed92f95a3f492608114fd8e112b8"
@@ -904,7 +904,7 @@
       "sha256": "686f1d295a1ea1ffcb04406f3adbdebcdb670144b04f9ce98df3df052eae646e"
     },
     "docs/README.md": {
-      "sha256": "3ac67afdd41334d855b2575ef94182a0bbb889ba76c7051d1ee61d4cf23378ca"
+      "sha256": "3f0c93117c6144f08d3fa44623ee4b7f1be54436e971edda96fb5871d9fff309"
     },
     "docs/changes/2026-10-08-synthetic-development-admission.md": {
       "sha256": "d67c0a71f21431a90f84301ceae2ce790f8a0aeb120052840b0b6032731a9f40"
@@ -2030,10 +2030,13 @@
       "sha256": "339532c31fda00b2a65a17c5b27001815344c6fdab953a3d543d80ac94497903"
     },
     "docs/product/scenario-catalog.md": {
-      "sha256": "4ea91f7cebc704a7ee6da380f815a01c7ee80449ec1d4f487131b4871fe285b0"
+      "sha256": "157a8ef9b04f8bb2415d2c4ebdfd6ea825cd846b8afeb414fa690ab38d951844"
     },
     "docs/product/student-safety-and-duty-workflows.md": {
-      "sha256": "25ca0883ce65886171f053de92bebf456e009b484a08b1068aac539f4f506703"
+      "sha256": "5575daa767000efa787bbd93893ecb727bfa90df6cf4e81cfacdfa38fe245514"
+    },
+    "docs/product/legal-evidence-and-rule-hierarchy.md": {
+      "sha256": "af3b3d7ea70428af7a675e45f8b79853d8eeafe4438c898202ecae327f4d3542"
     }
   }
 }
