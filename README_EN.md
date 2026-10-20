@@ -96,6 +96,8 @@ We are documenting 20 synthetic business scenarios, including absence, family co
 
 > **Scope:** Discovery/Future only. R1 does not support sensitive student mental-health records, multi-role handoffs, automated crisis alerts, or emergency response. Immediate real-world emergencies follow the school's approved offline procedures first.
 
+**Evidence-led governance:** Applicable statutes, regulations, judicial interpretations, decided cases and approved school procedures are reviewed separately. Every rule proposal requires jurisdiction, legal source, effective date, responsible actor and human approval. [Source hierarchy and traceability (Chinese)](docs/product/legal-evidence-and-rule-hierarchy.md).
+
 ## ✦ System design
 
 ### Agent-native without giving the model business authority
