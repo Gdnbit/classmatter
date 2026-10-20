@@ -85,6 +85,19 @@ These behaviors are backed by source, contracts, migrations and synthetic regres
 
 The wider [v1 requirements](docs/specs/class-os-v1/requirements.md) and [long-term direction](docs/specs/class-os-v1/long-term-requirements.md) are a product blueprint, not a claim that every module already ships.
 
+### From routine follow-ups to safer handoffs
+
+Some class matters remain open after a conversation: a follow-up is pending, a message was sent without verified receipt, or another authorized professional needs to take over. A reliable system must distinguish **recorded vs. acted on** and **delivered vs. accepted**, while respecting the school's actual responsibilities.
+
+We are documenting 20 synthetic business scenarios, including absence, family communication, peer conflict, boarding-school handoffs, and sensitive student-safety incidents. The aim is to reduce avoidable omissions and handoff gaps—not to predict every incident, issue medical diagnoses, or guarantee legal immunity.
+
+- [Business scenario catalog (Chinese)](docs/product/scenario-catalog.md)
+- [Student safety and duty-of-care workflows (Chinese)](docs/product/student-safety-and-duty-workflows.md)
+
+> **Scope:** Discovery/Future only. R1 does not support sensitive student mental-health records, multi-role handoffs, automated crisis alerts, or emergency response. Immediate real-world emergencies follow the school's approved offline procedures first.
+
+**Evidence-led governance:** Applicable statutes, regulations, judicial interpretations, decided cases and approved school procedures are reviewed separately. Every rule proposal requires jurisdiction, legal source, effective date, responsible actor and human approval. [Source hierarchy and traceability (Chinese)](docs/product/legal-evidence-and-rule-hierarchy.md).
+
 ## ✦ System design
 
 ### Agent-native without giving the model business authority
