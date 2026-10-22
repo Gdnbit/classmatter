@@ -9,4 +9,18 @@
 .composer textarea { resize: none; }
 .message p { white-space: pre-wrap; overflow-wrap: anywhere; }
 .object-discuss { margin-left: 8px; }
+.student-profile-head { grid-template-columns: 58px minmax(0, 1fr) auto auto; }
+.student-profile-head button { white-space: nowrap; }
+.student-search { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+.student-search label, .student-result-count, .student-empty { font-size: 12px; color: #59675f; }
+.student-search input { flex: 1; min-width: 120px; padding: 9px 12px; border: 1px solid #d6ddd6; border-radius: 6px; background: white; }
+.student-search button { border: 1px solid #d6ddd6; border-radius: 6px; padding: 8px; background: white; color: #31574c; }
+.student-result-count, .student-empty { margin: 12px; }
+.settings-controls button { min-width: 52px; min-height: 32px; font-size: 12px; }
+@media (max-width: 767px) {
+  .mobile-more { display: block; max-height: calc(100dvh - 140px); overflow-y: auto; overscroll-behavior: contain; }
+  .student-profile-head { grid-template-columns: 48px minmax(0, 1fr); }
+  .student-profile-head > .object-discuss { grid-column: 1 / -1; width: 100%; margin-left: 0; border: 1px solid #d6ddd6; padding: 9px; border-radius: 7px; background: white; color: #31574c; }
+  .student-profile-head h1 { overflow-wrap: anywhere; }
+}
 .ambient h3 { font-size: 12px; font-weight: 500; color: #77867d; margin: 14px 0 12px; }

@@ -195,6 +195,180 @@ async function main() {
     assert.equal(await composer().inputValue(), '');
     assert.equal(await page.locator('.voice-state').count(), 0);
     checks.push('A11: synthetic drag/drop, multi-file rejection, isolated drafts and cancelled late voice result');
+
+    // Test the narrow Web layout in this isolated test window, not the product's desktop minimum.
+    await app.evaluate(({ BrowserWindow }) => { const win = BrowserWindow.getAllWindows()[0]; win.setMinimumSize(320, 400); win.setSize(510, 720); });
+    await page.waitForFunction(() => innerWidth < 767);
+    await page.goto('classmatter://app/students');
+    const search = page.getByRole('searchbox', { name: '搜索学生' });
+    await search.fill('99001');
+    assert.equal(await page.locator('.table-row').count(), 1);
+    await page.getByText('共 1 位演示学生', {exact:true}).waitFor();
+    await search.fill('no-such-student');
+    await page.getByText(/未找到匹配学生/).waitFor();
+    assert.equal(await page.locator('.table-row').count(), 0);
+    await page.getByRole('button', {name:'清空搜索',exact:true}).click();
+    assert.equal(await page.locator('.table-row').count(), 36);
+    await page.locator('.table-row').filter({hasText:'合成学生01'}).click();
+    const discuss = page.getByRole('button',{name:'围绕此学生对话',exact:true});
+    assert.ok(await discuss.evaluate(el => { const b=el.getBoundingClientRect(); return b.width > 200 && b.height < 60 && b.right <= innerWidth; }));
+    await page.screenshot({path:path.join(evidence,'04-narrow-student.png')});
+    const mobileMore = page.getByRole('navigation',{name:'移动端导航'}).getByRole('button',{name:'更多',exact:true});
+    await mobileMore.click();
+    const mobileMenu = page.getByRole('menu',{name:'移动端更多功能'});
+    await mobileMenu.waitFor();
+    assert.ok(await mobileMenu.evaluate(el => {const b=el.getBoundingClientRect();return b.top >= 44 && b.bottom <= innerHeight-60;}));
+    await page.keyboard.press('End');
+    assert.equal(await mobileMenu.getByRole('menuitem',{name:'设置',exact:true}).evaluate(el=>document.activeElement===el),true);
+    await page.screenshot({path:path.join(evidence,'05-narrow-navigation.png')});
+    await page.keyboard.press('Escape');
+    await mobileMenu.waitFor({state:'hidden'});
+    assert.equal(await mobileMore.evaluate(el=>document.activeElement===el),true);
+    await mobileMore.click();
+    await mobileMenu.getByRole('menuitem',{name:'设置',exact:true}).click();
+    await page.getByRole('heading',{name:'模型与 API',exact:true}).waitFor();
+    checks.push('A12: narrow student search/empty/reset/detail geometry; mobile menu, keyboard and settings navigation');
+
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1380,900));
+    for (const section of ['用户与安全','外观','ClassMatter','Capture','自动化','集成','隐私与安全','数据','无障碍']) {
+      await page.locator('.settings-side').getByRole('button',{name:section,exact:true}).click();
+      await page.getByRole('heading',{name:section,exact:true}).waitFor();
+      const learn = page.locator('.settings-controls button').first();
+      await learn.click();
+      await page.getByRole('dialog').getByText('未接入',{exact:true}).waitFor();
+      await page.keyboard.press('Escape');
+      assert.equal(await learn.evaluate(el=>document.activeElement===el),true);
+    }
+    await page.screenshot({path:path.join(evidence,'06-settings-boundary.png')});
+    for (const [route,title] of [
+      ['/dashboard','班级总览'],['/students','学生'],['/students?view=table','视图'],['/work','工作'],
+      ['/data','数据与内容'],['/data/spreadsheets/score-001','表格'],['/data/documents/parents-001','文档'],
+      ['/inbox','AI 待处理'],['/automation','自动化'],['/knowledge','知识库'],['/reports','报告与导出']
+    ]) {
+      const response = await page.goto('classmatter://app'+route);
+      assert.equal(response.status(),200,route);
+      await page.getByRole('heading',{name:title,exact:true}).waitFor();
+      assert.equal(await page.getByRole('alert').count(),0,route);
+      assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),route);
+    }
+    await page.goto('classmatter://app/students/99001');
+    for(const label of ['概览','时间线','任务','记录','成绩','文件','关系']) {
+      await page.getByRole('tab',{name:label,exact:true}).click();
+      assert.equal(await page.getByRole('tab',{name:label,exact:true}).getAttribute('aria-selected'),'true');
+      await page.getByRole('heading',{name:label==='概览'?'当前情况':label+'记录',exact:true}).waitFor();
+    }
+    checks.push('A13: all settings sections are explanatory, eleven route headings and seven student detail tabs render without overflow');
+    await page.goto('classmatter://app/students?view=dorm');
+    await page.getByRole('heading',{name:'宿舍',exact:true}).waitFor();
+    assert.equal(await page.locator('.room-grid > section').count(),3);
+    await page.getByRole('button',{name:'仅看有空位',exact:true}).click();
+    assert.equal(await page.locator('.room-grid > section').count(),1);
+    await page.getByRole('button',{name:'1号楼',exact:true}).click();
+    await page.getByText('此楼层暂无演示布局；没有复用其他楼层的床位数据。',{exact:true}).waitFor();
+    assert.equal(await page.locator('.room-grid > section').count(),0);
+    await page.goto('classmatter://app/students?view=group');
+    await page.getByRole('heading',{name:'小队与画布',exact:true}).waitFor();
+    await page.getByRole('button',{name:'自动排布',exact:true}).click();
+    await page.getByRole('alertdialog').getByText(/当前没有接入分组求解器/).waitFor();
+    await page.keyboard.press('Escape');
+    await page.goto('classmatter://app/');
+    await send('打开名单');
+    await page.getByRole('heading',{name:'名单事务',exact:true}).waitFor();
+    assert.equal(await page.locator('.table-row').count(),36);
+    await page.goto('classmatter://app/inbox');
+    await page.getByRole('button',{name:'查看来源',exact:true}).first().click();
+    await page.getByRole('dialog').getByText('合成样例 · 无真实模型置信度或敏感度判定',{exact:true}).waitFor();
+    await page.keyboard.press('Escape');
+    checks.push('A14: dorm scope/empty filter, group non-solver boundary, roster entry and no fabricated confidence');
+    await page.goto('classmatter://app/data');
+    await page.getByRole('button',{name:'图片 / OCR',exact:true}).click();
+    await page.locator('.content-list').getByRole('button').first().click();
+    await page.getByRole('dialog').getByRole('button',{name:'延后处理',exact:true}).click();
+    await page.getByText('延后处理尚未接入；未移动文件或创建提醒',{exact:true}).waitFor();
+    await page.keyboard.press('Escape');
+    await page.goto('classmatter://app/data/spreadsheets/score-001');
+    await page.getByRole('button',{name:'字段映射',exact:true}).click();
+    await page.getByRole('dialog').getByText('保持未录入，需人工核对；不自动等同缺考或零分',{exact:true}).waitFor();
+    await page.getByRole('dialog').getByRole('button',{name:'返回表格',exact:true}).click();
+    assert.equal(await page.getByRole('dialog').count(),0);
+    const sheetButton=page.getByRole('button',{name:'成绩汇总',exact:true});
+    await sheetButton.click();
+    await page.getByRole('menu',{name:'选择工作表'}).waitFor();
+    await page.keyboard.press('Escape');
+    assert.equal(await sheetButton.evaluate(el=>document.activeElement===el),true);
+    await page.getByRole('button',{name:'查看 Diff',exact:true}).click();
+    await page.getByRole('alertdialog').getByRole('button',{name:'取消',exact:true}).click();
+    assert.equal(await page.getByRole('alertdialog').count(),0);
+    await page.goto('classmatter://app/data/documents/parents-001');
+    await page.getByRole('button',{name:'原文',exact:true}).click();
+    await page.getByText('会议流程包含班级情况、学科汇报、分组沟通、问答及后续安排。',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'修订记录',exact:true}).click();
+    await page.getByText('版本 3：删除重复的学科汇报环节，保留最后三项安排。',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'来源：班会材料 · 9月3日',exact:true}).click();
+    await page.getByRole('dialog').getByText('合成来源样例 · 未验证',{exact:true}).waitFor();
+    await page.keyboard.press('Escape');
+    await page.goto('classmatter://app/reports');
+    for(const row of await page.locator('.report-list article').all()) {
+      for(const action of ['预览','来源','编辑']) {
+        await row.getByRole('button',{name:action,exact:true}).click();
+        await page.getByRole('dialog').waitFor();
+        await page.keyboard.press('Escape');
+      }
+    }
+    const exitRow=page.locator('.report-list article').filter({hasText:'数据退出包'});
+    await exitRow.getByRole('button',{name:'导出',exact:true}).click();
+    await page.getByRole('alertdialog').getByRole('button',{name:'取消',exact:true}).click();
+    await exitRow.getByRole('button',{name:'导出',exact:true}).click();
+    await page.getByRole('alertdialog').getByRole('button',{name:'确认生成',exact:true}).click();
+    await page.getByText('退出包为演示入口；未生成或下载任何文件',{exact:true}).waitFor();
+    checks.push('A15: file feedback, missing-score semantics, sheet Escape/return/cancel, document modes/source and five report detail/cancel flows');
+    await page.goto('classmatter://app/data/spreadsheets/score-001');
+    const formula=page.getByRole('textbox',{name:'选中单元格样例值'});
+    await page.getByRole('button',{name:'单元格 B2：88',exact:true}).click();
+    assert.equal(await formula.inputValue(),'88');
+    await page.getByRole('button',{name:'单元格 C4：缺考',exact:true}).click();
+    assert.equal(await formula.inputValue(),'缺考');
+    await page.getByRole('button',{name:'单元格 C5：空白',exact:true}).click();
+    assert.equal(await formula.inputValue(),'');
+    await page.getByRole('button',{name:'成绩汇总',exact:true}).click();
+    await page.getByRole('menu',{name:'选择工作表'}).getByRole('button',{name:'导入问题',exact:true}).click();
+    await page.getByRole('button',{name:'单元格 D2：需确认',exact:true}).waitFor();
+    await page.getByRole('button',{name:'导入问题',exact:true}).click();
+    await page.getByRole('menu',{name:'选择工作表'}).getByRole('button',{name:'原始数据',exact:true}).click();
+    await page.getByRole('button',{name:'单元格 F2：合成样例',exact:true}).waitFor();
+    checks.push('A16: sheet selection changes actual sample rows; accessible cell selection and formula agree, blank remains blank');
+    await page.goto('classmatter://app/automation');
+    await page.getByRole('button',{name:/午休前确认迟到后续/}).click();
+    await page.getByRole('dialog').getByRole('button',{name:'暂停计划',exact:true}).click();
+    await page.getByText('仅修改当前演示暂停标记；未暂停实际后台计划',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'运行记录',exact:true}).click();
+    await page.getByRole('button',{name:/迟到后续检查/}).click();
+    await page.getByRole('dialog').getByText('样例步骤：检查触发条件（未执行）',{exact:true}).waitFor();
+    await page.keyboard.press('Escape');
+    await page.goto('classmatter://app/knowledge');
+    const knowledgeSearch=page.getByRole('searchbox',{name:'搜索知识样例'});
+    await knowledgeSearch.fill('no-matching-knowledge');
+    await page.getByText('没有找到相关内容',{exact:true}).waitFor();
+    await knowledgeSearch.fill('');
+    assert.equal(await page.locator('.knowledge-grid > button').count(),5);
+    await page.getByRole('button',{name:'添加来源',exact:true}).click();
+    await page.getByRole('dialog').getByRole('button',{name:'知道了',exact:true}).click();
+    assert.equal(await page.getByRole('dialog').count(),0);
+    await page.goto('classmatter://app/students/99003?tab=tasks');
+    await page.getByText('此学生暂无任务样例；没有复制其他学生的数据。',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'返回学生列表',exact:true}).click();
+    await page.getByRole('heading',{name:'学生',exact:true}).waitFor();
+    await app.evaluate(({ BrowserWindow })=>BrowserWindow.getAllWindows()[0].setSize(510,720));
+    await page.waitForFunction(()=>innerWidth<767);
+    for (const [label,title] of [['总览','班级总览'],['数据与内容','数据与内容'],['AI 待处理','AI 待处理'],['自动化','自动化'],['知识库','知识库'],['报告与导出','报告与导出'],['设置','模型与 API']]) {
+      await page.getByRole('navigation',{name:'移动端导航'}).getByRole('button',{name:'更多',exact:true}).click();
+      await page.getByRole('menu',{name:'移动端更多功能'}).getByRole('menuitem',{name:label,exact:true}).click();
+      await page.getByRole('heading',{name:title,exact:true}).waitFor();
+    }
+    await page.getByRole('navigation',{name:'移动端导航'}).getByRole('button',{name:'更多',exact:true}).click();
+    await page.getByRole('heading',{name:'模型与 API',exact:true}).click();
+    await page.getByRole('menu',{name:'移动端更多功能'}).waitFor({state:'hidden'});
+    checks.push('A17: automation has no real scheduler, knowledge empty/reset/dismiss, student empty/back and all seven mobile destinations/outside dismissal');
     assert.deepEqual(remote, []);
     assert.deepEqual(errors, []);
     const result = { checks, pageErrors: errors, externalRequests: remote, scope: 'Synthetic memory only; no business API/model/database' };

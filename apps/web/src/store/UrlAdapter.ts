@@ -30,7 +30,9 @@ export function parseUrl(url: string): ActiveSurfaceStack {
             ? "VIEW-DORM"
             : view === "group"
               ? "VIEW-GROUP"
-              : "VIEW-LIST",
+              : view === "table"
+                ? "VIEW-TABLE"
+                : "VIEW-LIST",
     })
   if (p.startsWith("/students/")) {
     const tabs: Record<string, SurfaceId> = {

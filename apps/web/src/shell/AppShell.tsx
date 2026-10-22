@@ -218,7 +218,9 @@ const workspaceByDomain: Record<ActiveSurfaceStack["domain"], Workspace> = {
   settings: "settings",
 }
 const workspaceFromStack = (stack: ActiveSurfaceStack): Workspace =>
-  stack.viewSurfaceId === "VIEW-SEAT"
+  stack.viewSurfaceId === "VIEW-TABLE"
+    ? "views"
+    : stack.viewSurfaceId === "VIEW-SEAT"
     ? "seat"
     : stack.viewSurfaceId === "VIEW-DORM"
       ? "dorm"
@@ -353,7 +355,7 @@ function AppShell() {
         [
           /Excel|表格文件|表格/,
           "spreadsheet",
-          "已切换到表格工作区，文件将以候选数据方式解析。",
+          "已打开表格样例；本演示未读取或解析任何文件。",
         ],
         [/Word|文档/, "document", "已切换到文档工作区，可在草稿中审阅改动。"],
         [/总体|概览/, "dashboard", "已打开班级总览。"],
@@ -390,7 +392,7 @@ function AppShell() {
       },
       {
         role: "assistant",
-        text: "已识别一项可能需要你负责的事项，并保留原始通知作为来源证据。",
+        text: "已打开通知责任候选样例；未调用模型、保存来源或判定你的实际职责。",
       },
     ])
   }
@@ -1304,12 +1306,11 @@ function DataWorkspace({ setWorkspace }: any) {
         },
       ],
       actions: [
-        { label: "延后处理", onSelect: () => notify("已移入稍后处理") },
+        { label: "延后处理", onSelect: () => notify("延后处理尚未接入；未移动文件或创建提醒") },
         {
           label: "标记已核对",
           tone: "primary",
-          onSelect: () => notify("已记录核对结果"),
-        },
+          onSelect: () => notify("核对为演示入口；未保存核对记录") },
       ],
     })
   }
@@ -1350,7 +1351,25 @@ function DataWorkspace({ setWorkspace }: any) {
 function SpreadsheetWorkspace() {
   const [sheet, setSheet] = useState("成绩汇总")
   const [selected, setSelected] = useState("C3")
+  const sheets: Record<string, string[][]> = {
+    成绩汇总: [["姓名", "语文", "数学", "英语", "总分", "备注"], ["合成学生01", "88", "90", "86", "264", ""], ["合成学生02", "91", "92", "89", "272", ""], ["合成学生05", "75", "缺考", "78", "153", "待确认"]],
+    原始数据: [["源行", "姓名", "语文", "数学", "英语", "来源"], ["2", "合成学生01", "88", "90", "86", "合成样例"], ["3", "合成学生02", "91", "92", "89", "合成样例"], ["4", "合成学生05", "75", "缺考", "78", "合成样例"]],
+    导入问题: [["源行", "字段", "原始值", "问题", "处理", "状态"], ["4", "数学", "缺考", "需确认", "保留原值", "样例"], ["36", "学号", "", "未录入", "人工核对", "样例"]],
+  }
+  const selectedRow = Number(selected.slice(1))
+  const selectedColumn = selected.charCodeAt(0) - 65
+  const selectedValue = sheets[sheet]?.[selectedRow - 1]?.[selectedColumn] || ""
   const [menu, setMenu] = useState(false)
+  const sheetMenu = useRef<HTMLDivElement>(null)
+  const sheetTrigger = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!menu) return
+    const outside = (event: PointerEvent) => { if (!sheetMenu.current?.contains(event.target as Node)) setMenu(false) }
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { event.preventDefault(); setMenu(false); sheetTrigger.current?.focus() } }
+    document.addEventListener("pointerdown", outside)
+    document.addEventListener("keydown", escape)
+    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape) }
+  }, [menu])
   const { openDetail, notify, requestConfirm } = useUiFeedback()
   const showMapping = () =>
     openDetail({
@@ -1361,7 +1380,7 @@ function SpreadsheetWorkspace() {
       sections: [
         { label: "姓名", value: "源列 A → 学生姓名" },
         { label: "数学", value: "源列 C → 数学成绩" },
-        { label: "空白值", value: "按缺考候选处理，需人工确认" },
+        { label: "空白值", value: "保持未录入，需人工核对；不自动等同缺考或零分" },
       ],
       actions: [
         { label: "返回表格" },
@@ -1396,17 +1415,18 @@ function SpreadsheetWorkspace() {
       icon={FileSpreadsheet}
     >
       <div className="sheet-tools">
-        <div className="compact-menu">
-          <button onClick={() => setMenu(!menu)}>
+        <div className="compact-menu" ref={sheetMenu}>
+          <button ref={sheetTrigger} aria-haspopup="menu" aria-expanded={menu} onClick={() => setMenu(!menu)}>
             {sheet} <ChevronDown size={14} />
           </button>
           {menu && (
-            <div className="floating-menu">
+            <div className="floating-menu" role="menu" aria-label="选择工作表">
               {["成绩汇总", "原始数据", "导入问题"].map((item) => (
                 <button
                   key={item}
                   onClick={() => {
                     setSheet(item)
+                    setSelected("A2")
                     setMenu(false)
                   }}
                 >
@@ -1422,9 +1442,8 @@ function SpreadsheetWorkspace() {
       <div className="formula">
         <span>{selected}</span>
         <input
-          value={
-            selected === "C3" ? "92" : selected === "C4" ? "缺考" : "合成学生02"
-          }
+          aria-label="选中单元格样例值"
+          value={selectedValue}
           readOnly
         />
       </div>
@@ -1434,24 +1453,16 @@ function SpreadsheetWorkspace() {
             {Array.from({ length: 7 }).map((_, c) => {
               const value =
                 r === 0
-                  ? "" + String.fromCharCode(64 + c)
+                  ? c === 0 ? "#" : String.fromCharCode(64 + c)
                   : c === 0
                     ? String(r)
-                    : r === 1
-                      ? ["姓名", "语文", "数学", "英语", "总分", "备注"][c - 1]
-                      : r === 2
-                        ? ["合成学生01", "88", "90", "86", "264", ""][c - 1]
-                        : r === 3
-                          ? ["合成学生02", "91", "92", "89", "272", ""][c - 1]
-                          : r === 4
-                            ? ["合成学生05", "75", "缺考", "78", "153", "待确认"][
-                                c - 1
-                              ]
-                            : ""
+                    : sheets[sheet]?.[r - 1]?.[c - 1] || ""
               const cell = `${String.fromCharCode(64 + c)}${r}`
               return (
                 <button
                   key={c}
+                  aria-label={r === 0 || c === 0 ? `表头 ${value}` : `单元格 ${cell}：${value || "空白"}`}
+                  disabled={r === 0 || c === 0}
                   className={selected === cell ? "selected-cell" : ""}
                   onClick={() => setSelected(cell)}
                 >
@@ -1464,7 +1475,7 @@ function SpreadsheetWorkspace() {
       </div>
       <div className="import-summary">
         <strong>导入预览</strong>
-        <span>导入 34 行 · 跳过 2 行 · 空白按缺考处理</span>
+        <span>样例：34 行候选 · 2 行待处理 · 空白保持未录入；未执行解析</span>
         <button
           className="primary"
           onClick={() =>
@@ -1568,8 +1579,8 @@ function DocumentWorkspace() {
               openDetail({
                 eyebrow: "来源证据",
                 title: "班会材料 · 9月3日",
-                description: "当前段落引用自班会材料，引用关系可追溯。",
-                status: "来源完整",
+                description: "仅演示段落来源的展示方式；没有接入真实材料或验证引用关系。",
+                status: "合成来源样例 · 未验证",
               })
             }
           >
@@ -1600,6 +1611,7 @@ function DormWorkspace({ activeStudentId, selectStudent }: any) {
       description={`${building} · ${floor} · 同一学生身份可在座位和小队中持续定位。`}
       icon={BedDouble}
     >
+      <p className="demo-capability-note">宿舍布局是静态合成样例；尚未接入床位管理或学校宿管系统。</p>
       <div className="dorm-tools">
         <button
           onClick={() => setBuilding(building === "1号楼" ? "2号楼" : "1号楼")}
@@ -1615,12 +1627,12 @@ function DormWorkspace({ activeStudentId, selectStudent }: any) {
         >
           仅看有空位
         </button>
-        <button onClick={() => notify("宿舍调整将先生成预览草稿")}>
+        <button onClick={() => notify("宿舍调整尚未接入；未生成草稿或修改床位")}>
           发起调整
         </button>
       </div>
       <div className="room-grid">
-        {rooms
+        {(building === "1号楼" && floor === "3层" ? rooms : [])
           .filter(([room]) => !filter || room === "303寝")
           .map(([room, names]) => (
             <section key={room as string}>
@@ -1634,7 +1646,7 @@ function DormWorkspace({ activeStudentId, selectStudent }: any) {
                     onClick={() =>
                       s
                         ? selectStudent(s.id)
-                        : notify("已选择空床位；请再选择一名学生生成调整草稿")
+                        : notify("这是空床位样例；尚不能生成分配草稿")
                     }
                   >
                     {s ? (
@@ -1652,6 +1664,7 @@ function DormWorkspace({ activeStudentId, selectStudent }: any) {
             </section>
           ))}
       </div>
+      {(building !== "1号楼" || floor !== "3层") && <p className="empty-state">此楼层暂无演示布局；没有复用其他楼层的床位数据。</p>}
     </WorkspaceShell>
   )
 }
@@ -1669,7 +1682,7 @@ function GroupWorkspace({ activeStudentId, selectStudent }: any) {
   return (
     <WorkspaceShell
       title="小队与画布"
-      description="拖动前先形成分组草稿；当前内容只作为共享身份投影。"
+      description="静态合成分组样例；布局编辑、自动求解与保存服务尚未接入。"
       icon={Network}
     >
       <div className="group-tools">
@@ -1688,7 +1701,7 @@ function GroupWorkspace({ activeStudentId, selectStudent }: any) {
           onClick={() =>
             requestConfirm({
               title: "生成自动分组候选？",
-              description: "系统将按人数均衡生成候选，不会覆盖当前分组。",
+              description: "当前没有接入分组求解器；确认只查看演示反馈，不会生成候选或覆盖分组。",
               confirmLabel: "生成候选",
               onConfirm: () => notify("当前仅展示分组样例；未执行均衡求解或生成候选"),
             })
@@ -1733,8 +1746,8 @@ function InboxWorkspace() {
         eyebrow: "AI 候选 · 来源",
         title: item,
         description:
-          "原始图片与提取文本并列展示。AI 结果只作为候选，不会自动晋升为正式事实。",
-        status: `置信度 ${i === 0 ? "92%" : "88%"} · 普通敏感度`,
+          "仅演示来源与候选的展示结构；没有实际图片或提取结果，不代表模型已经识别。",
+        status: "合成样例 · 无真实模型置信度或敏感度判定",
         sections: [
           { label: "来源", value: "课堂板书.jpg · 今天 10:18" },
           { label: "班级", value: "合成演示班" },
@@ -1774,10 +1787,10 @@ function InboxWorkspace() {
       })
     else if (action === "拒绝") {
       setItems(items.filter((x) => x !== item))
-      notify("候选已拒绝；原始来源仍按保留策略保存")
+      notify("仅移除当前演示候选；没有实际来源文件或保留策略执行")
     } else {
       setDeferred([...deferred, item])
-      notify("已延后到明天 09:00")
+      notify("仅在当前演示中标记延后；未设置明天提醒或后台任务")
     }
   }
   return (
@@ -1856,7 +1869,7 @@ function AutomationWorkspace() {
   return (
     <WorkspaceShell
       title="自动化"
-      description="自动化先展示范围与行为，再在运行记录中保留可追溯结果。"
+      description="计划、触发器与运行记录均为合成样例；没有后台调度或实际运行。"
       icon={CalendarClock}
     >
       <div className="tabbar">
@@ -1879,17 +1892,17 @@ function AutomationWorkspace() {
                 eyebrow: `自动化 · ${tab}`,
                 title: row[0],
                 description:
-                  "该自动化只会生成提醒或草稿，不会绕过确认执行正式业务写入。",
-                status: enabled.includes(row[0]) ? "已开启" : "等待 / 只读",
+                  "仅展示自动化交互；没有实际检查条件、生成提醒、草稿或业务写入。",
+                status: enabled.includes(row[0]) ? "样例启用标记 · 无后台任务" : "样例暂停标记 · 无后台任务",
                 sections: [
                   { label: "计划", value: row[1] },
                   { label: "结果", value: row[2] },
                   { label: "写入边界", value: "无直接写入权限" },
                 ],
                 timeline: [
-                  "检查触发条件",
-                  "生成候选结果",
-                  "等待人工处理或记录只读结果",
+                  "样例步骤：检查触发条件（未执行）",
+                  "样例步骤：生成候选结果（未执行）",
+                  "样例步骤：等待人工处理（未创建任务）",
                 ],
                 actions:
                   tab === "计划"
@@ -1907,8 +1920,8 @@ function AutomationWorkspace() {
                             )
                             notify(
                               enabled.includes(row[0])
-                                ? "计划已暂停"
-                                : "计划已启用",
+                                ? "仅修改当前演示暂停标记；未暂停实际后台计划"
+                                : "仅修改当前演示启用标记；未启动实际后台计划",
                             )
                           },
                         },
@@ -1919,7 +1932,7 @@ function AutomationWorkspace() {
           >
             <strong>{row[0]}</strong>
             <span>{row[1]}</span>
-            <em>{enabled.includes(row[0]) ? "已开启" : row[2]}</em>
+            <em>样例 · {enabled.includes(row[0]) ? "启用标记" : row[2]}</em>
             <ChevronRight size={16} />
           </button>
         ))}
@@ -1935,18 +1948,20 @@ function KnowledgeWorkspace() {
     ["班级制度", "合成演示班 · 已更新"],
     ["教师个人资料", "班主任偏好 · 私有"],
     ["模板", "家长会、班会、周报"],
-    ["已索引文件", "12 份 · 可引用"],
-  ].filter(([a, b]) => (a + b).includes(query))
+    ["已索引文件", "12 份合成样例 · 未创建索引"],
+  ].filter(([a, b]) => (a + b).includes(query.trim()))
   return (
     <WorkspaceShell
       title="知识库"
-      description="知识与正式学生事实分离；对话引用会保留来源。"
+      description="知识样例与正式学生事实分离；尚未接入知识存储、RAG或引用检索。"
       icon={Archive}
     >
       <div className="library-toolbar">
         <label>
           <SearchIcon />
           <input
+            type="search"
+            aria-label="搜索知识样例"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="搜索规章、模板和来源"
@@ -1986,7 +2001,7 @@ function KnowledgeWorkspace() {
                 openDetail({
                   eyebrow: "知识条目",
                   title: a,
-                  description: "知识内容按版本保存，Agent 引用时必须附带来源。",
+                  description: "仅展示版本与引用结构；本演示没有实际保存知识、索引或Agent引用。",
                   status: b,
                   sections: [
                     {
@@ -2038,8 +2053,8 @@ function ReportsWorkspace() {
       title: item,
       description:
         mode === "编辑"
-          ? "编辑结果会保存为 Artifact Draft，不会修改底层业务事实。"
-          : "基于已授权数据生成的可审阅材料。",
+          ? "当前仅展示编辑入口；未保存Artifact或修改底层业务事实。"
+          : "合成材料样例；未读取真实业务数据或生成产物。",
       status: item === "数据退出包" ? "需要强确认" : "Artifact Draft · 版本 1",
       sections: [
         { label: "范围", value: "合成演示班 · 当前学期" },
@@ -2188,6 +2203,7 @@ function StudentDetailWorkspace({ studentId, activeTab, onBack, onDiscuss }: any
           <p className="eyebrow">{current}</p>
           <h2>{current === "概览" ? "当前情况" : `${current}记录`}</h2>
           <div className="profile-records">
+            {content[current].length === 0 && <p className="student-empty" role="status">此学生暂无{current}样例；没有复制其他学生的数据。</p>}
             {content[current].map(([label, value]) => (
               <button
                 key={label}
@@ -2212,7 +2228,7 @@ function StudentDetailWorkspace({ studentId, activeTab, onBack, onDiscuss }: any
           <p className="eyebrow">数据边界</p>
           <strong>事实、观察与推断分开显示</strong>
           <p>
-            此页面只把已确认内容作为人物事实。AI 推断必须保留来源并等待确认。
+            当前为合成样例，不代表已确认的人物事实。正式事实、观察、主张和 AI 推断必须区分，推断不能自动晋升为事实。
           </p>
         </aside>
       </div>
@@ -2229,6 +2245,7 @@ function StudentWorkspace({
   seats,
 }: any) {
   const [view, setView] = useState("清单")
+  const [query, setQuery] = useState("")
   const views = ["清单", "表格", "座位", "宿舍", "小队", "画布"]
   return (
     <div className="surface student-surface">
@@ -2255,10 +2272,16 @@ function StudentWorkspace({
           </button>
         ))}
       </div>
+      {(view === "清单" || view === "表格") && <div className="student-search">
+        <label htmlFor="demo-student-search">搜索学生</label>
+        <input id="demo-student-search" type="search" placeholder="输入姓名或学号" value={query} onChange={event => setQuery(event.target.value)} />
+        {query && <button onClick={() => setQuery("")}>清空搜索</button>}
+      </div>}
       {view === "清单" || view === "表格" ? (
         <TablePreview
           selectStudent={openStudentDetail}
           activeStudentId={activeStudentId}
+          query={query}
         />
       ) : view === "座位" ? (
         <SeatWorkspace
@@ -2350,8 +2373,9 @@ function RepresentativeContent({ workspace }: { workspace: Workspace }) {
   )
 }
 
-function TablePreview({ selectStudent, activeStudentId }: any) {
+function TablePreview({ selectStudent, activeStudentId, query = "" }: any) {
   const { students } = useMockDomainStore()
+  const matches = students.filter(student => `${student.name} ${student.id}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   return (
     <div className="data-table">
       <div className="table-head">
@@ -2360,7 +2384,9 @@ function TablePreview({ selectStudent, activeStudentId }: any) {
         <span>座位</span>
         <span>状态</span>
       </div>
-      {students.map((s) => (
+      <p className="student-result-count" role="status">共 {matches.length} 位演示学生</p>
+      {matches.length === 0 && <p className="student-empty">未找到匹配学生。请检查姓名或学号，或清空搜索；未自动创建或匹配其他身份。</p>}
+      {matches.map((s) => (
         <button
           key={s.id}
           onClick={() => selectStudent(s.id)}
@@ -2598,6 +2624,7 @@ function SettingsWorkspace() {
 }
 
 function SettingsSection({ section }: { section: string }) {
+  const { openDetail } = useUiFeedback()
   const items: Record<string, string[]> = {
     用户与安全: ["用户资料", "登录与安全", "设备", "恢复码", "当前会话"],
     外观: ["浅色 / 深色 / 跟随系统", "UI 密度", "字号", "Sidebar 行为", "动效"],
@@ -2616,27 +2643,19 @@ function SettingsSection({ section }: { section: string }) {
     数据: ["Import", "Export", "Backup", "Migration"],
     无障碍: ["字号", "对比度", "Reduce Motion", "Keyboard"],
   }
-  const [enabled, setEnabled] = useState<string[]>([])
   return (
     <div className="settings-controls">
       {(items[section] || []).map((item) => (
         <section key={item}>
           <div>
             <strong>{item}</strong>
-            <span>使用当前班级的默认 mock 配置</span>
+            <span>未接入 · 仅说明规划边界，不修改配置</span>
           </div>
           <button
-            className={enabled.includes(item) ? "on" : ""}
-            onClick={() =>
-              setEnabled(
-                enabled.includes(item)
-                  ? enabled.filter((x) => x !== item)
-                  : [...enabled, item],
-              )
-            }
-            aria-label={`切换${item}`}
+            onClick={() => openDetail({ title: item, eyebrow: `设置 / ${section}`, description: "此能力尚未接入当前演示。本次只查看说明，没有保存偏好、改变权限、连接服务或创建后台任务。", status: "未接入", actions: [{ label: "关闭", tone: "primary" }] })}
+            aria-label={`了解${item}`}
           >
-            <i />
+            了解
           </button>
         </section>
       ))}

@@ -168,8 +168,10 @@ export function UiFeedbackStore({ children }: { children: ReactNode }) {
                         : ""
                   }
                   onClick={() => {
-                    action.onSelect?.()
-                    if (action.tone === "primary") closeDetail()
+                    const dismissOnly = ["关闭", "知道了", "返回表格"].includes(action.label)
+                    if (action.onSelect) action.onSelect()
+                    else if (!dismissOnly) notify(`${action.label}尚未接入；本次没有生成、保存或发送数据`)
+                    if (action.tone === "primary" || dismissOnly) closeDetail()
                   }}
                 >
                   {action.label}
