@@ -78,10 +78,10 @@
       "sha256": "077a04a3f165aa86879c25faba6f5c214488d6dcdd0418599633675b459f06f4"
     },
     "README.md": {
-      "sha256": "b2bb198daaf1ef33a0d4f1ba4f5d5a2c66a9098f25fd1e3a493bd2f516b203a1"
+      "sha256": "abd6851580ad43d16b21704dea0eae86d947946769275413ed2820656b7b4412"
     },
     "README_EN.md": {
-      "sha256": "7d213a326aea84fa283def16b98588c91678cd5f1e4bc8bff61e79e0d7e29fbb"
+      "sha256": "6d2c1a538a9f1dc282ec5c3da5e0742daeba6386aeb5703b2d141b92404c11b0"
     },
     "SECRET_SCAN_REVIEW.json": {
       "sha256": "9a0d9c5eb4dcd43f5d09006dafd35bfacff2ed92f95a3f492608114fd8e112b8"
@@ -895,7 +895,7 @@
       "sha256": "556da89d40408994ecaad651e17422b9c2747fe3d9770198b21a05446af0803d"
     },
     "docs/ENGINEERING_OVERVIEW.md": {
-      "sha256": "da51f1484e489ab4a21181227e8ffcb7af7c7eb55ae7ed8173c6bd0a22e2c130"
+      "sha256": "5b79b210fbbefcee17829f4fe7dafe9a21a93db9cc86964412e947aed7147fe5"
     },
     "docs/OPEN_SOURCE_READINESS.md": {
       "sha256": "7239bac7a4260f830aa1e539f35cf123f3de32784f794f7c9091d534e755f35a"
@@ -904,7 +904,7 @@
       "sha256": "686f1d295a1ea1ffcb04406f3adbdebcdb670144b04f9ce98df3df052eae646e"
     },
     "docs/README.md": {
-      "sha256": "3f0c93117c6144f08d3fa44623ee4b7f1be54436e971edda96fb5871d9fff309"
+      "sha256": "68119baae6beebe48ce6a0df434de323e001fc2cd665719c4bf9a813dcc83712"
     },
     "docs/changes/2026-10-08-synthetic-development-admission.md": {
       "sha256": "d67c0a71f21431a90f84301ceae2ce790f8a0aeb120052840b0b6032731a9f40"
@@ -2037,6 +2037,15 @@
     },
     "docs/product/legal-evidence-and-rule-hierarchy.md": {
       "sha256": "af3b3d7ea70428af7a675e45f8b79853d8eeafe4438c898202ecae327f4d3542"
+    },
+    "docs/product/agent-owned-work-and-attention.md": {
+      "sha256": "ee5d656cf20ad54e3bf95c7bc1f811b493a3c4e42e5649c13cacb07660dad7c9"
+    },
+    "docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md": {
+      "sha256": "74bd10a94cdf111df95e16717f3aad79555a1b02869a1e7ce70a5b33fd4d7313"
+    },
+    "docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md": {
+      "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"
     }
   }
 }

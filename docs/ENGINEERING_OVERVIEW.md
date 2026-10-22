@@ -22,6 +22,12 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 
+## Agent Runtime 与未来 Work Runtime（2026-10-22 非实施研究）
+
+[Agent 承接工作与业务记忆所有权](product/agent-owned-work-and-attention.md) 探讨了未来从“提醒教师”向“经授权由系统主动推进”的扩展。**业务事实、长期记忆、权限、等待/调度、执行证据与工作状态始终由 ClassMatter 自行治理**；Pydantic AI（现有）或 Pi（候选）只是可替换的按需 Agent Runtime。它们的 Session/compaction/内置耐久化能力均不能取代 ClassMatter 的正式领域工作状态。
+
+[框架与社区调研](research/2026-10-22-pydantic-ai-pi-runtime-assessment.md) 推荐保留默认 Pydantic AI；[候选实验计划](research/2026-10-22-agent-runtime-and-work-evaluation-plan.md) 规定合成对照、安全 Hard Gate 和新增能力的价值验证。**三个文档均不改变 R1 范围、版本、正式业务写入/审批权限或安全准入。**
+
 ## 验证与发行
 
 保留 107 项需求、147 项 Eval、94 个原子任务及其源行哈希；合成开发准入不代表正式 task/eval promotion。`scripts/verify.ps1` 为统一入口，`all` 包括 disposable PG/浏览器与 spikes；正式 security target 与真实数据/发布签名另受 Gate 管理。
