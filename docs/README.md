@@ -1,5 +1,13 @@
 # 班事有谱 · ClassMatter 文档
 
+## Agent 自主推进与 Runtime 调研（2026-10-22 · Discovery / Future）
+
+- [从教师 Todo 到 Agent 承接工作：事项生命周期、记忆所有权与人机协作 Attention](product/agent-owned-work-and-attention.md)：视频启发的抽象、ClassMatter-owned Work Item、等待/检查/证据、班务模拟与安全边界。
+- [Pydantic AI vs Pi：官方能力、专业社区/生产案例与选型判断](research/2026-10-22-pydantic-ai-pi-runtime-assessment.md)：默认继续采用 Pydantic AI，Pi 仅为隔离评测候选；证据与来源分级。
+- [Agent Runtime / 持续工作研究测试计划](research/2026-10-22-agent-runtime-and-work-evaluation-plan.md)：合成场景、对照合同、硬性安全门槛、Net Burden、渐进验证。
+
+以上均为研究文档，**不是 R1 新功能、已通过的 Eval/Gate、真实学生数据处理许可或 Runtime 迁移批准**。
+
 ## 业务场景与安全协同（2026-10-21 · Discovery / Future）
 
 - [班务与异常事件场景图谱](product/scenario-catalog.md)：20 个虚构情境，覆盖日常事实、家校沟通、失联/请假、寄宿、冲突、心理困扰、突发事故和交班；区分 R1 能力与长期业务假设。
