@@ -2,8 +2,20 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "apps/desktop/preload.cjs": {
+      "sha256": "9663a1d56aa2d7194ba84b908489c87c18297f2921d03a7cf652b405f55cc5f5"
+    },
+    "apps/web/src/DesktopChrome.tsx": {
+      "sha256": "7d91cd5fc9644cba1e26f4206a4bc0f1545d5098b280201baf134468581fcbbb"
+    },
+    "apps/web/src/desktop.css": {
+      "sha256": "1402ab1a5a3a72132a462eb913389654ec2d63ceeecfa4f01528f1331a7a93e4"
+    },
+    "design-qa.md": {
+      "sha256": "a26da4510d8a42b8a8839e6fd920cb8c7fd7d8ad4a39b335ee69f4ce0f98eac0"
+    },
     "apps/desktop/main.cjs": {
-      "sha256": "290b4afdbd9eb8dd48b4b0f3e29a5030f506fd259f64ff0611cdb4ad63b17bf3"
+      "sha256": "be2c6879293bc6fed1ad12245208b0d235dd40174bfd7745eabeb6fa5a96171d"
     },
     "apps/desktop/package.json": {
       "sha256": "435a70720c5279c035e15cc71dd8da482df846984a26e2ff3e0ce117e9f96b31"
@@ -18,10 +30,10 @@
       "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
     },
     "apps/desktop/README.md": {
-      "sha256": "1e6caaa742e0789ec96366f8ad7d4e3a70f4c5504676e82cb57e743d9b78852a"
+      "sha256": "7f03e976250a65a4056b2641a61315c99d0cdb327c060c5b22d3456e0836738a"
     },
     "apps/desktop/scripts/build.cjs": {
-      "sha256": "479b77fbeecedd603e93fe9b7dc1631f650179ccdce58cad27e8395c9a22dcf9"
+      "sha256": "586d17fa8f21ce2eda947c78a55d2139f4c979fd6110a9f0336d585fb777b7fc"
     },
     "apps/desktop/scripts/icon.cjs": {
       "sha256": "f6b51eec4012e917236ec404e96b91c7eb1ef30cabca3e589d18671271588534"
@@ -36,13 +48,13 @@
       "sha256": "197ace83cbbd212f888702c25a825f2ece85d35bd777295a5e6ab0f6f99c3043"
     },
     "apps/desktop/tests/policy.test.cjs": {
-      "sha256": "852b35951e493417dec3689b82975769b65c1c0c6ceaab4e0799833586fddc38"
+      "sha256": "df681bdf8db9366c7c0195423f0b2a0138d6cbeee3cb7d3ed5c8a0ad2efd8f90"
     },
     "apps/desktop/tests/smoke.cjs": {
-      "sha256": "765b7d05e78a9898f54cb2c59f7a3a90a1d1120f20b7566166467b0cb562165c"
+      "sha256": "34a12dd3016c7d32cbabeb25fad1153d2be21962b26ea08ca6972aab3fc28343"
     },
     "docs/desktop-demo.md": {
-      "sha256": "79a60906f92e99106c52ec44759479250487f96bbca832ae2bcf1f202713e3aa"
+      "sha256": "f744888d72500bfcc52d2aff14b9a82dd9ce376dca3b22fd7133c41a3b90d474"
     },
     ".ai/development/synthetic-policy.yaml": {
       "sha256": "1e8c0b807b2fa0a967dbcbc02750809cffea236ef98b608dc4d0f12c8317fffa"
@@ -192,7 +204,7 @@
       "sha256": "07cbe4271ef162a60ec93016e373c35b5f84e73472e39128fac0d0fcc239accd"
     },
     "apps/web/src/main.tsx": {
-      "sha256": "83b1a777bcedc295f80ff882b7eb0dc0890c371fa1cbecfa47952eb00de9b531"
+      "sha256": "ef5b73f15a918b4a4736885c59956f91c0787b34641a935117d244400c647c33"
     },
     "apps/web/src/product.css": {
       "sha256": "bd8b785fefcaa740127edf83dc3615fec2da7bc212d9a1054266c163928a23ed"

@@ -30,13 +30,36 @@ async function main() {
     expect.equal(isolation.contextIsolation, true);
     expect.equal(isolation.nodeIntegration, false);
     expect.equal(isolation.webSecurity, true);
-    expect.ok(!isolation.preload);
     expect.equal(isolation.packaged, packaged);
     expect.equal(await page.evaluate(() => typeof window.require), 'undefined');
     expect.equal(await page.evaluate(() => typeof window.process), 'undefined');
-    checks.push('independent local origin; sandbox/context isolation; no Node/preload bridge');
+    expect.deepEqual(await page.evaluate(() => Object.keys(window.classMatterDesktop)), ['openMenu']);
+    expect.equal(await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].isMenuBarVisible()), false);
+    await page.getByRole('banner', { name: '桌面窗口工具栏' }).waitFor();
+    expect.equal(await page.locator('.desktop-titlebar').evaluate(el => getComputedStyle(el).getPropertyValue('-webkit-app-region')), 'drag');
+    expect.equal(await page.getByRole('button', { name: '切换左侧栏', exact: true }).evaluate(el => getComputedStyle(el).getPropertyValue('-webkit-app-region')), 'no-drag');
+    await page.getByRole('button', { name: '切换左侧栏', exact: true }).click();
+    expect.equal(await page.locator('.app-shell > .sidebar').isVisible(), false);
+    await page.getByRole('button', { name: '切换左侧栏', exact: true }).click();
+    expect.equal(await page.locator('.app-shell > .sidebar').isVisible(), true);
+    expect.equal(await page.locator('.app-shell').evaluate(el => Math.round(el.getBoundingClientRect().bottom - innerHeight)), 0);
+    expect.equal(await page.locator('.app-shell > .sidebar').evaluate(el => Math.round(el.getBoundingClientRect().bottom - innerHeight)), 0);
+    checks.push('integrated draggable titlebar; native menu hidden; fixed menu-only bridge; sidebar toggle');
 
     await page.screenshot({ path: path.join(evidence, packaged ? 'packaged-home.png' : 'home.png') });
+    const viewport = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, density: devicePixelRatio, nativeOverlay: navigator.windowControlsOverlay?.visible }));
+    expect.equal(viewport.nativeOverlay, true);
+    fs.writeFileSync(path.join(evidence, 'viewport.json'), JSON.stringify(viewport, null, 2));
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setSize(1000, 680));
+    // Windows fractional-DPI non-client rounding can add a few CSS pixels.
+    await page.waitForFunction(() => innerWidth <= 1010);
+    expect.ok(await page.getByPlaceholder('输入、查询、记录或安排班级工作……').evaluate(el => el.getBoundingClientRect().bottom <= innerHeight));
+    expect.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+    await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].maximize());
+    await page.waitForFunction(() => innerWidth > 1010);
+    expect.ok(await page.getByPlaceholder('输入、查询、记录或安排班级工作……').evaluate(el => el.getBoundingClientRect().bottom <= innerHeight));
+    await app.evaluate(({ BrowserWindow }) => { const win = BrowserWindow.getAllWindows()[0]; win.unmaximize(); win.setSize(1380, 900); });
+    checks.push('native window-control overlay; minimum-size and maximized layout preserve composer');
     await page.getByRole('navigation', { name: '主要工作组件' }).getByRole('button', { name: '学生', exact: true }).click();
     await page.waitForURL('**/students');
     await page.locator('.table-row').filter({ hasText: '合成学生01' }).waitFor();
@@ -46,7 +69,11 @@ async function main() {
     await page.waitForURL(/\/students\/.+/);
     await page.reload();
     await page.getByText('合成学生01', { exact: true }).first().waitFor();
-    await page.goBack();
+    await page.getByRole('button', { name: '返回上一页', exact: true }).click();
+    await page.waitForURL('**/students');
+    await page.getByRole('button', { name: '前进下一页', exact: true }).click();
+    await page.waitForURL(/\/students\/.+/);
+    await page.getByRole('button', { name: '返回上一页', exact: true }).click();
     await page.waitForURL('**/students');
     checks.push('student navigation, detail deep-link reload, history back');
 

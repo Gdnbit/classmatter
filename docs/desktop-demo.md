@@ -10,7 +10,9 @@
 
 ## 进程、资源与生命周期
 
-Electron 主进程管理窗口/菜单；沙箱 renderer 仅渲染原有前端。没有 preload 或业务 IPC。主进程资源处理器限定 app host、GET/HEAD、已知 SPA 路由及平面 assets 白名单；真实路径必须仍位于 UI 根目录，缺失资源返回 404，不将 API 请求回退到 HTML。SPA 的 path/query、刷新、返回不需要改造成平行路由。
+Electron 主进程管理窗口/菜单；沙箱 renderer 渲染原有前端与桌面专用工具栏。preload 仅开放固定四类菜单请求，主进程校验 sender、主 frame、本地 URL 与封闭菜单枚举；没有通用 IPC 或业务 IPC。主进程资源处理器限定 app host、GET/HEAD、已知 SPA 路由及平面 assets 白名单；真实路径必须仍位于 UI 根目录，缺失资源返回 404，不将 API 请求回退到 HTML。SPA 的 path/query、刷新、返回不需要改造成平行路由。
+
+一体化窗口更新：`titleBarStyle=hidden` 与 Windows 原生 `titleBarOverlay`，44px 浅色顶栏复用 Lucide 图标与系统字体；固定预留原生窗口按钮区域，不自行模拟关闭/最大化。顶栏空白为 drag、按钮为 no-drag；侧栏支持收起。`VITE_CLASS_OS_DESKTOP=true` 只由桌面构建设置，普通 Web 不启用。白色内容区与浅色侧栏保留原界面结构。此 UI 请求不新增业务 Requirement/Eval/Task/Gate，也不放宽网络/数据库边界。
 
 同一用户重复启动仅聚焦原窗口，最后窗口关闭退出，无托盘常驻、Vite server 或应用自建监听端口。独立 appData 目录避免与 Codex/其他应用混用。页面 Session partition 不持久化；不承诺底层 Electron 零缓存或本机可取证擦除。Demo 页面内存变更在刷新或重启后重置。
 
@@ -34,7 +36,7 @@ Electron 主进程管理窗口/菜单；沙箱 renderer 仅渲染原有前端。
 | --- | --- |
 | 无浏览器/8443 服务依赖；打包版自己包含 UI | `tests/smoke.cjs --packaged` 校验本地 origin、打包标识、学生/工作页面 |
 | 导航、详情刷新、返回正常 | 同一集成测试的 path/query 与历史导航 |
-| renderer 无 Node/IPC 和宿主能力扩大 | 单测 + 集成测试检查沙箱、隔离、无 require/process/preload |
+| renderer 无 Node/通用 IPC 和业务能力扩大 | 单测 + 集成测试检查沙箱、隔离、无 require/process；bridge 仅 openMenu |
 | API、任意文件、远程访问和弹窗不放行 | `tests/policy.test.cjs` + 集成测试 |
 | 第二实例退出，最后窗口关闭后主进程退出 | 集成测试真实进程与窗口检查 |
 | 现有 Web 契约和类型不漂移 | `apps/web` 的 typecheck（含 32 项测试）及普通 build |
@@ -44,6 +46,8 @@ Electron 主进程管理窗口/菜单；沙箱 renderer 仅渲染原有前端。
 本轮本机验收：6 项资源边界单测、开发/打包版 Electron 集成均通过；打包版额外验证 10 个现有页面入口和底部对话框发送，无 pageerror。原 Web 32 项 Node 测试、TypeScript 与普通生产构建通过；SDD self/eval-meta/gate-graph/task-graph/development/fixtures、文档 UTF-8/链接/空白检查通过。新增桌面工具链完整 `pnpm audit` 当次无已知漏洞报告（不是未来安全保证）。增加 Windows CI 步骤但本轮没有推送或运行远端 CI；没有执行完整后端/数据库回归，未改其代码与契约。集成测试截图与 JSON 只保留在本机忽略目录。
 
 ## 许可证、产物和已知限制
+
+一体化顶栏增量验收：7 项桌面单测（含固定菜单桥白名单）、真实打包窗口回归、原生 overlay 可见性、最小窗口/最大化输入框可见性、顶栏返回/前进和侧栏显隐通过。原 Web 类型检查、32 项测试和普通构建通过。只读业务边界未变化；视觉检查及原生拖动/Snap 的人工抽查限制见根 `design-qa.md`。普通 Web 构建不显示桌面顶栏；测试截图仍不纳入源码。
 
 源码 Apache-2.0 / Gdnbit；Electron 保留自身 LICENSE 与 LICENSES.chromium.html；应用 ASAR 中包含自有 LICENSE/NOTICE、THIRD_PARTY_NOTICES 和实际 Web 生产闭包的通知/版本清单。开发打包工具不复制进应用。它补充原有 source-only 依赖清单，不将旧清单冒充完整桌面二进制 SBOM。正式公开二进制发布前仍需对 Electron/Chromium/FFmpeg、原生组件、打包链、签名及升级单独复核。
 

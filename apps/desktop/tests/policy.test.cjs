@@ -4,10 +4,27 @@ const fs = require('node:fs/promises');
 const os = require('node:os');
 const path = require('node:path');
 const { ORIGIN, CSP, localURL, resolveResource, serveResource } = require('../policy.cjs');
+const vm = require('node:vm');
 
 test('only the exact app origin is trusted', () => {
   for (const url of ['https://example.com', 'http://127.0.0.1:8443', 'file:///etc/passwd', 'classmatter://evil/', 'classmatter://app:80/', 'classmatter://user@app/']) assert.equal(localURL(url), false, url);
   assert.equal(localURL(`${ORIGIN}/students?view=seat`), true);
+});
+
+test('preload exports only four fixed menu requests, never arbitrary IPC', async () => {
+  let bridge;
+  const requests = [];
+  const source = await fs.readFile(path.join(__dirname, '../preload.cjs'), 'utf8');
+  vm.runInNewContext(source, { require: name => {
+    assert.equal(name, 'electron');
+    return { contextBridge: { exposeInMainWorld: (name, api) => { assert.equal(name, 'classMatterDesktop'); bridge = api; } }, ipcRenderer: { send: (...args) => requests.push(args) } };
+  } });
+  assert.deepEqual(Object.keys(bridge), ['openMenu']);
+  for (const value of ['application', 'edit', 'view', 'help']) bridge.openMenu(value);
+  assert.equal(requests.length, 4);
+  for (const value of ['shell', 'database', '__proto__', null, {}, ['help']]) bridge.openMenu(value);
+  assert.equal(requests.length, 4);
+  for (const request of requests) assert.equal(request[0], 'desktop:menu');
 });
 test('existing deep links resolve to SPA, assets have explicit MIME', () => {
   for (const route of ['/', '/students', '/students/s-001?tab=timeline', '/work', '/data/documents/parents-001', '/settings/user', '/spaces/midterm']) assert.equal(resolveResource(ORIGIN + route).relative, 'index.html');
