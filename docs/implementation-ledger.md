@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-22。基线：`e6a5bdd`，本轮继续在 `codex/desktop-demo` 实施。此表是工程状态索引，不替代 canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-23。基线：W1 `161a583`、W2-01 `9e97a08`，继续在 `codex/desktop-demo` 实施。此表是工程状态索引，不替代 canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 
@@ -22,7 +22,7 @@ W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2-01已实�
 | 桌面窗口/原生顶栏/菜单/沙箱 | implemented-synthetic | `apps/desktop/` | DESKTOP-DEMO及W2-01 runtime工程验收；非新增正式R1任务；安装器/签名/更新未完成 |
 | 对话、历史、标题、搜索、输入草稿 | demo-only | `store/ConversationStore.tsx`、`shell/AppShell.tsx` | A05/A06/A11；当前内存会话，非持久工作历史 |
 | 首页三类注意力/个人任务 | partial | `store/DemoWorkStore.tsx`；`runtime/R1App.tsx`、backend activity | T-RDOM-009/010/013、T-RWEB-004；E-TSK-001/E-EVT-004；Demo与真实视图仍分离 |
-| 学生列表、详情、搜索、空态 | partial | `shell/AppShell.tsx`；`runtime/R1App.tsx`、backend roster | T-RDOM-002—005/011、T-RWEB-002；E-ROS-001—004/E-ID-001—004；待统一冻结UX与API |
+| 学生列表、详情、搜索、空态 | partial / W2-02 implemented-synthetic | `shell/AppShell.tsx`；`runtime/R1App.tsx`、`runtime/student-directory.ts`、backend roster | T-RDOM-002—005/011、T-RWEB-002；E-ROS-001—004/E-ID-001—004；真实姓名/UUID搜索、详情、关联跟进已接；非整个冻结shell迁移 |
 | 登录/会话/恢复码 | implemented-synthetic | backend identity、runtime identity | T-RPLT-013/014/018/019、T-RWEB-001；E-AUTH-009—018；新开发桌面已接既有R1登录；owner凭据不由Agent设置 |
 | 事实/观察/更正/来源 | implemented-synthetic | backend activity、runtime forms | T-RDOM-006—008/012、T-RWEB-003；E-EVT/E-LEAVE/E-HWK；需在冻结桌面交互复验 |
 | 预览/批准/提交/幂等/审计 | implemented-synthetic | backend QG/BCG/ISB、runtime command receipts | T-RPLT-007—009/015—018；E-CMD/E-AUD/E-AGT-015—025；不能复用Demo确认当服务端批准 |
@@ -61,7 +61,7 @@ W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2-01已实�
 
 ## 版本与证据管理
 
-各波次小提交；公开清单复核后提交本地开发分支，未经新的明确决定不推送公开仓库。运行库、截图、密钥和证据原件留在忽略目录。正式任务仍planned/Eval仍not-run时保留原状态，另用本台账记录工程事实；完成正式晋级需目标版本绑定和批准证据。
+各波次小提交；公开清单复核后提交本地开发分支。用户2026-10-23明确授权本阶段验收通过后同步GitHub；本次仅同步已审查源码与文档，不包含安装包、运行库、截图、密钥和证据原件。正式任务仍planned/Eval仍not-run时保留原状态，另用本台账记录工程事实；完成正式晋级需目标版本绑定和批准证据。
 
 基线复核：后端非DB278通过/314未选入；task graph有效但正式implemented-green=0；147项Eval中82项executable-spec、65项catalogued。这些是本轮前置检查，不是W2/真实模型/生产验收。
 
@@ -87,3 +87,15 @@ W2-01验证：后端非DB284项、完整隔离DB回归315项（包含真实浏�
 新增读取接口仅`GET /health/desktop`，只在desktop operator opt-in装配中存在，不更改生成的业务契约。进程proof不授权用户/业务写入；测试临时owner不用于用户实例。其追溯复用T-RWEB-001—006、T-RDOM-006/009/010/012/013、T-RAGT-003，工程证据不提升正式任务或Eval状态。
 
 `verify -Suite desktop`已纳入独立runtime资产构建（不启动服务/数据库）；真实PG/Electron测试仍在Windows本机DB suite中执行，当前远端CI只在Linux执行DB组，不能声称远端已经覆盖Windows持久化桌面。源代码开发入口不是完整安装包；默认用户runtime/owner/真实模型凭据仍须本人按文档配置，本轮未创建或修改。
+
+### W2-02：真实学生详情与跟进绑定（2026-10-23）
+
+- 复用同一QG返回的学生、活动数据和现有BCG操作；新增纯表现层投影，不新增API、迁移、工具、权限或业务写入口。
+- 姓名/内部UUID搜索支持去除首尾空格和大小写匹配；同名学生保持独立，停用身份保留历史，不把UUID伪称学号。无匹配时可清空，搜索变更清除旧详情，班级/会话变更清除搜索。
+- 详情显示当前范围内记录与未结束跟进数；关联跟进进入现有工作页并保持学生筛选，可用原预览/确认动作处理。空身份返回空集合，不回退全班数据。教师观察没有晋升为人物事实。
+- 成绩、文件和关系图谱明确未接入；没有把Demo字段或fixture填入真实详情，没有建立长期画像或把样例界面当作生产功能。
+- 工程验收：新增2项投影测试（Web总41项并通过类型检查），18项桌面边界测试通过；真实Electron/一次性SCRAM PostgreSQL新增搜索无结果/恢复、UUID检索、两位学生详情隔离、跟进跳转/确认完成后摘要未结束计数归零，并保留记录/任务重启持久化与Agent草稿不落库验收，通过。截图/结果位于忽略的`apps/desktop/.build/evidence/runtime/`，人工检查桌面截图无溢出或样例冒充。
+- 本轮追溯沿用T-RWEB-002/003/004、T-RDOM-002/006/009/010/012；没有调整Requirement/Eval/Task/Gate语义或正式状态。W2仍未整体完成，后续优先继续绑定注意力/工作主链与完整故障矩阵，其后再完成W3/W4；真实供应商质量、教师净负担、正式准入仍待验证。
+- GitHub远端新增`a5e3156`研究文档已先合并并保留，Agent承接工作/Pi对照实验仍为Discovery/Future。同步不代表这些研究已实施或准许扩大R1。
+- 本轮既有回归：backend非DB284项、真实浏览器/PG集成1项、真实桌面/PG集成1项、Web41项/类型/普通与Demo/runtime构建、Node18项通过。工程脚本81项在新增源文件加入Git索引后重跑通过（首次索引遗漏未记为通过）。公开内容和历史扫描仅有原4条已审查记录、0未解决；68份Markdown的引用/UTF-8/空白与冻结Task/Gate/Eval图检查通过。未重复运行上一轮完整315项DB suite，不把定向回归冒称全量。
+- 原离线Demo smoke与打包应用A01—A17复测通过，`pageErrors=[]`、`externalRequests=[]`。首次因已有Demo占用单实例锁而退出；核实路径与窗口后正常关闭该Demo再重跑通过，不修改业务实例。浏览器预览构建恢复Demo模式，避免误把用户当前8443页面切成未配置的R1登录。

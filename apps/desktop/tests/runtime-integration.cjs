@@ -49,6 +49,31 @@ async function main(){
     await page.getByRole('button',{name:'基于事实建立跟进',exact:true}).click();
     await page.getByLabel('跟进标题').fill('合成桌面持久化任务');
     await commit(page);
+    const summary=page.getByRole('region',{name:'学生详情摘要'});
+    await summary.getByText('合成桌面持久化任务',{exact:true}).waitFor();
+    assert.match(await summary.innerText(),/1 项未结束跟进/);
+    await summary.getByRole('button',{name:/合成桌面持久化任务/}).click();
+    await page.getByRole('button',{name:'完成并记结果',exact:true}).waitFor();
+    assert.equal(await page.getByLabel('按学生筛选任务').inputValue(),await page.getByLabel('按学生筛选任务').locator('option',{hasText:'合成桌面学生'}).getAttribute('value'));
+    await page.getByRole('button',{name:'学生',exact:true}).click();
+    await page.getByLabel('搜索学生').fill('不匹配的合成姓名');
+    await page.getByText(/没有匹配的学生/).waitFor();
+    assert.equal(await summary.count(),0);
+    assert.equal(await page.getByText('合成桌面持久化事实',{exact:true}).count(),0);
+    await page.getByRole('button',{name:'清空搜索',exact:true}).click();
+    await page.getByRole('button',{name:'添加学生',exact:true}).click();
+    await page.getByLabel('学生姓名（允许同名，内部 ID 区分）').fill('另一合成学生');
+    await commit(page);
+    await page.getByRole('button',{name:/另一合成学生.*版本/}).click();
+    await summary.getByText('此学生尚无关联跟进。',{exact:true}).waitFor();
+    assert.equal(await page.getByText('合成桌面持久化事实',{exact:true}).count(),0);
+    await page.getByRole('button',{name:'返回全部学生',exact:true}).click();
+    await page.getByRole('button',{name:/合成桌面学生.*版本/}).click();
+    const internalId=(await summary.innerText()).match(/内部 ID：([a-f0-9-]+)/)[1];
+    await page.getByLabel('搜索学生').fill(` ${internalId.toUpperCase()} `);
+    await page.getByText('显示 1 / 2 位学生',{exact:true}).waitFor();
+    await page.getByRole('button',{name:/合成桌面学生.*版本/}).click();
+    await page.getByText('合成桌面持久化事实',{exact:true}).waitFor();
     assert.ok(await page.locator('.desktop-titlebar').isVisible());
     await page.screenshot({path:path.join(evidence,'01-saved.png')});
     await app.close();app=null;
@@ -59,6 +84,14 @@ async function main(){
     await page.getByRole('button',{name:'学生',exact:true}).click();
     await page.getByRole('button',{name:/合成桌面学生.*版本/}).click();
     await page.getByText('合成桌面持久化事实',{exact:true}).waitFor();
+    const restartedSummary=page.getByRole('region',{name:'学生详情摘要'});
+    await restartedSummary.getByRole('button',{name:/合成桌面持久化任务/}).click();
+    await page.getByRole('button',{name:'完成并记结果',exact:true}).click();
+    await page.getByLabel('完成结果 / 核对证据').fill('合成跟进已核对');
+    await commit(page);
+    await page.getByRole('button',{name:'学生',exact:true}).click();
+    await restartedSummary.getByText(/0 项未结束跟进/).waitFor();
+    await restartedSummary.getByRole('button',{name:/合成桌面持久化任务.*已完成/}).waitFor();
     await page.screenshot({path:path.join(evidence,'02-after-restart.png')});
     await page.getByRole('button',{name:'对话',exact:true}).click();
     await page.getByLabel('输入消息').fill('合成查询当前工作');
@@ -86,7 +119,7 @@ async function main(){
       await new Promise(resolve=>setTimeout(resolve,50));
     }
     assert.ok(gone,'Owned API must exit on parent pipe EOF after desktop crash');
-    fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({scope:'Synthetic disposable database and existing R1 UI; deterministic fake provider, not real-model quality or frozen shell migration',checks:['owned-process-proof','private-approval-and-command','record-task-linked','restart-persistence','owned-api-stop','read-tool-source','draft-not-committed','parent-crash-pipe-cleanup'],pageErrors:errors,externalRequests:remote},null,2));
+    fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({scope:'Synthetic disposable database and R1 student binding; deterministic fake provider, not real-model quality or full frozen shell migration',checks:['owned-process-proof','private-approval-and-command','record-task-linked','student-search-empty-and-reset','student-id-search','student-detail-no-cross-identity','student-follow-up-navigation-and-completion-count','restart-persistence','owned-api-stop','read-tool-source','draft-not-committed','parent-crash-pipe-cleanup'],pageErrors:errors,externalRequests:remote},null,2));
     console.log('Synthetic desktop record/task/restart passed');
   } catch(error){if(app){const page=await app.firstWindow();await page.screenshot({path:path.join(evidence,'failure.png')}).catch(()=>{});console.error('Runtime UI failed:',page.url());}throw error;}
   finally {try{if(app)await app.close();}finally{fs.writeFileSync(sourceFile,original);}}

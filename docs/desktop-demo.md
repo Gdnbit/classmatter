@@ -72,3 +72,5 @@ Future：生产桌面接入应复用原 API/Agent 服务，通过受控进程托
 限制：仍未完成冻结Demo全页面绑定、真实模型质量、长期记忆/checkpoint、完整生命周期退出/跨机恢复、installer/签名/自动更新和正式R1准入。使用现有R1业务页面验证运行桥，不创建平行领域实现；完整剩余项见[实现台账](implementation-ledger.md)。本机集成证据不能冒充远端CI或其他平台支持。
 
 本轮最终工程回归：backend非DB284/DB315、Web39/类型/构建、Node18、原离线Demo17组及真实runtime集成均通过；文档/引用/冻结task hash检查通过。桌面suite额外构建runtime资产但不启动它；Windows PG/Electron持久化仍属本机DB suite，未声称已推送或执行新远端CI。下载保存对话框、全平台辅助技术、真实教师净负担和真实provider仍未验收。
+
+2026-10-23 W2-02增量：真实R1页面增加姓名/UUID搜索、明确的无结果/清空、学生详情摘要和关联跟进跳转，复用原QG/BCG，不用Demo数据补齐未实现栏目。真实Electron/隔离PG验证两位学生不串记录、任务完成后未结束数归零，以及关闭重启持久化。完整范围、验证结果、GitHub同步授权和仍未实施项以[实现台账](implementation-ledger.md)为准；此轮不是全产品MVP或正式Gate通过。

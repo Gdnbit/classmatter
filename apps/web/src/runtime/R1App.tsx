@@ -40,6 +40,7 @@ import { ModelConfigurationForm } from "./ModelConfiguration"
 import { createScopedConversation, parseRecordNoteCandidate, type RecordNoteCandidate } from "./agent-conversation"
 import { decodeApproval, decodeCommandReceipt, decodeCommandState } from "./command-receipts"
 import { decodeTermMetadata } from "./term-metadata"
+import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -174,6 +175,7 @@ export default function R1App() {
   }, [session?.csrf_token, session?.subject.workspace_id, classroom?.class_id, classroom?.term_id])
   useEffect(() => () => { runningAgent.current?.abort() }, [])
   useEffect(() => { setAuditPage(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
+  useEffect(() => { setSearch("") }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   useEffect(() => { termLoad.current++; setTermMetadata(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   const fail = useCallback((reason: unknown) => {
     setError(reason instanceof Error ? reason.message : "操作失败")
@@ -384,6 +386,8 @@ export default function R1App() {
   }
   const editable = !!classroom && classroom.status !== "archived" && !refreshing
   const selected = students.find((item) => item.student_id === selectedStudent)
+  const matchingStudents = searchStudents(students, search)
+  const selectedFollowUps = studentFollowUps(activity?.tasks || [], selected?.student_id || "")
   const canEditStudent = editable && selected?.status !== "inactive"
   const studentName = (id: string | null) =>
     students.find((item) => item.student_id === id)?.name ||
@@ -965,10 +969,16 @@ export default function R1App() {
               <div className="r1-toolbar">
                 <input
                   aria-label="搜索学生"
-                  placeholder="搜索学生"
+                  placeholder="搜索姓名或内部 ID"
                   value={search}
-                  onChange={(event) => setSearch(event.target.value)}
+                  onChange={(event) => {
+                    setSearch(event.target.value)
+                    setSelectedStudent("")
+                    setRecord(null)
+                    setTask(null)
+                  }}
                 />
+                {search && <button onClick={() => setSearch("")}>清空搜索</button>}
                 <button
                   disabled={!classroom || !editable}
                   onClick={() => open("student")}
@@ -976,7 +986,7 @@ export default function R1App() {
                   添加学生
                 </button>
                 {selected && (
-                  <button onClick={() => setSelectedStudent("")}>
+                  <button onClick={() => { setSelectedStudent(""); setSearch(""); setRecord(null); setTask(null) }}>
                     返回全部学生
                   </button>
                 )}
@@ -986,8 +996,8 @@ export default function R1App() {
               ) : (
                 <div className="r1-student-layout">
                   <div className="r1-student-list">
-                    {students
-                      .filter((item) => item.name.includes(search))
+                    <p className="r1-muted" role="status">显示 {matchingStudents.length} / {students.length} 位学生</p>
+                    {matchingStudents
                       .map((item) => (
                         <button
                           key={item.student_id}
@@ -995,6 +1005,7 @@ export default function R1App() {
                           onClick={() => {
                             setSelectedStudent(item.student_id)
                             setRecord(null)
+                            setTask(null)
                           }}
                         >
                           <strong>{item.name}</strong>
@@ -1007,8 +1018,25 @@ export default function R1App() {
                     {!students.length && (
                       <p className="r1-muted">尚无学生，添加后即可记录事实。</p>
                     )}
+                    {!!students.length && !matchingStudents.length && (
+                      <p className="r1-muted">没有匹配的学生。请清空搜索或核对内部 ID；不会自动匹配其他人。</p>
+                    )}
                   </div>
                   <section>
+                    {selected && (
+                      <section className="r1-card" aria-label="学生详情摘要">
+                        <h2>学生详情</h2>
+                        <p>内部 ID：{selected.student_id}</p>
+                        <p>{selected.status === "inactive" ? "已停用（历史可查）" : "在班"} · {records.length} 条当前记录 · {selectedFollowUps.filter(isOpenTask).length} 项未结束跟进</p>
+                        <p className="r1-muted">只展示当前班级、学期内已查询的数据，不代表完整人物画像。成绩、文件、关系图谱尚未接入。</p>
+                        <h3>关联跟进</h3>
+                        {selectedFollowUps.length ? selectedFollowUps.map(item => (
+                          <button className="r1-attention-item" key={item.task_id} onClick={() => { setTask(item); setPage("work") }}>
+                            <span>{item.title}</span><span>{states[item.status]}</span>
+                          </button>
+                        )) : <p className="r1-muted">此学生尚无关联跟进。</p>}
+                      </section>
+                    )}
                     {selected && (
                       <div className="r1-toolbar">
                         <button disabled={!canEditStudent || busy} onClick={() => open("student-name")}>
@@ -1081,8 +1109,8 @@ export default function R1App() {
                         有标识重复候选。保持独立，不自动合并。
                       </div>
                     ))}
-                    <h2>事实时间线</h2>
-                    {records.length ? (
+                    <h2>{selected ? "事实时间线" : search.trim() ? "选择匹配学生后查看详情" : "班级事实时间线"}</h2>
+                    {(!search.trim() || selected) && (records.length ? (
                       records.map((item) => (
                         <RecordCard
                           key={item.record_id}
@@ -1102,7 +1130,7 @@ export default function R1App() {
                       ))
                     ) : (
                       <p className="r1-muted">尚无已确认事实。</p>
-                    )}
+                    ))}
                   </section>
                 </div>
               )}
