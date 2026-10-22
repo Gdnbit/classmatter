@@ -175,6 +175,7 @@ pwsh ./scripts/verify.ps1 -Suite all -PostgresRoot '<PostgreSQL18安装目录>'
 | **产品要解决什么问题** | [需求](docs/specs/class-os-v1/requirements.md) · [业务流程](docs/specs/class-os-v1/business-flow.md) |
 | **为什么这样设计** | [架构](docs/specs/class-os-v1/architecture.md) · [架构决策](docs/specs/class-os-v1/architecture-decision.md) |
 | **理念如何延伸为完整系统** | [长期需求](docs/specs/class-os-v1/long-term-requirements.md) · [验收与价值标准](docs/specs/class-os-v1/acceptance.md) |
+| **Agent 自主推进与底层技术研究（Future）** | [业务闭环与 AI 任务](docs/product/agent-owned-work-and-attention.md) · [Pydantic AI vs Pi](docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md) · [合成验证计划](docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md) |
 | **怎样贡献与验证** | [贡献指南](CONTRIBUTING.md) · [安全说明](SECURITY.md) · [公开审计](docs/PUBLIC_AUDIT.md) |
 
 ---
