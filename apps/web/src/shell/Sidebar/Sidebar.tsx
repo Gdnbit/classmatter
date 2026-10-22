@@ -25,6 +25,7 @@ import type { Workspace } from "@/shell/types"
 
 import MorePopover from "./MorePopover"
 import { useUiFeedback } from "@/store/UiFeedbackStore"
+import { persistentWorkspaces } from "@/data/workspaces"
 const navItems: { label: string; target: Workspace; icon: typeof Grid2X2 }[] = [
   { label: "总览", target: "dashboard", icon: Grid2X2 },
   { label: "学生", target: "students", icon: Users },
@@ -42,8 +43,8 @@ export default function Sidebar({
   workspace: Workspace
   setWorkspace: (w: Workspace) => void
 }) {
-  const { activeConversationId, setConversation } = useSessionStore()
-  const { createConversation } = useConversationStore()
+  const { activeConversationId, setConversation, navigate } = useSessionStore()
+  const { createConversation, conversations, messagesByConversationId, renameConversation } = useConversationStore()
   const { openDetail } = useUiFeedback()
   const [moreOpen, setMoreOpen] = useState(false)
   const [pinned, setPinned] = useState(false)
@@ -51,16 +52,8 @@ export default function Sidebar({
   const [query, setQuery] = useState("")
   const triggerRef = useRef<HTMLButtonElement>(null)
   const closeTimer = useRef<number | undefined>(undefined)
-  const chats = [
-    ["c1", "9月班级工作整理", "刚刚", "今天"],
-    ["c2", "合成学生02座位调整", "10:20", "今天"],
-    ["c3", "期初家校沟通", "昨天", "昨天"],
-    ["c4", "月考成绩分析", "9月3日", "过去7天"],
-    ["c5", "周五班会准备", "9月2日", "过去7天"],
-    ["c6", "期中考试安排", "8月31日", "过去7天"],
-    ["c7", "家长会材料整理", "8月30日", "过去7天"],
-  ] as const
-  const filteredChats = chats.filter(([, title]) => title.includes(query))
+  const [renaming, setRenaming] = useState<string | null>(null)
+  const filteredChats = conversations.filter(c => c.title.includes(query) || (messagesByConversationId[c.id] || []).some(m => m.text.includes(query)))
   const main = navItems.filter((x) =>
     ["总览", "学生", "工作"].includes(x.label),
   )
@@ -127,8 +120,8 @@ export default function Sidebar({
           {search ? (
             <input
               autoFocus
-              aria-label="搜索聊天和内容"
-              placeholder="搜索聊天和内容"
+              aria-label="搜索当前演示对话"
+              placeholder="搜索对话标题和消息"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
@@ -180,11 +173,10 @@ export default function Sidebar({
         {!query && (
           <section className="persistent-workspace">
             <p className="side-kicker">工作空间</p>
-            {["期中考试", "家长会准备", "座位与分组调整"].map((name, i) => (
-              <button key={name} onClick={() => setWorkspace("work")}>
+            {persistentWorkspaces.map(({name, id}) => (
+              <button key={id} onClick={() => navigate({ domain: "work", rootSurfaceId: "WORKSPACE-OVERVIEW", modeSurfaceIds: [], params: { workspaceId: id } })}>
                 <span className="status-ring" />
                 {name}
-                <small>{i === 0 ? "4 项任务" : ""}</small>
               </button>
             ))}
           </section>
@@ -193,14 +185,20 @@ export default function Sidebar({
           <p className="side-kicker">
             {query ? `搜索结果 · ${filteredChats.length}` : "聊天"}
           </p>
-          {["今天", "昨天", "过去7天"].map((group) => {
-            const groupChats = filteredChats.filter((c) => c[3] === group)
+          {["本次演示会话"].map((group) => {
+            const groupChats = filteredChats
             return groupChats.length ? (
               <div className="chat-group" key={group}>
                 <small>{group}</small>
-                {groupChats.map(([id, title, time]) => (
+                {groupChats.map(({id, title}) => renaming === id ? (
+                  <input key={id} aria-label="重命名对话" autoFocus defaultValue={title}
+                    onBlur={e => { renameConversation(id, e.target.value); setRenaming(null) }}
+                    onKeyDown={e => { if (e.key === "Enter") e.currentTarget.blur(); if (e.key === "Escape") { e.preventDefault(); setRenaming(null) } }} />
+                ) : (
                   <button
                     key={id}
+                    data-conversation-id={id}
+                    aria-current={activeConversationId === id ? "page" : undefined}
                     className={
                       activeConversationId === id &&
                       workspace === "conversation"
@@ -213,9 +211,10 @@ export default function Sidebar({
                       setSearch(false)
                       setQuery("")
                     }}
+                    onDoubleClick={() => setRenaming(id)}
+                    title="双击重命名对话"
                   >
                     <span>{title}</span>
-                    <small>{time}</small>
                     <MoreHorizontal className="chat-more" size={15} />
                   </button>
                 ))}

@@ -1,6 +1,6 @@
 /* Explicit desktop build only. Windows owns the native caption controls. */
 .desktop-titlebar { display: none; }
-.desktop-host { --desktop-bar-height: 44px; --desktop-chrome: #eef3f6; }
+.desktop-host { --desktop-bar-height: 44px; --desktop-chrome: #eef3f6; height: 100%; overflow: clip; }
 .desktop-host body { background: var(--desktop-chrome); overflow: hidden; }
 .desktop-host #root { padding-top: var(--desktop-bar-height); height: 100dvh; box-sizing: border-box; }
 .desktop-host .desktop-titlebar {
@@ -24,6 +24,8 @@
 .desktop-host .app-shell, .desktop-host .app-shell > .sidebar { background: var(--desktop-chrome); }
 .desktop-host .app-shell > .sidebar { height: 100%; min-height: 0; }
 .desktop-host .shell-main { border-radius: 14px 0 0 0; background: #fff; }
+.desktop-host .overlay-backdrop { top: var(--desktop-bar-height); }
+.desktop-host .toast { max-width: calc(100vw - 32px); }
 .desktop-sidebar-collapsed .app-shell { grid-template-columns: minmax(0, 1fr); }
 .desktop-sidebar-collapsed .app-shell > .sidebar { display: none; }
 @media (max-width: 1100px) { .desktop-demo-badge { display: none; } }

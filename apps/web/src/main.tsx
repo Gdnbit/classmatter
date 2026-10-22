@@ -8,6 +8,7 @@ import DesktopChrome from "./DesktopChrome"
 import "./index.css"
 import "./product.css"
 import "./composer.css"
+import "./acceptance.css"
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

@@ -150,6 +150,7 @@ if ($Suite -eq 'desktop') {
         Invoke-Checked -Label 'Desktop resource boundary tests' -Command { pnpm test }
         Invoke-Checked -Label 'Standalone Windows Demo build' -Command { pnpm package }
         Invoke-Checked -Label 'Packaged Electron integration' -Command { node tests/smoke.cjs --packaged }
+        Invoke-Checked -Label 'Targeted frontend acceptance regression' -Command { node tests/acceptance.cjs }
     }
     finally { Pop-Location }
 }

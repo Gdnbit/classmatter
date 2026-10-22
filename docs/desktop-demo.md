@@ -28,6 +28,8 @@ Electron 主进程管理窗口/菜单；沙箱 renderer 渲染原有前端与桌
 
 ## 追溯与范围
 
+最新定向修复与验收见[前端 Demo 验收记录](frontend-demo-acceptance.md)：Web37项测试、桌面7项边界测试、普通窗口回归及11组真实打包前端验收；包含状态同源、准确预览、焦点和桌面弹层适配。以下首版/顶栏阶段记录保留为历史证据，不代表其32项测试是当前总数。
+
 此变更属于新增表现层宿主交付（DESKTOP-DEMO），不是新的业务需求或正式任务完成声明。107 个 Requirement、147 个 Eval、94 个原子任务及 Gate 源行哈希不变；不将 synthetic 验证提升成真实用户或正式 R1 验收。映射现有 Conversation-first、Attention-first、One Data World/Multiple Views 的 UI 合同；不修改这些语义、mock store、原型样式或正式接口。
 
 新增工程验收与测试映射：

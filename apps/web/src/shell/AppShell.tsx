@@ -17,6 +17,9 @@ import { useSessionStore } from "@/store/SessionStore"
 import { useWorkingContext } from "@/state/WorkingContextProvider"
 
 import { useTransactionSession } from "@/state/TransactionSessionProvider"
+import { projectSeatPlan } from "@/demo/seat-plan"
+import { useDemoWork, useDemoTaskDetails, attentionSummary } from "@/store/DemoWorkStore"
+import { persistentWorkspaces } from "@/data/workspaces"
 import { useUiFeedback } from "@/store/UiFeedbackStore"
 import type { ActiveSurfaceStack } from "@/types/nav"
 
@@ -236,8 +239,9 @@ export const resolveActiveSurface = (stack: ActiveSurfaceStack) =>
 
 function AppShell() {
   const { students } = useMockDomainStore()
+  const { tasks } = useDemoWork()
 
-  const { messagesByConversationId, appendMessage } = useConversationStore()
+  const { messagesByConversationId, appendMessage, drafts, setDraft } = useConversationStore()
 
   const {
     activeSurfaceStack,
@@ -255,6 +259,8 @@ function AppShell() {
     phase: transaction,
     setPhase: setTransaction,
     commitSeatSwap,
+    createSeatDraft,
+    plan: seatPlan,
   } = useTransactionSession()
 
   const workspace = workspaceFromStack(activeSurfaceStack)
@@ -264,7 +270,15 @@ function AppShell() {
   const [conversationState, setConversationState] =
     useState<"idle" | "focus" | "active">("idle")
 
-  const [input, setInput] = useState("")
+  const input = drafts[activeConversationId] || ""
+  const setInput = (value: string) => setDraft(activeConversationId, value)
+
+  useEffect(() => {
+    setAttachment(null)
+    setVoice("idle")
+    setNoticeState("idle")
+    setNoticeFeedback("")
+  }, [activeConversationId])
 
   const messages = messagesByConversationId[activeConversationId] || []
 
@@ -298,8 +312,12 @@ function AppShell() {
 
   const activeStudentWithSeat = activeStudent
 
-  function makeSeatDraft() {
-    setTransaction("preview-ready")
+  function makeSeatDraft(request = "交换合成学生02和合成学生05的座位") {
+    const error = createSeatDraft(request)
+    if (error) {
+      setMessages(prev => [...prev, { role: "assistant", text: error }])
+      return
+    }
     navigate({ ...stackForWorkspace("seat"), modeSurfaceIds: ["TX-PREVIEW"] })
     setInspectorOpen(true)
     setConversationState("active")
@@ -308,8 +326,7 @@ function AppShell() {
       ...prev,
       {
         role: "assistant",
-        text: "已核对身份并生成座位调整草稿。两项变更尚未写入班级数据。",
-        action: true,
+        text: "已按明确指定的两名学生生成演示预览；未修改原名单或业务数据库。请核对姓名、学号及前后座位。",
       },
     ])
   }
@@ -321,10 +338,15 @@ function AppShell() {
     setConversationState("active")
 
     if (value) setMessages((prev) => [...prev, { role: "user", text: value }])
+    else if (attachment) setMessages(prev => [...prev, { role: "user", text: "本地附件演示：仅选择了文件，未上传或解析。" }])
 
     setInput("")
 
-    if (/换座|座位/.test(value)) makeSeatDraft()
+    if (/换座|座位/.test(value)) makeSeatDraft(value)
+    else if (/今天|跟进|待办/.test(value)) {
+      const rows = tasks.filter(t => t.state !== "done")
+      setMessages(prev => [...prev, { role: "assistant", text: `演示待跟进事项（来源：当前演示事项列表，未调用模型）：\n${rows.map(t => `${t.title} · ${t.due}`).join("\n") || "暂无未完成事项"}` }])
+    }
     else {
       const route: [RegExp, Workspace, string][] = [
         [/名单|改名单/, "roster", "已为你打开名单事务，可先核对字段变更。"],
@@ -347,7 +369,7 @@ function AppShell() {
           role: "assistant",
           text: found
             ? found[2]
-            : "我会先将你的请求整理为候选操作，再由你确认是否应用。",
+            : "当前为离线演示，未调用真实模型，也未执行操作。可明确指定两名合成学生交换座位，或从学生/工作入口查看现有示例。",
         },
       ])
 
@@ -379,8 +401,6 @@ function AppShell() {
   }
 
   function confirmCommit() {
-    setTransaction("committing")
-
     commitSeatSwap()
   }
 
@@ -414,7 +434,8 @@ function AppShell() {
           <main className="workspace">
             {workspace === "conversation" ? (
               <Conversation
-                state={conversationState}
+                key={activeConversationId}
+                state={messages.length ? "active" : "idle"}
                 setState={setConversationState}
                 input={input}
                 setInput={setInput}
@@ -424,8 +445,9 @@ function AppShell() {
                 voice={voice}
                 setVoice={setVoice}
                 onSend={sendMessage}
-                onSeat={makeSeatDraft}
-                onOpenSeat={() => setWorkspace("seat")}
+                onSeat={() => makeSeatDraft()}
+                onOpenSeat={() => { setWorkspace("seat"); setInspectorOpen(true) }}
+                onOpenWork={() => setWorkspace("work")}
                 noticeState={noticeState}
                 noticeFeedback={noticeFeedback}
                 onNotice={processSchoolNotice}
@@ -433,10 +455,10 @@ function AppShell() {
                   setNoticeState(action as any)
                   setNoticeFeedback(
                     action === "mine"
-                      ? "已加入「需要我处理」"
+                      ? "演示选择：需要我处理；未修改真实任务或职责。"
                       : action === "waiting"
-                        ? "已交给班长收集信息；明天 16:00 前未完成会重新提醒你。"
-                        : "已标记为不属于你的责任范围，这条通知不会继续占用你的当前注意力。",
+                        ? "演示选择：等待他人；未发生真实交接或创建提醒，职责仍待确认。"
+                        : "演示选择：暂不处理；不等于已经判定你的实际责任。",
                   )
                 }}
               />
@@ -450,6 +472,7 @@ function AppShell() {
                 seats={committedSeats}
                 activeSurfaceStack={activeSurfaceStack}
                 openStudentDetail={openStudentDetail}
+                onDiscuss={(student: Student) => { setWorkspace("conversation"); setInput(`关于${student.name}（学号${student.id}）：`); setInspectorOpen(true) }}
               />
             )}
           </main>
@@ -463,7 +486,7 @@ function AppShell() {
               onConfirmCommit={confirmCommit}
               onCancelConfirm={() => setTransaction("preview-ready")}
               onUnknown={() => setTransaction("outcome-unknown")}
-              onCheck={() => setTransaction("committed")}
+              onCheck={() => setTransaction("preview-ready")}
             />
           )}
         </div>
@@ -491,12 +514,15 @@ function Conversation({
   onSend,
   onSeat,
   onOpenSeat,
+  onOpenWork,
   noticeState,
   noticeFeedback,
   onNotice,
   onNoticeAction,
 }: any) {
   const active = state === "active"
+  const { tasks } = useDemoWork()
+  const { plan, phase } = useTransactionSession()
 
   return (
     <div className={`conversation ${state}`}>
@@ -513,7 +539,7 @@ function Conversation({
       {!active && <Ambient compact={state === "focus"} />}{" "}
       {active && (
         <div className="collapsed-ambient">
-          需要我处理 3 项 · 等待别人 2 项 · 可能遗漏 1 项{" "}
+          {attentionSummary(tasks)}{" "}
           <ChevronDown size={15} />
         </div>
       )}
@@ -521,24 +547,15 @@ function Conversation({
         {messages.map((m: any, i: number) => (
           <div key={i} className={`message ${m.role}`}>
             <p>{m.text}</p>
-            {m.action && (
-              <div className="action-card">
-                <div>
-                  <span className="action-icon">
-                    <Grid2X2 size={18} />
-                  </span>
-                  <div>
-                    <strong>已生成座位调整草稿</strong>
-                    <small>合成学生02 · 99002，与 合成学生05 · 99005</small>
-                  </div>
-                </div>
-                <button onClick={onOpenSeat}>
-                  查看调整 <ChevronRight size={16} />
-                </button>
-              </div>
-            )}
+            {m.role === "assistant" && m.text.startsWith("演示待跟进事项") && <button onClick={onOpenWork}>查看演示工作列表</button>}
           </div>
         ))}
+        {plan && phase !== "discarded" && <div className="action-card">
+          <div><Grid2X2 size={18}/><div><strong>{phase === "committed" ? "演示座位已应用" : "当前对话的座位草稿"}</strong>
+            <small>{plan.changes.map(c => `${c.name}（${c.studentId}）${c.before} → ${c.after}`).join("；")}</small>
+          </div></div>
+          <button onClick={onOpenSeat}>查看调整<ChevronRight size={16}/></button>
+        </div>}
         {noticeState !== "idle" && (
           <ResponsibilityCandidate
             state={noticeState}
@@ -564,66 +581,17 @@ function Conversation({
   )
 }
 
-function Ambient({ compact }: { compact: boolean }) {
-  const { openDetail, notify } = useUiFeedback()
-  const data = [
-    [
-      "需要我处理",
-      [
-        "合成清单信息最终核对 · 明天 17:00",
-        "合成学生01迟到后续 · 今天 12:30",
-        "合成返校跟进（未关联学生） · 已逾期",
-      ],
-    ],
-    ["可能遗漏", ["合成通知频道 · 1 条通知尚未确认责任"]],
-    ["等待别人", ["合成学生05家长 · 等待补充信息", "家长会回执 · 等待班长收集"]],
-  ]
-  return (
-    <div className={`ambient ${compact ? "compact" : ""}`}>
-      {data.map(([title, items]) => (
-        <section key={title as string}>
-          <p>{title}</p>
-          {(items as string[]).slice(0, compact ? 1 : 3).map((x) => (
-            <button
-              key={x}
-              onClick={() =>
-                openDetail({
-                  eyebrow: `注意力 · ${title}`,
-                  title: x.split(" · ")[0],
-                  description:
-                    "打开后可以查看来源、责任判断和下一步，不会自动执行任何业务变更。",
-                  status: x.split(" · ").slice(1).join(" · "),
-                  sections: [
-                    { label: "责任状态", value: title as string },
-                    { label: "当前范围", value: "合成演示班" },
-                    {
-                      label: "来源",
-                      value:
-                        title === "可能遗漏" ? "合成通知频道" : "已确认记录",
-                    },
-                  ],
-                  actions: [
-                    {
-                      label: "稍后提醒",
-                      onSelect: () => notify("已设置稍后提醒"),
-                    },
-                    {
-                      label: "开始处理",
-                      tone: "primary",
-                      onSelect: () => notify("已加入当前工作"),
-                    },
-                  ],
-                })
-              }
-            >
-              {x}
-              <ChevronRight size={14} />
-            </button>
-          ))}
-        </section>
-      ))}
-    </div>
-  )
+function Ambient({ compact = false }: { compact?: boolean }) {
+  const { tasks } = useDemoWork()
+  const open = useDemoTaskDetails()
+  return <div className={compact ? "ambient compact" : "ambient"}>
+    {([["需要我处理", "mine"], ["可能遗漏", "possible"], ["等待别人", "waiting"]] as const).map(([label, state]) => (
+      <section key={state}><h3>{label}</h3>
+        {tasks.filter(t => t.state === state).map(task => <button key={task.id} onClick={() => open(task)}>{task.title} · {task.due}<ChevronRight size={14}/></button>)}
+        {!tasks.some(t => t.state === state) && <p className="demo-capability-note">暂无此类演示事项</p>}
+      </section>
+    ))}
+  </div>
 }
 
 function ResponsibilityCandidate({ state, feedback, onAction }: any) {
@@ -715,8 +683,46 @@ function Composer({
   const imageInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dragDepth = useRef(0)
+  const textarea = useRef<HTMLTextAreaElement>(null)
+  const voiceTimer = useRef<number | undefined>(undefined)
+  const { notify } = useUiFeedback()
+  useEffect(() => () => window.clearTimeout(voiceTimer.current), [])
+  useEffect(() => {
+    if (!textarea.current) return
+    textarea.current.style.height = "auto"
+    textarea.current.style.height = `${Math.min(textarea.current.scrollHeight, 150)}px`
+  }, [input])
+  const menuWrap = useRef<HTMLDivElement>(null)
+  const addTrigger = useRef<HTMLButtonElement>(null)
+  const modelTrigger = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!addOpen && !modelOpen) return
+    const outside = (e: PointerEvent) => {
+      const target = e.target as Element
+      if (!target.closest?.(".composer-menu, .model-menu, [data-composer-menu-trigger]")) { setAddOpen(false); setModelOpen(false) }
+    }
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.stopPropagation(); e.preventDefault()
+        ;(modelOpen ? modelTrigger : addTrigger).current?.focus()
+        setAddOpen(false); setModelOpen(false)
+      }
+      if (["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key) && menuWrap.current?.contains(document.activeElement) && document.activeElement?.closest(".composer-menu, .model-menu")) {
+        e.preventDefault()
+        const items = Array.from(menuWrap.current.querySelectorAll<HTMLButtonElement>(modelOpen ? ".model-menu button" : ".composer-menu button"))
+        const index = items.indexOf(document.activeElement as HTMLButtonElement)
+        const next = e.key === "Home" ? 0 : e.key === "End" ? items.length - 1 : (index + (e.key === "ArrowDown" ? 1 : -1) + items.length) % items.length
+        items[next]?.focus()
+      }
+    }
+    menuWrap.current?.querySelector<HTMLButtonElement>(modelOpen ? ".model-menu button" : ".composer-menu button")?.focus()
+    document.addEventListener("pointerdown", outside)
+    document.addEventListener("keydown", key, true)
+    return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", key, true) }
+  }, [addOpen, modelOpen])
 
   const receiveFiles = (files: FileList | null) => {
+    if (files && files.length > 1) { notify("本演示一次仅选择一个附件，未选择或上传任何文件"); return }
     const file = files?.[0]
     if (!file) return
     setUploadedName(file.name)
@@ -725,6 +731,7 @@ function Composer({
   }
 
   const startTranscription = () => {
+    window.clearTimeout(voiceTimer.current)
     setVoice("recording")
     setVoiceWorkspaceOpen(false)
     onFocus()
@@ -732,7 +739,7 @@ function Composer({
 
   const models = ["自动选择", "GPT-5.6 Sol", "DeepSeek V4", "本地模型"]
   return (
-    <div className="composer-wrap">
+    <div className="composer-wrap" ref={menuWrap}>
       <input
         ref={imageInputRef}
         className="sr-only"
@@ -778,8 +785,8 @@ function Composer({
             </strong>
             <small>
               {attachment === "image"
-                ? "图片候选 · 待确认后处理"
-                : "文件候选 · 待确认后处理"}
+                ? "仅选中图片 · 本演示未上传或解析"
+                : "仅选中文件 · 本演示未上传或解析"}
             </small>
           </div>
           <button
@@ -799,11 +806,11 @@ function Composer({
           {voice === "recording" ? (
             <>
               <span className="wave">▁▃▅▂▆▃▂</span>
-              <strong>00:08</strong>
+              <strong>模拟录音 · 未开启麦克风</strong>
               <button
                 onClick={() => {
                   setVoice("transcribing")
-                  window.setTimeout(() => {
+                  voiceTimer.current = window.setTimeout(() => {
                     setVoice("draft")
                     setInput("请提醒合成学生05今天补交数学作业")
                   }, 700)
@@ -894,10 +901,10 @@ function Composer({
                 <strong>{name}</strong>
                 <small>
                   {name === "自动选择"
-                    ? "按任务选择已配置模型"
+                    ? "仅演示选项 · 未连接模型"
                     : name === "本地模型"
                       ? "未连接 · 仅展示入口"
-                      : "当前会话展示选项"}
+                      : "仅演示选择 · 不会切换真实模型"}
                 </small>
               </span>
               {model === name && <Check size={15} />}
@@ -935,13 +942,16 @@ function Composer({
           </div>
         )}
         <textarea
+          ref={textarea}
           value={input}
           rows={2}
+          aria-label="输入、查询、记录或安排班级工作"
           onFocus={onFocus}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
+            if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing && e.keyCode !== 229) {
               e.preventDefault()
+              setAddOpen(false); setModelOpen(false)
               onSend()
             }
           }}
@@ -951,6 +961,9 @@ function Composer({
           <div className="compose-tools">
           <button
             aria-label="添加内容"
+            ref={addTrigger}
+            data-composer-menu-trigger
+            aria-haspopup="menu"
             aria-expanded={addOpen}
             onClick={() => {
               setAddOpen(!addOpen)
@@ -964,6 +977,9 @@ function Composer({
           <div className="composer-actions">
             <button
               className="model-switch"
+              ref={modelTrigger}
+              data-composer-menu-trigger
+              aria-haspopup="menu"
               aria-expanded={modelOpen}
               onClick={() => {
                 setModelOpen(!modelOpen)
@@ -980,7 +996,7 @@ function Composer({
             <Mic size={18} />
           </button>
             {input.trim() || attachment ? (
-              <button className="send" onClick={onSend} aria-label="发送">
+              <button className="send" onClick={() => { setAddOpen(false); setModelOpen(false); onSend() }} aria-label="发送">
                 <Send size={17} />
               </button>
             ) : (
@@ -1013,6 +1029,7 @@ function WorkspaceView({
   seats,
   activeSurfaceStack,
   openStudentDetail,
+  onDiscuss,
 }: any) {
   if (workspace === "seat")
     return (
@@ -1033,6 +1050,7 @@ function WorkspaceView({
         studentId={activeSurfaceStack.params.studentId}
         activeTab={activeSurfaceStack.subpageSurfaceId}
         onBack={() => setWorkspace("students")}
+        onDiscuss={onDiscuss}
       />
     )
 
@@ -1128,20 +1146,22 @@ function DashboardWorkspace() {
   const [range, setRange] = useState("今天")
   const [hidden, setHidden] = useState<string[]>([])
   const { openDetail, notify } = useUiFeedback()
+  const { tasks } = useDemoWork()
+  const { plan, phase } = useTransactionSession()
   const cards = [
-    ["需要我处理", "3 项", "合成学生01迟到后续 · 今天 12:30"],
-    ["48h 内截止", "2 项", "家长会材料、合成清单信息核对"],
-    ["等待别人", "6 项", "班长、家长与学生信息补充"],
-    ["可能遗漏", "1 项", "班主任群通知尚未确认责任"],
-    ["请假 / 缺勤", "1 人", "赵一诺 · 已请假"],
-    ["作业待跟进", "4 项", "数学补交 · 截止今日"],
-    ["学生近期动态", "3 条", "合成学生02 · 座位草稿"],
-    ["成绩摘要", "待导入", "9月成绩表已识别"],
-    ["AI 待处理", "7 条", "候选记录等待核对"],
-    ["自动化运行", "正常", "2 条提醒将在今天执行"],
-    ["最近文件", "3 份", "家长会方案 · 草稿"],
-    ["班级位置", "已同步", "座位 / 宿舍 / 小队"],
-    ["最近活动", "刚刚", "创建了座位调整草稿"],
+    ["需要我处理", `${tasks.filter(t => t.state === "mine").length} 项`, "来源：同一份演示事项列表"],
+    ["演示截止信息", `${tasks.filter(t => t.state !== "done" && /今天|明天|已逾期/.test(t.due)).length} 项`, "样例时间标签，不是实际日历调度结果"],
+    ["等待别人", `${tasks.filter(t => t.state === "waiting").length} 项`, "分工待确认，不默认判断最终责任"],
+    ["可能遗漏", `${tasks.filter(t => t.state === "possible").length} 项`, "来源：同一份演示事项列表"],
+    ["请假 / 缺勤", "未接入", "当前桌面演示未连接考勤数据"],
+    ["作业待跟进", "样例", "未接入真实作业数据"],
+    ["学生近期动态", "演示", "学生、名单与座位来自同一内存状态"],
+    ["成绩摘要", "未解析", "只有表格样例，未导入真实成绩"],
+    ["AI 待处理", "样例", "未运行真实模型或解析服务"],
+    ["自动化运行", "未接入", "未创建真实提醒或定时任务"],
+    ["最近文件", "3 份样例", "未实际上传或解析"],
+    ["班级位置", "演示内存", "名单与座位同源，宿舍/小组仍为样例"],
+    ["最近活动", plan ? "演示草稿" : "暂无草稿", plan ? `当前对话演示状态：${phase}` : "尚未生成座位候选"],
   ]
   const visible = cards.filter(([title]) => !hidden.includes(title))
   return (
@@ -1166,7 +1186,7 @@ function DashboardWorkspace() {
           className="primary"
           onClick={() => {
             setEditing(!editing)
-            if (editing) notify("总览布局已保存到当前设备")
+            if (editing) notify("总览布局仅在当前页面内存中生效，刷新会重置")
           }}
         >
           {editing ? "完成编辑" : "编辑总览"}
@@ -1226,97 +1246,25 @@ function DashboardWorkspace() {
     </WorkspaceShell>
   )
 }
-function WorkWorkspace({ onSeat }: any) {
+function WorkWorkspace(_: any) {
   const [tab, setTab] = useState("需要我处理")
-  const [completed, setCompleted] = useState<string[]>([])
-  const { openDetail, notify } = useUiFeedback()
-  const rows =
-    tab === "等待别人"
-      ? [
-          ["合成清单信息收集", "等待：班长", "明天 16:00 检查"],
-          ["合成学生05家庭信息补充", "等待：合成学生05家长", "等待"],
-        ]
-      : tab === "即将截止"
-        ? [
-            ["家长会材料提交", "18 小时", "即将截止"],
-            ["学生合成清单名单", "1 天 3 小时", "即将截止"],
-          ]
-        : tab === "已闭环"
-          ? [["学生保险名单", "36 / 36 已核对", "有留痕"]]
-          : [
-              ["合成清单信息最终核对", "明天 17:00", "班主任群"],
-              ["合成学生01迟到后续", "今天 12:30", "课堂记录"],
-              ["合成返校跟进（未关联学生）", "已逾期", "需要跟进"],
-            ]
-  const open = (row: string[]) =>
-    openDetail({
-      eyebrow: `工作 · ${tab}`,
-      title: row[0],
-      description:
-        "此事项按注意力状态管理。系统保留来源、责任判断与每次处理记录。",
-      status: completed.includes(row[0])
-        ? "已闭环 · 保留审计留痕"
-        : `${row[2]} · 尚未修改正式数据`,
-      sections: [
-        { label: "时限 / 等待", value: row[1] },
-        { label: "来源", value: row[2] },
-        {
-          label: "责任",
-          value:
-            tab === "等待别人"
-              ? "你负责最终确认；当前动作由他人完成"
-              : "等待班主任确认",
-        },
-      ],
-      timeline: [
-        "来源被加入当前工作空间",
-        "系统生成注意力候选",
-        "等待你的确认或转交",
-      ],
-      actions: [
-        { label: "稍后提醒", onSelect: () => notify("已设置明天 09:00 提醒") },
-        {
-          label: "标记完成",
-          tone: "primary",
-          onSelect: () => {
-            setCompleted([...completed, row[0]])
-            notify("事项已闭环并保留处理记录")
-          },
-        },
-      ],
-    })
-  return (
-    <WorkspaceShell
-      title="工作"
-      description="按注意力状态组织，帮助你以最低必要注意力控制责任风险。"
-      icon={ClipboardList}
-    >
-      <div className="tabbar">
-        {["需要我处理", "等待别人", "即将截止", "已闭环", "全部"].map((x) => (
-          <button
-            key={x}
-            className={tab === x ? "active" : ""}
-            onClick={() => setTab(x)}
-          >
-            {x}
-          </button>
-        ))}
-      </div>
-      <div className="work-list">
-        {rows.map((row) => (
-          <button
-            key={row[0]}
-            onClick={() => (row[0] === "座位调整" ? onSeat() : open(row))}
-          >
-            <strong>{row[0]}</strong>
-            <span>{row[1]}</span>
-            <em>{completed.includes(row[0]) ? "已闭环" : row[2]}</em>
-            <ChevronRight size={16} />
-          </button>
-        ))}
-      </div>
-    </WorkspaceShell>
-  )
+  const { tasks } = useDemoWork()
+  const open = useDemoTaskDetails()
+  const { activeSurfaceStack } = useSessionStore()
+  const workspaceId = activeSurfaceStack.params.workspaceId
+  const space = persistentWorkspaces.find(s => s.id === workspaceId)
+  const scope = workspaceId ? tasks.filter(t => t.workspaceId === workspaceId) : tasks
+  const states: Record<string, string> = { "需要我处理": "mine", "等待别人": "waiting", "可能遗漏": "possible", "已闭环": "done" }
+  const rows = scope.filter(t => tab === "全部" || (tab === "即将截止" ? t.state !== "done" && /今天|明天|已逾期/.test(t.due) : t.state === states[tab]))
+  return <WorkspaceShell title={space?.name || (workspaceId ? "未知工作空间" : "工作")} description={space ? space.detail + " · 仅当前演示范围" : "按注意力状态查看同一份演示事项；未确认职责不自动归属。"} icon={ClipboardList}>
+    <div className="tabbar">
+      {["需要我处理", "等待别人", "可能遗漏", "即将截止", "已闭环", "全部"].map(label => <button key={label} className={tab === label ? "active" : ""} onClick={() => setTab(label)}>{label}</button>)}
+    </div>
+    <div className="work-list">
+      {rows.map(task => <button key={task.id} onClick={() => open(task)}><strong>{task.title}</strong><span>{task.due}</span><em>{task.state === "done" ? "演示已完成" : task.source}</em><ChevronRight size={16}/></button>)}
+      {!rows.length && <p className="demo-capability-note">此范围暂无该类演示事项。未自动创建任务或修改其他工作空间。</p>}
+    </div>
+  </WorkspaceShell>
 }
 function DataWorkspace({ setWorkspace }: any) {
   const [tab, setTab] = useState("文件")
@@ -1343,7 +1291,7 @@ function DataWorkspace({ setWorkspace }: any) {
       title: item,
       description:
         "原始内容与 AI 提取结果分开保存；候选内容不会自动成为正式业务事实。",
-      status: i === 0 ? "候选 · 等待人工核对" : "已更新",
+      status: "合成文件样例 · 未实际上传或解析",
       sections: [
         { label: "范围", value: "合成演示班 · 2026–2027上学期" },
         { label: "来源", value: tab },
@@ -1389,7 +1337,7 @@ function DataWorkspace({ setWorkspace }: any) {
             <span>
               <strong>{item}</strong>
               <small>
-                {tab} · 合成演示班 · {i === 0 ? "候选，待确认" : "已更新"}
+                {tab} · 合成演示班 · 样例，未实际解析
               </small>
             </span>
             <MoreHorizontal size={18} />
@@ -1420,7 +1368,7 @@ function SpreadsheetWorkspace() {
         {
           label: "保存映射",
           tone: "primary",
-          onSelect: () => notify("字段映射已保存为导入草稿"),
+          onSelect: () => notify("字段映射演示入口；未生成或保存实际导入草稿"),
         },
       ],
     })
@@ -1525,7 +1473,7 @@ function SpreadsheetWorkspace() {
               description: "这一步只生成可审阅 Diff，不会写入正式成绩。",
               confirmLabel: "生成 Diff",
               onConfirm: () => {
-                notify("已生成成绩导入 Diff")
+                notify("当前展示固定字段映射样例，未生成真实导入 Diff")
                 showMapping()
               },
             })
@@ -1590,7 +1538,7 @@ function DocumentWorkspace() {
           </ol>
           <button
             className="document-save"
-            onClick={() => notify("文档修改已保存为草稿版本 4")}
+            onClick={() => notify("文档保存为演示入口；未生成文件或保存版本")}
           >
             保存草稿
           </button>
@@ -1607,7 +1555,7 @@ function DocumentWorkspace() {
                   {
                     label: "回复",
                     tone: "primary",
-                    onSelect: () => notify("回复已保存为草稿"),
+                    onSelect: () => notify("回复保存为演示入口；未持久化草稿"),
                   },
                 ],
               })
@@ -1742,13 +1690,13 @@ function GroupWorkspace({ activeStudentId, selectStudent }: any) {
               title: "生成自动分组候选？",
               description: "系统将按人数均衡生成候选，不会覆盖当前分组。",
               confirmLabel: "生成候选",
-              onConfirm: () => notify("已生成 4 个均衡分组候选"),
+              onConfirm: () => notify("当前仅展示分组样例；未执行均衡求解或生成候选"),
             })
           }
         >
           自动排布
         </button>
-        <button onClick={() => notify("当前视图已保存")}>保存视图</button>
+        <button onClick={() => notify("保存视图为演示入口；未持久化布局")}>保存视图</button>
       </div>
       <div className={`group-board ${editing ? "is-editing" : ""}`}>
         {groups.map(([name, members]) => (
@@ -1797,7 +1745,7 @@ function InboxWorkspace() {
           {
             label: "接受为草稿",
             tone: "primary",
-            onSelect: () => notify("已生成可审阅草稿，尚未写入正式数据"),
+            onSelect: () => notify("草稿生成演示入口；未创建实际候选"),
           },
         ],
       })
@@ -1810,7 +1758,7 @@ function InboxWorkspace() {
           {
             label: "保存编辑",
             tone: "primary",
-            onSelect: () => notify("候选编辑已保存"),
+            onSelect: () => notify("候选编辑演示入口；未持久化草稿"),
           },
         ],
       })
@@ -1821,7 +1769,7 @@ function InboxWorkspace() {
         confirmLabel: "接受为草稿",
         onConfirm: () => {
           setItems(items.filter((x) => x !== item))
-          notify("已生成草稿并移出 AI 待处理")
+          notify("仅更新当前演示队列；未生成实际草稿或正式业务数据")
         },
       })
     else if (action === "拒绝") {
@@ -2081,7 +2029,7 @@ function ReportsWorkspace() {
         description:
           "退出包将包含当前班级可导出的结构化数据、来源和版本清单。此演示不会真的下载文件。",
         confirmLabel: "确认生成",
-        onConfirm: () => notify("数据退出包已生成，可在最近内容中查看"),
+        onConfirm: () => notify("退出包为演示入口；未生成或下载任何文件"),
       })
       return
     }
@@ -2105,11 +2053,11 @@ function ReportsWorkspace() {
         mode === "来源"
           ? [{ label: "关闭", tone: "primary" }]
           : [
-              { label: "保存草稿", onSelect: () => notify("报告草稿已保存") },
+              { label: "保存草稿", onSelect: () => notify("报告保存为演示入口；未持久化草稿") },
               {
                 label: mode === "编辑" ? "完成编辑" : "导出",
                 tone: "primary",
-                onSelect: () => notify("已生成演示导出记录"),
+                onSelect: () => notify("导出为演示入口；未生成文件或导出记录"),
               },
             ],
     })
@@ -2145,11 +2093,14 @@ function ReportsWorkspace() {
   )
 }
 
-function StudentDetailWorkspace({ studentId, activeTab, onBack }: any) {
+function StudentDetailWorkspace({ studentId, activeTab, onBack, onDiscuss }: any) {
   const { students } = useMockDomainStore()
   const { navigate } = useSessionStore()
   const { notify, openDetail } = useUiFeedback()
-  const student = students.find((item) => item.id === studentId) || students[0]
+  const { tasks } = useDemoWork()
+  const student = students.find((item) => item.id === studentId)
+  if (!student) return <WorkspaceShell title="未知学生" description="未找到此身份；没有回退到其他学生。" icon={Users}><button onClick={onBack}>返回学生列表</button></WorkspaceShell>
+  const relatedTasks = tasks.filter(t => t.studentId === student.id)
   const tabs = [
     ["概览", undefined],
     ["时间线", "STUDENT-DETAIL-TIMELINE"],
@@ -2171,19 +2122,16 @@ function StudentDetailWorkspace({ studentId, activeTab, onBack }: any) {
   const content: Record<string, [string, string][]> = {
     概览: [
       ["当前座位", student.seat],
-      ["宿舍", "1号楼 302寝"],
-      ["小队", "晨星小队"],
-      ["近期关注", "1 项待跟进 · 2 项已闭环"],
+      ["宿舍", student.dorm],
+      ["小队", student.group],
+      ["近期关注", `${relatedTasks.filter(t => t.state !== "done").length} 项演示待跟进 · ${relatedTasks.filter(t => t.state === "done").length} 项演示已完成`],
     ],
     时间线: [
       ["9月19日", "课堂表现记录 · 教师确认"],
       ["9月16日", "家长沟通已闭环"],
       ["9月12日", "座位信息已核对"],
     ],
-    任务: [
-      ["需要跟进", "数学作业补交 · 今天 16:00"],
-      ["已完成", "合成清单信息核对 · 9月18日"],
-    ],
+    任务: relatedTasks.map(t => [t.state === "done" ? "演示已完成" : "演示待跟进", `${t.title} · ${t.due}`]),
     记录: [
       ["课堂", "积极参与小组讨论 · 有来源"],
       ["沟通", "与家长确认近期作息 · 已闭环"],
@@ -2210,16 +2158,17 @@ function StudentDetailWorkspace({ studentId, activeTab, onBack }: any) {
       <header className="student-profile-head">
         <span className="profile-avatar">{student.name[0]}</span>
         <div>
-          <p className="eyebrow">学生详情 · 已确认事实</p>
+          <p className="eyebrow">学生详情 · 合成样例，非真实人物事实</p>
           <h1>{student.name}</h1>
           <p>{student.id} · 合成演示班 · 在读</p>
         </div>
         <button
           className="primary"
-          onClick={() => notify(`已为${student.name}创建记录草稿`)}
+          onClick={() => onDiscuss(student)}
         >
           添加记录
         </button>
+        <button className="object-discuss" onClick={() => onDiscuss(student)}>围绕此学生对话</button>
       </header>
       <div className="view-switcher" role="tablist" aria-label="学生详情栏目">
         {tabs.map(([label, id]) => (
@@ -2247,7 +2196,7 @@ function StudentDetailWorkspace({ studentId, activeTab, onBack }: any) {
                     eyebrow: `${student.name} · ${current}`,
                     title: label,
                     description: value,
-                    status: "来源与修改记录可追溯",
+                    status: "仅合成样例；不代表已有真实来源或审计记录",
                     actions: [{ label: "关闭", tone: "primary" }],
                   })
                 }
@@ -2465,10 +2414,15 @@ function SeatWorkspace({
   seats,
 }: any) {
   const { students } = useMockDomainStore()
+  const { plan, error } = useTransactionSession()
   const pending =
     transaction && !["committed", "discarded"].includes(transaction)
   const isAfter = transaction === "committed"
-  const shown = (s: Student) => (isAfter ? seats[s.id] || s.seat : s.seat)
+  let projected = students
+  let issue = error
+  if (pending && plan) {
+    try { projected = projectSeatPlan(students, plan) } catch (e) { issue = (e as Error).message }
+  }
   return (
     <div className="seat-workspace">
       <div className="seat-header">
@@ -2488,24 +2442,21 @@ function SeatWorkspace({
           <span>调整前</span>
           <ChevronRight size={16} />
           <strong>调整后</strong>
-          <span>合成学生02：3排2座 → 2排4座　合成学生05：2排4座 → 3排2座</span>
+          <span>{plan?.changes.map(c => `${c.name}（${c.studentId}）：${c.before} → ${c.after}`).join("；")}</span>
+          {issue && <strong role="alert">{issue}</strong>}
         </div>
       )}
       <div className="seat-grid">
         {[1, 2, 3, 4, 5, 6].map((row) => (
           <div className="seat-row" key={row}>
             {[1, 2, 3, 4, 5, 6].map((col) => {
-              const original = students.find(
+              const original = projected.find(
                 (s) => s.seat === `${row}排${col}座`,
               )
               let person = original
-              if (pending || isAfter) {
-                if (row === 2 && col === 4) person = students[1]
-                if (row === 3 && col === 2) person = students[4]
-              }
               const changed =
                 person &&
-                ["99002", "99005"].includes(person.id) &&
+                plan?.changes.some(c => c.studentId === person.id) &&
                 (pending || isAfter)
               return (
                 <button
@@ -2570,7 +2521,7 @@ function SettingsWorkspace() {
         <h1>{section}</h1>
         {section === "模型与 API" ? (
           <>
-            <p>为 ClassMatter 配置内置或自定义模型 Provider。</p>
+            <p>仅配置表单演示：不保存密钥、不连接模型；请勿输入真实凭据。</p>
             <div className="provider-card">
               <div>
                 <span className="surface-icon">
@@ -2581,7 +2532,7 @@ function SettingsWorkspace() {
                   测试连接状态：{connection} · 密钥仅作为本地配置草稿。
                 </small>
               </div>
-              <button onClick={() => setConnection("连接正常")}>
+              <button onClick={() => setConnection("仅模拟界面反馈；未发起网络请求，不能证明连接正常")}>
                 测试连接
               </button>
             </div>
@@ -2598,7 +2549,7 @@ function SettingsWorkspace() {
               ].map(([label, placeholder]) => (
                 <label key={label}>
                   {label}
-                  <input placeholder={placeholder} />
+                  <input type={label === "API Key" ? "password" : "text"} autoComplete="off" placeholder={placeholder} />
                 </label>
               ))}
             </form>
@@ -2614,7 +2565,7 @@ function SettingsWorkspace() {
             <div className="api-shell">
               <section>
                 <strong>工具调用</strong>
-                <span>已允许</span>
+                <span>演示声明 · 未启用真实工具</span>
               </section>
               <section>
                 <strong>结构化输出</strong>

@@ -10,6 +10,7 @@
 - [法律、案例、规章与校规的效力核验和规则追溯](product/legal-evidence-and-rule-hierarchy.md)：Discovery / Future，含已核对的官方规范、来源元数据与上线拒绝门。
 - [工程边界与代码地图](ENGINEERING_OVERVIEW.md)
 - [独立 PC Demo：设计与验收](desktop-demo.md) · [运行与打包](../apps/desktop/README.md)
+- [前端 Demo 定向修复、范围与验收](frontend-demo-acceptance.md)
 - [发行审查状态](OPEN_SOURCE_READINESS.md)
 - [公开安全审计](PUBLIC_AUDIT.md)
 - [R1 范围](specs/class-os-v1/release-1-manifest.md)

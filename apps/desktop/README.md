@@ -32,6 +32,8 @@ pnpm test:desktop -- --packaged
 
 也可直接用 `node tests/smoke.cjs --packaged` 运行打包版测试。测试前关闭已打开的 ClassMatter Demo（单实例锁是正常行为），不要并发跑开发版/打包版测试。集成测试覆盖真实 Electron，不下载 Playwright 浏览器。`pnpm start` 是开发启动，仍需本机 Node；打包 exe 不需要。
 
+定向前端验收运行 `node tests/acceptance.cjs`，也已加入仓库 `scripts/verify.ps1 -Suite desktop`。包括准确预览、确认后仅应用演示内存、会话隔离、同源任务状态、弹层/焦点、输入法、附件与模拟反馈；详见[修复和验收记录](../../docs/frontend-demo-acceptance.md)。本演示只接受明确两名合成学生的交换请求，例如“交换合成学生01和合成学生02的座位，先给我预览”，其他请求不会套用固定座位样例。
+
 Electron 的安装脚本由 `pnpm-workspace.yaml` 精确允许；若机器全局禁止安装脚本，检查本机策略，明确允许后运行上游 `node node_modules/electron/install.js`，不要为所有依赖打开脚本执行。首次安装/打包需访问 Electron 官方发行资源，运行不需要网络；不要把机器代理地址写进源码。
 
 ## 代码地图与边界

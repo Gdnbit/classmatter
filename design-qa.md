@@ -26,4 +26,10 @@ Real packaged Electron tests cover titlebar visibility, drag/no-drag CSS, fixed 
 
 P3: automatically disabling history arrows at the bounds could improve affordance; current arrows safely no-op at the bounds. No actionable P0/P1/P2 issue remains within the selected header-only scope.
 
+## Targeted frontend acceptance follow-up
+
+The later whole-frontend audit found issues outside the original header-only comparison: drawer/header overlap, menu overflow, static history and incorrect fixed seat previews. These are not covered by the earlier header-only pass. The corrective implementation and executable acceptance map are in `docs/frontend-demo-acceptance.md`.
+
+Current local renderer evidence: `apps/desktop/.build/evidence/acceptance/01-menu-minimum.png`, `02-detail-boundary.png`, `03-correct-preview.png`; all ignored runtime artifacts. These captures were opened and inspected: minimum-window menu remains accessible, drawer heading/close action are below the native toolbar, and the seat preview contains the requested 01/02 identities with six-column topology. No new graphic assets were introduced; original typography/palette retained. Functional tests additionally cover shared counts, memory-only application, focus, IME, draft isolation and honest capability states. Remaining service integrations and broader accessibility/OS validation are explicitly out of scope, not silently passed.
+
 final result: passed

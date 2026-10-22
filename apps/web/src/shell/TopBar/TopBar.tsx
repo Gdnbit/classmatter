@@ -10,6 +10,7 @@ import type { Workspace } from "@/shell/types"
 
 import type { Phase } from "@/types/transaction"
 import { useUiFeedback } from "@/store/UiFeedbackStore"
+import { useDemoWork, attentionSummary } from "@/store/DemoWorkStore"
 export default function TopBar({
   workspace,
   transaction,
@@ -22,6 +23,7 @@ export default function TopBar({
   onInspector: () => void
 }) {
   const { notify, openDetail } = useUiFeedback()
+  const { tasks } = useDemoWork()
   const workspaceLabels: Record<Workspace, string> = {
     conversation: "对话",
     dashboard: "总览",
@@ -72,25 +74,25 @@ export default function TopBar({
           onClick={() =>
             openDetail({
               eyebrow: "今日注意力摘要",
-              title: "今天还有 6 项需要留意",
+              title: `当前演示有 ${tasks.filter(t => t.state !== "done").length} 项需要留意`,
               description: "内容按责任状态聚合，不等同于全部班级数据。",
               sections: [
-                { label: "需要我处理", value: "3 项" },
-                { label: "等待别人", value: "2 项" },
-                { label: "可能遗漏", value: "1 项" },
+                { label: "需要我处理", value: `${tasks.filter(t => t.state === "mine").length} 项` },
+                { label: "等待别人", value: `${tasks.filter(t => t.state === "waiting").length} 项` },
+                { label: "可能遗漏", value: `${tasks.filter(t => t.state === "possible").length} 项` },
               ],
               actions: [{ label: "知道了", tone: "primary" }],
             })
           }
         >
           <Clock3 size={15} />
-          需要我处理 3 项 · 等待别人 2 项 · 可能遗漏 1 项
+          {attentionSummary(tasks)}
         </button>
       )}
       <div className="bar-actions">
         {pending && <span className="draft-dot">编辑中 · 2 项未提交变更</span>}
         {controls.map((control) => (
-          <button key={control} onClick={() => notify(`${control}面板已更新`)}>
+          <button key={control} onClick={() => notify(`${control}仅为演示入口，未修改数据或建立真实定时任务`)}>
             {control}
           </button>
         ))}

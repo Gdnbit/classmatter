@@ -1,0 +1,12 @@
+/* Shared presentation invariants established by the Demo acceptance pass. */
+.seat-grid { overflow-x: auto; }
+.seat-grid .seat-row { display: grid; grid-template-columns: repeat(6, minmax(88px, 1fr)); min-width: 580px; flex-wrap: nowrap; }
+.seat-grid .seat { min-width: 0; width: auto; }
+.more-overlay { box-sizing: border-box; overscroll-behavior: contain; }
+.conversation-item:focus-visible, .more-overlay button:focus-visible, .icon-control:focus-visible { outline: 2px solid #507f72; outline-offset: -2px; }
+.chat-group > input { width: 100%; box-sizing: border-box; padding: 8px; border: 1px solid #668a83; border-radius: 6px; }
+.demo-capability-note { font-size: 12px; color: #59675f; line-height: 1.6; }
+.composer textarea { resize: none; }
+.message p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.object-discuss { margin-left: 8px; }
+.ambient h3 { font-size: 12px; font-weight: 500; color: #77867d; margin: 14px 0 12px; }

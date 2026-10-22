@@ -59,14 +59,38 @@ export function UiFeedbackStore({ children }: { children: ReactNode }) {
   }, [toast])
 
   useEffect(() => {
+    if (!detail && !confirm) return
+    const panel = document.querySelector<HTMLElement>(confirm ? ".confirm-dialog" : ".detail-sheet")
+    if (!panel) return
+    const previous = document.activeElement as HTMLElement | null
+    const container = panel.closest(".overlay-backdrop")!
+    const backgrounds = Array.from(container.parentElement?.children || []).filter(el => el !== container && el instanceof HTMLElement) as HTMLElement[]
+    const oldInert = backgrounds.map(el => el.inert)
+    backgrounds.forEach(el => { el.inert = true })
+    panel.tabIndex = -1
+    const buttons = () => Array.from(panel.querySelectorAll<HTMLElement>('button:not(:disabled), input, textarea, select, a[href], [tabindex="0"]')).filter(el => el.getClientRects().length)
+    ;(buttons()[0] || panel).focus()
     const handleKey = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return
-      if (confirm) setConfirm(null)
-      else if (detail) setDetail(null)
+      if (event.key === "Escape") {
+        event.preventDefault(); event.stopPropagation()
+        if (confirm) setConfirm(null)
+        else setDetail(null)
+      }
+      if (event.key === "Tab") {
+        const items = buttons()
+        const index = items.indexOf(document.activeElement as HTMLElement)
+        if (!items.length) { event.preventDefault(); panel.focus(); return }
+        if (event.shiftKey && index <= 0) { event.preventDefault(); items.at(-1)!.focus() }
+        else if (!event.shiftKey && (index < 0 || index === items.length - 1)) { event.preventDefault(); items[0].focus() }
+      }
     }
-    window.addEventListener("keydown", handleKey)
-    return () => window.removeEventListener("keydown", handleKey)
-  }, [confirm, detail])
+    document.addEventListener("keydown", handleKey, true)
+    return () => {
+      document.removeEventListener("keydown", handleKey, true)
+      backgrounds.forEach((el, i) => { el.inert = oldInert[i] })
+      if (previous?.isConnected) previous.focus()
+    }
+  }, [!!confirm, !!detail])
 
   return (
     <UiFeedbackContext.Provider

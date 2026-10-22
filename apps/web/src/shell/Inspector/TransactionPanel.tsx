@@ -1,2 +1,24 @@
-import { AlertTriangle, Check, ChevronRight, LoaderCircle } from "lucide-react";
-export default function TransactionPanel({transaction,onDiscard,onCommit,onConfirmCommit,onCancelConfirm,onUnknown,onCheck}:any){const pending=transaction&&!["committed","discarded"].includes(transaction);return <><section><p className="inspect-label">座位调整</p><div className="diff"><div><strong>合成学生02 <small>99002</small></strong><span>3排2座 <ChevronRight size={12}/> 2排4座</span></div><div><strong>合成学生05 <small>99005</small></strong><span>2排4座 <ChevronRight size={12}/> 3排2座</span></div></div></section><section><p className="inspect-label">验证</p><p className="valid"><Check size={16}/>冲突：0</p>{transaction==="outcome-unknown"&&<p className="warning"><AlertTriangle size={16}/>提交状态待确认</p>}{transaction==="committed"&&<p className="valid"><Check size={16}/>已应用 · 收据 #TX-0906-021</p>}</section>{transaction==="confirming"?<div className="confirm-action"><strong>确认应用 2 项变更？</strong><p>确认后将更新合成学生02和合成学生05的正式座位记录。</p><div><button onClick={onCancelConfirm}>返回预览</button><button className="primary" onClick={onConfirmCommit}>确认应用</button></div></div>:pending&&<div className="inspector-actions"><button onClick={onDiscard}>放弃修改</button>{transaction==="committing"?<button className="primary"><LoaderCircle className="spin" size={16}/>正在应用</button>:<button className="primary" onClick={onCommit}>应用变更</button>}</div>}{transaction==="preview-ready"&&<button className="demo-unknown" onClick={onUnknown}>演示：提交状态待确认</button>}{transaction==="outcome-unknown"&&<button className="primary wide" onClick={onCheck}>检查状态</button>}</>}
+import { AlertTriangle, Check, ChevronRight } from "lucide-react";
+import { useTransactionSession } from "@/state/TransactionSessionProvider";
+import { useMockDomainStore } from "@/store/MockDomainStore";
+import { projectSeatPlan } from "@/demo/seat-plan";
+export default function TransactionPanel({transaction,onDiscard,onCommit,onConfirmCommit,onCancelConfirm,onUnknown,onCheck}:any) {
+  const { plan, error } = useTransactionSession();
+  const { students } = useMockDomainStore();
+  if (!plan || transaction === "discarded") return null;
+  let issue = error;
+  if (transaction !== "committed") { try { projectSeatPlan(students, plan); } catch (e) { issue = (e as Error).message; } }
+  return <>
+    <section><p className="inspect-label">座位调整 · 仅本次演示</p><div className="diff">
+      {plan.changes.map(c => <div key={c.studentId}><strong>{c.name} <small>{c.studentId}</small></strong><span>{c.before}<ChevronRight size={12}/>{c.after}</span></div>)}
+    </div></section>
+    <section><p className="inspect-label">验证</p><p className={issue ? "warning" : "valid"}>{issue ? <AlertTriangle size={16}/> : <Check size={16}/>}{issue || "已校验：身份、快照、一人一座与一座一人"}</p>
+      {transaction === "committed" && <p className="valid">已应用到当前演示内存；未写入业务数据库</p>}
+      {transaction === "outcome-unknown" && <p className="warning">模拟状态待确认；没有提交到服务器</p>}
+    </section>
+    {transaction === "confirming" ? <div className="confirm-action"><strong>确认应用这两项演示变更？</strong><p>{plan.changes.map(c => c.name).join("与")}；仅更新当前演示内存。</p><div><button onClick={onCancelConfirm}>返回预览</button><button disabled={!!issue} className="primary" onClick={onConfirmCommit}>确认应用</button></div></div>
+      : transaction !== "committed" && <div className="inspector-actions"><button onClick={onDiscard}>放弃修改</button><button disabled={!!issue || transaction === "outcome-unknown"} className="primary" onClick={onCommit}>应用变更</button></div>}
+    {transaction === "preview-ready" && <button className="demo-unknown" onClick={onUnknown}>演示：提交状态待确认</button>}
+    {transaction === "outcome-unknown" && <button className="primary wide" onClick={onCheck}>检查状态</button>}
+  </>
+}

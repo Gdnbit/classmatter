@@ -11,6 +11,7 @@ import { WorkingContextProvider } from "@/state/WorkingContextProvider"
 import { TransactionSessionProvider } from "@/state/TransactionSessionProvider"
 import { UiFeedbackStore } from "@/store/UiFeedbackStore"
 import R1App from "@/runtime/R1App"
+import { DemoWorkStore } from "@/store/DemoWorkStore"
 export default function App() {
   if (import.meta.env.VITE_CLASS_OS_DEMO !== "true") return <R1App />
   return (
@@ -20,7 +21,7 @@ export default function App() {
           <WorkingContextProvider>
             <TransactionSessionProvider>
               <UiFeedbackStore>
-                <AppShell />
+                <DemoWorkStore><AppShell /></DemoWorkStore>
               </UiFeedbackStore>
             </TransactionSessionProvider>
           </WorkingContextProvider>
