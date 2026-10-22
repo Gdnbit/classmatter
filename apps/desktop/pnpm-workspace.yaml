@@ -1,0 +1,3 @@
+# Electron's reviewed installer downloads the pinned runtime from upstream.
+allowBuilds:
+  electron: true

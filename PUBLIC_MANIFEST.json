@@ -2,6 +2,48 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "apps/desktop/main.cjs": {
+      "sha256": "290b4afdbd9eb8dd48b4b0f3e29a5030f506fd259f64ff0611cdb4ad63b17bf3"
+    },
+    "apps/desktop/package.json": {
+      "sha256": "435a70720c5279c035e15cc71dd8da482df846984a26e2ff3e0ce117e9f96b31"
+    },
+    "apps/desktop/pnpm-lock.yaml": {
+      "sha256": "11c1f20d52f0b44b34ca6f249d5bb4695286cd21904e982269f5ba41fb87c1e9"
+    },
+    "apps/desktop/pnpm-workspace.yaml": {
+      "sha256": "d688d99770defd126ae887f450ae77915f0646e28d20de4fe83fa24ab0c7b966"
+    },
+    "apps/desktop/policy.cjs": {
+      "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
+    },
+    "apps/desktop/README.md": {
+      "sha256": "1e6caaa742e0789ec96366f8ad7d4e3a70f4c5504676e82cb57e743d9b78852a"
+    },
+    "apps/desktop/scripts/build.cjs": {
+      "sha256": "479b77fbeecedd603e93fe9b7dc1631f650179ccdce58cad27e8395c9a22dcf9"
+    },
+    "apps/desktop/scripts/icon.cjs": {
+      "sha256": "f6b51eec4012e917236ec404e96b91c7eb1ef30cabca3e589d18671271588534"
+    },
+    "apps/desktop/scripts/launch.cjs": {
+      "sha256": "b79b3e96203f7e65977e7636549a571cb30c4cf4a00d9b161efb35e474cccaf8"
+    },
+    "apps/desktop/scripts/notices.cjs": {
+      "sha256": "53ce8598b89cb288d4ec811466512a6670c2737bc9950d914f57ac27c1afdd30"
+    },
+    "apps/desktop/scripts/package.cjs": {
+      "sha256": "197ace83cbbd212f888702c25a825f2ece85d35bd777295a5e6ab0f6f99c3043"
+    },
+    "apps/desktop/tests/policy.test.cjs": {
+      "sha256": "852b35951e493417dec3689b82975769b65c1c0c6ceaab4e0799833586fddc38"
+    },
+    "apps/desktop/tests/smoke.cjs": {
+      "sha256": "765b7d05e78a9898f54cb2c59f7a3a90a1d1120f20b7566166467b0cb562165c"
+    },
+    "docs/desktop-demo.md": {
+      "sha256": "79a60906f92e99106c52ec44759479250487f96bbca832ae2bcf1f202713e3aa"
+    },
     ".ai/development/synthetic-policy.yaml": {
       "sha256": "1e8c0b807b2fa0a967dbcbc02750809cffea236ef98b608dc4d0f12c8317fffa"
     },
@@ -51,10 +93,10 @@
       "sha256": "c5b195dd96f32a9f0156dafbe8a6438a7d28e33d7ce151f9b75f5dec3361ee3b"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "36485fc3dec0a2510f0fe6a3f8b7824dbdb2afc0eac8a296f3483c0b827f67d9"
+      "sha256": "cf24b3051bb5e8b62b492a90f119127847c46ae51ab7b0a076fa9ff3062dd7c6"
     },
     ".gitignore": {
-      "sha256": "dfa0bb56fe82d7a5e310b58ca0d1948ceb13c3e09db894a8e4ab1f8b21ed2f7b"
+      "sha256": "2fba4e827fd80ec895546941b1b23b97eb2a4e0183cacb3f5dbdd7efd59d283d"
     },
     "AGENTS.md": {
       "sha256": "145599b5a34fa9d0e8834e52ca23c91423d956c68d2fecbdabc5a3b8b61f2677"
@@ -78,7 +120,7 @@
       "sha256": "077a04a3f165aa86879c25faba6f5c214488d6dcdd0418599633675b459f06f4"
     },
     "README.md": {
-      "sha256": "b2bb198daaf1ef33a0d4f1ba4f5d5a2c66a9098f25fd1e3a493bd2f516b203a1"
+      "sha256": "799780f3ee6602d9f0bd75f550b638abd1a43654ef40825fb154981e4b23e23a"
     },
     "README_EN.md": {
       "sha256": "7d213a326aea84fa283def16b98588c91678cd5f1e4bc8bff61e79e0d7e29fbb"
@@ -90,7 +132,7 @@
       "sha256": "f14b6fab4f65f7fb21a5712a64a4978df6baf878806af524a017c2011a9691af"
     },
     "THIRD_PARTY_NOTICES.md": {
-      "sha256": "4d4bec36a80589a75a8468048b4e26845f119c200fdfc5519786d617d5a6c260"
+      "sha256": "58d8e34e43339dfd5229b8e6c09bf73c7bad1a0b862eef3c143bcf4d94cd8988"
     },
     "apps/web/.figma/make/site.json": {
       "sha256": "ec98b717eb772e31d8a21ba072d45aa47561e4bc1b13f87f9cc71a54ad2435f9"
@@ -895,16 +937,16 @@
       "sha256": "556da89d40408994ecaad651e17422b9c2747fe3d9770198b21a05446af0803d"
     },
     "docs/ENGINEERING_OVERVIEW.md": {
-      "sha256": "da51f1484e489ab4a21181227e8ffcb7af7c7eb55ae7ed8173c6bd0a22e2c130"
+      "sha256": "0b056032f09b2ae524633b7bdec4af875a7e6511b6f1c92657bda0d35dab3d7d"
     },
     "docs/OPEN_SOURCE_READINESS.md": {
-      "sha256": "7239bac7a4260f830aa1e539f35cf123f3de32784f794f7c9091d534e755f35a"
+      "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
       "sha256": "686f1d295a1ea1ffcb04406f3adbdebcdb670144b04f9ce98df3df052eae646e"
     },
     "docs/README.md": {
-      "sha256": "3f0c93117c6144f08d3fa44623ee4b7f1be54436e971edda96fb5871d9fff309"
+      "sha256": "74e8b80b841461aadf65d8a3e326f72f6a0aa0fa602f047434ecb8ffa5c06cb8"
     },
     "docs/changes/2026-10-08-synthetic-development-admission.md": {
       "sha256": "d67c0a71f21431a90f84301ceae2ce790f8a0aeb120052840b0b6032731a9f40"
@@ -1095,7 +1137,7 @@
       "sha256": "59044f6f1cb5eff88eb5280769761a2bddd4485642f6a63f227f3d4d5619c53e"
     },
     "scripts/verify-docs.ps1": {
-      "sha256": "7ea8c793f0be2ba5569d90399288b45032e49dac7dedbdc47644700055be8b04",
+      "sha256": "d8b1e054cb5db123365907e805d96cbff0974354773c75fe006069ad91b6d135",
       "reviewed_pattern_exceptions": [
         {
           "rule": "conversation-link",
@@ -1104,7 +1146,7 @@
       ]
     },
     "scripts/verify.ps1": {
-      "sha256": "8e7314f2fc9b39ab18aab1fdecd2284eb31b4d14927fc25630440026f7881914"
+      "sha256": "5d4a24b7eb8ecc0529188b1b0bf6a7a9f6f35c82c9e4cb357bd884406dbe7924"
     },
     "scripts/verify_manifests.py": {
       "sha256": "f0a45c302b6c55e32d6b1aaab2c935015b0e35ca6fb38e19d4beb37c193633f2"

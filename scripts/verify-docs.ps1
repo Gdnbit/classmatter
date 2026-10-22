@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 $utf8 = [System.Text.UTF8Encoding]::new($false, $true)
 $errors = [System.Collections.Generic.List[string]]::new()
 $markdownFiles = Get-ChildItem -LiteralPath $RepoRoot -Recurse -File -Filter '*.md' |
-    Where-Object { $_.FullName -notmatch '[\\/](node_modules|dist|\.git|\.venv|__pycache__|\.pytest_cache)[\\/]' }
+    Where-Object { $_.FullName -notmatch '[\\/](node_modules|dist|\.build|out|\.local-runtime|test-results|\.git|\.venv|__pycache__|\.pytest_cache)[\\/]' }
 
 foreach ($file in $markdownFiles) {
     try {

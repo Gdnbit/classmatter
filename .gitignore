@@ -50,3 +50,7 @@ Thumbs.db
 /.ai/audit/
 /.ai/progress.md
 /.ai/pipeline-state.md
+
+# Desktop staging, executable bundles and automated GUI evidence.
+/apps/desktop/.build/
+/apps/desktop/out/

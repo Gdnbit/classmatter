@@ -18,6 +18,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 ## 当前技术与限制
 
+可选 `apps/desktop/` 是 Electron 独立 Windows Demo 宿主，复用 `apps/web` 的显式合成构建，通过本地资源协议加载，不启动后端或数据库，也不改变 Agent Harness。其单独构建、窗口/沙箱边界和进程验收见[桌面设计](desktop-demo.md)。新增桌面宿主不代表正式 R1 或原型内全部业务能力已交付。
+
 数据库当前 head0016、22 张登记表、risk r1.3；没有自动迁移已存在实例。0015 显示名更正、0016 学期元数据更正均保留历史 migration 和权限约束。恢复使用经验证快照/前滚，禁止破坏性 downgrade。退出包有 core 验证及上限，但 `lifecycle_complete=false`，不是完整跨机恢复或退役实现。
 
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。

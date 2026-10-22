@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('all', 'self', 'eval-meta', 'gate-graph', 'task-graph', 'development', 'backend', 'db', 'fixtures', 'security', 'language-spike', 'agent-spike', 'self-host-spike', 'signature-spike', 'docs', 'web')]
+    [ValidateSet('all', 'self', 'eval-meta', 'gate-graph', 'task-graph', 'development', 'backend', 'db', 'fixtures', 'security', 'language-spike', 'agent-spike', 'self-host-spike', 'signature-spike', 'docs', 'web', 'desktop')]
     [string]$Suite = 'all',
     [string]$PostgresRoot = ''
 )
@@ -139,6 +139,19 @@ if ($Suite -in @('all', 'web')) {
             Pop-Location
         }
     }
+}
+
+if ($Suite -eq 'desktop') {
+    if (-not $IsWindows -or [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture -ne 'X64') {
+        throw 'Desktop delivery verification requires Windows x64 and PowerShell 7'
+    }
+    Push-Location (Join-Path $repoRoot 'apps/desktop')
+    try {
+        Invoke-Checked -Label 'Desktop resource boundary tests' -Command { pnpm test }
+        Invoke-Checked -Label 'Standalone Windows Demo build' -Command { pnpm package }
+        Invoke-Checked -Label 'Packaged Electron integration' -Command { node tests/smoke.cjs --packaged }
+    }
+    finally { Pop-Location }
 }
 
 Write-Host 'Verification completed.'
