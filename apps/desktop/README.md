@@ -50,3 +50,29 @@ Electron 的安装脚本由 `pnpm-workspace.yaml` 精确允许；若机器全局
 `.build/`、`out/` 和测试截图不进入 Git；源码、测试、锁文件和设计说明可同步。Electron 使用独立 `ClassMatter-Demo` 用户配置目录，业务页面使用内存 session partition；Chromium 自身仍可能留下日志/缓存等基础文件，不承诺零磁盘痕迹。preload 仅暴露四类固定原生菜单请求，主进程复核发送窗口/主 frame/本地 URL；没有通用 IPC、任意文件访问、shell、DDL、Agent 执行、数据库连接或凭据存储入口。
 
 详情与未来生产接入边界见[桌面宿主演进说明](../../docs/desktop-demo.md)。
+
+## 合成持久化开发入口（W2-01，非发行版）
+
+原离线Demo命令和快捷方式不变。另有独立的开发入口，复用已有R1业务页面、API和PostgreSQL，不是把Demo内存当数据库，也不表示全部冻结页面已迁移。
+
+先按[后端运行说明](../../backend/README.md)准备本机自有合成runtime、启动PostgreSQL并由本人交互bootstrap owner；不要重建已有实例。同步冻结依赖后，在本目录执行：
+
+```powershell
+pnpm build:runtime
+pnpm start:runtime
+```
+
+桌面以固定自有Python入口启动API，使用每次启动的新密钥和随机challenge验证服务进程，再检查数据库/身份/业务Gateway readiness；不连接占用8000端口的旧服务。不启动/初始化/迁移/停止PostgreSQL，不创建owner、不重放失败写入。关闭桌面会停止自有API；父进程强退时空stdin管道EOF触发API退出。服务崩溃关闭窗口，不自动重连或重启。
+
+runtime构建在`.build/runtime/`，与`.build/app/`离线Demo及普通Web dist分开。生成的`runtime-source.json`只包含本机源码与合成runtime路径，不入Git，不能跨机复制。此入口依赖源码、Python虚拟环境、当前用户DPAPI和已启动的PG；不支持packaged分发，不是安装包/完整离线后端捆绑。
+
+renderer只访问已验证的固定loopback同源，preload仍只有4类菜单请求；没有通用IPC、shell、DB或DDL。仅已批准JSON核心退出包的既有API路径、正确MIME和1—16MiB大小允许打开原生保存对话框；保存位置由用户选择，其他下载拒绝。保存对话框完整手工体验尚待验证。模型默认仍是确定性fake，真实供应商质量没有验收。
+
+工程验证：`pnpm test`当前包含原7项Demo边界及11项runtime监督/策略测试；`backend/tests/test_desktop_runtime.py`在临时SCRAM库和真实Electron中验证建班/学生/事实/关联任务、重启持久化、只读Agent来源/未提交草稿及父进程强退清理，既有用户runtime不变。Windows执行：
+
+```powershell
+# backend
+uv run --frozen pytest -q tests/test_desktop_runtime.py --pg-root '<PG18目录>'
+```
+
+测试若8000已被占用会明确skip，不杀已有服务；缺桌面依赖会失败，不假报通过。此测试自动创建的owner仅属于一次性合成库，不代替本人设置真实使用凭据。完整状态见[实现台账](../../docs/implementation-ledger.md)。

@@ -56,3 +56,19 @@ Electron 主进程管理窗口/菜单；沙箱 renderer 渲染原有前端与桌
 本机产物和证据在忽略目录，不上传截图/可执行文件，也不自动推送分支。回退只需退出新 Demo 并继续原 Web 入口；本变更未迁移或修改任何业务库，无需数据库回滚。
 
 Future：生产桌面接入应复用原 API/Agent 服务，通过受控进程托管、认证握手、健康检查和退出清理连接；不能仅解禁网络/CSP 就宣布实现。文件选择/解析、可信上传、麦克风/ASR、本地工具/命令执行均需各自的能力接口、范围授权、取消/超时/审计和验收，不能暴露万能 IPC/shell，更不能绕过 BCG。
+
+## W2-01：独立合成runtime开发入口
+
+2026-10-22增量：前述离线Demo仍是原样的独立交付；新增源码开发runtime，固定启动`backend/desktop.py`，复用现有R1页面和领域/API，不是整个冻结shell迁移。构建与运行命令见[桌面README](../apps/desktop/README.md)。该入口不支持packaged分发，不捆绑Python/PG、不初始化/迁移/启动用户数据库、不代设owner。
+
+文件落点：`runtime-service.cjs`负责固定受信进程、challenge/HMAC证明、readiness和stop；`runtime-main.cjs`负责独立窗口、同源网络/导航、原菜单桥和退出；`runtime-policy.cjs`负责同源与有限下载判定；backend `desktop_host.py`只注册可选只读进程证明，`desktop.py`是operator装配。证明只表明“本次启动的服务”，不是身份认证、scope、业务事实、admission或第四写入口。原QG/BCG/ISB、数据库Schema、Task/Eval/Gate定义不变。
+
+网络策略与Demo分开：runtime仅允许验证后的固定`127.0.0.1:8000`同源；CSP依然拒绝外部脚本/frame/worker/对象。renderer不拿到进程密钥、任意进程参数、数据库凭据或通用IPC。只有已批准JSON核心退出包的既有路径、正确MIME和1—16MiB响应允许原生保存对话框；真实保存交互仍待专项人工验收。原离线Demo继续全部禁止网络与下载。
+
+服务失败/端口占用不自动附着；启动失败停止自有子进程，静态错误不回显日志/路径/密钥。正常退出停止自有API，不停止既有PG；桌面强制退出使stdin父管道EOF，API自行结束。该管道只做生存期信号，不接受命令。进程意外死亡不自动重启/重放业务。
+
+验收：新增6项backend proof用例、11项Node runtime监督/策略用例；真实Electron+一次性SCRAM库通过建班/学生/事实/关联任务、私有批准/BCG提交、应用重启持久化、fake查询来源、未提交草稿和父进程强退清理。一次故障测试错误地观察Windows launcher退出而超时，修正为Electron强制退出（绕过before-quit）后重跑通过；没有把该失败记成通过。最终集成结果在忽略的`.build/evidence/runtime/`，不入Git。
+
+限制：仍未完成冻结Demo全页面绑定、真实模型质量、长期记忆/checkpoint、完整生命周期退出/跨机恢复、installer/签名/自动更新和正式R1准入。使用现有R1业务页面验证运行桥，不创建平行领域实现；完整剩余项见[实现台账](implementation-ledger.md)。本机集成证据不能冒充远端CI或其他平台支持。
+
+本轮最终工程回归：backend非DB284/DB315、Web39/类型/构建、Node18、原离线Demo17组及真实runtime集成均通过；文档/引用/冻结task hash检查通过。桌面suite额外构建runtime资产但不启动它；Windows PG/Electron持久化仍属本机DB suite，未声称已推送或执行新远端CI。下载保存对话框、全平台辅助技术、真实教师净负担和真实provider仍未验收。

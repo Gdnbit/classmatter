@@ -151,6 +151,7 @@ if ($Suite -eq 'desktop') {
         Invoke-Checked -Label 'Standalone Windows Demo build' -Command { pnpm package }
         Invoke-Checked -Label 'Packaged Electron integration' -Command { node tests/smoke.cjs --packaged }
         Invoke-Checked -Label 'Targeted frontend acceptance regression' -Command { node tests/acceptance.cjs }
+        Invoke-Checked -Label 'Development-only persistent desktop assets (no service/database start)' -Command { node scripts/runtime-build.cjs }
     }
     finally { Pop-Location }
 }

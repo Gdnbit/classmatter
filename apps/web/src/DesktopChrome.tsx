@@ -28,7 +28,7 @@ export default function DesktopChrome() {
           <button key={id} aria-haspopup="menu" onClick={() => window.classMatterDesktop?.openMenu(id)}>{label}</button>
         ))}
       </nav>
-      <span className="desktop-demo-badge">合成演示</span>
+      <span className="desktop-demo-badge">{import.meta.env.VITE_CLASS_OS_DEMO === "true" ? "合成演示" : "合成持久化开发"}</span>
     </header>
   )
 }

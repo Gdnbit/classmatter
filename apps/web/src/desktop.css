@@ -26,6 +26,10 @@
 .desktop-host .shell-main { border-radius: 14px 0 0 0; background: #fff; }
 .desktop-host .overlay-backdrop { top: var(--desktop-bar-height); }
 .desktop-host .toast { max-width: calc(100vw - 32px); }
+.desktop-host .r1-shell { height: calc(100dvh - var(--desktop-bar-height)); }
+.desktop-host .r1-auth { min-height: calc(100dvh - var(--desktop-bar-height)); max-height: calc(100dvh - var(--desktop-bar-height)); overflow: auto; }
+.desktop-host .r1-backdrop { top: var(--desktop-bar-height); }
+.desktop-sidebar-collapsed .r1-sidebar { display: none; }
 .desktop-sidebar-collapsed .app-shell { grid-template-columns: minmax(0, 1fr); }
 .desktop-sidebar-collapsed .app-shell > .sidebar { display: none; }
 @media (max-width: 1100px) { .desktop-demo-badge { display: none; } }

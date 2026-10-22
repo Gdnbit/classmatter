@@ -20,6 +20,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 可选 `apps/desktop/` 是 Electron 独立 Windows Demo 宿主，复用 `apps/web` 的显式合成构建，通过本地资源协议加载，不启动后端或数据库，也不改变 Agent Harness。其单独构建、窗口/沙箱边界和进程验收见[桌面设计](desktop-demo.md)。新增桌面宿主不代表正式 R1 或原型内全部业务能力已交付。
 
+2026-10-22 W2-01新增独立的源码开发runtime入口，复用已有R1页面和后端，托管固定自有API进程，先验证每次启动的进程proof与readiness，再开放该loopback同源。它不改变离线Demo、不初始化/迁移/启动用户数据库、不代设owner；不是全部冻结Demo页面绑定完成。临时SCRAM数据库+真实Electron已验证事实/任务经原BCG持久化及应用重启后复用，Agent fake只读/草稿不自动写入；正式发布、真实模型、完整退出仍未完成。代码与剩余项见[实现台账](implementation-ledger.md)。
+
 数据库当前 head0016、22 张登记表、risk r1.3；没有自动迁移已存在实例。0015 显示名更正、0016 学期元数据更正均保留历史 migration 和权限约束。恢复使用经验证快照/前滚，禁止破坏性 downgrade。退出包有 core 验证及上限，但 `lifecycle_complete=false`，不是完整跨机恢复或退役实现。
 
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。

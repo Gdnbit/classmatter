@@ -11,8 +11,10 @@
   "scripts": {
     "build": "node scripts/build.cjs",
     "start": "node scripts/launch.cjs",
+    "build:runtime": "node scripts/runtime-build.cjs",
+    "start:runtime": "node scripts/runtime-launch.cjs",
     "package": "node scripts/package.cjs",
-    "test": "node --test tests/policy.test.cjs",
+    "test": "node --test tests/policy.test.cjs tests/runtime-service.test.cjs",
     "test:desktop": "node tests/smoke.cjs"
   },
   "devDependencies": {
