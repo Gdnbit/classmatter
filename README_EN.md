@@ -175,6 +175,7 @@ The open-source edition is **Pre-alpha · Synthetic Development**. Real student 
 | **Product and workflows** | [Requirements](docs/specs/class-os-v1/requirements.md) · [Business flows](docs/specs/class-os-v1/business-flow.md) |
 | **Architecture choices** | [Architecture](docs/specs/class-os-v1/architecture.md) · [ADRs](docs/specs/class-os-v1/architecture-decision.md) |
 | **Long-term direction and value** | [Evolution](docs/specs/class-os-v1/long-term-requirements.md) · [Acceptance](docs/specs/class-os-v1/acceptance.md) |
+| **Agent-owned work & runtime research (Future; Chinese)** | [Work / attention design](docs/product/agent-owned-work-and-attention.md) · [Pydantic AI vs Pi](docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md) · [Synthetic evaluation plan](docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md) |
 | **Contribution and security** | [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Public audit](docs/PUBLIC_AUDIT.md) |
 
 ---
