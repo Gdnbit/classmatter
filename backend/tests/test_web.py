@@ -120,7 +120,7 @@ def test_real_browser_direct_ui_record_task_and_reload(roster):
             assert client.get(f"http://127.0.0.1:{port}/api/not-real").status_code == 404
         result = subprocess.run(["node", "tests/runtime.mjs"], cwd=root / "apps/web",
                                 env=dict(os.environ, CLASS_OS_TEST_URL=f"http://127.0.0.1:{port}"),
-                                timeout=100, capture_output=True, text=True, encoding="utf-8",
+                                timeout=130, capture_output=True, text=True, encoding="utf-8",
                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         assert result.returncode == 0, result.stdout + result.stderr
         assert lost_commit_response.is_set()

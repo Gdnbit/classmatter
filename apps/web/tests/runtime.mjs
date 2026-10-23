@@ -214,6 +214,65 @@ try {
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
   const activityRoute = /\/terms\/[0-9a-f-]+\/activity$/;
+  // Foreground events only re-read the actual QG/PG; no successful route stubs.
+  let foregroundReads = 0, foregroundWrites = 0;
+  const countForeground = request => {
+    if (request.method() === 'GET' && activityRoute.test(new URL(request.url()).pathname)) foregroundReads++;
+    if (!['GET', 'HEAD'].includes(request.method())) foregroundWrites++;
+  };
+  page.on('request', countForeground);
+  const returnedRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
+  await page.evaluate(() => { for (let index = 0; index < 20; index++) window.dispatchEvent(new Event('focus')); });
+  await returnedRead;
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
+  assert.equal(foregroundReads, 1);
+  assert.equal(foregroundWrites, 0);
+  await page.getByRole('button', { name: '记录事实', exact: true }).click();
+  await page.getByLabel('事实原文（观察类型请留空）').fill('合成未提交表单，不能被自动刷新打断');
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await page.waitForTimeout(5250); // Exceed cooldown: idle protection, not the throttle, must prevent reads.
+  assert.equal(foregroundReads, 1);
+  assert.equal(await page.getByLabel('事实原文（观察类型请留空）').inputValue(), '合成未提交表单，不能被自动刷新打断');
+  const deferredRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
+  await page.keyboard.press('Escape');
+  await deferredRead;
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
+  assert.equal(foregroundReads, 2);
+  assert.equal(foregroundWrites, 0);
+  await page.context().setOffline(true);
+  await page.getByText('当前列表尚未刷新。', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: '记录事实', exact: true }).isDisabled(), true);
+  await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
+  const reconnectedRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
+  await page.context().setOffline(false);
+  await reconnectedRead;
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
+  assert.equal(foregroundReads, 3);
+  assert.equal(foregroundWrites, 0);
+  page.off('request', countForeground);
+  // A successful QG response from BEFORE an offline transition is not fresh
+  // merely because navigator.onLine is true again when its delivery arrives.
+  let releaseOldRead, markOldReadReady;
+  const oldReadReady = new Promise(resolve => { markOldReadReady = resolve; });
+  const oldReadRelease = new Promise(resolve => { releaseOldRead = resolve; });
+  await page.route(activityRoute, async route => {
+    const response = await route.fetch();
+    assert.equal(response.status(), 200);
+    markOldReadReady();
+    await oldReadRelease;
+    await route.fulfill({ response });
+  });
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await oldReadReady;
+  await page.context().setOffline(true);
+  await page.waitForFunction(() => !navigator.onLine);
+  await page.context().setOffline(false);
+  await page.waitForFunction(() => navigator.onLine);
+  releaseOldRead();
+  await page.getByText('当前列表尚未刷新。', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: '记录事实', exact: true }).isDisabled(), true);
+  await page.unroute(activityRoute);
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
   let refreshWrites = 0;
   const countRefreshWrites = request => { if (request.method() === 'POST' && /\/commands\/(preview|approve|commit)$/.test(request.url())) refreshWrites++; };
   page.on('request', countRefreshWrites);
@@ -236,6 +295,16 @@ try {
   await page.getByLabel('跟进标题').fill('合成浏览器跟进任务');
   await page.getByLabel('截止时间（可不填，本机时区）').fill('2026-10-08T09:00');
   await page.getByRole('button', { name: '生成预览', exact: true }).click();
+  await page.getByRole('heading', { name: '确认这次变更', exact: true }).waitFor();
+  let pendingRefreshRequests = 0;
+  const countDuringApproval = request => { if (new URL(request.url()).pathname.startsWith('/api/')) pendingRefreshRequests++; };
+  page.on('request', countDuringApproval);
+  await page.evaluate(() => { for (let index = 0; index < 20; index++) window.dispatchEvent(new Event('focus')); });
+  await page.waitForTimeout(5250); // Hold the proposal beyond the automatic read cooldown.
+  assert.equal(pendingRefreshRequests, 0, 'Pending approval blocks automatic reads and all writes');
+  await page.getByRole('heading', { name: '确认这次变更', exact: true }).waitFor();
+  assert((await page.getByRole('dialog').innerText()).includes('合成浏览器跟进任务'));
+  page.off('request', countDuringApproval);
   let savedTaskCommits = 0;
   const countSavedTask = request => { if (request.method() === 'POST' && /\/commands\/commit$/.test(request.url())) savedTaskCommits++; };
   page.on('request', countSavedTask);
@@ -386,6 +455,14 @@ try {
     await page.getByLabel('输入消息').fill('合成延迟回复，阅读历史时不要抢回滚动');
     await page.getByRole('button', { name: '发送消息', exact: true }).click();
     await readReady;
+    let requestsDuringAgent = 0;
+    const countWhileAgent = request => { if (new URL(request.url()).pathname.startsWith('/api/')) requestsDuringAgent++; };
+    page.on('request', countWhileAgent);
+    await page.evaluate(() => { for (let index = 0; index < 20; index++) window.dispatchEvent(new Event('focus')); });
+    await page.waitForTimeout(5250); // Keep Agent delivery held beyond the read cooldown.
+    assert.equal(requestsDuringAgent, 0, 'An active Agent delivery blocks automatic queries and writes');
+    assert.equal(await page.getByRole('button', { name: '停止 Agent', exact: true }).count(), 1);
+    page.off('request', countWhileAgent);
     await page.locator('.r1-scroll').hover();
     await page.mouse.wheel(0, -5000);
     await page.waitForFunction(() => document.querySelector('.r1-scroll').scrollTop <= 1);

@@ -43,6 +43,7 @@ import { decodeTermMetadata } from "./term-metadata"
 import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
 import { filterWorkTasks, projectAttention, type WorkFilter } from "./work-projection"
 import { CommandPreview } from "./CommandPreview"
+import { createQueryRefresh } from "./query-refresh"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -140,6 +141,7 @@ export default function R1App() {
   const alive = useRef(true)
   const termLoad = useRef(0)
   const loading = useRef(0)
+  const connectivity = useRef(0)
   const conversationViewport = useRef<HTMLDivElement>(null)
   const conversationContent = useRef<HTMLDivElement>(null)
   const messageInput = useRef<HTMLTextAreaElement>(null)
@@ -238,6 +240,7 @@ export default function R1App() {
     async (chosen?: Classroom | null) => {
       if (!session) return
       const generation = ++loading.current
+      const connectionGeneration = connectivity.current
       setRefreshing(true)
       setQueryFresh(false)
       try {
@@ -281,7 +284,7 @@ export default function R1App() {
       setActivity(data?.activity || null)
       setIdentifiers(data?.identifiers || [])
       setDuplicates(data?.duplicates || [])
-      setQueryFresh(true)
+      setQueryFresh(navigator.onLine && connectionGeneration === connectivity.current)
       setError("")
       } catch (reason) {
         // A revoked old-session query cannot clear the new authenticated
@@ -300,6 +303,48 @@ export default function R1App() {
   useEffect(() => {
     if (session) void reload().catch(fail)
   }, [session]) // reload once per authenticated session
+
+  const refreshContext = useRef({ reload, fail, session, blocked: true })
+  refreshContext.current = {
+    reload, fail, session,
+    blocked: busy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage
+      || page === "settings" || !!runningAgent.current,
+  }
+  const foregroundRefresh = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
+  useEffect(() => {
+    if (!session) return
+    const controller = createQueryRefresh({
+      read: () => refreshContext.current.reload(),
+      invalidate: () => { connectivity.current++; setQueryFresh(false) },
+      fail: reason => refreshContext.current.fail(reason),
+      available: () => navigator.onLine && document.visibilityState === "visible",
+      idle: () => alive.current && refreshContext.current.session === session && !refreshContext.current.blocked,
+      now: () => performance.now(),
+      schedule: (callback, delay) => window.setTimeout(callback, delay),
+      cancel: timer => window.clearTimeout(timer as number),
+    })
+    foregroundRefresh.current = controller
+    const foreground = () => controller.request()
+    const visibility = () => {
+      if (document.visibilityState === "visible") controller.request()
+      else controller.resume()
+    }
+    const offline = () => controller.offline()
+    window.addEventListener("focus", foreground)
+    window.addEventListener("online", foreground)
+    window.addEventListener("offline", offline)
+    document.addEventListener("visibilitychange", visibility)
+    return () => {
+      controller.dispose()
+      if (foregroundRefresh.current === controller) foregroundRefresh.current = null
+      window.removeEventListener("focus", foreground)
+      window.removeEventListener("online", foreground)
+      window.removeEventListener("offline", offline)
+      document.removeEventListener("visibilitychange", visibility)
+    }
+  }, [session])
+  // Release deferred invalidation after the interaction that blocked it ends.
+  useEffect(() => { foregroundRefresh.current?.resume() })
 
   async function action(operation: () => Promise<void>) {
     if (busy) return
