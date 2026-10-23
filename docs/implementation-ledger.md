@@ -192,3 +192,30 @@ PR #9首轮Ubuntu完整CI在320px最新来源可见性断言失败（其余309�
 加强后最终真实Web/PG链1通过99.04秒，忽略日志`test-results/live-data-refresh-web.xml`；合成上下游真实业务成功、故障/交付延迟受测试控制，外部请求仍为空。后端全非DB301通过、2个宿主链接能力跳过、315个DB项未在该命令执行，日志`test-results/live-data-refresh-nondb.xml`；定向gateway与桌面日志分别为`live-data-refresh-gateways.xml`/`live-data-refresh-desktop.xml`。独立复审确认冷却掩盖已修复、未发现新的已证实实现缺陷；远端完整两平台CI通过之前不标本单元最终验收，不标Goal完成。
 
 当前前台持续停留、无任何事件时不会自动更新到期投影；LD-08与主界面真实绑定U2、综合验收U3仍待完成。不以本单元宣布全部页面、耐久聊天、工作专题或跨窗口推送已完成。回滚为revert独立PR，无schema/data迁移；原用户工作树修改不动。
+
+U1最终远端验收：[PR #14](https://github.com/Gdnbit/classmatter/pull/14)在[完整CI39979232478](https://github.com/Gdnbit/classmatter/actions/runs/39979232478)的Windows/Ubuntu均成功后合并为main `ee44bfe`；Ubuntu实际310个DB/browser通过、5个平台跳过，非DB301通过、2个平台跳过。此处只收口U1，不提升正式Gate或整个Goal。
+
+### D0-U2：真实主界面导航与同源投影（2026-10-24，候选）
+
+从已验收main `ee44bfe`建立独立`codex/live-data-navigation`。目标是当前非Demo主入口中的真实页面可刷新/返回，列表、表格、详情和工作筛选不切到MockStore；不是把全部未来原型生产化。教师无需重复选取已有页面来核对同一事实，导航本身不新增业务录入、批准、模型或后台业务动作。
+
+| 当前页面 | 实际数据/操作路径 | U2新增或保留的明确边界 |
+| --- | --- | --- |
+| 对话首页/三类注意力 | 原roster/activity QG及既有Agent客户端 | 需要处理/等待按原Task投影；可能遗漏仍无通知责任候选。聊天显式临时，不承诺刷新/重启恢复 |
+| 总览 | 原学生/记录/任务授权快照及原统计投影 | 不额外维护统计副本或把AI推断写成事实 |
+| 学生列表/表格/详情/时间线/跟进/记录 | `StudentDirectory`与原typed QG/BCG | 一个学生身份/一份记录修订/一项任务，多种表现；更正不增加记录数，停用保留历史。成绩/文件/关系不填样例 |
+| 工作/筛选/任务详情 | 原activity及BCG命令 | 路径保存闭合filter和UUID；详情按当前activity解析，跨窗口更正后重读采用新版本，不保留旧对象作为事实 |
+| 设置/审计/核心退出 | 原ISB、QG、BCG与配置控制器 | 不把UI导航变成身份、批准或恢复授权；原型未来模块与核心导出完整性限制不变 |
+| 数据/专题/自动化等未来页面 | 仅固定页面壳GET | 明确未接入，不加载MockStore，也不创建Store/Schema/Task |
+
+实现文件：`runtime/navigation.ts`闭合路由提示、`useRuntimeNavigation.ts`轻量原生History接线、`StudentDirectory.tsx`/`student-directory.ts`纯表现/计数、局部`student-directory.css`及R1App接线。URL/history不保存姓名、搜索词、正文、草稿、CSRF、供应商配置或批准。`history.state`不读取，挂载/恢复时规范化清除；交互期间只排队最新导航，不弹跳或增长历史；可信身份清理优先清除旧选择/排队。URL不包含旧class/term授权，不承诺刷新恢复历史scope；未知UUID显示缺失，不回落他人。
+
+源码核验发现原`mount_web`只有`/`且middleware全拒query，真实deep-link刷新将404/400。因此新增有限UI壳GET路径，始终返回同一固定index文件，不拼文件路径或catch-all吞掉API/asset错误。只在Web mounted时允许学生view/tab和工作UUID/filter闭合参数；API/health/assets、重复字段、未知字段/值、超长输入和非GET仍拒绝。无业务API、Tool、数据库或权限变化。
+
+验收文件：新`tests/runtime-navigation-browser.mjs`与`backend/tests/test_web_navigation.py`，原Web回归和桌面runtime链。合成内容经原UI预览/提交→实际PG，再验证表格/详情tabs/工作深链刷新、Back/Forward、未提交表单与待确认proposal延后导航、未知对象/Future/伪造history、注销后不释放事实；第二窗口经原BCG更正任务后，第一窗口focus重读及编辑表单须采用新标题。测试末尾另直接只读核对2学生、1记录的2修订、1项waiting/version3任务。截图/原始日志留忽略目录，不作为公开数据导出。
+
+失败保留：最初HTTP缺深链；早期断言未等待提交后重读/排队导航；恢复dashboard不含学生ID却误期望隐式旧选择；Playwright便捷单页context不能再建共享页；桌面“视图”与原生菜单同名。分别补受限壳路由、等待真实完成、明确重选、显式共享context及侧栏范围定位，没有改产品去自动猜对象或删业务断言。独立审查发现并修复detail丢table view与规范URL未清history.state，补真实work/多窗口证据；U3身份/Agent导航/未知提交矩阵仍不可从本单元外推。
+
+当前已验证Web54单测/类型/build、HTTP拒绝边界、真实聚焦链及Electron链的定向运行；加入最终数据库数量断言后，组合Web/PG/Electron仍在重跑，最终日志/计数及两平台CI按独立PR记录，不提前标U2或Goal完成。回滚为revert该独立PR，无schema/data迁移。LD-08持续到期刷新和U3完整故障矩阵仍待实施。
+
+最终本地组合：`uv run --frozen pytest tests/test_web_navigation.py tests/test_web.py tests/test_desktop_runtime.py -q --pg-root <owned-PG18.6> --junitxml=../test-results/live-navigation-final.xml` 4通过150.32秒（含最终数据库数量/版本断言、规范history清理及detail表格刷新）。全非DB302通过、2项宿主链接能力跳过、316项DB未在该命令执行；Web54/类型/build、桌面边界18通过。独立审查发现的两项导航问题均修复，并补真实work/多窗口及桌面深链证据；未提升跨scope恢复、Agent/身份/未知提交完整矩阵。截图实查320px表格只在自身区域横向滚动，页面无横向溢出。公开审查、最终清单及远端完整两平台CI仍须以该单元PR的实际结果收口。
