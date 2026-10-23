@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-23。当前公开main基线为W2合并`27dad59`，W3在独立PR #10继续；W1 `161a583`、W2-01 `9e97a08`为历史阶段证据。此表是工程状态索引，不替代 canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-23。当前公开main基线为W4-01合并`2f45ab6`，W3在独立PR #10继续；W1 `161a583`、W2-01 `9e97a08`、W2合并`27dad59`为历史阶段证据。此表是工程状态索引，不替代 canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 
@@ -158,3 +158,15 @@ W2最终证据：[PR #9](https://github.com/Gdnbit/classmatter/pull/9)目标`3ae
 本机工程证据：新增12场景各3次的离线合成QG/PG回归及真实SDK的离线HTTP计量用例通过；来源检查同时核对实际审计行范围/当前hash，业务表及命令回执无额外写入。新增预算/blocked入口/回归比较测试通过，默认operator实际执行返回blocked且付费请求0。真实Provider结果仍未运行，代码CI不替代真实质量成绩。
 
 W3本轮加固：发现预算预检漏算PE-03第二轮，修正保守请求上界146→158；历史比较报告在任何认证/付费前必须通过完整性校验。补环境和模型设置指纹、逐案例模型/usage覆盖一致性与新增失败告警，不能以总通过数不变掩盖局部退化。首次新增测试的阈值/指纹夹具错误已修正，不改变生产接口。独立只读审查发现并推动修复缺少指纹的预检、请求/模型不一致、通过数互抵三个问题；最终验证和CI见PR #10，不把上一目标SHA的绿色CI冒称本次结果。无API/Tool/迁移/Requirement/Eval/Task/Gate语义变化；追溯仍为T-RAGT-001—004及既有E-AGT，真实质量、人工审查和费用前置仍blocked。回滚可revert本轮加固提交；无数据迁移。
+
+### W4-01：同机checkpoint发现与中断保护（2026-10-23）
+
+本单元从已合并PR #9后的main建立独立分支；不依赖W3真实Provider付费评测，不改Pydantic AI、业务模型、权限或正式Gate。教师的实际价值是故障后无需另记备份UUID，操作员可在数据库停止时找到可检查的同机checkpoint，避免把损坏/未写完的文件当作恢复凭据；教师平时无新增维护步骤。
+
+- `backend/local.py backup-list` → `operator_backup.SyntheticBackup.catalog()`：只读、闭合UUID元数据；有效元数据不等于已成功恢复，所有条目均明确`restore_verified=false`。损坏/绑定不匹配/不兼容条目拒绝；原始名称、行内容、凭据和错误细节不输出。
+- checkpoint先写加密临时文件、flush/fsync，再以原子exclusive hard link发布。已有checkpoint绝不覆盖；写入/同步/发布故障保留上一有效备份。主机骤停遗留pending文件只计数，不自动删除/导入；不支持hard link的文件系统拒绝，无不安全降级。
+- 清单限制128目录项/候选文件合计64MiB/单包原32MiB，超限不返回部分成功。目录或checkpoint symlink/junction保留拒绝边界；无任意路径、SQL、DDL、自动修复或新HTTP/Agent能力。
+- 验收：真实临时PG snapshot/隔离恢复及源库存量不变；实际Windows DPAPI+SCRAM CLI在stop后发现、start后check；同步/发布失败及UUID碰撞不产生可见半包且不覆盖；坏包、链接和清单上限拒绝。符号链接创建受宿主策略限制时明确skip，不当作通过。
+- 复用T-ROPS-003/006及E-OPS-005/006/007既有目标，仅形成合成工程证据，不将完整任务/正式Eval标绿。不覆盖retention、生命周期ledger重放、跨机迁移或退出完整性；这些仍待实施。回滚为revert本PR，无数据库迁移；旧checkpoint格式保持兼容。
+
+W4-01已通过[完整CI 39941521068](https://github.com/Gdnbit/classmatter/actions/runs/39941521068)后由[PR #11](https://github.com/Gdnbit/classmatter/pull/11)合并为`2f45ab6`。Windows非DB288项、Ubuntu非DB286项/2项平台跳过，Ubuntu完整隔离DB310项/5项平台跳过；Web/桌面与公开检查均通过。本机实际Windows DPAPI/SCRAM恢复及角色边界34项通过/1项符号链接策略跳过，不拿跳过当通过。完整W4仍未完成。使用方法及限制见[backend README](../backend/README.md)。

@@ -72,7 +72,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "d4ce899f54a36f3138800fe544e6d3a8b787f63c024720d5557a69e8d57be927"
+      "sha256": "2802a6a00e2eefbecf113495867247067bcbe884516a4b5ff0a86dc55a78a0a6"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -468,7 +468,7 @@
       "sha256": "51bfee0c564708f42efd96b6cb5ad707e720a6a84348317adfdab276d735d723"
     },
     "backend/README.md": {
-      "sha256": "03806cd682084a7703c0dd87d52aafd186efebce4daa166effebbc2dba7d57b6"
+      "sha256": "beb00fdf5b8c5ad6a32e2cc2807882352b62fdd17a4a93b0544f43c77b28730e"
     },
     "backend/db/migrations/env.py": {
       "sha256": "b2393f310d1d8a05229c29757dbd885fb275ca6bf7e87c81fa84270863b6edec"
@@ -528,7 +528,7 @@
       "sha256": "44bb31e4e0caa0b1f4abc7708ccda08808435629054e950d5b147ae0e34eeb76"
     },
     "backend/local.py": {
-      "sha256": "5893426646ce25b3540e9e3673b7d1a07297ce51404c126878b73f7def888e2b"
+      "sha256": "c96ba4e59c14981ae3467693c2a4896575c5ea3ac202a8b305c856ce8edd7dd7"
     },
     "backend/pyproject.toml": {
       "sha256": "d5f7f427959bf873c4dc53f54f7065748d7d5c33bcae26e1d4cc4100eb43075e"
@@ -633,7 +633,7 @@
       "sha256": "a4c31c1888e62b110079d19319ebbbd6d2757d7835e45b75683e03a52385364c"
     },
     "backend/src/class_os/infrastructure/operator_backup.py": {
-      "sha256": "267e1afc43a5bac9034ff34ba6a4d4a0dc86e5478dcfbc2dd3c60aecd4da4ed1"
+      "sha256": "5fd2773e34965b150bc6c379f6f57d0c5b15e39ec3a3ca35a2e04e48c2bb22dc"
     },
     "backend/src/class_os/infrastructure/persistence/__init__.py": {
       "sha256": "43fde57fdf4c97fb50216ebd5f7491d20f7998192506fb510a12444674b02432"
@@ -832,7 +832,7 @@
       "sha256": "f10133f633b2cee4757fb8d46878fdaeadf23e420c05089c34ded07f473496c8"
     },
     "backend/tests/test_operator_backup.py": {
-      "sha256": "a670a3722510cfeac5a323006682acb31039a59ea72b52ed7996a55b658b4f6c"
+      "sha256": "653ddeb5648d16ac0b00bb90a444e264babda30f8468381bbd0123582fc67afb"
     },
     "backend/tests/test_operator_support.py": {
       "sha256": "7e4d9b0a65aec8bb480e5801212efa9db151c4e4e53ae181f515b5ef04c9b4ae"
@@ -1045,7 +1045,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "3c086f09acb6a52fd453755f07993942c00a986cd7e04d3d09b365cb286845b8"
+      "sha256": "ae9753debf41886c02aea4a8a56e9883319bf0fe9aba39e0e98ec5a1a3a462d0"
     },
     "docs/README.md": {
       "sha256": "ce77626ce5828a613325bf8e68265be131dc42081ef05aa42badbe19ee81bbb6"

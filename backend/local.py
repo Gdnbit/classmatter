@@ -13,7 +13,7 @@ from class_os.interfaces.http.settings import Settings
 
 def main():
     parser = argparse.ArgumentParser(description="ClassMatter owned synthetic Windows runtime; no real data")
-    parser.add_argument("command", choices=("init", "start", "stop", "migrate", "serve", "bootstrap", "doctor", "support", "backup", "backup-check"))
+    parser.add_argument("command", choices=("init", "start", "stop", "migrate", "serve", "bootstrap", "doctor", "support", "backup", "backup-list", "backup-check"))
     parser.add_argument("--pg-root")
     parser.add_argument("--backup-id", type=UUID, help="Owned checkpoint UUID; no arbitrary file paths")
     parser.add_argument("--model-api-base-url", action="append", default=[],
@@ -49,12 +49,14 @@ def main():
         runtime.stop()
     elif args.command == "migrate":
         runtime.upgrade()
-    elif args.command in ("backup", "backup-check"):
+    elif args.command in ("backup", "backup-list", "backup-check"):
         from class_os.infrastructure.operator_backup import SyntheticBackup
         backup = SyntheticBackup(runtime)
         if args.command == "backup":
             print(json.dumps({"schema_version": "class-os.synthetic-backup-created.v1",
                               "backup_id": str(backup.create()), "portable": False, "complete_exit": False}))
+        elif args.command == "backup-list":
+            print(json.dumps(backup.catalog()))
         else:
             print(json.dumps(backup.check(args.backup_id)))
         return 0
