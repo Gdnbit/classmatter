@@ -49,7 +49,11 @@ class LocalBoundary:
         if not local or not valid_host or not valid_origin or forwarded:
             return await rejection(403, "local_boundary_rejected", request_id)(scope, receive, send)
         if scope.get("query_string"):
-            return await rejection(400, "invalid_request", request_id)(scope, receive, send)
+            from .web import navigation_query_allowed
+            root = scope.get("app")
+            if not (getattr(getattr(root, "state", None), "web_mounted", False)
+                    and navigation_query_allowed(scope.get("path", ""), scope.get("method", ""), scope["query_string"])):
+                return await rejection(400, "invalid_request", request_id)(scope, receive, send)
 
         if scope.get("path", "").startswith(("/api/identity/", "/api/workspaces/")) and scope.get("method") == "POST":
             # Bound credential requests before JSON/Pydantic parsing, including
