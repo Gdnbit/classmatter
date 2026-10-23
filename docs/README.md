@@ -2,6 +2,7 @@
 
 ## 数据库与真实数据接入（2026-10-23 · 设计提案）
 
+- [真实数据闭环执行目标与验收台账](design/live-data-delivery-acceptance.md)：Goal必交范围、U0—U3依赖、11项验收指标与证据要求；D1—D3单独后续变更，不自动扩R1。
 - [数据库与实时数据演进设计](design/database-live-data-design.md)：保留PostgreSQL；核对22表与Mock/R1差距；耐久会话/运行、工作专题、注意力投影、Agent读写边界、提交后同步、迁移与退出的分阶段设计。候选对象和DB验收条目不是正式Requirement/Eval，不批准建表、Agent写入或扩大R1。
 
 ## Agent 自主推进与 Runtime 调研（2026-10-22 · Discovery / Future）
