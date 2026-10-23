@@ -106,6 +106,8 @@ ClassMatter 是 External Working Memory + Closure Engine。除管理班级的事
 
 ## 6A. Teacher Work Tools / 教师工作工具体系（2026-10-23 补充）
 
+延伸研究：[教师工具开源生态与个人政策情报 Agent 调研](../research/2026-10-23-teacher-tools-and-policy-intelligence-agent.md)，包括可复用项目、政策来源监测、适用性、通知与研究测试路线。
+
 ### 设计定位：班主任核心流程 + 任课教学模块，两条线统一底座
 
 用户提出 PPT 生成、题库积累、自动评分批改、常规手写材料处理等高频刚需。调研建议：**ClassMatter 不是仅会聊天的班级 CRM，也不是一次性造齐所有工具的教学 ERP，而是围绕老师实际工作流，将专用工具通过 Skill/Tool 契约纳入统一的记录、知识、任务、画像与产物体系。** R1 不扩张；以下均为非 R1 候选。
