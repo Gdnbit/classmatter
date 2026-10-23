@@ -2,6 +2,10 @@ from datetime import timedelta
 from copy import deepcopy
 from uuid import uuid4
 import re
+import json
+from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 from sqlalchemy import text
@@ -24,7 +28,7 @@ def test_exit_audit_action_registry_matches_actual_migrated_constraint(roster):
 
 
 @pytest.mark.db
-def test_w2_core_exit_is_idempotent_consistent_and_expiring(roster):
+def test_w2_core_exit_is_idempotent_consistent_and_expiring(roster, tmp_path):
     gateway, query, _, credentials, _, owner, clock = roster
     classroom, student, record = seed(roster)
     submit(gateway, credentials, record)
@@ -45,6 +49,24 @@ def test_w2_core_exit_is_idempotent_consistent_and_expiring(roster):
     assert counts == summary.counts and counts["record_revision"] == 1 and counts["manual_task"] == 1
     assert artifact.bundle["core_checksum"] == summary.core_hash
     assert artifact.bundle["audit_refs"] and all("session_digest" not in row for row in artifact.bundle["audit_refs"])
+    # Consume an actual BCG-approved/QG-downloaded package, not mock success.
+    original, transferred = tmp_path / "original.json", tmp_path / "transferred.json"
+    raw = json.dumps(artifact.bundle, ensure_ascii=False).encode("utf-8")
+    original.write_bytes(raw)
+    transferred.write_bytes(raw)
+    def database_counts():
+        with owner.transaction(read_only=True) as connection:
+            return tuple(connection.execute(text(f"SELECT count(*) FROM class_os.{table}")).scalar_one()
+                         for table in ("record_revision", "manual_task", "command_receipt", "export_job", "business_audit"))
+    before_verify = database_counts()
+    result = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / "verify_exit.py"),
+                             str(original), "--compare-with", str(transferred)], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0 and not result.stderr
+    verification = json.loads(result.stdout)
+    assert verification["comparison"] == {"same_file_bytes": True, "same_package": True, "same_core": True}
+    assert verification["lifecycle_complete"] is False and verification["counts"] == summary.counts
+    assert database_counts() == before_verify
+    assert original.read_bytes() == transferred.read_bytes() == raw
     # Recompute hashes deliberately: semantic rejection must not rely only on
     # a digest mismatch or trust a forged "valid" marker in an imported file.
     for mutation in ("inference", "missing-term", "history-gap"):
