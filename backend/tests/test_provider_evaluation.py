@@ -12,6 +12,7 @@ import sys
 from types import SimpleNamespace
 from contextlib import asynccontextmanager
 from dataclasses import replace
+from copy import deepcopy
 from uuid import uuid4
 
 import pytest
@@ -45,6 +46,11 @@ def test_dataset_and_budget_are_closed_and_bounded():
         evaluation.Budget("1000", "1000").preflight()
     with pytest.raises(evaluation.EvalBlocked):
         budget.preflight(0)
+    # 146 used to omit the three extra PE-03 runs (12 requests).
+    threshold = evaluation.Budget("2.2", "2.2")
+    threshold.preflight(146)
+    with pytest.raises(evaluation.EvalBlocked):
+        threshold.preflight()
 
 
 def test_budget_keeps_failed_reservation_and_never_admits_over_limit():
@@ -167,14 +173,101 @@ def test_empty_metrics_are_unknown_not_fake_zero_or_improvement():
     assert report["real_provider_runs"] == 0
 
 
+def baseline_report():
+    rows = [{"case": case.id, "repetition": repetition, "passed": True,
+             "provider": "offline-boundary" if case.scope in ("timeout", "cancel", "unauthorized") else "configured-api",
+             "duration_ms": 10, "input_tokens": None, "output_tokens": None,
+             "requests": 0 if case.scope in ("timeout", "cancel", "unauthorized") else 1,
+             "resolved_models": [] if case.scope in ("timeout", "cancel", "unauthorized") else ["synthetic-test-model"]}
+            for case in evaluation.CASES for repetition in range(1, 4)]
+    return {**{key: "a" * 64 for key in ("dataset_hash", "configuration_hash", "lock_sha256", "agent_source_sha256", "tool_contract_sha256")},
+            "schema_version": "classmatter.synthetic-provider-eval.v1", "status": "needs-human-review",
+            "formal_release_evidence": False, "resolved_models": ["synthetic-test-model"],
+            "environment": evaluation.environment_fingerprint(), "model_settings": dict(evaluation.MODEL_SETTINGS),
+            "results": rows, "summary": evaluation.summarize(rows)}
+
+
 def test_regression_comparison_does_not_compare_other_models_or_invent_missing_usage():
-    before = {key: "fixed" for key in ("schema_version", "dataset_hash", "configuration_hash", "lock_sha256", "agent_source_sha256", "tool_contract_sha256", "resolved_models")}
-    before.update(summary={"p50_ms": 10, "p95_ms": 20, "input_tokens": None, "output_tokens": 5}, results=[{"passed": True}])
-    after = {**before, "summary": {"p50_ms": 10, "p95_ms": 30, "input_tokens": None, "output_tokens": 5}, "results": [{"passed": False}]}
+    before = baseline_report()
+    after = deepcopy(before)
+    after["results"][0].update(duration_ms=30, passed=False)
+    after["status"] = "failed-or-incomplete"
+    after["results"][1]["duration_ms"] = 30
+    after["summary"] = evaluation.summarize(after["results"])
     comparison = evaluation.compare_reports(after, before)
     assert comparison["metric_deltas"]["input_tokens"] is None
     assert set(comparison["alerts"]) == {"p95_ms_increased_over_20pct", "case_pass_regression"}
-    assert evaluation.compare_reports({**after, "configuration_hash": "other"}, before)["status"] == "incomparable-configuration"
+    assert evaluation.compare_reports({**after, "configuration_hash": "b" * 64}, before)["status"] == "incomparable-configuration"
+
+
+@pytest.mark.parametrize("fault", ["missing", "duplicate", "nonfinite", "negative", "boolean-token", "summary", "not-object", "status", "offline", "environment", "model_settings", "models", "requests", "offline-usage", "unpaired-usage", "false-success", "no-model"])
+def test_baseline_validation_rejects_invalid_reports(fault):
+    report = baseline_report()
+    if fault == "missing":
+        report["results"].pop()
+    elif fault == "duplicate":
+        report["results"][1] = dict(report["results"][0])
+    elif fault == "nonfinite":
+        report["results"][0]["duration_ms"] = float("nan")
+    elif fault == "negative":
+        report["results"][0]["input_tokens"] = -1
+    elif fault == "boolean-token":
+        report["results"][0]["input_tokens"] = True
+    elif fault == "summary":
+        report["summary"]["p95_ms"] = "not-a-number"
+    elif fault == "not-object":
+        report = []
+    elif fault == "status":
+        report["status"] = "unverified"
+    elif fault == "offline":
+        report["results"][0]["provider"] = "offline-boundary"
+    elif fault in ("environment", "model_settings"):
+        report.pop(fault)
+    elif fault == "models":
+        report["resolved_models"] = ["forged-model"]
+    elif fault == "requests":
+        report["results"][0]["requests"] = True
+    elif fault == "offline-usage":
+        report["results"][-1]["input_tokens"] = 5
+    elif fault == "unpaired-usage":
+        report["results"][0]["output_tokens"] = 5
+    elif fault == "false-success":
+        report["results"][0]["passed"] = False
+    else:
+        report["results"][0]["resolved_models"] = []
+    with pytest.raises(evaluation.EvalBlocked):
+        evaluation.validate_report(report)
+    assert evaluation.compare_reports(baseline_report(), report)["status"] == "incomparable-invalid-or-incomplete-report"
+
+
+def test_comparison_rejects_environment_and_usage_cohort_changes():
+    before = baseline_report()
+    assert evaluation.validate_report(before) is before
+    assert evaluation.compare_reports(before, before)["status"] == "comparable"
+    for key in ("environment", "model_settings"):
+        other = deepcopy(before)
+        other.pop(key)
+        assert evaluation.compare_reports(other, before)["status"] == "incomparable-invalid-or-incomplete-report"
+        other[key] = {**before[key], "release": "different"} if key == "environment" else {**before[key], "max_tokens": 512}
+        assert evaluation.compare_reports(other, before)["status"] == "incomparable-configuration"
+    other = deepcopy(before)
+    other["results"][0]["input_tokens"] = 20
+    other["results"][0]["output_tokens"] = 5
+    other["summary"] = evaluation.summarize(other["results"])
+    assert evaluation.compare_reports(other, before)["status"] == "incomparable-measurement-coverage"
+
+
+def test_equal_total_passes_cannot_hide_a_new_case_regression():
+    before = baseline_report()
+    before["status"] = "failed-or-incomplete"
+    before["results"][0]["passed"] = False
+    after = deepcopy(before)
+    after["results"][0]["passed"] = True
+    after["results"][1]["passed"] = False
+    result = evaluation.compare_reports(after, before)
+    assert result["previous_passed"] == result["current_passed"] == 35
+    assert result["alerts"] == ["case_pass_regression"]
+    assert result["newly_failed_cases"] == [{"case": "PE-01", "repetition": 2}]
 
 
 def test_source_hash_and_tool_oracle_rejects_wrong_scope_proof_and_unknown_tool():

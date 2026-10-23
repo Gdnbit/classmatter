@@ -60,8 +60,7 @@ def main():
         previous = None
         if args.compare_report:
             previous = json.loads(args.compare_report.read_text(encoding="utf-8"))
-            if previous.get("schema_version") != "classmatter.synthetic-provider-eval.v1" or not isinstance(previous.get("results"), list) or not isinstance(previous.get("summary"), dict):
-                raise evaluation.EvalBlocked()
+            evaluation.validate_report(previous)
         from class_os.infrastructure.local_runtime import LocalRuntime, protect
         from class_os.infrastructure.identity import PostgresIdentityStore
         from class_os.application.identity import IdentityBoundary
@@ -110,6 +109,7 @@ def main():
         report = {"schema_version": "classmatter.synthetic-provider-eval.v1",
                   "status": "needs-human-review" if code == 0 and len(rows) == 36 else "failed-or-incomplete",
                   "formal_release_evidence": False, "dataset_hash": evaluation.DATASET_HASH,
+                  "environment": evaluation.environment_fingerprint(),
                   "code_sha": subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip(),
                   "lock_sha256": hashlib.sha256((ROOT / "uv.lock").read_bytes()).hexdigest(),
                   "agent_source_sha256": hashlib.sha256((ROOT / "src/class_os/infrastructure/agent.py").read_bytes()).hexdigest(),
@@ -120,7 +120,7 @@ def main():
                   "budget_cny": 10, "probe_usage": "unknown-reserved", "results": rows,
                   "summary": evaluation.summarize(rows),
                   "input_cny_per_million": str(budget.input_rate), "output_cny_per_million": str(budget.output_rate),
-                  "model_settings": {"max_tokens": 1024, "temperature": "provider-default", "request_limit": 4, "tool_limit": 2, "total_tokens_limit": 6000},
+                  "model_settings": dict(evaluation.MODEL_SETTINGS),
                   "supplier_bill_guaranteed": False}
         report["comparison"] = evaluation.compare_reports(report, previous) if previous else {"status": "first-baseline-no-improvement-claim"}
         target = ROOT.parent / "test-results/provider-evaluation"

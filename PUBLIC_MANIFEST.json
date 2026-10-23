@@ -3,13 +3,13 @@
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
     "backend/evaluate_provider.py": {
-      "sha256": "2b759444994c286d076f0dfda97d1152562ab00a020efbdb1f8f558922256708"
+      "sha256": "10f5bc37b5e9b88d24fe47d2cc3fd6a19907529f5d9469f4ce03913710b12c3d"
     },
     "backend/src/class_os/infrastructure/provider_evaluation.py": {
-      "sha256": "c4048cbd78964bb1b7113f4f76891d9875093a47ddc546cb59ffb92e997bbf30"
+      "sha256": "92d1837829761f34c0d6d2a2bb071861ca49f393fd0397d26f3815578d96fad1"
     },
     "backend/tests/test_provider_evaluation.py": {
-      "sha256": "b0d135ac07f71103613cd34c2bdb5f1beb258d33d0bb45defc7ddf6743555a28"
+      "sha256": "22871cd95bb5fafb80baa9732f52cca0b6ac05703bb49bcc7182deed98345e99"
     },
     "apps/web/src/runtime/CommandPreview.tsx": {
       "sha256": "72efead16671285b03fca71bce2c905969ddbdd79bd042bdc81126c2645eba62"
@@ -72,7 +72,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "3eb533bf4da684259d1eed36f753b103b5163bf5796b0e7655d27d0fc894876e"
+      "sha256": "d4ce899f54a36f3138800fe544e6d3a8b787f63c024720d5557a69e8d57be927"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -2186,7 +2186,7 @@
       "sha256": "8ed5a5f2fbaf951d71e6a531aafa1d30f85572ee56741423fcbe2be9a8fe4aa6"
     },
     "docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md": {
-      "sha256": "57a89075a4ac9eac5dcc9a7fdeb59ca2611cc503fba86ad2d9f3fb44c22bdc48"
+      "sha256": "e947d62c0e207fa570ba1fec6caf52eee292f565aa4071941832d8f6b113a3f3"
     },
     "docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md": {
       "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"

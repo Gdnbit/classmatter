@@ -9,7 +9,8 @@ from decimal import Decimal
 import hashlib
 import json
 import re
-from math import ceil
+from math import ceil, isfinite
+import platform
 from statistics import median
 from time import monotonic
 from uuid import UUID
@@ -46,6 +47,7 @@ CASES = (
     Scenario("PE-12", "read", "合成取消故障注入", scope="cancel"),
 )
 DATASET_HASH = hashlib.sha256(json.dumps([vars(case) for case in CASES], ensure_ascii=False, sort_keys=True).encode()).hexdigest()
+MODEL_SETTINGS = {"max_tokens": 1024, "temperature": "provider-default", "request_limit": 4, "tool_limit": 2, "total_tokens_limit": 6000}
 
 
 class Budget:
@@ -66,8 +68,8 @@ operator must independently verify CNY prices and a supplier-side spending cap.
     def cost(self, input_tokens=24000, output_tokens=1024):
         return (input_tokens * self.input_rate + output_tokens * self.output_rate) / Decimal(1000000) * Decimal("1.2")
 
-    def preflight(self, calls=146):
-        # 12*3 runs*4 requests + up to2 existing controller probe requests.
+    def preflight(self, calls=158):
+        # (12 scenarios + PE-03's extra run)*3*4 + 2 probe requests.
         if type(calls) is not int or calls < 1 or self.reserved + self.cost() * calls > self.limit:
             raise EvalBlocked()
 
@@ -162,9 +164,18 @@ def summarize(rows):
 
 
 def compare_reports(current, previous):
-    identity = ("schema_version", "dataset_hash", "configuration_hash", "lock_sha256", "agent_source_sha256", "tool_contract_sha256", "resolved_models")
-    if any(previous.get(key) != current.get(key) for key in identity):
+    try:
+        validate_report(current)
+        validate_report(previous)
+    except EvalBlocked:
+        return {"status": "incomparable-invalid-or-incomplete-report"}
+    identity = ("schema_version", "dataset_hash", "configuration_hash", "lock_sha256", "agent_source_sha256", "tool_contract_sha256", "resolved_models", "environment", "model_settings")
+    if any(key not in previous or key not in current or previous[key] != current[key] for key in identity):
         return {"status": "incomparable-configuration"}
+    # Missing usage or changed cohorts must not look like a token improvement.
+    cohort = lambda report: [(row["case"], row["repetition"], row["provider"], row["resolved_models"], row["input_tokens"] is not None, row["output_tokens"] is not None) for row in sorted(report["results"], key=lambda row: (row["case"], row["repetition"]))]
+    if cohort(current) != cohort(previous):
+        return {"status": "incomparable-measurement-coverage"}
     old, new = previous["summary"], current["summary"]
     changes, alerts = {}, []
     for key in ("p50_ms", "p95_ms", "input_tokens", "output_tokens"):
@@ -174,11 +185,90 @@ def compare_reports(current, previous):
             alerts.append(key + "_increased_over_20pct")
     old_pass = sum(row.get("passed") is True for row in previous["results"])
     new_pass = sum(row.get("passed") is True for row in current["results"])
-    if new_pass < old_pass:
+    old_results = {(row["case"], row["repetition"]): row["passed"] for row in previous["results"]}
+    regressions = [{"case": row["case"], "repetition": row["repetition"]} for row in current["results"]
+                   if old_results[(row["case"], row["repetition"])] and not row["passed"]]
+    if regressions:
         alerts.append("case_pass_regression")
     return {"status": "comparable", "metric_deltas": changes, "alerts": alerts,
+            "newly_failed_cases": regressions,
             "previous_passed": old_pass, "current_passed": new_pass,
             "statistical_significance_claimed": False}
+
+
+def environment_fingerprint():
+    # No host/user names, paths, IP addresses or machine identifiers.
+    return {"python": platform.python_version(), "os": platform.system(),
+            "release": platform.release(), "architecture": platform.machine()}
+
+
+def validate_report(report):
+    """Reject incomplete/forged metric shapes before any live authentication.
+
+    This verifies internal consistency, not report authenticity or human quality.
+    Complete failed runs can expose regressions; partial runs are incomparable.
+    """
+    try:
+        if (type(report) is not dict or report.get("schema_version") != "classmatter.synthetic-provider-eval.v1"
+                or report.get("status") not in ("needs-human-review", "failed-or-incomplete") or report.get("formal_release_evidence") is not False):
+            raise ValueError()
+        for key in ("dataset_hash", "configuration_hash", "lock_sha256", "agent_source_sha256", "tool_contract_sha256"):
+            if not isinstance(report.get(key), str) or not re.fullmatch(r"[a-f0-9]{64}", report[key]):
+                raise ValueError()
+        environment = report["environment"]
+        if (type(environment) is not dict or set(environment) != {"python", "os", "release", "architecture"}
+                or any(type(value) is not str or not 1 <= len(value) <= 100 for value in environment.values())):
+            raise ValueError()
+        settings = report["model_settings"]
+        if (type(settings) is not dict or set(settings) != set(MODEL_SETTINGS)
+                or type(settings["temperature"]) is not str or not 1 <= len(settings["temperature"]) <= 40
+                or any(type(settings[key]) is not int or not 1 <= settings[key] <= 24000 for key in settings if key != "temperature")):
+            raise ValueError()
+        rows = report["results"]
+        if type(rows) is not list or len(rows) != len(CASES) * 3:
+            raise ValueError()
+        expected = {(case.id, repetition) for case in CASES for repetition in range(1, 4)}
+        seen = set()
+        for row in rows:
+            case = next(case for case in CASES if case.id == row["case"])
+            pair = (row["case"], row["repetition"])
+            if type(row["repetition"]) is not int or pair not in expected or pair in seen or type(row["passed"]) is not bool:
+                raise ValueError()
+            seen.add(pair)
+            provider = "offline-boundary" if case.scope in ("timeout", "cancel", "unauthorized") else "configured-api"
+            if row["provider"] != provider:
+                raise ValueError()
+            if (type(row["requests"]) is not int or not 0 <= row["requests"] <= (8 if case.scope == "fresh" else 4)
+                    or (provider == "offline-boundary" and row["requests"] != 0)
+                    or (provider == "configured-api" and row["passed"] and row["requests"] == 0)):
+                raise ValueError()
+            models = row["resolved_models"]
+            if type(models) is not list or any(type(name) is not str or not name or len(name) > 256 for name in models) or sorted(set(models)) != models:
+                raise ValueError()
+            if provider == "offline-boundary" and (models or row["input_tokens"] is not None or row["output_tokens"] is not None):
+                raise ValueError()
+            duration = row["duration_ms"]
+            if type(duration) not in (int, float) or not isfinite(duration) or duration < 0:
+                raise ValueError()
+            for key in ("input_tokens", "output_tokens"):
+                if row[key] is not None and (type(row[key]) is not int or row[key] < 0):
+                    raise ValueError()
+            if (row["input_tokens"] is None) != (row["output_tokens"] is None):
+                raise ValueError()
+            if provider == "configured-api" and row["passed"] and not models:
+                raise ValueError()
+        if report["status"] == "needs-human-review" and not all(row["passed"] for row in rows):
+            raise ValueError()
+        if report["summary"] != summarize(rows):
+            raise ValueError()
+        models = report["resolved_models"]
+        if type(models) is not list or not models or any(type(name) is not str or not name for name in models) or sorted(set(models)) != models:
+            raise ValueError()
+        if models != sorted({name for row in rows for name in row["resolved_models"]}):
+            raise ValueError()
+    except (KeyError, TypeError, ValueError, StopIteration, OverflowError):
+        raise EvalBlocked() from None
+    return report
 
 
 # Explicit in-process operator injection, never loaded from env or HTTP input.
