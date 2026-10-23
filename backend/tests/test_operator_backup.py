@@ -66,6 +66,10 @@ def test_actual_dump_snapshot_and_isolated_restore_preserve_source(backup_runtim
     assert type(artifact) is UUID
     path = backup_runtime.root / "backups" / (str(artifact) + ".dpapi")
     assert path.is_file()
+    catalog = backup.catalog()
+    assert catalog["checkpoints"] == [{"backup_id": str(artifact), "status": "metadata-verified",
+                                       "restore_verified": False, "created_at": backup._open(artifact)[0]["created_at"]}]
+    assert catalog["pending_files"] == 0
     source = backup_runtime.database("migrator")
     try:
         with source.transaction(read_only=True) as connection:
@@ -127,6 +131,7 @@ def test_actual_dpapi_backup_does_not_store_plaintext_and_rejects_corruption(bac
     path.write_bytes(blob)
     with pytest.raises(BackupRejected):
         backup.check(artifact)
+    assert backup.catalog()["checkpoints"] == [{"backup_id": str(artifact), "status": "rejected", "restore_verified": False}]
 
 
 @pytest.mark.db
@@ -189,6 +194,97 @@ def test_backup_subprocess_uses_explicit_noninteractive_credentials_not_ambient_
     assert options["timeout"] == 45 and not options.get("shell", False)
 
 
+def test_backup_catalog_is_bounded_read_only_and_never_exposes_foreign_names(tmp_path, monkeypatch):
+    from class_os.infrastructure import operator_backup
+    runtime = SimpleNamespace(root=tmp_path, configuration=lambda: {})
+    backup = SyntheticBackup(runtime, codec=fixture_codec)
+    assert backup.catalog()["checkpoints"] == []
+    assert not (tmp_path / "backups").exists()
+    directory = backup._directory()
+    (directory / "private-name-canary").touch()
+    (directory / ".checkpoint-interrupted.pending").write_bytes(b"encrypted-partial")
+    artifact = uuid4()
+    (directory / (str(artifact) + ".dpapi")).write_bytes(b"invalid")
+    catalog = backup.catalog()
+    assert catalog["pending_files"] == 1 and catalog["unrecognized_files"] == 1
+    assert catalog["checkpoints"] == [{"backup_id": str(artifact), "status": "rejected", "restore_verified": False}]
+    assert "private-name-canary" not in json.dumps(catalog)
+    monkeypatch.setattr(operator_backup, "CATALOG_LIMIT", 2)
+    with pytest.raises(BackupRejected):
+        backup.catalog()
+    monkeypatch.setattr(operator_backup, "CATALOG_LIMIT", 128)
+    monkeypatch.setattr(operator_backup, "CATALOG_BYTES", 1)
+    with pytest.raises(BackupRejected):
+        backup.catalog()
+
+
+def test_backup_publish_never_exposes_partial_or_replaces_existing_checkpoint(tmp_path, monkeypatch):
+    from class_os.infrastructure import operator_backup
+    backup = SyntheticBackup(SimpleNamespace(root=tmp_path), codec=fixture_codec)
+    artifact = uuid4()
+    backup._publish(artifact, b"synthetic-sealed-original")
+    destination = tmp_path / "backups" / (str(artifact) + ".dpapi")
+    with pytest.raises(FileExistsError):
+        backup._publish(artifact, b"must-not-replace")
+    assert destination.read_bytes() == b"synthetic-sealed-original"
+    original_sync = operator_backup.os.fsync
+    def interrupted_sync(*args):
+        raise OSError("synthetic-private-error-canary")
+    monkeypatch.setattr(operator_backup.os, "fsync", interrupted_sync)
+    with pytest.raises(OSError):
+        backup._publish(uuid4(), b"synthetic-encrypted-partial")
+    assert list(destination.parent.iterdir()) == [destination]
+    monkeypatch.setattr(operator_backup.os, "fsync", original_sync)
+    monkeypatch.setattr(operator_backup.os, "link", interrupted_sync)
+    with pytest.raises(OSError):
+        backup._publish(uuid4(), b"synthetic-complete-but-unpublished")
+    assert list(destination.parent.iterdir()) == [destination]
+
+
+def test_backup_catalog_rejects_linked_directory_and_checkpoint(tmp_path):
+    backup = SyntheticBackup(SimpleNamespace(root=tmp_path), codec=fixture_codec)
+    directory = backup._directory()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    artifact = uuid4()
+    target = outside / "private-canary"
+    target.write_bytes(b"do-not-open-canary")
+    checkpoint = directory / (str(artifact) + ".dpapi")
+    try:
+        checkpoint.symlink_to(target)
+    except OSError:
+        pytest.skip("Host policy does not permit symbolic-link creation")
+    assert backup.catalog()["checkpoints"] == [{"backup_id": str(artifact), "status": "rejected", "restore_verified": False}]
+    checkpoint.unlink()
+    directory.rmdir()
+    directory.symlink_to(outside, target_is_directory=True)
+    with pytest.raises(BackupRejected):
+        backup.catalog()
+    assert target.read_bytes() == b"do-not-open-canary"
+
+
+def test_backup_publication_happens_only_after_complete_bytes_are_synced(tmp_path, monkeypatch):
+    from class_os.infrastructure import operator_backup
+    backup = SyntheticBackup(SimpleNamespace(root=tmp_path), codec=fixture_codec)
+    real_sync, real_link = operator_backup.os.fsync, operator_backup.os.link
+    observed = []
+    def sync(descriptor):
+        real_sync(descriptor)
+        observed.append("synced")
+    def link(source, destination):
+        assert observed == ["synced"]
+        assert not Path(destination).exists()
+        assert Path(source).read_bytes() == b"synthetic-complete-sealed-packet"
+        observed.append("published")
+        real_link(source, destination)
+    monkeypatch.setattr(operator_backup.os, "fsync", sync)
+    monkeypatch.setattr(operator_backup.os, "link", link)
+    artifact = uuid4()
+    backup._publish(artifact, b"synthetic-complete-sealed-packet")
+    assert observed == ["synced", "published"]
+    assert list((tmp_path / "backups").iterdir()) == [tmp_path / "backups" / (str(artifact) + ".dpapi")]
+
+
 @pytest.mark.db
 @pytest.mark.skipif(os.name != "nt", reason="Owned Windows SCRAM/DPAPI CLI")
 def test_actual_operator_cli_owned_scram_runtime(tmp_path, request, monkeypatch, capsys):
@@ -204,6 +300,14 @@ def test_actual_operator_cli_owned_scram_runtime(tmp_path, request, monkeypatch,
         assert module.main() == 0
         created = json.loads(capsys.readouterr().out)
         assert created["complete_exit"] is False and created["portable"] is False
+        runtime.stop()  # Inventory must remain useful during a database outage.
+        monkeypatch.setattr(sys, "argv", ["local.py", "backup-list"])
+        assert module.main() == 0
+        catalog = json.loads(capsys.readouterr().out)
+        assert catalog["checkpoints"][0]["backup_id"] == created["backup_id"]
+        assert catalog["checkpoints"][0]["status"] == "metadata-verified"
+        assert catalog["checkpoints"][0]["restore_verified"] is False
+        runtime.start()
         monkeypatch.setattr(sys, "argv", ["local.py", "backup-check", "--backup-id", created["backup_id"]])
         assert module.main() == 0
         assert json.loads(capsys.readouterr().out)["verified"] is True
