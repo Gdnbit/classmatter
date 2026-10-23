@@ -2,6 +2,9 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "apps/web/src/runtime/CommandPreview.tsx": {
+      "sha256": "72efead16671285b03fca71bce2c905969ddbdd79bd042bdc81126c2645eba62"
+    },
     "docs/product/2026-10-23-personal-working-profile-and-adaptive-agent.md": {
       "sha256": "3df8e2b910093672e8a994fd0d6f2da93971cf06f3b7040f1a5c7b1ce07c7e2a"
     },
@@ -36,7 +39,7 @@
       "sha256": "afcdce4a4184c9a44dcd68f71a83bf6af922891c27b9a767ff892d08e156b5d2"
     },
     "apps/desktop/tests/runtime-integration.cjs": {
-      "sha256": "e94fa7983835b33dc3922cfb4fc6979ab9a1cd361fb6319603a9ed602dbac8dd"
+      "sha256": "2562cfe160de7e51035a48b837dce201e525570ed521d1bb617060f31afd753e"
     },
     "apps/desktop/tests/runtime-service.test.cjs": {
       "sha256": "85a61ac3feb761e1f39ad820d75bb1e685edf4087ee2a025ec35c86f9cd815ad"
@@ -60,7 +63,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "e5fb3d050a185b55f32120139cb6e429bff1f56c591a54c031466c088be95771"
+      "sha256": "8893e38d20d50c790c9847f46baa931a7f6c70ad0ae2cc5077e8532eba1d01e4"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -294,7 +297,7 @@
       "sha256": "fe5baeec654888996fa3a94a03251bea227325fa54dc53a4e351ecd72d8d4d9b"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "6afeb4f06167373ecb3c4ac670bc7194ce37e23bb239927464e40bbb9f095d52"
+      "sha256": "b61389b29ccdf05bd88ffd0bdd88c047a08570b49101b00a49f5f2d51d781005"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "8f005293650b914c64f9649c7c70efe41080d6a310c275aff9fdf4707588160b"
@@ -438,7 +441,7 @@
       "sha256": "507d510cee982bdd2b6af4169e3701fb42642c849558155cdbdf0339d5442885"
     },
     "apps/web/tests/runtime.mjs": {
-      "sha256": "361529cb4b3dccc3bfc531e834c4cbffb6e1f1893b4c20a9d1f450f49005003c",
+      "sha256": "e3acbe292b90b1c5042707c7d4fff362b516e3b9a575611ae9b3c277cd5b425e",
       "reviewed_pattern_exceptions": [
         {
           "rule": "email-shape",

@@ -42,6 +42,7 @@ import { decodeApproval, decodeCommandReceipt, decodeCommandState } from "./comm
 import { decodeTermMetadata } from "./term-metadata"
 import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
 import { filterWorkTasks, projectAttention, type WorkFilter } from "./work-projection"
+import { CommandPreview } from "./CommandPreview"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -115,6 +116,7 @@ export default function R1App() {
   const [pending, setPending] = useState<Pending | null>(null)
   const [busy, setBusy] = useState(false)
   const [refreshing, setRefreshing] = useState(true)
+  const [queryFresh, setQueryFresh] = useState(false)
   const [notice, setNotice] = useState("")
   const [exportId, setExportId] = useState("")
   const [issuedCodes, setIssuedCodes] = useState<string[] | null>(null)
@@ -186,6 +188,7 @@ export default function R1App() {
       loading.current++
       runningAgent.current?.abort()
       setSession(null)
+      setQueryFresh(false)
       setPage("conversation")
       setSelectedStudent("")
       setRecord(null)
@@ -234,6 +237,7 @@ export default function R1App() {
       if (!session) return
       const generation = ++loading.current
       setRefreshing(true)
+      setQueryFresh(false)
       try {
       const history = await request<{ data: Classroom[] }>(
         `${workspace(session)}/classes`,
@@ -275,11 +279,15 @@ export default function R1App() {
       setActivity(data?.activity || null)
       setIdentifiers(data?.identifiers || [])
       setDuplicates(data?.duplicates || [])
+      setQueryFresh(true)
       setError("")
       } catch (reason) {
         // A revoked old-session query cannot clear the new authenticated
         // session or its one-time kit after identity rotation.
-        if (generation === loading.current && alive.current) throw reason
+        if (generation === loading.current && alive.current) {
+          if (reason instanceof ApiError && reason.status === 401) throw reason
+          throw new Error("读取当前班级数据未完成；屏幕可能保留上次快照，请重新读取后再变更。已有可信提交回执仍表示已保存，不要重复新建。")
+        }
       } finally {
         if (generation === loading.current && alive.current) setRefreshing(false)
       }
@@ -306,6 +314,10 @@ export default function R1App() {
   }
   async function preview(command: Command) {
     if (!session) return
+    // Model configuration has its own controller/version checks; a roster
+    // read failure must not prevent removing a configured external provider.
+    if ((!queryFresh || refreshing) && !command.command.startsWith("model_configuration."))
+      throw new Error("当前数据尚未重新核对，请先重新读取数据，再生成业务预览。")
     const generation = loading.current
     let proposal: Proposal
     try {
@@ -387,7 +399,7 @@ export default function R1App() {
     if (result.status === "committed" && result.receipt) await acceptReceipt(result.receipt, String(pending.proposal.payload.command))
     else setError(result.status === "not_committed" ? "未查询到原请求键的已提交收据；核对后可按原键重试，不要重复新建。" : "当前预览已失效或无法按原键提交；请核对现有数据，不要盲目重新录入。")
   }
-  const editable = !!classroom && classroom.status !== "archived" && !refreshing
+  const editable = !!classroom && classroom.status !== "archived" && !refreshing && queryFresh
   const selected = students.find((item) => item.student_id === selectedStudent)
   const matchingStudents = searchStudents(students, search)
   const selectedFollowUps = studentFollowUps(activity?.tasks || [], selected?.student_id || "")
@@ -776,7 +788,7 @@ export default function R1App() {
             </select>
           </label>
           {!classes.some((item) => item.status === "active") && (
-            <button disabled={busy || refreshing} onClick={() => open("class")}>建立班级与学期</button>
+            <button disabled={busy || refreshing || !queryFresh} onClick={() => open("class")}>建立班级与学期</button>
           )}
         </section>
         <div className="r1-future">
@@ -841,6 +853,12 @@ export default function R1App() {
         {notice && (
           <div className="r1-notice" role="status">
             {notice}
+          </div>
+        )}
+        {!refreshing && !queryFresh && (
+          <div className="r1-warning" role="status">
+            <strong>当前列表尚未刷新。</strong>这里只保留上次成功读取的快照（若有），不是最新数据；新业务预览已暂停。成功回执不因读取失败而失效，结果未知的提交仍须核对原请求。
+            <button disabled={busy} onClick={() => void action(() => reload())}>重新读取数据</button>
           </div>
         )}
         <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}`} onScroll={event => {
@@ -1265,7 +1283,7 @@ export default function R1App() {
                     if (generation === loading.current && alive.current) throw reason
                   }
                 }) }}>查看班级业务审计</button>
-                {!classes.some(item => item.status === "active") && <button disabled={busy || refreshing} onClick={() => open("class")}>建立班级与学期</button>}
+                {!classes.some(item => item.status === "active") && <button disabled={busy || refreshing || !queryFresh} onClick={() => open("class")}>建立班级与学期</button>}
                 <label>切换查看班级<select aria-label="设置中切换班级" value={classroom?.class_id || ""} onChange={event => {
                   const target = classes.find(item => item.class_id === event.target.value)
                   setSelectedStudent("")
@@ -1641,63 +1659,12 @@ export default function R1App() {
             </form>
         </R1Dialog>
       )}
-      {pending && (
-        <R1Dialog titleId="r1-preview-title" busy={busy} onDismiss={() => void action(async () => {
+      {pending && <CommandPreview proposal={pending.proposal} error={error} busy={busy}
+        onReject={() => void action(async () => {
           await request(`${workspace(session)}/commands/reject`, { proposal_id: pending.proposal.proposal_id }, session.csrf_token)
           setPending(null)
-        })}>
-            <h2 id="r1-preview-title">确认这次变更</h2>
-            {error && <p className="r1-error" role="alert">{error}</p>}
-            <p>
-              {pending.proposal.risk === "W2"
-                ? "需要你明确批准后才能提交。"
-                : "请核对服务端预览，再明确提交。"}
-              有效至 {displayTime(pending.proposal.expires_at)}
-            </p>
-            <dl>
-              {Object.entries(pending.proposal.payload).map(([key, value]) => (
-                <div key={key}>
-                  <dt>{key}</dt>
-                  <dd>{value === null ? "无" : String(value)}</dd>
-                </div>
-              ))}
-            </dl>
-            <details>
-              <summary>完整性摘要</summary>
-              {pending.proposal.payload_hash}
-            </details>
-            <div className="r1-toolbar">
-              <button
-                disabled={busy}
-                onClick={() =>
-                  void action(async () => {
-                    await request(
-                      `${workspace(session)}/commands/reject`,
-                      { proposal_id: pending.proposal.proposal_id },
-                      session.csrf_token,
-                    )
-                    setPending(null)
-                  })
-                }
-              >
-                放弃变更
-              </button>
-              <button disabled={busy} onClick={() => void action(checkCommit)}>核对提交结果（不重复写入）</button>
-              <button
-                className="r1-primary"
-                disabled={busy}
-                onClick={() => void action(commit)}
-              >
-                {busy
-                  ? "正在处理…"
-                  : pending.proposal.risk === "W2"
-                    ? "明确批准并提交"
-                    : "确认提交"}
-              </button>
-            </div>
-            <p className="r1-muted">网络失败可重试同一回执，不会重复创建。</p>
-        </R1Dialog>
-      )}
+        })}
+        onCheck={() => void action(checkCommit)} onCommit={() => void action(commit)} />}
       {issuedCodes && <R1Dialog titleId="r1-kit-title"><h2 id="r1-kit-title">离线恢复码 · 仅显示一次</h2><p>旧恢复码和旧会话已撤销。请离线保存；不会写入本地缓存、模型或支持包。</p><pre>{issuedCodes.join("\n")}</pre><button className="r1-primary" onClick={() => setIssuedCodes(null)}>我已离线保存新的恢复码</button></R1Dialog>}
     </div>
   )

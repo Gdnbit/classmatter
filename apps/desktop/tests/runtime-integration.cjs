@@ -123,6 +123,36 @@ async function main(){
     await page.getByRole('button',{name:/合成桌面持久化任务.*已完成/}).waitFor();
     await page.getByText('显示 1 / 1 项任务 · 全班未结束 0 项',{exact:true}).waitFor();
     await page.screenshot({path:path.join(evidence,'04-work-filters.png')});
+    // Real authorized download; the test-owned destination substitutes for a
+    // human Save dialog only. Production still chooses no arbitrary path.
+    const exitFile=path.join(evidence,'synthetic-core-exit.json');
+    await app.evaluate(({BrowserWindow},destination)=>{
+      globalThis.__classmatterDownload=null;
+      BrowserWindow.getAllWindows()[0].webContents.session.once('will-download',(event,item)=>{
+        const title=item.getSaveDialogOptions().title;
+        item.setSavePath(destination);
+        item.once('done',(_event,state)=>{globalThis.__classmatterDownload={state,title,bytes:item.getReceivedBytes()};});
+      });
+    },exitFile);
+    await page.getByRole('button',{name:'设置',exact:true}).click();
+    await page.getByRole('button',{name:'生成合成核心退出包',exact:true}).click();
+    await page.getByRole('button',{name:'明确批准并提交',exact:true}).click();
+    await page.getByRole('dialog').waitFor({state:'hidden'});
+    await page.getByRole('link',{name:'下载已批准的核心包（30分钟内）',exact:true}).click();
+    let downloadState;
+    const downloadDeadline=Date.now()+8000;
+    while(Date.now()<downloadDeadline){
+      downloadState=await app.evaluate(()=>globalThis.__classmatterDownload);
+      if(downloadState)break;
+      await new Promise(resolve=>setTimeout(resolve,50));
+    }
+    assert.equal(downloadState?.state,'completed');
+    assert.equal(downloadState.title,'保存已批准的合成核心退出包');
+    const exitBundle=JSON.parse(fs.readFileSync(exitFile,'utf8'));
+    assert.equal(exitBundle.schema_version,'class-os.synthetic-core-exit.v1');
+    assert.equal(exitBundle.core.manual_task.length,1);
+    assert.equal(exitBundle.core.record_revision.length,1);
+    assert.ok(!JSON.stringify(exitBundle).includes('synthetic-test-passphrase-2026'));
     await page.getByRole('button',{name:'对话',exact:true}).click();
     assert.equal(await page.locator('.r1-attention').getByRole('button',{name:/合成桌面持久化任务/}).count(),0);
     await page.getByLabel('输入消息').fill('合成查询当前工作');
@@ -150,7 +180,7 @@ async function main(){
       await new Promise(resolve=>setTimeout(resolve,50));
     }
     assert.ok(gone,'Owned API must exit on parent pipe EOF after desktop crash');
-    fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({scope:'Synthetic disposable database and R1 student/attention/work binding; deterministic fake provider, not real-model quality or full frozen shell migration',checks:['owned-process-proof','private-approval-and-command','record-task-linked','student-search-empty-and-reset','student-id-search','student-detail-no-cross-identity','student-follow-up-navigation-and-completion-count','class-attention-independent-of-student-filter','work-filter-empty-reset','waiting-transition-and-global-count','completed-task-leaves-attention','restart-persistence','owned-api-stop','read-tool-source','draft-not-committed','parent-crash-pipe-cleanup'],pageErrors:errors,externalRequests:remote},null,2));
+    fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({scope:'Synthetic disposable database and frozen R1 binding; deterministic fake provider, not real-model quality or future Demo modules',checks:['owned-process-proof','private-approval-and-command','record-task-linked','student-search-empty-and-reset','student-id-search','student-detail-no-cross-identity','student-follow-up-navigation-and-completion-count','class-attention-independent-of-student-filter','work-filter-empty-reset','waiting-transition-and-global-count','completed-task-leaves-attention','approved-core-download-with-test-owned-save-target','restart-persistence','owned-api-stop','read-tool-source','draft-not-committed','parent-crash-pipe-cleanup'],pageErrors:errors,externalRequests:remote},null,2));
     console.log('Synthetic desktop record/task/restart passed');
   } catch(error){if(app){const page=await app.firstWindow();await page.screenshot({path:path.join(evidence,'failure.png')}).catch(()=>{});console.error('Runtime UI failed:',page.url());}throw error;}
   finally {try{if(app)await app.close();}finally{fs.writeFileSync(sourceFile,original);}}
