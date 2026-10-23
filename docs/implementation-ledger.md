@@ -13,7 +13,7 @@
 5. W4：补齐退出/恢复/运维，形成候选证据；先合成shadow，再作教师净负担研究和正式准入决定。
 6. W5：依据真实任务证据选择通知责任闭环或其他下一切片；新release change，不偷渡进冻结R1。
 
-W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2-01已实现受控runtime入口，W2-02/03完成学生与注意力/工作页绑定，W2-04收口冻结R1的真实界面与故障矩阵（候选，须以对应PR的最终验收/CI为准）。完整Demo所有页面并不属于R1；W3真实Provider质量与W4/W5仍未完成。此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
+W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2-01—04收口冻结R1真实界面与故障矩阵，PR #9最终两平台CI通过后合并为`27dad59`。完整Demo所有页面并不属于R1；W3已建立首版12例Provider工程评测，真实运行/人工质量审查仍blocked，W4/W5仍未完成。此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
 
 ## 能力、代码与追溯
 
@@ -146,3 +146,13 @@ W2-01验证：后端非DB284项、完整隔离DB回归315项（包含真实浏�
 本地定向结果：Web43项/类型/构建通过；真实浏览器与Electron/PG2项通过；roster/activity/status/memory-expiry隔离PG30项通过。首轮新测试未等待重新读取完成便断言可编辑而失败，修正等待实际按钮状态后完整重跑通过，不将失败计为通过。其余公开检查和远端完整CI以PR证据为准；未重复本机全315项DB回归。
 
 PR #9首轮Ubuntu完整CI在320px最新来源可见性断言失败（其余309项DB通过、5项平台跳过），Windows通过；没有合并或跳过失败。修复viewport尺寸变化触发scroll早于ResizeObserver时误取消跟随最新回复的问题，保留主动上滚阅读历史时不抢回位置。最终状态以修复后的两平台完整CI为准。
+
+W2最终证据：[PR #9](https://github.com/Gdnbit/classmatter/pull/9)目标`3ae2ba0`的[完整CI 39921094043](https://github.com/Gdnbit/classmatter/actions/runs/39921094043)为success，Windows/Ubuntu均成功。修复后本机真实浏览器全链重跑通过，未增大原1500ms断言超时；默认拒绝公开清单、历史扫描及70份Markdown校验通过。按约定验收后才合并/启动W3，不提升正式Gate。
+
+### 单元3：真实Provider评测工程基线（Draft / live blocked）
+
+复用原Pydantic AI与SDK、ISB/QG/BCG；代码位于`backend/evaluate_provider.py`、`infrastructure/provider_evaluation.py`及对应pytest。12例每例3次，区分离线边界、Provider前拒绝、故障注入和真实模型质量。首轮人民币10元总预算、价格/供应商限额核验、原UI受保护配置与本进程重新test/enable均是前置条件；不新增模型业务写权限。
+
+当前未获得满足入口条件的真实配置，operator默认执行明确blocked/0付费请求；真实Token/延迟/质量不填假数，PR保持Draft。测试初轮误用conversation参数导致失败，修正为原有接口后重跑；不修改生产接口迁就测试。详细命令、报告/回归口径、风险与回滚见[既有实验计划第10节](research/2026-10-22-agent-runtime-and-work-evaluation-plan.md)。正式Eval/Task/Gate保持原状态。
+
+本机工程证据：新增12场景各3次的离线合成QG/PG回归及真实SDK的离线HTTP计量用例通过；来源检查同时核对实际审计行范围/当前hash，业务表及命令回执无额外写入。新增预算/blocked入口/回归比较测试通过，默认operator实际执行返回blocked且付费请求0。真实Provider结果仍未运行，代码CI不替代真实质量成绩。
