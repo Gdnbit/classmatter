@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-23。当前公开main基线为W4-01合并`2f45ab6`，W3在独立PR #10继续；W1 `161a583`、W2-01 `9e97a08`、W2合并`27dad59`为历史阶段证据。此表是工程状态索引，不替代 canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-23。当前公开main基线为W4-02合并`3d8d750`；W2已由PR #9收口，W3在独立Draft PR #10继续，真实Provider质量仍blocked。W1 `161a583`、W2-01 `9e97a08`、W2合并`27dad59`为历史阶段证据。此表是工程状态索引，不替代 canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 
@@ -13,7 +13,7 @@
 5. W4：补齐退出/恢复/运维，形成候选证据；先合成shadow，再作教师净负担研究和正式准入决定。
 6. W5：依据真实任务证据选择通知责任闭环或其他下一切片；新release change，不偷渡进冻结R1。
 
-W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2-01—04收口冻结R1真实界面与故障矩阵，PR #9最终两平台CI通过后合并为`27dad59`。完整Demo所有页面并不属于R1；W3已建立首版12例Provider工程评测，真实运行/人工质量审查仍blocked，W4/W5仍未完成。此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
+W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR #9最终CI](https://github.com/Gdnbit/classmatter/actions/runs/39921094043)收口冻结R1真实界面与故障矩阵，W4-01/02已通过各自两平台CI后合并。完整Demo所有页面并不属于R1；W3已建立12例Provider工程评测但真实质量仍blocked，完整W4/W5仍未完成。此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
 
 ## 能力、代码与追溯
 
@@ -170,3 +170,13 @@ W3本轮加固：发现预算预检漏算PE-03第二轮，修正保守请求上�
 - 复用T-ROPS-003/006及E-OPS-005/006/007既有目标，仅形成合成工程证据，不将完整任务/正式Eval标绿。不覆盖retention、生命周期ledger重放、跨机迁移或退出完整性；这些仍待实施。回滚为revert本PR，无数据库迁移；旧checkpoint格式保持兼容。
 
 W4-01已通过[完整CI 39941521068](https://github.com/Gdnbit/classmatter/actions/runs/39941521068)后由[PR #11](https://github.com/Gdnbit/classmatter/pull/11)合并为`2f45ab6`。Windows非DB288项、Ubuntu非DB286项/2项平台跳过，Ubuntu完整隔离DB310项/5项平台跳过；Web/桌面与公开检查均通过。本机实际Windows DPAPI/SCRAM恢复及角色边界34项通过/1项符号链接策略跳过，不拿跳过当通过。完整W4仍未完成。使用方法及限制见[backend README](../backend/README.md)。
+
+### W4-02：离线退出包复制核对（implemented-synthetic）
+
+教师问题：更换设备/交付备份前，操作员不应仅凭“文件能打开”判断资料复制完整。复用原`verify_exit.py`和固定`validate_package`，新增`--compare-with`，一次命令分别核对文件字节、规范包及核心数据摘要；正常使用无额外业务录入。两份均合法但不同返回2（包括仅格式变化），坏包返回1，完全一致返回0。不是来源认证或恢复授权，不导入/写入数据库。
+
+验收覆盖真实BCG批准/QG下载包→复制→离线核对，比较前后事实/任务/收据/导出/审计数量及文件字节不变；格式、元数据和核心内容差异分开报告。坏包、重复字段、NaN/Infinity、编码/深度/尺寸、缺失、目录/特殊文件/叶子链接拒绝，错误不回显原文/路径。新增文件打开约束不改变退出包wire schema、BCG授权或导出行为；父目录链接不在本机只读operator的隔离保证内。
+
+复用T-REXP-001—003、T-ROPS-006和既有退出完整性目标，不修改正式Eval/Task/Gate语义或状态；`--require-complete`继续拒绝。Windows/Linux各自通过不证明实际两台机器的导入恢复。跨机业务写入、身份重新配置、生命周期账本和退役证明仍待实施。独立PR记录最终测试/CI，回滚为revert，无迁移；首轮Windows目录异常测试断言过窄已修正，不当作生产成功。详细操作见backend README。
+
+W4-02最终证据：[PR #12](https://github.com/Gdnbit/classmatter/pull/12)在[完整CI 39956007791](https://github.com/Gdnbit/classmatter/actions/runs/39956007791)两平台成功后合并为`3d8d750`。Windows非DB303项、Ubuntu非DB301项/2项平台跳过，Ubuntu完整DB/浏览器310项/5项平台跳过；本机退出相关定向76项通过/1项叶子链接策略跳过。源码、文档和公开检查通过；无实际跨机导入或完整W4准入。

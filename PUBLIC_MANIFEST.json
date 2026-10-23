@@ -72,7 +72,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "2802a6a00e2eefbecf113495867247067bcbe884516a4b5ff0a86dc55a78a0a6"
+      "sha256": "78e45cea836495aaadc0a62fdcbe9bea8666cda07ac779e4b888decde12750fc"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -468,7 +468,7 @@
       "sha256": "51bfee0c564708f42efd96b6cb5ad707e720a6a84348317adfdab276d735d723"
     },
     "backend/README.md": {
-      "sha256": "beb00fdf5b8c5ad6a32e2cc2807882352b62fdd17a4a93b0544f43c77b28730e"
+      "sha256": "278ca70ca38f3a664c8a6fbd123c28be4cb2e68fb5f2ff2c322ad60e666dbfcf"
     },
     "backend/db/migrations/env.py": {
       "sha256": "b2393f310d1d8a05229c29757dbd885fb275ca6bf7e87c81fa84270863b6edec"
@@ -759,10 +759,10 @@
       "sha256": "1073f9e7f5942132872db325c260fe017f3c0867ba4703fb9945641ab4b83159"
     },
     "backend/tests/test_exit_cli.py": {
-      "sha256": "90cbd2f3d7db68779db28c6054e490e3f5711ccbeeadcdcff0db6edf8bc60408"
+      "sha256": "8f898cf25d867cb513df913d20e92c5e8c4fc257b3933edb947e3e8db26a2871"
     },
     "backend/tests/test_exit_gateway.py": {
-      "sha256": "e79f6c9c7b2b92adaa0d7455c386f6438448d17643f6b25c759f8fab4b3f51fd"
+      "sha256": "23bf3517cc3544bfe0670942c4e9797c5347c02d8d6f2acea112bdc5d23694d9"
     },
     "backend/tests/test_exit_package.py": {
       "sha256": "0aad6ea21caa1d7fb6be674294cde2387586cad6953f42dcb730c5153592e597"
@@ -892,7 +892,7 @@
       "sha256": "b0d1977c0b54e83f7d5e7948ebc1e616080f7c5b2884882fa254b777ba509f7f"
     },
     "backend/verify_exit.py": {
-      "sha256": "7f22790f5190dfaa86fdf32a7edd6315b5f872b391610b5d6101c9f710a7cf3a"
+      "sha256": "8ea7990d597faab145f495c6ec9f4c82ae0fbf04615cf32f6431aee2199589a1"
     },
     "contracts/README.md": {
       "sha256": "fb84a3d03eed43d8ff981b5318c508173e6c7a8b47e027da4a82942458d31ec6"
@@ -1045,7 +1045,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "ae9753debf41886c02aea4a8a56e9883319bf0fe9aba39e0e98ec5a1a3a462d0"
+      "sha256": "460c672a833e02b201ecfdceb24f5f657ce5bb04c92c76d4d4474def22a23beb"
     },
     "docs/README.md": {
       "sha256": "ce77626ce5828a613325bf8e68265be131dc42081ef05aa42badbe19ee81bbb6"
