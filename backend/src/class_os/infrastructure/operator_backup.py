@@ -12,6 +12,7 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+import tempfile
 from uuid import UUID, uuid4
 
 from psycopg import sql
@@ -27,6 +28,8 @@ HEAD = "0016"
 MIB = 1024 * 1024
 ARCHIVE_LIMIT = 16 * MIB
 PACKET_LIMIT = 32 * MIB
+CATALOG_LIMIT = 128
+CATALOG_BYTES = 64 * MIB
 
 
 class BackupRejected(Exception):
@@ -55,13 +58,64 @@ class SyntheticBackup:
         return hashlib.sha256(encoded({"root": str(self.runtime.root.resolve()),
                                        "configuration": self.runtime.configuration()})).hexdigest()
 
-    def _directory(self):
+    def _directory(self, *, create=True):
         root = self.runtime.root.resolve()
         directory = root / "backups"
         if directory.is_symlink() or directory.is_junction() or directory.resolve().parent != root:
             raise BackupRejected()
-        directory.mkdir(mode=0o700, exist_ok=True)
+        if create:
+            directory.mkdir(mode=0o700, exist_ok=True)
         return directory
+
+    def _publish(self, artifact, sealed):
+        directory = self._directory()
+        destination = directory / (str(artifact) + ".dpapi")
+        pending = None
+        try:
+            # Write and sync encrypted bytes before an atomic, exclusive link.
+            # Never replace an existing checkpoint, even on an ID collision.
+            with tempfile.NamedTemporaryFile(dir=directory, prefix=".checkpoint-", suffix=".pending", delete=False) as output:
+                pending = Path(output.name)
+                output.write(sealed); output.flush(); os.fsync(output.fileno())
+            os.link(pending, destination)
+        finally:
+            if pending is not None:
+                pending.unlink(missing_ok=True)
+
+    def catalog(self):
+        """Bounded metadata inspection only; does not connect to PostgreSQL."""
+        try:
+            directory = self._directory(create=False)
+            entries, pending, unrecognized, total = [], 0, 0, 0
+            if directory.exists():
+                with os.scandir(directory) as candidates:
+                    for number, candidate in enumerate(candidates, start=1):
+                        if number > CATALOG_LIMIT:
+                            raise BackupRejected()
+                        name = candidate.name
+                        if re.fullmatch(r"\.checkpoint-[a-z0-9_]+\.pending", name):
+                            pending += 1
+                            continue
+                        if not re.fullmatch(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.dpapi", name):
+                            unrecognized += 1
+                            continue
+                        artifact = UUID(name[:-6])
+                        row = {"backup_id": str(artifact), "status": "rejected", "restore_verified": False}
+                        # Preflight an aggregate bound before reading protected packets.
+                        total += candidate.stat(follow_symlinks=False).st_size
+                        if total > CATALOG_BYTES:
+                            raise BackupRejected()
+                        try:
+                            packet, _ = self._open(artifact)
+                            row.update(status="metadata-verified", created_at=packet["created_at"])
+                        except BackupRejected:
+                            pass
+                        entries.append(row)
+            return {"schema_version": "class-os.synthetic-backup-catalog.v1", "portable": False,
+                    "complete_exit": False, "checkpoints": sorted(entries, key=lambda row: row["backup_id"]),
+                    "pending_files": pending, "unrecognized_files": unrecognized}
+        except Exception:
+            raise BackupRejected() from None
 
     @staticmethod
     def _state(connection):
@@ -138,8 +192,7 @@ class SyntheticBackup:
             directory = self._directory()
             if shutil.disk_usage(directory).free < len(sealed) + MIB:
                 raise BackupRejected()
-            with (directory / (str(artifact) + ".dpapi")).open("xb") as output:
-                output.write(sealed); output.flush(); os.fsync(output.fileno())
+            self._publish(artifact, sealed)
             return artifact
         except Exception:
             raise BackupRejected() from None
@@ -150,8 +203,8 @@ class SyntheticBackup:
         try:
             if type(artifact) is not UUID:
                 raise BackupRejected()
-            path = self._directory() / (str(artifact) + ".dpapi")
-            if path.is_symlink() or path.is_junction():
+            path = self._directory(create=False) / (str(artifact) + ".dpapi")
+            if path.is_symlink() or path.is_junction() or not path.is_file():
                 raise BackupRejected()
             with path.open("rb") as source:
                 sealed = source.read(PACKET_LIMIT + 1)

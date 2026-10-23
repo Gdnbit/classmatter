@@ -16,6 +16,22 @@ uv run --frozen python local.py serve
 
 Use <http://127.0.0.1:8000>. Keep generated passwords and recovery codes out of files/logs/Git. `init` does not overwrite a runtime; migrations must be explicit (`local.py migrate`), followed by rebuild/restart. `local.py stop` stops only the owned database. Do not copy `.local-runtime/` between hosts. `serve.py` is a health-only test entry and intentionally not ready; it is not the persistent composition.
 
+## Owned synthetic checkpoint discovery and checking
+
+These trusted local operator commands use the existing runtime; they are not Agent tools or HTTP endpoints:
+
+```powershell
+uv run --frozen python local.py backup
+uv run --frozen python local.py backup-list
+uv run --frozen python local.py backup-check --backup-id '<UUID from backup-list>'
+```
+
+`backup-list` is read-only and works while PostgreSQL is stopped. It inspects only this runtime's owned directory, returns UUIDs, validated creation times and `metadata-verified`/`rejected`; it never returns filenames, credentials, row contents or raw failure messages. A metadata-verified checkpoint has **not** been restore-verified: run `backup-check` to restore into an isolated temporary database, compare registered-table hashes and validate schema/roles, then remove that clone. A failed check never switches or replaces the source. Rejected metadata can indicate corruption, a different runtime binding, a protected-file access problem or an incompatible head; it does not diagnose which one or delete the file. Pending/foreign files are reported only as counts and never imported.
+
+Discovery rejects rather than returning a partial result above 128 directory entries or 64 MiB of candidate protected packets. Each packet retains the existing 32 MiB limit. File publication now syncs encrypted bytes in a temporary file before an atomic exclusive hard link; a collision never replaces an existing checkpoint. Filesystems lacking hard-link support reject creation without a fallback that could expose partial files. An abrupt process/host failure may leave a `.pending` file; discovery does not treat it as a checkpoint or silently delete it. No automated retention/deletion, cross-machine recovery, production backup, PITR or complete lifecycle/exit guarantee is provided. DPAPI and runtime binding remain unchanged; do not copy the runtime or its backups to another host.
+
+The local NTFS and CI Linux filesystems support this hard-link publication. Atomic visibility is not a guarantee of power-loss durability: directory metadata is not separately fsynced, so a successful command is not evidence that a newly published filename survives a sudden host power loss. Preserve earlier checked checkpoints and verify again after an abnormal shutdown; no RPO/RTO promise is made.
+
 ## Contracts and authority
 
 `src/class_os/domain` holds closed business rules; `application` owns QG/BCG/ISB; infrastructure adapters implement SQL/model/secrets; HTTP interfaces own strict wire DTOs and composition. `uv run --frozen python export_contracts.py --check` rejects contract drift. All business changes require validated command/preview/approval as applicable, idempotent receipt and transactional audit. Agent has no business-write or approval tool.

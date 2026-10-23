@@ -146,3 +146,15 @@ W2-01验证：后端非DB284项、完整隔离DB回归315项（包含真实浏�
 本地定向结果：Web43项/类型/构建通过；真实浏览器与Electron/PG2项通过；roster/activity/status/memory-expiry隔离PG30项通过。首轮新测试未等待重新读取完成便断言可编辑而失败，修正等待实际按钮状态后完整重跑通过，不将失败计为通过。其余公开检查和远端完整CI以PR证据为准；未重复本机全315项DB回归。
 
 PR #9首轮Ubuntu完整CI在320px最新来源可见性断言失败（其余309项DB通过、5项平台跳过），Windows通过；没有合并或跳过失败。修复viewport尺寸变化触发scroll早于ResizeObserver时误取消跟随最新回复的问题，保留主动上滚阅读历史时不抢回位置。最终状态以修复后的两平台完整CI为准。
+
+### W4-01：同机checkpoint发现与中断保护（2026-10-23）
+
+本单元从已合并PR #9后的main建立独立分支；不依赖W3真实Provider付费评测，不改Pydantic AI、业务模型、权限或正式Gate。教师的实际价值是故障后无需另记备份UUID，操作员可在数据库停止时找到可检查的同机checkpoint，避免把损坏/未写完的文件当作恢复凭据；教师平时无新增维护步骤。
+
+- `backend/local.py backup-list` → `operator_backup.SyntheticBackup.catalog()`：只读、闭合UUID元数据；有效元数据不等于已成功恢复，所有条目均明确`restore_verified=false`。损坏/绑定不匹配/不兼容条目拒绝；原始名称、行内容、凭据和错误细节不输出。
+- checkpoint先写加密临时文件、flush/fsync，再以原子exclusive hard link发布。已有checkpoint绝不覆盖；写入/同步/发布故障保留上一有效备份。主机骤停遗留pending文件只计数，不自动删除/导入；不支持hard link的文件系统拒绝，无不安全降级。
+- 清单限制128目录项/候选文件合计64MiB/单包原32MiB，超限不返回部分成功。目录或checkpoint symlink/junction保留拒绝边界；无任意路径、SQL、DDL、自动修复或新HTTP/Agent能力。
+- 验收：真实临时PG snapshot/隔离恢复及源库存量不变；实际Windows DPAPI+SCRAM CLI在stop后发现、start后check；同步/发布失败及UUID碰撞不产生可见半包且不覆盖；坏包、链接和清单上限拒绝。符号链接创建受宿主策略限制时明确skip，不当作通过。
+- 复用T-ROPS-003/006及E-OPS-005/006/007既有目标，仅形成合成工程证据，不将完整任务/正式Eval标绿。不覆盖retention、生命周期ledger重放、跨机迁移或退出完整性；这些仍待实施。回滚为revert本PR，无数据库迁移；旧checkpoint格式保持兼容。
+
+具体本地结果与完整Windows/Ubuntu CI按PR记录，远端全绿前不合并。使用方法及限制见[backend README](../backend/README.md)。
