@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "node scripts/generate-identity.mjs --check && node scripts/generate-model-configuration.mjs --check && node scripts/generate-agent-conversation.mjs --check && node scripts/generate-command-receipts.mjs --check && vite",
     "build": "node scripts/generate-identity.mjs --check && node scripts/generate-model-configuration.mjs --check && node scripts/generate-agent-conversation.mjs --check && node scripts/generate-command-receipts.mjs --check && vite build",
-    "typecheck": "node scripts/generate-identity.mjs --check && node scripts/generate-model-configuration.mjs --check && node scripts/generate-agent-conversation.mjs --check && node scripts/generate-command-receipts.mjs --check && node --test tests/identity.mjs tests/model-configuration.mjs tests/agent-conversation.mjs tests/command-receipts.mjs tests/api-errors.mjs tests/local-time.mjs tests/term-metadata.mjs tests/demo-seats.mjs tests/demo-navigation.mjs tests/student-directory.mjs tests/work-projection.mjs && tsc --noEmit",
+    "typecheck": "node scripts/generate-identity.mjs --check && node scripts/generate-model-configuration.mjs --check && node scripts/generate-agent-conversation.mjs --check && node scripts/generate-command-receipts.mjs --check && node --test tests/identity.mjs tests/model-configuration.mjs tests/agent-conversation.mjs tests/command-receipts.mjs tests/api-errors.mjs tests/local-time.mjs tests/term-metadata.mjs tests/demo-seats.mjs tests/demo-navigation.mjs tests/student-directory.mjs tests/work-projection.mjs tests/query-refresh.mjs && tsc --noEmit",
     "preview": "vite preview",
     "format": "oxfmt"
   },

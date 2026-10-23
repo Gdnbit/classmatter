@@ -2,8 +2,14 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "apps/web/src/runtime/query-refresh.ts": {
+      "sha256": "81f4d6c3c47837be07905c2301734a565a3a659ddef4c6b7827f1ed558769fa1"
+    },
+    "apps/web/tests/query-refresh.mjs": {
+      "sha256": "50a724c16343197954a58d000f4ec9eb137112f4084ddaca89465b24637a0d48"
+    },
     "docs/design/live-data-delivery-acceptance.md": {
-      "sha256": "7ca4a1609ecc96a2661dbcf48b60aa7c5d0a2988c2d9450eceb305df61a8e68d"
+      "sha256": "5bdc494804665f7214c84a21c8735f82a14b80b23e2c0d910d01336def35f4e1"
     },
     "docs/design/database-live-data-design.md": {
       "sha256": "beecbcaa2cbb9a7c7d42c5806906ed8e0c994d69174004fd646ca657c33adb0a"
@@ -69,7 +75,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "658ea07cb9fa3b00680a8e2a76296a2cd75b6dd2af829351bb4b4305d9a671de"
+      "sha256": "28976abdfe114846ecc5a39503f60c7491886a1eb281e84ce48486923e628cf5"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -246,7 +252,7 @@
       "sha256": "6857940a16627475250d8d98cf9711cf58e418459b8a7f97755f0c3180ed845f"
     },
     "apps/web/package.json": {
-      "sha256": "a79af5cd9149da3de6ecdf455e8d1c06b6b0ff6f210c11996f6551f71699be02"
+      "sha256": "a64d644e48705dbed9cbda514d13bbf80b69574ba564eb1831ac1b15602eb62d"
     },
     "apps/web/pnpm-lock.yaml": {
       "sha256": "c684a8b108321e9dcce6bf62b4b1b4b6e8e64f4e55e3019ed95f1f95ca184251"
@@ -303,7 +309,7 @@
       "sha256": "fe5baeec654888996fa3a94a03251bea227325fa54dc53a4e351ecd72d8d4d9b"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "8aaa16d59981482a305a4a37a32e326bf88f61e42a1e50a6c66732d0c2debf27"
+      "sha256": "90c2d92ab34fe5e7248d2d2d94776e9177e64656f0c0176157c2705fff849ecf"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "8f005293650b914c64f9649c7c70efe41080d6a310c275aff9fdf4707588160b"
@@ -447,7 +453,7 @@
       "sha256": "507d510cee982bdd2b6af4169e3701fb42642c849558155cdbdf0339d5442885"
     },
     "apps/web/tests/runtime.mjs": {
-      "sha256": "e3acbe292b90b1c5042707c7d4fff362b516e3b9a575611ae9b3c277cd5b425e",
+      "sha256": "bf84ef69eed0a0dd2a7a3e7a845e8df2cd745962aeb2769399309f58a2c5db15",
       "reviewed_pattern_exceptions": [
         {
           "rule": "email-shape",
@@ -880,7 +886,7 @@
       "sha256": "0b028a7aa07408423724b7ef666c7e07b2e689b3c306f67d5e67b8e2a474e6e8"
     },
     "backend/tests/test_web.py": {
-      "sha256": "e3647d8016c6c5ebba4468d9967bfdd254cb53d47e42a108971625c804a25c19"
+      "sha256": "932027e1a40fe7f3e2e5e600d7f4c8bf5a0dc439169c619ae1851b4cfcf9bf51"
     },
     "backend/tests/test_work_snapshot.py": {
       "sha256": "a08994631068002bc2ece8a2e4fa8784361046f84eb146d6683ee74e9d7e1bb4"
@@ -1042,7 +1048,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "b987a2695dbf54e7318ef172d3517bb938a3053c5492802890f767f2433f60fc"
+      "sha256": "9d762b71720a090372a14ccf5c43a6a2587b5637abe547e921f09ce0ffccc4ea"
     },
     "docs/README.md": {
       "sha256": "c27648890e17daccf94655ba7366b9abc4289af94990cd82f36d144fd3626daa"
