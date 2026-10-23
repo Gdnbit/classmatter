@@ -144,6 +144,7 @@ export default function R1App() {
   const conversationContent = useRef<HTMLDivElement>(null)
   const messageInput = useRef<HTMLTextAreaElement>(null)
   const followingConversation = useRef(true)
+  const conversationGeometry = useRef<{ width: number; height: number } | null>(null)
   const observedMessages = useRef(0)
   const [newReply, setNewReply] = useState(false)
   const scrollToLatest = useCallback(() => {
@@ -167,6 +168,7 @@ export default function R1App() {
     if (page !== "conversation" || checking || !session || !viewport || !content) return
     let observing = true
     const observer = new ResizeObserver(() => {
+      conversationGeometry.current = { width: viewport.clientWidth, height: viewport.clientHeight }
       if (observing && followingConversation.current && content.querySelector("article")) scrollToLatest()
     })
     observer.observe(viewport); observer.observe(content)
@@ -864,6 +866,12 @@ export default function R1App() {
         <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}`} onScroll={event => {
           if (page !== "conversation") return
           const viewport = event.currentTarget
+          const previous = conversationGeometry.current
+          const resized = previous && (previous.width !== viewport.clientWidth || previous.height !== viewport.clientHeight)
+          conversationGeometry.current = { width: viewport.clientWidth, height: viewport.clientHeight }
+          // Resize may dispatch scroll before ResizeObserver; it is not an
+          // intentional request to stop following the latest answer.
+          if (resized && followingConversation.current) { scrollToLatest(); return }
           followingConversation.current = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop <= 48
           if (followingConversation.current) setNewReply(false)
         }}>

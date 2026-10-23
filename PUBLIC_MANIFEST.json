@@ -63,7 +63,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "8893e38d20d50c790c9847f46baa931a7f6c70ad0ae2cc5077e8532eba1d01e4"
+      "sha256": "481143674d4e4a28b9d7936c39f817b81dab8e41f426d5e1e7377069de74614a"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -297,7 +297,7 @@
       "sha256": "fe5baeec654888996fa3a94a03251bea227325fa54dc53a4e351ecd72d8d4d9b"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "b61389b29ccdf05bd88ffd0bdd88c047a08570b49101b00a49f5f2d51d781005"
+      "sha256": "8aaa16d59981482a305a4a37a32e326bf88f61e42a1e50a6c66732d0c2debf27"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "8f005293650b914c64f9649c7c70efe41080d6a310c275aff9fdf4707588160b"

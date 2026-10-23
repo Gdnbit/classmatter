@@ -144,3 +144,5 @@ W2-01验证：后端非DB284项、完整隔离DB回归315项（包含真实浏�
 本单元复用T-RWEB-001—006、T-RDOM-002/006—013及既有E-CMD/E-AGT/E-LOCAL/E-WEB/E-AUD追溯，不修改Requirement/Task/Eval/Gate定义或正式状态。最终本地结果与两平台CI必须逐项记录在PR；未全绿前不标W2完成、不进入W3。回滚为revert本PR；无新增迁移或数据重写。
 
 本地定向结果：Web43项/类型/构建通过；真实浏览器与Electron/PG2项通过；roster/activity/status/memory-expiry隔离PG30项通过。首轮新测试未等待重新读取完成便断言可编辑而失败，修正等待实际按钮状态后完整重跑通过，不将失败计为通过。其余公开检查和远端完整CI以PR证据为准；未重复本机全315项DB回归。
+
+PR #9首轮Ubuntu完整CI在320px最新来源可见性断言失败（其余309项DB通过、5项平台跳过），Windows通过；没有合并或跳过失败。修复viewport尺寸变化触发scroll早于ResizeObserver时误取消跟随最新回复的问题，保留主动上滚阅读历史时不抢回位置。最终状态以修复后的两平台完整CI为准。
