@@ -166,3 +166,13 @@ PR #9首轮Ubuntu完整CI在320px最新来源可见性断言失败（其余309�
 验收覆盖真实BCG批准/QG下载包→复制→离线核对，比较前后事实/任务/收据/导出/审计数量及文件字节不变；格式、元数据和核心内容差异分开报告。坏包、重复字段、NaN/Infinity、编码/深度/尺寸、缺失、目录/特殊文件/叶子链接拒绝，错误不回显原文/路径。新增文件打开约束不改变退出包wire schema、BCG授权或导出行为；父目录链接不在本机只读operator的隔离保证内。
 
 复用T-REXP-001—003、T-ROPS-006和既有退出完整性目标，不修改正式Eval/Task/Gate语义或状态；`--require-complete`继续拒绝。Windows/Linux各自通过不证明实际两台机器的导入恢复。跨机业务写入、身份重新配置、生命周期账本和退役证明仍待实施。独立PR记录最终测试/CI，回滚为revert，无迁移；首轮Windows目录异常测试断言过窄已修正，不当作生产成功。详细操作见backend README。
+
+### 数据库与真实接入：设计准备（design-proposal，未实施）
+
+2026-10-23在main `3d8d750`上核对现有22表、QG/BCG/ISB、界面Store与刷新链。新增[专题设计提案](design/database-live-data-design.md)，建议保留PostgreSQL/SQLAlchemy Core/Alembic/Psycopg；先绑定真实学生/记录/任务投影，再以单独后续change处理耐久聊天、运行、工作专题和可靠变更订阅。本文没有执行迁移、增加Tool、启用Provider或替换当前Demo。
+
+设计把会话消息与正式事实分开、明确工作专题不是授权workspace，补齐并发幂等/终态、分页计数、跨页快照、提交水位、deadline无写变化及备份退出升级条件。D0复用既有T-RWEB-002—004/T-RDOM-009/010/013；D1—D3与DB-*为后续候选，不是新正式Task/Eval，原107/147/94定义和Gate状态不变。设计和官方资料核验不等于真实性能、模型质量或教师净负担验收；先前W4-02实际通过与合并证据见[PR #12](https://github.com/Gdnbit/classmatter/pull/12)。
+
+### D0 Goal：真实数据闭环执行与验收（2026-10-23，进行中）
+
+用户已明确授权持续推进及验收后GitHub同步。见[执行目标与验收台账](design/live-data-delivery-acceptance.md)：U0固定范围，U1恢复刷新，U2主界面真实绑定，U3综合验收/公开交付。11项LD验收索引不是正式Eval；目前未标通过。D1—D3不作为偷偷扩大R1的手段，无真实数据/付费Provider/Agent业务写入权限变更。设计原提交`b8bf32a`的81脚本测试、71份Markdown检查、公开guard及历史扫描为前轮设计证据，不等于本Goal完成。
