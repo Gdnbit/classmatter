@@ -144,7 +144,7 @@ ClassMatter 是 External Working Memory + Closure Engine。除管理班级的事
 ### 教育应用政策核验入口
 
 - 教育部等五部门《“人工智能+教育”行动计划》（2026-04-10）：提出 AI 辅助备课、资源生成、作业管理与智能批改，但这不是任意自动化评分的准入许可：https://www.moe.gov.cn/srcsite/A16/s3342/202604/t20260410_1433240.html
-- 教育部基础教育教学指导委员会《中小学生成式人工智能使用指南（2025 年版）》要求教师审核 AI 内容，不能把 AI 输出直接当作学生评价结果，并关注学生信息和试题保密。实际部署需核对官方原文、学校与地方规定：https://jyj.linxia.gov.cn/jyj/xxgk/fdzdgknr/zcwj/GJZC/art/2025/art_ec21649bfa774fb28ca73d6c6e287e4c.html
+- 教育部基础教育教学指导委员会《中小学生成式人工智能使用指南（2025 年版）》的官方转载涉及教师指导、内容准确性与信息保护。下列链接作为原文核验入口，不以本文概括推导自动评分准入或正式评价规则；实际部署仍须逐项核对官方原文、学校与地方规定：https://jyj.linxia.gov.cn/jyj/xxgk/fdzdgknr/zcwj/GJZC/art/2025/art_ec21649bfa774fb28ca73d6c6e287e4c.html
 
 ### 后续产品讨论（未定案）
 
