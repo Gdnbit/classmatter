@@ -219,3 +219,21 @@ U1最终远端验收：[PR #14](https://github.com/Gdnbit/classmatter/pull/14)�
 当前已验证Web54单测/类型/build、HTTP拒绝边界、真实聚焦链及Electron链的定向运行；加入最终数据库数量断言后，组合Web/PG/Electron仍在重跑，最终日志/计数及两平台CI按独立PR记录，不提前标U2或Goal完成。回滚为revert该独立PR，无schema/data迁移。LD-08持续到期刷新和U3完整故障矩阵仍待实施。
 
 最终本地组合：`uv run --frozen pytest tests/test_web_navigation.py tests/test_web.py tests/test_desktop_runtime.py -q --pg-root <owned-PG18.6> --junitxml=../test-results/live-navigation-final.xml` 4通过150.32秒（含最终数据库数量/版本断言、规范history清理及detail表格刷新）。全非DB302通过、2项宿主链接能力跳过、316项DB未在该命令执行；Web54/类型/build、桌面边界18通过。独立审查发现的两项导航问题均修复，并补真实work/多窗口及桌面深链证据；未提升跨scope恢复、Agent/身份/未知提交完整矩阵。截图实查320px表格只在自身区域横向滚动，页面无横向溢出。公开审查、最终清单及远端完整两平台CI仍须以该单元PR的实际结果收口。
+
+U2最终交付：[PR #15](https://github.com/Gdnbit/classmatter/pull/15)，提交`3b321696`，在[完整CI39999026807](https://github.com/Gdnbit/classmatter/actions/runs/39999026807)两平台成功及独立审查后合并main `5244047`。实际远端日志：Windows非DB304/Web54/desktop18；Ubuntu非DB302+2平台跳过、DB/browser311+5平台跳过。两平台公开guard、8.30.1历史扫描（4已审查、0未解决）、验证器81、文档72及图检查通过；643清单哈希独立复算零差异，例外元数据不变。不是完整Goal通过。
+
+### U3：时钟重读与综合故障验收（2026-10-24，实施中）
+
+基线main `5244047`；沿T-RWEB-002—004及原E-CMD/E-AUD/E-WEB/E-LOCAL，LD索引仅是本轮工程证据，不修改正式Requirement/Eval/Task/Gate。教师价值：不额外点击刷新即可看到既有任务跨到期变化，不因切页/未知回执重复操作；新增教师维护步骤为零。
+
+文件级范围：`query-refresh.ts`依据既有QG `activity.as_of/due_at/overdue/status`计算下次到期重读；`R1App.tsx`一次性可见窗口定时失效仍交U1控制器，沿原session/generation与idle保护。已结束、已逾期、无截止不定时；最短5秒、最长浏览器安全上限，避免零延迟循环和timer溢出。隐藏/断网清timer，返前台由原事件合并重读；失败停止自动尝试。客户端墙钟不判定逾期、不改状态，不是定时任务、提醒或可靠推送系统；后台无实时保证，响应传输及交互延后有滞后，多API仍非原子快照。
+
+验收增加`runtime-deadline-browser.mjs`/`test_web_deadline.py`：原BCG合成种子3项未来截止，真实服务器单调时钟跨到期，错误浏览器墙钟，表单延后、受控503交付、隐藏事件和可见空闲重读；无Agent adapter、外部请求及业务POST，最终PG三任务version1。隐藏由受控浏览器visibility事件验证接线，不冒称操作系统物理最小化。`runtime.mjs`加强未知提交Back/Forward后只GET原proposal/key、零额外preview/approve/commit，及Agent延迟交付期间Back/Forward不重读、不新增历史。`runtime-navigation-browser.mjs`增加实际旧200/撤销后401交付跨登录代次，以及原班归档→新空班后旧scope不回填；不手改React state或放开单active约束。
+
+首次加强组合3通过、1失败：新会话测试错误地把“未选择学生的授权班级时间线”期望为空；随后聚焦复现定位，改为交付前后同源内容一致，新增真实换班空时间线强断言，而非修改产品隐藏合法事实。最终组合、完整CI和公开清单仍待执行。回滚为独立PR revert，无schema/data迁移，不影响原工作区用户脏改动。D1聊天耐久、D2专题、D3可靠变更流及真实Provider/用户研究仍未获得本轮实现或质量证据。
+
+最终本地证据：Web/PG/Electron `tests/test_web_navigation.py tests/test_web.py tests/test_web_deadline.py tests/test_desktop_runtime.py` 5通过227.16秒；其中主链含实际停止Agent再交付迟到响应，答案/草稿未采纳、零额外POST及单次排队导航。Web55/类型/build、desktop18、非DB302+2宿主链接跳过（318项DB的最终收集数以后续CI为准；该非DB运行时为317项DB未执行）通过。U2基线另完整本机DB316通过957.39秒，不冒充新增U3全DB。失败保留：会话timeline错误预期、清理未等待交付而掩盖原异常、同名新建按钮需侧栏定位、新建班不自动替换教师当前归档选择需明确select；均修测试同步/合法动线，没有删安全断言或改变产品授权。
+
+独立审查要求补足真正PG业务重启：`test_local_runtime.py::test_owned_business_entities_survive_actual_pg_process_restart`在新临时SCRAM/DPAPI运行时经BCG写学生/事实/关联任务，关闭全部连接再stop/start自有PG，新建ISB/QG和数据库对象核对原实体ID/version/count、关联及完整投影；不是仅检查数据库元数据。local-runtime文件6项通过31.50秒，随后固定合成时钟的最终单项仍须核验。此证据只证明同机自有实例重启，不升级跨机迁移/容灾/恢复准入。README空白行导致docs首次拒绝，清理后72Markdown/引用/UTF8及图检查通过；正式107需求/147eval/94任务与green0不变。U3公开guard/历史扫描/精确清单、独立PR及完整两平台CI必须按实际结果收口。
+
+最终PG业务重启单项（固定合成时钟版本）1通过9.93秒。该补充缺口已由实际测试消除，不再把此前的metadata smoke当成业务持久性证明。最终公开CI/提交/合并收口证据记录在本单元独立PR验收评论；其成功之前本Goal不宣告完成。

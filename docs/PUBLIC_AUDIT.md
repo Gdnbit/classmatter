@@ -64,3 +64,7 @@ Reviewed first-party Web controller, R1 integration, synthetic unit/browser test
 ## 2026-10-24 real-mode navigation and view binding
 
 Reviewed first-party runtime navigation/student presentation, bounded HTTP shell routing, synthetic parser/browser/desktop tests and delivery notes. New GET routes serve only the fixed index file; they are not business APIs and never join user paths to files. Presentation query hints are closed and only allowed when Web is mounted; API, health and asset query rejection remains. URL/history state conveys no authorization or entity objects. Tests use deliberate synthetic names/IDs/passwords and actual disposable API/PG/BCG, with no live Provider or imported material. No database migration, permission, dependency, scanner exception or formal Gate change. Raw XML/screenshots/databases remain ignored. Exact final-byte manifest review and full two-platform CI are required; temporary chat and Future modules are not promoted.
+
+## 2026-10-24 U3 deadline and fault acceptance candidate
+
+Reviewed first-party UI refresh wiring and synthetic fixture/browser assertions only. Existing server `as_of`/deadline projections remain authoritative; no new endpoint, dependency, business grant, Agent write, schema or real data. Fixture clocks, passwords and faults are synthetic; raw screenshots, XML, runtime databases and machine paths stay ignored. Precise content hashes and full CI are required before public delivery; exception lists are unchanged. This review is not formal release or real-data admission.

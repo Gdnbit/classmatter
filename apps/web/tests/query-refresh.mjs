@@ -1,6 +1,20 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { createQueryRefresh } from '../src/runtime/query-refresh.ts'
+import { createQueryRefresh, deadlineRefreshDelay } from '../src/runtime/query-refresh.ts'
+
+test('deadline invalidation follows server as_of, excludes closed/overdue/no-date and bounds timers', () => {
+  const as_of = '2026-10-08T12:00:00Z'
+  const task = { status: 'waiting', overdue: false, due_at: '2026-10-08T12:01:00Z' }
+  const delay = tasks => deadlineRefreshDelay({ as_of, records: [], tasks })
+  assert.equal(delay([task]), 60250) // Independent of host date/timezone.
+  assert.equal(delay([{ ...task, due_at: as_of }]), 5000)
+  assert.equal(delay([{ ...task, due_at: '2020-01-01T00:00:00Z' }]), 5000)
+  assert.equal(delay([{ ...task, due_at: '2030-01-01T00:00:00Z' }]), 2147483647)
+  assert.equal(delay([task, { ...task, due_at: '2026-10-08T12:00:10Z' }]), 10250)
+  assert.equal(delay(['done', 'cancelled'].map(status => ({ ...task, status }))), null)
+  assert.equal(delay([{ ...task, overdue: true }, { ...task, due_at: null }, { ...task, due_at: 'invalid' }]), null)
+  assert.equal(deadlineRefreshDelay({ as_of: 'invalid', records: [], tasks: [task] }), null)
+})
 
 function fixture(read = async () => {}) {
   let now = 0, next = 0
