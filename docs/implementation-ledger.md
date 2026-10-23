@@ -13,7 +13,7 @@
 5. W4：补齐退出/恢复/运维，形成候选证据；先合成shadow，再作教师净负担研究和正式准入决定。
 6. W5：依据真实任务证据选择通知责任闭环或其他下一切片；新release change，不偷渡进冻结R1。
 
-W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2-01已实现受控runtime入口并用已有R1页面完成真实持久化纵向工程验收，W2完整冻结页面绑定及W3—W5未完成。未来模块仍只是样例；此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
+W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2-01已实现受控runtime入口并完成真实持久化纵向工程验收，W2-02/03继续学生与注意力/工作页绑定。W2完整冻结页面绑定及W3—W5未完成。未来模块仍只是样例；此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
 
 ## 能力、代码与追溯
 
@@ -21,7 +21,7 @@ W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2-01已实�
 | --- | --- | --- | --- |
 | 桌面窗口/原生顶栏/菜单/沙箱 | implemented-synthetic | `apps/desktop/` | DESKTOP-DEMO及W2-01 runtime工程验收；非新增正式R1任务；安装器/签名/更新未完成 |
 | 对话、历史、标题、搜索、输入草稿 | demo-only | `store/ConversationStore.tsx`、`shell/AppShell.tsx` | A05/A06/A11；当前内存会话，非持久工作历史 |
-| 首页三类注意力/个人任务 | partial | `store/DemoWorkStore.tsx`；`runtime/R1App.tsx`、backend activity | T-RDOM-009/010/013、T-RWEB-004；E-TSK-001/E-EVT-004；Demo与真实视图仍分离 |
+| 首页三类注意力/个人任务 | partial / W2-03 implemented-synthetic | `store/DemoWorkStore.tsx`；`runtime/R1App.tsx`、`runtime/work-projection.ts`、backend activity | T-RDOM-009/010/013、T-RWEB-004；E-TSK-001/E-EVT-004；真实全班注意力/任务筛选已接，通知责任候选仍未实现 |
 | 学生列表、详情、搜索、空态 | partial / W2-02 implemented-synthetic | `shell/AppShell.tsx`；`runtime/R1App.tsx`、`runtime/student-directory.ts`、backend roster | T-RDOM-002—005/011、T-RWEB-002；E-ROS-001—004/E-ID-001—004；真实姓名/UUID搜索、详情、关联跟进已接；非整个冻结shell迁移 |
 | 登录/会话/恢复码 | implemented-synthetic | backend identity、runtime identity | T-RPLT-013/014/018/019、T-RWEB-001；E-AUTH-009—018；新开发桌面已接既有R1登录；owner凭据不由Agent设置 |
 | 事实/观察/更正/来源 | implemented-synthetic | backend activity、runtime forms | T-RDOM-006—008/012、T-RWEB-003；E-EVT/E-LEAVE/E-HWK；需在冻结桌面交互复验 |
@@ -99,3 +99,14 @@ W2-01验证：后端非DB284项、完整隔离DB回归315项（包含真实浏�
 - GitHub远端新增`a5e3156`研究文档已先合并并保留，Agent承接工作/Pi对照实验仍为Discovery/Future。同步不代表这些研究已实施或准许扩大R1。
 - 本轮既有回归：backend非DB284项、真实浏览器/PG集成1项、真实桌面/PG集成1项、Web41项/类型/普通与Demo/runtime构建、Node18项通过。工程脚本81项在新增源文件加入Git索引后重跑通过（首次索引遗漏未记为通过）。公开内容和历史扫描仅有原4条已审查记录、0未解决；68份Markdown的引用/UTF-8/空白与冻结Task/Gate/Eval图检查通过。未重复运行上一轮完整315项DB suite，不把定向回归冒称全量。
 - 原离线Demo smoke与打包应用A01—A17复测通过，`pageErrors=[]`、`externalRequests=[]`。首次因已有Demo占用单实例锁而退出；核实路径与窗口后正常关闭该Demo再重跑通过，不修改业务实例。浏览器预览构建恢复Demo模式，避免误把用户当前8443页面切成未配置的R1登录。
+
+### W2-03：全班注意力与工作筛选边界（2026-10-23）
+
+- 修正学生详情筛选意外影响全班首页/总览的缺陷：注意力和全班未结束计数始终来自当前授权班级/学期的完整活动快照；总览最近事实也来自同范围。工作页学生/状态筛选只是投影，不修改领域状态。
+- 从全班注意力卡片进入任务时清除旧学生/状态筛选，确保目标可见；学生详情关联跟进保留明确学生范围但清除旧状态筛选。总览统计入口与其展示范围一致，不再用全班数字跳到残留的局部结果。
+- 新增全部/未结束/等待别人/已结束筛选、当前/全班任务数量及清空空态；状态筛选与学生筛选取交集。完成/取消退出注意力但保留可查历史，等待状态不声称对方接手或自动转移责任。
+- 新增`runtime/work-projection.ts`纯投影和2项测试；复用既有QG/BCG、预览确认和幂等/收据路径。不新增后端、Schema、工具、通知推断、调度或提醒机制。
+- 追溯复用T-RWEB-004、T-RDOM-009/010/013与既有E-TSK/E-EVT；Requirement/Eval/Task/Gate定义及正式状态不变。W2其余冻结shell绑定/完整故障矩阵、W3真实provider质量、W4生命周期及用户研究仍待完成。
+- 验收过程保留失败：桌面首轮测试仍假设全班任务返回学生页会保留某位学生详情，在新正确范围下找不到详情；测试明确重选学生后重跑通过。未修改产品去迁就旧筛选残留。最终验收结果在本节追加，不能把未执行的用例或上一轮DB全量算作本轮通过。
+- 最终定向工程验收通过：Web43项/类型检查、普通与runtime构建；Node18项；真实浏览器/PG1项与真实Electron/PG1项；工程脚本81项；68份Markdown链接/UTF-8/空白检查、Task/Gate/Eval引用和定义hash检查。Electron新增覆盖空学生筛选不影响全班注意力/最近事实、卡片范围重置、等待转移、总览统计跳转、完成退出注意力及已结束历史。结果仍为`pageErrors=[]`、`externalRequests=[]`，忽略目录`apps/desktop/.build/evidence/runtime/04-work-filters.png`已人工复核布局。
+- 本轮无后端/数据库迁移修改，未重跑完整315项DB或284项非DB套件；以上定向真实API/PG回归不等于正式发布准入、模型质量或真实教师净负担验收。原离线Demo行为未修改；浏览器预览仍恢复Demo构建。公开清单按最终字节更新，GitHub同步只包含审查后的源码/文档，不包含运行数据与截图。

@@ -67,7 +67,19 @@ async function main(){
     await page.getByRole('button',{name:/另一合成学生.*版本/}).click();
     await summary.getByText('此学生尚无关联跟进。',{exact:true}).waitFor();
     assert.equal(await page.getByText('合成桌面持久化事实',{exact:true}).count(),0);
-    await page.getByRole('button',{name:'返回全部学生',exact:true}).click();
+    // Student 2 has no tasks. Class attention must still show student 1's task.
+    await page.getByRole('button',{name:'总览',exact:true}).click();
+    await page.locator('.r1-stats').getByRole('button',{name:/1.*未结束任务/}).waitFor();
+    await page.getByText('合成桌面持久化事实',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'对话',exact:true}).click();
+    await page.locator('.r1-attention').getByRole('button',{name:/合成桌面持久化任务/}).click();
+    assert.equal(await page.getByLabel('按学生筛选任务').inputValue(),'');
+    await page.getByRole('button',{name:'完成并记结果',exact:true}).waitFor();
+    await page.getByLabel('按状态筛选任务').selectOption('waiting');
+    await page.getByText('当前筛选下没有任务，可清空筛选查看全部。',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'清空任务筛选',exact:true}).click();
+    await page.getByText('显示 1 / 1 项任务 · 全班未结束 1 项',{exact:true}).waitFor();
+    await page.getByRole('button',{name:'学生',exact:true}).click();
     await page.getByRole('button',{name:/合成桌面学生.*版本/}).click();
     const internalId=(await summary.innerText()).match(/内部 ID：([a-f0-9-]+)/)[1];
     await page.getByLabel('搜索学生').fill(` ${internalId.toUpperCase()} `);
@@ -86,14 +98,33 @@ async function main(){
     await page.getByText('合成桌面持久化事实',{exact:true}).waitFor();
     const restartedSummary=page.getByRole('region',{name:'学生详情摘要'});
     await restartedSummary.getByRole('button',{name:/合成桌面持久化任务/}).click();
+    await page.getByRole('button',{name:'等待别人',exact:true}).click();
+    await page.getByRole('button',{name:'确认提交',exact:true}).click();
+    await page.getByRole('dialog').waitFor({state:'hidden'});
+    await page.getByRole('button',{name:'对话',exact:true}).click();
+    const waitingColumn=page.locator('.r1-attention section').filter({has:page.getByRole('heading',{name:'等待别人',exact:true})});
+    await waitingColumn.getByRole('button',{name:/合成桌面持久化任务/}).waitFor();
+    const actionColumn=page.locator('.r1-attention section').filter({has:page.getByRole('heading',{name:'需要我处理',exact:true})});
+    assert.equal(await actionColumn.getByRole('button',{name:/合成桌面持久化任务/}).count(),0);
+    await page.getByRole('button',{name:'总览',exact:true}).click();
+    await page.locator('.r1-stats').getByRole('button',{name:/1.*未结束任务/}).click();
+    assert.equal(await page.getByLabel('按状态筛选任务').inputValue(),'open');
+    await page.getByRole('button',{name:/合成桌面持久化任务.*等待别人/}).click();
     await page.getByRole('button',{name:'完成并记结果',exact:true}).click();
     await page.getByLabel('完成结果 / 核对证据').fill('合成跟进已核对');
     await commit(page);
     await page.getByRole('button',{name:'学生',exact:true}).click();
+    await page.getByRole('button',{name:/合成桌面学生.*版本/}).click();
     await restartedSummary.getByText(/0 项未结束跟进/).waitFor();
     await restartedSummary.getByRole('button',{name:/合成桌面持久化任务.*已完成/}).waitFor();
     await page.screenshot({path:path.join(evidence,'02-after-restart.png')});
+    await page.getByRole('button',{name:'工作',exact:true}).click();
+    await page.getByLabel('按状态筛选任务').selectOption('closed');
+    await page.getByRole('button',{name:/合成桌面持久化任务.*已完成/}).waitFor();
+    await page.getByText('显示 1 / 1 项任务 · 全班未结束 0 项',{exact:true}).waitFor();
+    await page.screenshot({path:path.join(evidence,'04-work-filters.png')});
     await page.getByRole('button',{name:'对话',exact:true}).click();
+    assert.equal(await page.locator('.r1-attention').getByRole('button',{name:/合成桌面持久化任务/}).count(),0);
     await page.getByLabel('输入消息').fill('合成查询当前工作');
     await page.getByRole('button',{name:'发送消息',exact:true}).click();
     await page.locator('.r1-messages').getByText(/来源已重新查询/).waitFor();
@@ -119,7 +150,7 @@ async function main(){
       await new Promise(resolve=>setTimeout(resolve,50));
     }
     assert.ok(gone,'Owned API must exit on parent pipe EOF after desktop crash');
-    fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({scope:'Synthetic disposable database and R1 student binding; deterministic fake provider, not real-model quality or full frozen shell migration',checks:['owned-process-proof','private-approval-and-command','record-task-linked','student-search-empty-and-reset','student-id-search','student-detail-no-cross-identity','student-follow-up-navigation-and-completion-count','restart-persistence','owned-api-stop','read-tool-source','draft-not-committed','parent-crash-pipe-cleanup'],pageErrors:errors,externalRequests:remote},null,2));
+    fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({scope:'Synthetic disposable database and R1 student/attention/work binding; deterministic fake provider, not real-model quality or full frozen shell migration',checks:['owned-process-proof','private-approval-and-command','record-task-linked','student-search-empty-and-reset','student-id-search','student-detail-no-cross-identity','student-follow-up-navigation-and-completion-count','class-attention-independent-of-student-filter','work-filter-empty-reset','waiting-transition-and-global-count','completed-task-leaves-attention','restart-persistence','owned-api-stop','read-tool-source','draft-not-committed','parent-crash-pipe-cleanup'],pageErrors:errors,externalRequests:remote},null,2));
     console.log('Synthetic desktop record/task/restart passed');
   } catch(error){if(app){const page=await app.firstWindow();await page.screenshot({path:path.join(evidence,'failure.png')}).catch(()=>{});console.error('Runtime UI failed:',page.url());}throw error;}
   finally {try{if(app)await app.close();}finally{fs.writeFileSync(sourceFile,original);}}

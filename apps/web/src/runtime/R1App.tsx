@@ -41,6 +41,7 @@ import { createScopedConversation, parseRecordNoteCandidate, type RecordNoteCand
 import { decodeApproval, decodeCommandReceipt, decodeCommandState } from "./command-receipts"
 import { decodeTermMetadata } from "./term-metadata"
 import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
+import { filterWorkTasks, projectAttention, type WorkFilter } from "./work-projection"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -110,6 +111,7 @@ export default function R1App() {
   const [termMetadata, setTermMetadata] = useState<Readonly<TermMetadata> | null>(null)
   const [record, setRecord] = useState<RecordItem | null>(null)
   const [task, setTask] = useState<TaskItem | null>(null)
+  const [workFilter, setWorkFilter] = useState<WorkFilter>("all")
   const [pending, setPending] = useState<Pending | null>(null)
   const [busy, setBusy] = useState(false)
   const [refreshing, setRefreshing] = useState(true)
@@ -176,6 +178,7 @@ export default function R1App() {
   useEffect(() => () => { runningAgent.current?.abort() }, [])
   useEffect(() => { setAuditPage(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   useEffect(() => { setSearch("") }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
+  useEffect(() => { setWorkFilter("all") }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   useEffect(() => { termLoad.current++; setTermMetadata(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   const fail = useCallback((reason: unknown) => {
     setError(reason instanceof Error ? reason.message : "操作失败")
@@ -401,12 +404,9 @@ export default function R1App() {
   const records = selectedStudent
     ? latest.filter((item) => item.student_id === selectedStudent)
     : latest
-  const tasks = (activity?.tasks || []).filter(
-    (item) => !selectedStudent || item.student_id === selectedStudent,
-  )
-  const openTasks = tasks.filter(
-    (item) => !["done", "cancelled"].includes(item.status),
-  )
+  const tasks = filterWorkTasks(activity?.tasks || [], selectedStudent, workFilter)
+  const attention = projectAttention(activity?.tasks || [])
+  const openTasks = attention.open
 
   function open(next: Form) {
     termLoad.current++
@@ -677,6 +677,8 @@ export default function R1App() {
           key={item.task_id}
           className="r1-attention-item"
           onClick={() => {
+            setSelectedStudent("")
+            setWorkFilter("all")
             setTask(item)
             setPage("work")
           }}
@@ -857,9 +859,7 @@ export default function R1App() {
               <div className="r1-attention">
                 <section>
                   <h3>需要我处理</h3>
-                  {taskCards(
-                    openTasks.filter((item) => item.status !== "waiting"),
-                  )}
+                  {taskCards(attention.needsAction)}
                 </section>
                 <section>
                   <h3>可能遗漏</h3>
@@ -874,9 +874,7 @@ export default function R1App() {
                 </section>
                 <section>
                   <h3>等待别人</h3>
-                  {taskCards(
-                    openTasks.filter((item) => item.status === "waiting"),
-                  )}
+                  {taskCards(attention.waiting)}
                 </section>
               </div>
               <div className="r1-quick">
@@ -925,15 +923,15 @@ export default function R1App() {
                 </p>
               </div>
               <div className="r1-stats">
-                <button onClick={() => setPage("students")}>
+                <button onClick={() => { setSelectedStudent(""); setSearch(""); setPage("students") }}>
                   {students.length}
                   <span>学生</span>
                 </button>
-                <button onClick={() => setPage("work")}>
+                <button onClick={() => { setSelectedStudent(""); setWorkFilter("open"); setTask(null); setPage("work") }}>
                   {openTasks.length}
                   <span>未结束任务</span>
                 </button>
-                <button onClick={() => setPage("students")}>
+                <button onClick={() => { setSelectedStudent(""); setSearch(""); setPage("students") }}>
                   {latest.length}
                   <span>已确认事实 / 观察</span>
                 </button>
@@ -941,7 +939,7 @@ export default function R1App() {
               <h2>任务</h2>
               {taskCards(openTasks)}
               <h2>最近事实</h2>
-              {records.slice(0, 10).map((item) => (
+              {latest.slice(0, 10).map((item) => (
                 <RecordCard
                   key={item.record_id}
                   item={item}
@@ -1031,7 +1029,7 @@ export default function R1App() {
                         <p className="r1-muted">只展示当前班级、学期内已查询的数据，不代表完整人物画像。成绩、文件、关系图谱尚未接入。</p>
                         <h3>关联跟进</h3>
                         {selectedFollowUps.length ? selectedFollowUps.map(item => (
-                          <button className="r1-attention-item" key={item.task_id} onClick={() => { setTask(item); setPage("work") }}>
+                          <button className="r1-attention-item" key={item.task_id} onClick={() => { setWorkFilter("all"); setTask(item); setPage("work") }}>
                             <span>{item.title}</span><span>{states[item.status]}</span>
                           </button>
                         )) : <p className="r1-muted">此学生尚无关联跟进。</p>}
@@ -1155,7 +1153,7 @@ export default function R1App() {
                 <select
                   aria-label="按学生筛选任务"
                   value={selectedStudent}
-                  onChange={(event) => setSelectedStudent(event.target.value)}
+                  onChange={(event) => { setSelectedStudent(event.target.value); setTask(null) }}
                 >
                   <option value="">全部学生 / 班级</option>
                   {students.map((item) => (
@@ -1164,8 +1162,16 @@ export default function R1App() {
                     </option>
                   ))}
                 </select>
+                <select aria-label="按状态筛选任务" value={workFilter} onChange={event => { setWorkFilter(event.target.value as WorkFilter); setTask(null) }}>
+                  <option value="all">全部状态</option>
+                  <option value="open">未结束</option>
+                  <option value="waiting">等待别人</option>
+                  <option value="closed">已结束（完成 / 取消）</option>
+                </select>
+                {(selectedStudent || workFilter !== "all") && <button onClick={() => { setSelectedStudent(""); setWorkFilter("all"); setTask(null) }}>清空任务筛选</button>}
               </div>
-              {!tasks.length && <p className="r1-muted">尚无任务。</p>}
+              <p className="r1-muted" role="status">显示 {tasks.length} / {activity?.tasks.length || 0} 项任务 · 全班未结束 {openTasks.length} 项</p>
+              {!tasks.length && <p className="r1-muted">{selectedStudent || workFilter !== "all" ? "当前筛选下没有任务，可清空筛选查看全部。" : "尚无任务。"}</p>}
               {tasks.map((item) => (
                 <article className="r1-card" key={item.task_id}>
                   <button

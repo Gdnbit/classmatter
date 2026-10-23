@@ -2,6 +2,12 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "apps/web/src/runtime/work-projection.ts": {
+      "sha256": "71b687f2af40bfb336c2d6f13a1477375b0260a240d3a39aae4c27e1f4baa4d5"
+    },
+    "apps/web/tests/work-projection.mjs": {
+      "sha256": "eb797f90ddb743e282c9bfdf67ca88ddd4f1fdb3f3ed469c6c34c72f2dd300b5"
+    },
     "apps/web/src/runtime/student-directory.ts": {
       "sha256": "149fd6faa41aa0fd0edf4fb9f0d44ae9ecf02aa6364a12391e3e83e286c003a7"
     },
@@ -24,7 +30,7 @@
       "sha256": "afcdce4a4184c9a44dcd68f71a83bf6af922891c27b9a767ff892d08e156b5d2"
     },
     "apps/desktop/tests/runtime-integration.cjs": {
-      "sha256": "d4515ee0d36ad473104ea8501473bd4323b00cd9976853629d99ca1e29816781"
+      "sha256": "e94fa7983835b33dc3922cfb4fc6979ab9a1cd361fb6319603a9ed602dbac8dd"
     },
     "apps/desktop/tests/runtime-service.test.cjs": {
       "sha256": "85a61ac3feb761e1f39ad820d75bb1e685edf4087ee2a025ec35c86f9cd815ad"
@@ -48,7 +54,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "3a99278106a9098192a6bf253df8c84fc789affe4da02136b43e25bd2aef0f35"
+      "sha256": "e5fb3d050a185b55f32120139cb6e429bff1f56c591a54c031466c088be95771"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -225,7 +231,7 @@
       "sha256": "6857940a16627475250d8d98cf9711cf58e418459b8a7f97755f0c3180ed845f"
     },
     "apps/web/package.json": {
-      "sha256": "128a5a658338ccd036a28e7a87cae80a72c543152dbe555a1f0759791da76518"
+      "sha256": "a79af5cd9149da3de6ecdf455e8d1c06b6b0ff6f210c11996f6551f71699be02"
     },
     "apps/web/pnpm-lock.yaml": {
       "sha256": "c684a8b108321e9dcce6bf62b4b1b4b6e8e64f4e55e3019ed95f1f95ca184251"
@@ -282,7 +288,7 @@
       "sha256": "fe5baeec654888996fa3a94a03251bea227325fa54dc53a4e351ecd72d8d4d9b"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "eb6d7eb4bfa3f7f5ae2d16eb6885c55f880cb24451ebaaf5f865aada2d34105d"
+      "sha256": "6afeb4f06167373ecb3c4ac670bc7194ce37e23bb239927464e40bbb9f095d52"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "8f005293650b914c64f9649c7c70efe41080d6a310c275aff9fdf4707588160b"
