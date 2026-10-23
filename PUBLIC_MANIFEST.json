@@ -2,6 +2,12 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "apps/web/tests/runtime-deadline-browser.mjs": {
+      "sha256": "5214c4c0f6f77e077741a70a694fc39d8450d8d2f3641524a41f2a40c4d22ca3"
+    },
+    "backend/tests/test_web_deadline.py": {
+      "sha256": "dfa19a05d78f4661f2589e6fdaec2cd8bd5f7b201f8f211b82afeab0a3f927e4"
+    },
     "apps/web/src/runtime/StudentDirectory.tsx": {
       "sha256": "73790e212f300108a9c40daf411c5f7c71e7fabe36933e1c0e23d3a2a14dd5a0"
     },
@@ -15,22 +21,22 @@
       "sha256": "49fdb0702faf5b96e98e924f4a777def8e4cead9cdfc4eb0f1199474adbd4c04"
     },
     "apps/web/tests/runtime-navigation-browser.mjs": {
-      "sha256": "512bfc6ce210771f1331e82d74ed1cb0f6206cc4b6c2c9ef767d247ab4b7d198"
+      "sha256": "761b03c632ff032e89d287a59b98ebb71b1af2b11af79d0b679cea8f7486ac9f"
     },
     "apps/web/tests/runtime-navigation.mjs": {
       "sha256": "93f0554317bfb260983c474b0535354f9a32bdfc6a13b4654342906b9d7f8b5f"
     },
     "backend/tests/test_web_navigation.py": {
-      "sha256": "7d57fc2c4e11dc1e0fc2c46fd628efbe7fb0c30ddb4730566e36553b7ab76de0"
+      "sha256": "0662362324e8754e9ca379d7729aebf9a8bf4205ef1b46bf683225ae4aae5bd4"
     },
     "apps/web/src/runtime/query-refresh.ts": {
-      "sha256": "81f4d6c3c47837be07905c2301734a565a3a659ddef4c6b7827f1ed558769fa1"
+      "sha256": "779b88126742d1b1ad1785a9b4eb2feeb8a4e51efa1ccdcf55359ec59bba06b7"
     },
     "apps/web/tests/query-refresh.mjs": {
-      "sha256": "50a724c16343197954a58d000f4ec9eb137112f4084ddaca89465b24637a0d48"
+      "sha256": "bb036d19d48a159faab1a8f8327d43ef78331eae0de46fe1ae5f625cfd0f2547"
     },
     "docs/design/live-data-delivery-acceptance.md": {
-      "sha256": "04b295431589d9783fe7e340d183d18100d79f3c653b93c6f46157fc510eae67"
+      "sha256": "b51399f3b9997dcde04bb543816ce10a950bf49bcc93c78c3dc3ef2fab600195"
     },
     "docs/design/database-live-data-design.md": {
       "sha256": "beecbcaa2cbb9a7c7d42c5806906ed8e0c994d69174004fd646ca657c33adb0a"
@@ -96,7 +102,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "f101153325b232834104e20bc46ec98feb0ba6526eb049a873b95919d89f18ed"
+      "sha256": "56c3c63e7056aecfef0eee23e9929291ae785ccdf5063230052e234764d987b6"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -267,7 +273,7 @@
       "sha256": "a916845977c93c4a807d1bf56dd224f0d8015d7a46620643b30eec79e843987b"
     },
     "apps/web/README.md": {
-      "sha256": "bd8035f9c87c4ff5fa163f5242ed5d675de930425d243d0c53cc0e880eb655df"
+      "sha256": "918fb5e630be438b4dc556b6cce90c61168721e34a4e7fa0c06c784e5923ba41"
     },
     "apps/web/index.html": {
       "sha256": "6857940a16627475250d8d98cf9711cf58e418459b8a7f97755f0c3180ed845f"
@@ -330,7 +336,7 @@
       "sha256": "fe5baeec654888996fa3a94a03251bea227325fa54dc53a4e351ecd72d8d4d9b"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "510f7e603df9832ed2e14d516cd8a9ee050ca72640ec2224916169651f796d96"
+      "sha256": "1b9dd5d2686f403c41250995a654aad3b980f6a06288f994651a5ea84b57444b"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "8f005293650b914c64f9649c7c70efe41080d6a310c275aff9fdf4707588160b"
@@ -474,7 +480,7 @@
       "sha256": "507d510cee982bdd2b6af4169e3701fb42642c849558155cdbdf0339d5442885"
     },
     "apps/web/tests/runtime.mjs": {
-      "sha256": "bf84ef69eed0a0dd2a7a3e7a845e8df2cd745962aeb2769399309f58a2c5db15",
+      "sha256": "bfa322d4b1d92c899c009b6522b61620d7d9d0c011bdb3b0343dc3ded02dfd4a",
       "reviewed_pattern_exceptions": [
         {
           "rule": "email-shape",
@@ -831,7 +837,7 @@
       "sha256": "99be70872395e28688e75ed73ad22297e6e3adb4214ce758105c0068906febd1"
     },
     "backend/tests/test_local_runtime.py": {
-      "sha256": "10815103967f09b9c7e6a162da127a1c13525c217ca9199da5b7d0b77ee1678e"
+      "sha256": "6d39d9682c8ac7a4e67ea73934b160bb1e60b93a12aecf63e47098364c405d4b"
     },
     "backend/tests/test_logout_receipt.py": {
       "sha256": "272c2e3d0eea6cf720f242c52930a36307afa099baa0b27efd95956d2cae8a48"
@@ -1069,7 +1075,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "a12730e3144b6a871d51e62a40bf0c17c2efd2f7574e38f56c70cfbea0eb9d1f"
+      "sha256": "75980846b58cf88833c5889917c5e370269b3afd85aab9ccf724e413029d4319"
     },
     "docs/README.md": {
       "sha256": "c27648890e17daccf94655ba7366b9abc4289af94990cd82f36d144fd3626daa"

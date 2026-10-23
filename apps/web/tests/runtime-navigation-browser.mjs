@@ -186,6 +186,81 @@ try {
   assert.equal(await page.evaluate(() => history.state), null)
   await page.getByText('合成导航数据库事实', { exact: true }).waitFor()
   assert(!(await page.locator('body').innerText()).includes('synthetic-untrusted-history'))
+
+  // Hold genuine old-session delivery across actual logout/login. For 401,
+  // defer the upstream request itself until its captured cookie is revoked.
+  const activityRoute = /\/terms\/[0-9a-f-]+\/activity$/
+  for (const [oldStatus, switchScope] of [[200, false], [401, false], [200, true]]) {
+    let release, reached, delivered, deliveryError, first = true
+    const gate = new Promise(resolve => { release = resolve })
+    const ready = new Promise(resolve => { reached = resolve })
+    const done = new Promise(resolve => { delivered = resolve })
+    const oldDelivery = async route => {
+      if (!first) { await route.continue(); return }
+      first = false
+      try {
+        let response
+        if (oldStatus === 200) response = await route.fetch()
+        reached()
+        await gate
+        if (oldStatus === 401) response = await route.fetch()
+        assert.equal(response.status(), oldStatus)
+        await route.fulfill({ response })
+      } catch (error) { deliveryError = error }
+      finally { reached(); delivered() }
+    }
+    await page.route(activityRoute, oldDelivery)
+    try {
+      await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+      await ready
+      assert.equal(await page.getByLabel('切换班级学期', { exact: true }).isDisabled(), true)
+      await page.locator('.r1-logout').click()
+      await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026')
+      await page.getByRole('button', { name: '登录', exact: true }).click()
+      await page.getByRole('heading', { name: '今天想处理什么？', exact: true }).waitFor()
+      await page.getByRole('button', { name: '学生', exact: true }).click()
+      await waitEditable()
+      await page.getByText('页面切换已延后。', { exact: false }).waitFor({ state: 'hidden' })
+      if (switchScope) {
+        await page.getByRole('button', { name: '设置', exact: true }).click()
+        await page.getByRole('button', { name: '预览归档（历史仍可查看）', exact: true }).click()
+        await page.getByRole('button', { name: '明确批准并提交', exact: true }).click()
+        await page.getByRole('dialog').waitFor({ state: 'hidden' })
+        await page.getByRole('complementary').getByRole('button', { name: '建立班级与学期', exact: true }).click()
+        await page.getByLabel('班级名称', { exact: true }).fill('合成新范围空班')
+        await page.getByLabel('学期名称', { exact: true }).fill('合成新范围学期')
+        await page.getByLabel('学期开始').fill('2026-09-01')
+        await page.getByLabel('学期结束（不包含该日）').fill('2027-01-31')
+        await page.getByRole('button', { name: '生成预览', exact: true }).click()
+        await page.getByRole('button', { name: '明确批准并提交', exact: true }).click()
+        await page.getByRole('dialog').waitFor({ state: 'hidden' })
+        // Creation does not silently replace the teacher's selected archive.
+        // Select the actual new scope through its existing authorized control.
+        await page.getByLabel('切换班级学期', { exact: true }).selectOption({ label: '合成新范围空班 · 合成新范围学期' })
+        await page.getByRole('button', { name: '学生', exact: true }).click()
+        await waitEditable()
+      }
+      const currentScope = await page.getByLabel('切换班级学期', { exact: true }).inputValue()
+      const expectedFacts = switchScope ? 0 : 1 // No selected student means authorized class timeline, not an empty view.
+      assert.equal(await page.getByText('合成导航数据库事实', { exact: true }).count(), expectedFacts)
+      release(); await done
+      assert.equal(deliveryError, undefined)
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+      assert.equal(await page.getByLabel('Owner 密码').count(), 0)
+      assert.equal(await page.getByText('合成导航数据库事实', { exact: true }).count(), expectedFacts)
+      assert.equal(await page.getByLabel('切换班级学期', { exact: true }).inputValue(), currentScope)
+      // Complete another actual authorized read after the late delivery.
+      await page.getByRole('button', { name: '刷新数据', exact: true }).click()
+      await waitEditable()
+      assert.equal(path(), '/students')
+      assert.equal(await page.getByLabel('Owner 密码').count(), 0)
+      assert.equal(await page.getByText('合成导航数据库事实', { exact: true }).count(), expectedFacts)
+      await page.getByText('页面切换已延后。', { exact: false }).waitFor({ state: 'hidden' })
+      assert.equal(await page.getByLabel('切换班级学期', { exact: true }).inputValue(), currentScope)
+      if (switchScope) assert.equal(await page.getByRole('button', { name: /合成导航学生甲.*版本/ }).count(), 0)
+      else await page.getByRole('button', { name: /合成导航学生甲.*版本/ }).waitFor()
+    } finally { release(); await done; await page.unroute(activityRoute, oldDelivery) }
+  }
   await page.getByRole('button', { name: '设置', exact: true }).click()
   await page.getByRole('button', { name: '注销当前会话', exact: true }).click()
   await page.getByRole('button', { name: '登录', exact: true }).waitFor()

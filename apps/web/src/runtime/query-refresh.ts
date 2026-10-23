@@ -1,4 +1,22 @@
-// Foreground invalidation only: no polling, writes, model calls or persistence.
+import type { Activity } from "./api.ts"
+
+// Relative to the authorized server snapshot, not the teacher's wall clock.
+// This only requests a new QG projection: the server remains overdue authority.
+export function deadlineRefreshDelay(activity: Activity): number | null {
+  const asOf = Date.parse(activity.as_of)
+  if (!Number.isFinite(asOf)) return null
+  const nearest = activity.tasks.reduce((nearest, task) => {
+    if (task.overdue || task.status === "done" || task.status === "cancelled" || task.due_at === null) return nearest
+    const due = Date.parse(task.due_at)
+    return Number.isFinite(due) ? Math.min(nearest, due) : nearest
+  }, Infinity)
+  if (!Number.isFinite(nearest)) return null
+  // Minimum bounds near-boundary reads; maximum avoids browser timer overflow.
+  return Math.min(2147483647, Math.max(5000, nearest - asOf + 250))
+}
+
+// Event/deadline invalidation only: no recurring hidden polling, writes, model
+// calls or persistence. A failed read is not autonomously retried.
 export function createQueryRefresh(options: {
   read: () => Promise<void>
   invalidate: () => void

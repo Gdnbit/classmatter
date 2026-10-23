@@ -44,7 +44,7 @@ import { decodeTermMetadata } from "./term-metadata"
 import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
 import { filterWorkTasks, projectAttention, type WorkFilter } from "./work-projection"
 import { CommandPreview } from "./CommandPreview"
-import { createQueryRefresh } from "./query-refresh"
+import { createQueryRefresh, deadlineRefreshDelay } from "./query-refresh"
 import { useRuntimeNavigation } from "./useRuntimeNavigation"
 import { StudentDirectory } from "./StudentDirectory"
 
@@ -356,6 +356,31 @@ export default function R1App() {
   }, [session])
   // Release deferred invalidation after the interaction that blocked it ends.
   useEffect(() => { foregroundRefresh.current?.resume() })
+
+  useEffect(() => {
+    if (!session || !activity || !queryFresh) return
+    const delay = deadlineRefreshDelay(activity)
+    if (delay === null) return
+    const started = performance.now()
+    let timer: number | undefined
+    const clear = () => { window.clearTimeout(timer); timer = undefined }
+    const arm = () => {
+      clear()
+      if (document.visibilityState !== "visible" || !navigator.onLine) return
+      timer = window.setTimeout(() => {
+        timer = undefined
+        if (document.visibilityState === "visible" && navigator.onLine) foregroundRefresh.current?.request()
+      }, Math.max(0, delay - (performance.now() - started)))
+    }
+    arm()
+    document.addEventListener("visibilitychange", arm)
+    window.addEventListener("offline", clear)
+    return () => {
+      clear()
+      document.removeEventListener("visibilitychange", arm)
+      window.removeEventListener("offline", clear)
+    }
+  }, [session?.csrf_token, classroom?.class_id, classroom?.term_id, activity, queryFresh])
 
   async function action(operation: () => Promise<void>) {
     if (busy) return

@@ -70,6 +70,8 @@ def test_real_browser_navigation_and_single_world_views(roster):
                                 capture_output=True, text=True, encoding="utf-8", creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         assert result.returncode == 0, result.stdout + result.stderr
         with owner.transaction(read_only=True) as connection:
+            assert connection.execute(text("SELECT count(*) FROM class_os.school_class")).scalar_one() == 2
+            assert connection.execute(text("SELECT count(*) FROM class_os.school_class WHERE status='active'")).scalar_one() == 1
             assert connection.execute(text("SELECT count(*) FROM class_os.student")).scalar_one() == 2
             assert connection.execute(text("SELECT count(*) FROM class_os.record_revision")).scalar_one() == 2
             assert connection.execute(text("SELECT count(DISTINCT record_id) FROM class_os.record_revision")).scalar_one() == 1

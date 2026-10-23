@@ -339,8 +339,11 @@ try {
   const nameTargetId = nameTarget.match(/[0-9a-f]{8}/)[0];
   let wrongReceiptDelivered = 0;
   let receiptLookupCount = 0;
+  const receiptLookupPaths = [];
   const countReceiptLookup = request => {
-    if (request.method() === 'GET' && /\/commands\/[0-9a-f-]+\/receipts\/[0-9a-f-]+$/.test(request.url())) receiptLookupCount++;
+    if (request.method() === 'GET' && /\/commands\/[0-9a-f-]+\/receipts\/[0-9a-f-]+$/.test(request.url())) {
+      receiptLookupCount++; receiptLookupPaths.push(new URL(request.url()).pathname);
+    }
   };
   page.on('request', countReceiptLookup);
   const receiptDelivery = /\/commands\/commit$/;
@@ -354,8 +357,10 @@ try {
   });
   for (const [previousName, nextName] of [['合成浏览器学生', '合成姓名更正'], ['合成姓名更正', '合成浏览器学生']]) {
     let unavailableDeliveryCount = 0;
+    let originalCommit;
     if (previousName === '合成姓名更正') {
       await page.route(receiptDelivery, async route => {
+        originalCommit = route.request().postDataJSON();
         const response = await route.fetch();
         assert.equal(response.status(), 200); // Actual commit succeeded; 503 is delivery loss, not rollback proof.
         unavailableDeliveryCount++;
@@ -380,8 +385,24 @@ try {
       await page.getByRole('alert').filter({ hasText: '先核对原请求结果，不要重复新建' }).waitFor({ timeout: 2000 });
       assert.equal(unavailableDeliveryCount, 1);
       assert(!(await page.getByRole('alert').innerText()).includes('synthetic-private-503-canary'));
+      const additionalCommands = [];
+      const countAdditionalCommands = request => {
+        if (request.method() === 'POST' && /\/commands\/(preview|approve|commit)$/.test(request.url())) additionalCommands.push(request.url());
+      };
+      page.on('request', countAdditionalCommands);
+      const historyLength = await page.evaluate(() => history.length);
+      // Native modal makes background navigation inert; browser history is
+      // the reachable navigation path. Do not force-click through modality.
+      await page.goBack(); await page.goForward();
+      await page.getByText('页面切换已延后。', { exact: false }).waitFor();
+      assert((await page.getByRole('dialog').innerText()).includes(nextName));
+      assert.equal(await page.evaluate(() => history.length), historyLength);
       await page.unroute(receiptDelivery);
       await page.getByRole('button', { name: '核对提交结果（不重复写入）', exact: true }).click();
+      await page.getByRole('dialog').waitFor({ state: 'hidden' });
+      assert(receiptLookupPaths.at(-1).endsWith(`/commands/${originalCommit.proposal_id}/receipts/${originalCommit.idempotency_key}`));
+      assert.deepEqual(additionalCommands, [], 'Navigation and reconciliation cannot approve/replay another command');
+      page.off('request', countAdditionalCommands);
     }
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     if (previousName === '合成浏览器学生') {
@@ -452,12 +473,19 @@ try {
   };
   await page.route('**/agent/events', delayReadDelivery);
   try {
+    await page.getByRole('button', { name: '总览', exact: true }).click();
+    await page.getByRole('button', { name: '对话', exact: true }).click();
     await page.getByLabel('输入消息').fill('合成延迟回复，阅读历史时不要抢回滚动');
     await page.getByRole('button', { name: '发送消息', exact: true }).click();
     await readReady;
     let requestsDuringAgent = 0;
     const countWhileAgent = request => { if (new URL(request.url()).pathname.startsWith('/api/')) requestsDuringAgent++; };
     page.on('request', countWhileAgent);
+    const agentHistoryLength = await page.evaluate(() => history.length);
+    await page.goBack();
+    await page.getByText('页面切换已延后。', { exact: false }).waitFor();
+    await page.getByLabel('输入消息').waitFor();
+    await page.goForward(); // Latest queued destination is the same conversation.
     await page.evaluate(() => { for (let index = 0; index < 20; index++) window.dispatchEvent(new Event('focus')); });
     await page.waitForTimeout(5250); // Keep Agent delivery held beyond the read cooldown.
     assert.equal(requestsDuringAgent, 0, 'An active Agent delivery blocks automatic queries and writes');
@@ -468,6 +496,8 @@ try {
     await page.waitForFunction(() => document.querySelector('.r1-scroll').scrollTop <= 1);
     releaseReadDelivery();
     await page.getByRole('button', { name: '查看新回复', exact: true }).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/');
+    assert.equal(await page.evaluate(() => history.length), agentHistoryLength);
     assert((await page.locator('.r1-scroll').evaluate(element => element.scrollTop)) <= 1);
     const readingViewport = await page.locator('.r1-scroll').boundingBox();
     const newReplyButton = await page.getByRole('button', { name: '查看新回复', exact: true }).boundingBox();
@@ -482,6 +512,47 @@ try {
   } finally {
     releaseReadDelivery();
     await page.unroute('**/agent/events', delayReadDelivery);
+  }
+  // A real response can finish upstream before the teacher stops delivery.
+  // The stopped browser run still must not adopt its answer or repeat a call.
+  let releaseCancelled, cancelledReady, cancelledDelivered;
+  const cancelledGate = new Promise(resolve => { releaseCancelled = resolve; });
+  const cancelReady = new Promise(resolve => { cancelledReady = resolve; });
+  const cancelDone = new Promise(resolve => { cancelledDelivered = resolve; });
+  const holdCancelled = async route => {
+    const response = await route.fetch();
+    assert.equal(response.status(), 200);
+    cancelledReady(); await cancelledGate;
+    try { await route.fulfill({ response }); } catch { /* The browser intentionally aborted this delivery. */ }
+    cancelledDelivered();
+  };
+  await page.route('**/agent/events', holdCancelled);
+  try {
+    await page.getByRole('button', { name: '总览', exact: true }).click();
+    await page.getByRole('button', { name: '对话', exact: true }).click();
+    const answersBeforeStop = await page.locator('.r1-messages article.assistant').count();
+    await page.getByLabel('输入消息').fill('合成取消后迟到结果不得采纳');
+    await page.getByRole('button', { name: '发送消息', exact: true }).click();
+    await cancelReady;
+    const commandsAfterStop = [];
+    const noReplay = request => { if (request.method() === 'POST') commandsAfterStop.push(request.url()); };
+    page.on('request', noReplay);
+    const cancelHistoryLength = await page.evaluate(() => history.length);
+    await page.goBack();
+    await page.getByText('页面切换已延后。', { exact: false }).waitFor();
+    await page.getByRole('button', { name: '停止 Agent', exact: true }).click();
+    await page.getByRole('heading', { name: '今天的班级工作', exact: true }).waitFor();
+    releaseCancelled(); await cancelDone;
+    await page.getByRole('button', { name: '对话', exact: true }).click();
+    await page.getByText('已停止 · 未采纳未完成结果', { exact: true }).waitFor();
+    assert.equal(await page.locator('.r1-messages article.assistant').count(), answersBeforeStop);
+    assert.equal(await page.getByRole('heading', { name: '未提交的任务草稿', exact: true }).count(), 0);
+    assert.equal(await page.evaluate(() => history.length), cancelHistoryLength);
+    assert.deepEqual(commandsAfterStop, []);
+    page.off('request', noReplay);
+  } finally {
+    releaseCancelled(); await cancelDone;
+    await page.unroute('**/agent/events', holdCancelled);
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await studentScope.selectOption('');
