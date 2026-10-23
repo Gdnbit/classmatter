@@ -2,6 +2,9 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "docs/design/database-live-data-design.md": {
+      "sha256": "beecbcaa2cbb9a7c7d42c5806906ed8e0c994d69174004fd646ca657c33adb0a"
+    },
     "apps/web/src/runtime/CommandPreview.tsx": {
       "sha256": "72efead16671285b03fca71bce2c905969ddbdd79bd042bdc81126c2645eba62"
     },
@@ -63,7 +66,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "e00e825f3a44d4e1a61b9134c564f5a4328f3195bbf863f2c5b3ce6b89c7ddb2"
+      "sha256": "8bd11e273a3123082c9198d2f86d7e892f76a581f3bd7f6c037a62353253e2b5"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -1030,16 +1033,16 @@
       "sha256": "556da89d40408994ecaad651e17422b9c2747fe3d9770198b21a05446af0803d"
     },
     "docs/ENGINEERING_OVERVIEW.md": {
-      "sha256": "b6f1086bf2be287c19c0dba249a1b7fbf7c0d75c0579897517d0d2f6032dee42"
+      "sha256": "7278b3f174518aad328d5b11f3405db00fc6b49e0183d1b87b788fa5957e7cf7"
     },
     "docs/OPEN_SOURCE_READINESS.md": {
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "460c672a833e02b201ecfdceb24f5f657ce5bb04c92c76d4d4474def22a23beb"
+      "sha256": "f608f604fe73c907082b62d7890363a157c4b7c54fb5aa67571a269e44acdf59"
     },
     "docs/README.md": {
-      "sha256": "ce77626ce5828a613325bf8e68265be131dc42081ef05aa42badbe19ee81bbb6"
+      "sha256": "170981f8ec638939828b3c0e526f7e385a0064320f1a9a48aee3f99347c0d6a8"
     },
     "docs/changes/2026-10-08-synthetic-development-admission.md": {
       "sha256": "d67c0a71f21431a90f84301ceae2ce790f8a0aeb120052840b0b6032731a9f40"
