@@ -166,6 +166,8 @@ Capture / 已有业务事件（先确认来源与身份）
 
 继续阅读：[Pydantic AI / Pi 评估](../research/2026-10-22-pydantic-ai-pi-runtime-assessment.md) · [实验与验收计划](../research/2026-10-22-agent-runtime-and-work-evaluation-plan.md)。
 
+新讨论方向：[班主任个人工作画像与可学习的 AI 协作（2026-10-23，Discovery）](2026-10-23-personal-working-profile-and-adaptive-agent.md)：教师表达、工作习惯、经验与协作偏好在何种治理边界下成为可撤销的个性化能力。
+
 ---
 
 **状态声明**：本文仅整理产品研究与设计候选；不是实施命令、架构批准、真实环境准入、测试通过记录或发布承诺。
