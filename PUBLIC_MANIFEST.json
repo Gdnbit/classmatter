@@ -2,6 +2,12 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "docs/product/2026-10-23-personal-working-profile-and-adaptive-agent.md": {
+      "sha256": "3df8e2b910093672e8a994fd0d6f2da93971cf06f3b7040f1a5c7b1ce07c7e2a"
+    },
+    "docs/research/2026-10-23-teacher-tools-and-policy-intelligence-agent.md": {
+      "sha256": "6f05c8e34dd3ad5e8407dc211292065ae91d1f63b4b29177c53491604f0eca63"
+    },
     "apps/web/src/runtime/work-projection.ts": {
       "sha256": "71b687f2af40bfb336c2d6f13a1477375b0260a240d3a39aae4c27e1f4baa4d5"
     },
@@ -1027,7 +1033,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "686f1d295a1ea1ffcb04406f3adbdebcdb670144b04f9ce98df3df052eae646e"
+      "sha256": "3c086f09acb6a52fd453755f07993942c00a986cd7e04d3d09b365cb286845b8"
     },
     "docs/README.md": {
       "sha256": "ce77626ce5828a613325bf8e68265be131dc42081ef05aa42badbe19ee81bbb6"
@@ -2165,7 +2171,7 @@
       "sha256": "af3b3d7ea70428af7a675e45f8b79853d8eeafe4438c898202ecae327f4d3542"
     },
     "docs/product/agent-owned-work-and-attention.md": {
-      "sha256": "ee5d656cf20ad54e3bf95c7bc1f811b493a3c4e42e5649c13cacb07660dad7c9"
+      "sha256": "8ed5a5f2fbaf951d71e6a531aafa1d30f85572ee56741423fcbe2be9a8fe4aa6"
     },
     "docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md": {
       "sha256": "74bd10a94cdf111df95e16717f3aad79555a1b02869a1e7ce70a5b33fd4d7313"
