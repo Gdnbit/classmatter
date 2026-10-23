@@ -32,6 +32,19 @@ Discovery rejects rather than returning a partial result above 128 directory ent
 
 The local NTFS and CI Linux filesystems support this hard-link publication. Atomic visibility is not a guarantee of power-loss durability: directory metadata is not separately fsynced, so a successful command is not evidence that a newly published filename survives a sudden host power loss. Preserve earlier checked checkpoints and verify again after an abnormal shutdown; no RPO/RTO promise is made.
 
+## Offline core exit transfer checks
+
+An owner-approved core JSON download can be checked without a running database, login, model or network connection:
+
+```powershell
+uv run --frozen python verify_exit.py '<download.json>'
+uv run --frozen python verify_exit.py '<original.json>' --compare-with '<copied.json>'
+```
+
+Both files must pass the same existing fixed-domain validator. The report includes SHA-256 of file bytes, canonical package and core checksums, plus separate `same_file_bytes`, `same_package` and `same_core` comparisons. Exit 0 means a valid core, and when comparing, an exact copy; exit 2 means both are valid but differ; exit 1 rejects invalid/incomplete input. Formatting-only changes can preserve canonical package/core hashes but are not an exact transfer. A newly generated export may preserve core data while changing package metadata or audit evidence; this is distinguished, not called a restore success. Outputs omit paths, identities and content. Only bounded regular local files are read; leaf symlinks/junctions, directories, special files, duplicate JSON fields, invalid constants and oversized packets are rejected.
+
+No file or database is written, imported, initialized or switched. Checksums detect differences, not an authorized sender or forged but rehashed data; use a separately trusted source/digest when authenticating provenance. `--require-complete` still rejects this core-only profile. Tests copy a synthetic actual BCG/QG export into another local file and check no database changes; Windows/Ubuntu CI verifies the code on each platform, not a physical cross-machine restoration. Complete lifecycle, identity re-enrolment, cross-host import and retirement remain unimplemented.
+
 ## Contracts and authority
 
 `src/class_os/domain` holds closed business rules; `application` owns QG/BCG/ISB; infrastructure adapters implement SQL/model/secrets; HTTP interfaces own strict wire DTOs and composition. `uv run --frozen python export_contracts.py --check` rejects contract drift. All business changes require validated command/preview/approval as applicable, idempotent receipt and transactional audit. Agent has no business-write or approval tool.
