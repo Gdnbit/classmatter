@@ -7,7 +7,9 @@ def validate_conversation_integrity(connection):
     # FK/unique/check constraints cover tuple integrity; these cover the
     # supported aggregate shape which cannot be expressed in a row CHECK.
     broken = connection.execute(text("""SELECT
-        EXISTS(SELECT 1 FROM class_os.conversation_turn t
+        EXISTS(SELECT 1 FROM class_os.conversation_thread t
+            LEFT JOIN class_os.conversation_control c USING(workspace_id,owner_id) WHERE c.authority_id IS NULL)
+        OR EXISTS(SELECT 1 FROM class_os.conversation_turn t
             LEFT JOIN class_os.conversation_run r USING(workspace_id,thread_id,turn_id)
             LEFT JOIN class_os.conversation_message m
                 ON m.workspace_id=t.workspace_id AND m.thread_id=t.thread_id AND m.turn_id=t.turn_id AND m.role='user'

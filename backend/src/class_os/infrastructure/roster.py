@@ -23,7 +23,10 @@ class PostgresBusinessStore:
         with self.database.transaction() as connection:
             connection.exec_driver_sql("SET LOCAL lock_timeout='5s'")
             connection.execute(text("SELECT pg_advisory_xact_lock(607103017)"))
-            yield BusinessTransaction(connection, self)
+            yield self._transaction(connection)
+
+    def _transaction(self, connection):
+        return BusinessTransaction(connection, self)
 
     def audit(self, connection, binding, action, outcome, now, metadata):
         event_id = uuid4()

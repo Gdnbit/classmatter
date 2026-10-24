@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-最新公开基线补充：Logo 原件本地留档登记已由[PR #21](https://github.com/Gdnbit/classmatter/pull/21)经[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40077809472)通过后合并为`dc69e7a`；仅公开资产说明/精确忽略规则，图片没有上传或接入应用图标。下述`71b6a41`仍是同一基线中的业务代码验收点。D1-11b1合并这一最新main后，root81和docs74/UTF8/链接再次通过；当前新代码完整非DB381通过4跳过，后续仍以最终PR/CI为准。
+更新时间：2026-10-24。最新验收main为`91a47a1`：[PR #22](https://github.com/Gdnbit/classmatter/pull/22)的限制记录适配器已经[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40078603025)验收，Windows非DB385/Web55/desktop23，Ubuntu非DB382+3跳过、实际PG/browser356+7跳过，独立审查657个真实hash。此前D0/E1、D1-00、D1-10、D1-11a分别由PR #13—20收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-更新时间：2026-10-24。当前已验收业务main为`71b6a41`：D0/E1由PR #13—17、D1-00由PR #18、D1-10由PR #19收口；D1-11a显式快照完整性由[PR #20](https://github.com/Gdnbit/classmatter/pull/20)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40064737955)验收，Windows非DB341/Web55/desktop23，Ubuntu非DB339+2跳过、DB/browser356+7跳过。D1仍固定不可恢复激活。D1-11b1限制证据端口为当前独立候选单元：本机专项42通过2宿主symlink跳过，实际Windows DPAPI和跨进程竞争通过；没有数据库锚点/BCG清除/历史读取或SDK接线，不能称防恢复复活已完成。Goal工程范围仍未完成，不因本单元缩减；持久会话、完整生命周期/UI和班级工作小结待后续交付。Owner本人设置和真实Provider质量为外部条件，服务ready/合成测试不代替个人验收或付费评测。早期提交号和候选状态保留为历史，不能覆盖本摘要；本表不替代canonical SDD、正式任务状态、签名或发布准入。
+D1-11b2为当前独立候选：显式0018/27表锚点、人工批准/近期认证的BCG清除及有界QG历史；原R1仍0016/22表。真实PG故障测试覆盖审计/SQL/文件失败后拒读与幂等重试、事实任务不变、run fence、scope和部分旧内容回填拒读。尚无HTTP/CLI/Agent/UI接线，未升级用户实例；D1备份仍固定不可激活。完整生命周期、typed退出/新身份恢复、真实耐久会话UI/SDK及班级工作小结仍是未完成工程目标。Owner本人设置和真实Provider配置/价格/费用授权/人工质量为外部待验证，合成测试不代替。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
 
 ## 状态与顺序
 
