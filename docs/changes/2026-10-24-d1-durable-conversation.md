@@ -48,3 +48,27 @@ run规则固定queued/running/cancel_requested与五类终态；有版本前置�
 本地组合回归43通过13.69秒。独立对抗审查发现并修复两项纯规则缺陷：直接重建终态也必须校验lease边界；增加cancel_requested_at，终态不得早于取消请求，重复请求也不得倒退时钟。新增非法持久行和取消/迟到竞争测试，不修改原数据/权限。全套非DB、公开检查和两平台CI须按最终版本再次核验。
 
 验收状态以该单元PR和真实测试日志为准；完整D1的存储/生命周期/出口/应用/UI验收继续待实施，不改变正式R1 Gate或把合成研究当已验证产品优先级。
+
+## D1-10：显式存储profile基础（文件级计划）
+
+新Goal按独立单元推进。本单元基于已合并D1-00的main，不修改其规则，也不把所有剩余能力塞入一次PR。
+
+| 文件 | 修改和验收 |
+| --- | --- |
+| `backend/db/migrations/versions/0017_durable_conversation.py` | 新建四张有作用域外键的thread/turn/message/run表，有限列、状态、来源、幂等键和运行槽唯一约束；不建万能JSON、任意SDK缓存或自动执行表 |
+| `persistence/schema_inventory.py` | 原r1清单/0016保持原样；另建明确conversation-d1清单/0017，未知profile和对象拒绝 |
+| `persistence/database.py` | Database显式选择开发schema profile；普通调用仍停0016，不因新head升级R1；未来D1 revision不反向降级 |
+| `persistence/role_guards.py` | 按精确profile核对表族，新表identity零访问、runtime有限列UPDATE，无DELETE/TRUNCATE/DDL；默认不宽松匹配所有新表 |
+| `infrastructure/exit_package.py`、`tests/test_exit_read_limits.py` | 核心v1源读取/下载前明确拒绝非0016，避免新增store被漏导；原LIMIT上限/不得发布部分包的负向断言不削弱 |
+| `backend/tests/test_durable_conversation_storage.py` | 隔离真实PG验证非空R1升级/重复执行/默认拒绝D1、跨scope外键、消息来源/大小、幂等键、单运行槽、时间边界、列权限；不使用用户实例 |
+| 本变更单、实现台账、公开审计/manifest | 只记实际工程证据；新文件先审核来源再登记真实SHA；完整两平台CI和独立对抗审查 |
+
+四表暂不向HTTP、模型或现有桌面composition开放；这不是耐久会话已可用。新schema只由显式profile的测试/受信迁移入口使用，默认R1 readiness/backup/exit仍拒绝它，防止核心v1包漏导聊天而假称完整。后续独立单元必须先补版本化备份/退出/恢复及清除一致性，再接QG/BCG和UI；不在当前用户新实例上尝试升级。SQL结构约束不代替应用鉴权、事务CAS、审计或数据分类，临时fixture写入不构成Agent写权限。
+
+初轮新存储25项通过65.81秒；补核心退出拒绝、合法成员ID不能交叉配对和空白正文后，存储/既有inventory/0015非空升级组合37项通过94.04秒。全非DB338通过、2项宿主链接策略跳过。最后新增精确列清单/多余列权限拒绝后的重跑与完整CI待核验，不能复用早一版本成绩。独立审查未发现阻断基础单元的问题；特别保留限制：当前DDL不能独自保证cleared thread下所有正文已清除，也不阻止可信SQL重新置visible。下一生命周期单元须原子化实现并校验恢复不复活，不把DDL成绩当完成该语义。正式R1定义和Gate不变。
+
+## 新Goal的工程完成条件
+
+Goal状态active，按独立单元持续推进：D1-10存储基础→版本化生命周期/退出/备份/恢复→QG/BCG/ISB与真实会话UI/原SDK接线→班级工作小结纵向切片。每一单元实际验收、独立对抗复核、精确公开清单及两平台CI通过后再收口；所有相关代码/必要文档同步GitHub后才能标记工程完成。用户本人Owner设置、真实Provider配置/有效价格/费用授权及人工质量评估仍为外部待验证，不用测试Owner、fake模型或绿色CI冒充。
+
+最终合成工程必须证明：刷新/业务与PG进程重启恢复相同内容和scope；重复发送/回执丢失不会重复运行；过期scope/撤权拒绝；取消/超时/迟到worker/终态保存故障不假成功；新store有受控退出/恢复及清除防复活；工作小结只引用当前QG事实/任务，观察/AI推断不晋升事实，产物可编辑且不自动发送。真实教师减负效果保持discovery，不以工程验收代替用户研究。

@@ -16,9 +16,12 @@ from test_identity import identity
 
 @pytest.mark.parametrize("surface", ["core", "audit"])
 def test_overflow_sentinel_is_db_bounded_and_never_published(surface):
-    statements, writes = [], []
+    statements, writes, guards = [], [], []
     class Overflow:
-        def execute(self, statement, values):
+        def execute(self, statement, values=None):
+            if str(statement) == "SELECT version_num FROM class_os.alembic_version":
+                guards.append(True)
+                return SimpleNamespace(scalar_one=lambda: "0016")
             statements.append(str(statement))
             assert re.search(r"\bLIMIT\s+10001\b", str(statement), re.I), "Unbounded exit source read"
             return self
@@ -40,6 +43,7 @@ def test_overflow_sentinel_is_db_bounded_and_never_published(surface):
         with pytest.raises(ValueError, match="Audit export exceeds"):
             adapter.create_exit({"workspace_id": uuid4(), "actor_id": uuid4()}, SimpleNamespace(export_id=uuid4()), datetime.now(timezone.utc))
     assert len(statements) == 1 and writes == []
+    assert len(guards) == (1 if surface == "core" else 0)
 
 
 @pytest.mark.db

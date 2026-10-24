@@ -9,15 +9,17 @@ from alembic.script import ScriptDirectory
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.pool import NullPool
-from .schema_inventory import validate_surface
+from .schema_inventory import validate_surface, schema_profile
 
 
 # New development migrations must never silently change the frozen R1 default.
-R1_MIGRATION_TARGET = "0016"
+R1_MIGRATION_TARGET = schema_profile()[0]
 
 
 class Database:
-    def __init__(self, url, *, migration=False, identity=False):
+    def __init__(self, url, *, migration=False, identity=False, profile="r1"):
+        schema_profile(profile)
+        self.profile = profile
         try:
             parsed = make_url(url)
             if migration and identity:
@@ -83,7 +85,8 @@ def migrate(database: Database, *, connection=None):
     config.set_main_option("script_location", str(Path(__file__).resolve().parents[4] / "db/migrations"))
     config.attributes["connection"] = connection
     scripts = ScriptDirectory.from_config(config)
-    objects = validate_surface(connection)
+    target, _ = schema_profile(database.profile)
+    objects = validate_surface(connection, profile=database.profile)
     if objects and "alembic_version" not in objects:
         raise RuntimeError("Unregistered database objects")
     schema_owner = connection.execute(text(
@@ -95,8 +98,8 @@ def migrate(database: Database, *, connection=None):
     if version_table:
         revisions = connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalars().all()
         if len(revisions) != 1 or revisions[0] not in {
-                item.revision for item in scripts.iterate_revisions(R1_MIGRATION_TARGET, "base")}:
+                item.revision for item in scripts.iterate_revisions(target, "base")}:
             raise RuntimeError("Unknown database revision")
     connection.exec_driver_sql("CREATE SCHEMA IF NOT EXISTS class_os AUTHORIZATION class_os_migrator")
-    command.upgrade(config, R1_MIGRATION_TARGET)
-    validate_surface(connection, complete=True)
+    command.upgrade(config, target)
+    validate_surface(connection, complete=True, profile=database.profile)
