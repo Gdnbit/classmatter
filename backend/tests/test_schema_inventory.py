@@ -53,3 +53,44 @@ def test_missing_or_unlogged_registered_store_is_not_healthy_migration(database_
             migrate(database)
     finally:
         database.close()
+
+
+@pytest.mark.db
+def test_default_migration_targets_frozen_r1_and_rejects_even_a_known_future_revision(database_urls, monkeypatch):
+    from types import SimpleNamespace
+    from class_os.infrastructure.persistence import database as module
+
+    owner = Database(database_urls["migrator"], migration=True)
+    targets = []
+    upgrade = module.command.upgrade
+
+    def fixed_upgrade(config, target):
+        targets.append(target)
+        return upgrade(config, target)
+
+    monkeypatch.setattr(module.command, "upgrade", fixed_upgrade)
+    try:
+        migrate(owner)
+        migrate(owner)
+        assert targets == ["0016", "0016"]
+        with owner.transaction() as connection:
+            connection.execute(text("UPDATE class_os.alembic_version SET version_num='future_test'"))
+        original = module.ScriptDirectory.from_config
+
+        def scripts_with_future_head(config):
+            scripts = original(config)
+            # A future script existing on disk must not admit its schema into
+            # default R1. Only ancestors of the explicit R1 target are allowed.
+            walk = scripts.walk_revisions
+            scripts.walk_revisions = lambda *a, **kw: iter([SimpleNamespace(revision="future_test"), *walk(*a, **kw)])
+            return scripts
+
+        monkeypatch.setattr(module.ScriptDirectory, "from_config", scripts_with_future_head)
+        with pytest.raises(RuntimeError, match="Unknown database revision"):
+            migrate(owner)
+        assert targets == ["0016", "0016"]
+        with owner.transaction(read_only=True) as connection:
+            assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "future_test"
+            assert validate_surface(connection, complete=True) == REGISTERED_TABLES
+    finally:
+        owner.close()
