@@ -12,6 +12,10 @@ from class_os.infrastructure.persistence.schema_inventory import schema_profile
 from class_os.infrastructure.conversation_integrity import validate_conversation_integrity
 from test_operator_backup import backup_runtime, fixture_codec, roster, identity
 from test_durable_conversation_storage import thread, turn, queued, message
+from class_os.application.conversation_control import ConversationBusinessGateway
+from class_os.domain.conversation_control import InitializeConversationControl
+from class_os.infrastructure.conversation_control import ConversationBusinessStore
+from class_os.infrastructure.conversation_restrictions import ProtectedConversationRestrictions
 
 
 @pytest.fixture
@@ -19,6 +23,15 @@ def conversation_runtime(backup_runtime, roster, database_urls):
     owner = Database(database_urls["migrator"], migration=True, profile="conversation-d1")
     try:
         migrate(owner)
+        runtime = Database(database_urls["runtime"], profile="conversation-d1")
+        try:
+            controls = ProtectedConversationRestrictions(backup_runtime.root, roster[3][3], codec=fixture_codec)
+            gateway = ConversationBusinessGateway(roster[4], ConversationBusinessStore(runtime, controls), clock=lambda: roster[6][0])
+            proposal = gateway.preview(*roster[3], InitializeConversationControl(uuid4()))
+            nonce = gateway.approve(*roster[3], proposal.proposal_id, proposal.payload_hash)
+            gateway.commit(*roster[3], proposal.proposal_id, uuid4(), nonce)
+        finally:
+            runtime.close()
         with owner.transaction() as connection:
             row = connection.execute(text("""SELECT e.workspace_id AS workspace,o.owner_id AS owner,
                 e.class_id AS class,e.term_id AS term,e.student_id AS student,e.enrollment_id AS enrollment
@@ -65,7 +78,7 @@ def test_real_d1_snapshot_clone_verifies_all_tables_without_activation_or_source
     assert packet["kind"] == "classmatter.owned-conversation-backup.v1"
     assert packet["schema_profile"] == "conversation-d1" and packet["activation_allowed"] is False
     assert packet["head"] == schema_profile("conversation-d1")[0]
-    assert packet["inventory"] == before and len(before) == 26
+    assert packet["inventory"] == before and len(before) == 27
     assert all(before[table]["rows"] == count for table, count in
                (("conversation_thread", 1), ("conversation_turn", 1), ("conversation_message", 2), ("conversation_run", 1)))
     path = runtime.root / "backups" / (str(artifact) + ".dpapi")
@@ -74,7 +87,7 @@ def test_real_d1_snapshot_clone_verifies_all_tables_without_activation_or_source
     assert report == {"schema_version": "classmatter.conversation-backup-check.v1",
                       "snapshot_integrity_verified": True, "activation_allowed": False,
                       "source_preserved": True, "temporary_clone_removed": True, "portable": False,
-                      "complete_exit": False, "table_count": 26}
+                      "complete_exit": False, "table_count": 27}
     assert "合成checkpoint" not in json.dumps(report)
     assert inventory(runtime) == before and path.read_bytes() == sealed
     assert backup.catalog()["activation_allowed"] is False

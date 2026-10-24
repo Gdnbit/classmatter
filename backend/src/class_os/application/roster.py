@@ -28,6 +28,14 @@ def fingerprint(payload):
 
 
 class GatewayBase:
+    @staticmethod
+    def audit_purpose(action):
+        if action.startswith("model."):
+            return "manage-model"
+        if action in ("activity.today", "student.timeline", "audit.list"):
+            return "manage-class"
+        return "exit-recovery" if action.startswith("exit.") else "manage-roster"
+
     def __init__(self, identity, store, *, clock=lambda: datetime.now(timezone.utc)):
         self.identity, self.store, self.clock = identity, store, clock
 
@@ -63,11 +71,7 @@ class GatewayBase:
             metadata = {"proposal_id": reference, "payload_hash": None, "receipt_id": None,
                         "resource_id": resource_id if type(resource_id) is UUID else class_id,
                         "resource_version": None, "class_id": class_id, "term_id": term_id,
-                        "purpose": "exit-recovery" if action.startswith("exit.") else "manage-roster"}
-            if action in ("activity.today", "student.timeline", "audit.list"):
-                metadata["purpose"] = "manage-class"
-            if action.startswith("model."):
-                metadata["purpose"] = "manage-model"
+                        "purpose": self.audit_purpose(action)}
             if reference is not None and not identity_expired:
                 stored = tx.proposal(subject.workspace_id, reference)
                 if stored and stored["actor_id"] == subject.owner_id:
@@ -109,6 +113,15 @@ class GatewayBase:
 class BusinessGateway(GatewayBase):
     """Registered commands only. Never injected into Agent/Tool adapters."""
 
+    decode_command = staticmethod(decode)
+    assess_command = staticmethod(decision)
+
+    @staticmethod
+    def command_purpose(command, payload):
+        if type(command) is ModelControl:
+            return "manage-model"
+        return "exit-recovery" if type(command) is CreateExitExport else "manage-class" if payload["command"].startswith(("record.", "task.")) else "manage-roster"
+
     @staticmethod
     def _validate(tx, binding, command, now):
         if type(command) is ModelControl:
@@ -133,14 +146,11 @@ class BusinessGateway(GatewayBase):
         def preview(tx, binding, now):
             self._validate(tx, binding, command, now)
             payload = command.canonical()
-            assessed = decision(tx, binding, command)
+            assessed = self.assess_command(tx, binding, command)
             if not assessed.admitted:
                 raise CommandRejected()
             result = Proposal(uuid4(), fingerprint(payload), assessed.level.name, now + timedelta(minutes=10), command)
-            purpose = "exit-recovery" if type(command) is CreateExitExport else "manage-class" if payload["command"].startswith(("record.", "task.")) else "manage-roster"
-            if type(command) is ModelControl:
-                purpose = "manage-model"
-            tx.save_proposal(result, binding, payload, purpose)
+            tx.save_proposal(result, binding, payload, self.command_purpose(command, payload))
             return result
         return self._run((token, client, csrf, workspace_id), "command.preview", preview)
 
@@ -162,9 +172,9 @@ class BusinessGateway(GatewayBase):
             proposal = self._proposal(tx, binding, proposal_id, now)
             if not isinstance(expected_hash, str) or not hmac.compare_digest(proposal["payload_hash"], expected_hash):
                 raise CommandRejected()
-            command = decode(proposal["payload"])
+            command = self.decode_command(proposal["payload"])
             self._validate(tx, binding, command, now)
-            assessed = decision(tx, binding, command)
+            assessed = self.assess_command(tx, binding, command)
             if not assessed.admitted or not assessed.requires_approval:
                 raise CommandRejected()
             secret = secrets.token_urlsafe(32)
@@ -190,9 +200,9 @@ class BusinessGateway(GatewayBase):
                     raise CommandRejected()
                 return existing["receipt"]
             proposal = self._proposal(tx, binding, proposal_id, now)
-            command = decode(proposal["payload"])
+            command = self.decode_command(proposal["payload"])
             self._validate(tx, binding, command, now)
-            assessed = decision(tx, binding, command)
+            assessed = self.assess_command(tx, binding, command)
             if not assessed.admitted:
                 raise CommandRejected()
             if assessed.requires_approval:

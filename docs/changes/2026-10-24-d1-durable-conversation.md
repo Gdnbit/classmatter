@@ -90,6 +90,23 @@ PR #20 已以最终 head ce0a2c7、两平台 CI 40064737955 验收，合并 main
 
 ## D1-11b1：备份外限制记录适配器（文件级计划）
 
+后续验收补记：PR #22最终68cfc37经CI40078603025两平台成功合并为main91a47a1；Windows非DB385/Web55/desktop23，Ubuntu非DB382+3跳过、实际PG/browser356+7跳过。独立审查657真实hash及专项42通过2宿主链接跳过均核验。它只完成适配器，以下集成是新单元。
+
+## D1-11b2：数据库锚点和BCG清除（文件级计划）
+
+目标：真实受控清除和读取拒绝闭环；不是恢复激活或完整耐久聊天UI。
+
+- 新建`0018_conversation_control.py`：D1专用有限control锚点，authority/owner不可更新、epoch/hash有限更新，无DELETE/DDL；只在D1登记两种命令与独立人工高风险策略。原R1 schema/default/risk表不变。
+- `schema_inventory.py`、`role_guards.py`、原存储/备份测试：D1显式0018/27表；拒绝未知列/权限。旧0017 D1开发快照不自动升级/激活；R1/v1退出备份保持原样。
+- 新`domain/conversation_control.py`、`application/conversation_control.py`、`infrastructure/conversation_control.py`：封闭初始化/清除命令和有界历史DTO；复用原BCG预览、批准、回执、ISB认证租约和业务锁；近期认证在锁后重新检查。外部标记先行，数据库原子清正文/通用标题、fence活动run、锚点、回执与审计。文件ahead保留，只允许同一待清除线程/版本重试，QG读正文前要求精确对齐。
+- `application/roster.py`、`infrastructure/roster.py`：提取默认行为不变的固定解码/策略/用途/事务工厂扩展点；R1闭合解码器与HTTP契约不增加命令。不得把新BCG注入Agent。
+- 新`tests/test_conversation_control.py`：合成真实PG与受保护临时文件，验证清除、重试/并发、scope/近期认证/批准、文件/审计失败、旧DB锚点拒绝读取、活动run真实终态与旧worker CAS拒绝、事实/任务不变；R1负向回归。
+- 只更新现有变更单/台账/审计/真实manifest；独立对抗审查、公开/历史scan/docs及完整两平台CI。正式107/147/94与Gate不变。
+
+初始化是人工批准的BCG操作，要求无旧锚点且无会话；不得由QG缺失文件自动重建。文件写成但数据库回滚时，只能重试同authority的空初始证据。普通clear不假称Provider已取消：lease未到使用unknown、lease已到使用interrupted，queued才可直接cancelled。源旧备份仍不可激活；本单元不恢复身份/业务包，不实现SDK RAM清理或对外发消息。用户实例不迁移。回滚不得删除或倒退已存在的限制文件；新schema只能受控forward-fix或停用profile，不能破坏性downgrade。
+
+## D1-11b1历史详情（以下未交付结论为当时范围）
+
 目标是为后续BCG清除提供不随PostgreSQL快照回滚的受控限制证据，而不是新增业务写入口或宣称清除已交付。先独立验收文件原子性和封闭协议，再接BCG/数据库锚点，避免同时改变身份、写入和恢复边界。
 
 | 文件 | 本单元范围和验收 |
@@ -109,3 +126,17 @@ PR #20 已以最终 head ce0a2c7、两平台 CI 40064737955 验收，合并 main
 本单元回滚为revert其代码/测试/必要说明，没有迁移或用户实例变更。已经生成的限制证据必须保留，不通过删除文件、重建authority或回退水位来“恢复可用”；未来任何使用该格式的集成均须先证明与数据库锚点一致。当前尚无该类消费者，不提升任何正式Gate。
 
 最终提交前已整合独立Logo登记PR #21的新main dc69e7a，两处公开审计/manifest插入冲突逐项保留两单元内容并重算最终字节SHA；root81、docs74及原public_guard再次通过，没有覆盖并发业务代码。原桌面工作区R1App的17增/3删保持原样；已运行的用户合成实例仍停原R1基线，ready不等于Owner设置完成。本单元未触碰该实例。
+
+## D1-11b2实际实现与候选证据
+
+已实现计划内锚点、近期认证/人工批准清除及只读历史适配器，均未向现有HTTP/CLI/Agent/UI注册。共享Proposal的类型注解补充D1值类型，但原R1解码器、风险表与wire契约保持闭合；默认Gateway用途/策略提取为等价扩展点，旧R1仍不接受新命令。初始化要求无历史，不要求老师维护UUID或限制文件；未来启用流程仍需单独验证净负担，不宣称现有UI已提供该能力。
+
+真实临时PostgreSQL专项最终24通过92.32秒，包含实际Windows DPAPI+PG组合、文件损坏拒读、初始化/清除审批、审计/SQL/文件回执故障、run UPDATE为0行拒绝假成功、幂等并发、近期认证在不同阶段过期、错误scope、pending不可用于另一线程、事实/任务字节不变、unknown/interrupted/cancelled真实边界及旧worker CAS为0行。完整历史按最后50个完整turn截取（最多100消息），固定ordinal和user→assistant顺序；同时间戳逆UUID/51turn边界已实测。全非DB最终382通过4宿主跳过、386 DB项未在该轮执行39.55秒。原Gateway/事实任务/回执/查询/模型控制、D1存储与实际checkpoint组合87通过243.46秒；最终全平台CI仍须按PR head核验，不用这些局部成绩冒充完整验收。原始XML/运行态均忽略，不公开。
+
+两项对抗发现已修复并有真实PG回归：不能依赖消息时间/随机UUID排序；即使文件与anchor对齐，也须核对该thread已有ClearMarker与SQL cleared/version/cleared_at，部分旧正文回填亦拒读。SQL fence/正文/标题/锚点/回执/批准消费/审计全部在原BCG事务，外部标记保留于回滚之外。所有关键UPDATE检查预期行数，不能把0行写入当成功。
+
+追溯变化明确限定为本post-R1开发变更及新工程测试；没有新增/更改正式Requirement、147 Eval、94 Task或Gate结果。旧D1 profile从0017演进至明确0018/27表；checkpoint必须包含control表，缺少owner锚点的会话快照拒绝。备份fixture通过真实BCG初始化锚点，不用直接SQL假冒业务操作；原R1/v1出口与默认22表不变。未知/旧D1包仍不激活，已有0017历史不被自动生成外部证明，也不由QG初始化“修复”。
+
+剩余边界：尚无SDK上下文/迟到输出放行接线、跨机新身份typed恢复、业务包导入或真实耐久聊天UI。QG限制校验只证明当前受控读取事务，不代替未来SDK终态输出前复核。完整主机回滚、硬链接残留的受控修复、容量演进仍需后续单元；不假称物理删除、Provider取消或全生命周期完成。用户Owner/真实Provider外部条件不改变，Goal保持未完成。
+
+独立审计最终重跑24/24通过78.97秒，无剩余阻断发现；root81、docs74/UTF8/本地链接与public_guard/license通过，107/147/94及formalgreen0不变。公开安全和CI需以最终提交再次核验，PR记录承载最终远端结果，不将本地/独立成绩外推为完整发布准入。

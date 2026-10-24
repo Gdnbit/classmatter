@@ -1,5 +1,9 @@
 # ClassMatter public candidate audit
 
+## 2026-10-24 D1 controlled clear candidate
+
+Reviewed first-party explicit0018/27-table development schema, narrow anchor grants, closed human control DTOs and opt-in Gateway/store adapters. RiskX for the two D1 controls is a separate manual/recent-auth/approval policy, not a widening of the frozen R1 evaluator, HTTP schema or Agent tools. Shared default Gateway hooks preserve existing behavior. Synthetic disposable PostgreSQL tests use fixture identities/text/files only; no user-instance migration, credentials, Provider request, image upload or imported source. History releases only after current file/anchor AND per-thread clear marker consistency, with bounded complete-turn ordering. Missing/pending proofs refuse body release; SQL/audit/receipt failure does not undo external restriction evidence. Snapshot validation additionally refuses missing control anchors; this is still not portable recovery, activation, SDK output fencing or full lifecycle admission. Exact hashes, unchanged exceptions and full final-head CI remain mandatory.
+
 ## 2026-10-24 D1 local restriction evidence port
 
 Reviewed first-party closed local metadata/protocol, bounded file reads and protected publication, cooperating-process locks and synthetic failure tests. No imported source, personal transcript, external service, runtime path, credential or actual student record is published. Default protection reuses current-user Windows DPAPI; the cross-platform fixture codec is explicitly not encryption. The port is not wired to HTTP, CLI, database, QG/BCG, SDK or restoration and grants no history release or activation. Missing/mismatched evidence fails closed; a one-step-ahead result is unresolved, not a committed clear. It cannot prove freshness after whole-host rollback or repair every crash. No R1 schema/role/dependency/formal Gate or reviewed exception change; final-byte manifest, historical scan and complete CI remain required.
