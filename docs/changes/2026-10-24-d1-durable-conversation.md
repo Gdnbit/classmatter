@@ -182,3 +182,32 @@ D1-12最终由PR #24在两平台CI40083796925通过后合并main e8fb126：Windo
 实际实现保持原`check`返回值和语义，显式新方法增加源/clone/源三阶段核对。最终专项17通过100.91秒，含真实BCG清除、实际pg_restore、Windows DPAPI、缺失/损坏/pending/异根/异workspace/proof字典拒绝、检查期间clear、恢复失败/最终证据损坏后的clone清理，以及源库/原包保留。新旧backup回归26通过1项平台跳过125.85秒；全非DB415通过4项宿主能力跳过、当时412项DB未执行46.90秒（随后另加1个DB用例，最终收集数以CI为准）。日志仅存忽略的test-results，不公开。
 
 独立首轮14通过81.47秒，指出篡改clone会先被旧inventory检查拒绝，证据不能归因于新关系检查；已补实际生成inventory自洽但marker关系错误的坏包，并明确断言旧check通过/新check拒绝，独立关键用例1通过15.02秒。无剩余实现阻断发现；不将独立首轮成绩冒称最后3个新增用例已全量独立重跑。公开清单、扫描、完整两平台CI仍按最终head收口。教师正常工作新增操作为零；该operator开发能力尚无UI，不声称已经完成用户净负担验收、新身份恢复或耐久会话链路。
+
+D1-13a最终PR #25在CI40101895174两平台成功后合并main80cbaf8：Windows非DB419/Web55/desktop23，Ubuntu非DB416+3跳过、实际PG/browser403+10跳过。669项hash及公开历史扫描通过；以上候选状态为历史过程，不表示该单元仍未验收。
+
+## D1-13b：源端持久移交冻结（文件级计划）
+
+下一目标不是再发一个preflight布尔值，而是建立真正导入所需的源端持久fence。一次源查询或PG进程锁不足以保护目标提交：源连接中断会释放锁。因此先经人工BCG明确冻结源，后续目标隔离导入→源退休→目标admission必须复用同一attempt，不自动恢复原源。此单元只交付源端冻结，目标导入/准入仍必须继续实现，不缩小Goal。
+
+| 文件范围 | 计划内变化与验收 |
+| --- | --- |
+| 新`domain/source_transfer.py`、`infrastructure/source_transfer.py`及专项测试 | 封闭命令/固定元数据、同runtime/workspace/root绑定的DPAPI文件、排他原子发布及不可覆盖；复用已有文件锁，不把移交伪装成ClearMarker。缺失/损坏/异scope/硬链接/重启/发布故障拒绝，真实Windows DPAPI另验 |
+| 新显式D1迁移及schema/role清单 | 为原control增加有限移交字段及none/pending约束，只允许现有runtime在BCG中写固定字段；默认R1仍0016/22表，不改旧迁移或用户实例 |
+| 原Gateway/BusinessTransaction与conversation控制、独立SourceTransfer Gateway | 原ISB、近期认证、Risk.X批准、幂等、审计；文件先持久化再同事务保存SQL锚点/回执。普通D1 QG/BCG遇任一fence拒绝，仅同attempt的闭合移交操作可收口；不得让通用Gateway或嵌套调用借用豁免 |
+| conversation出口及离线验证 | 新字段使用显式v3承载，旧v2校验保持原格式，不谎称旧包涵盖新控制状态；冻结源不能再导出或给SDK提供正文。backup仍含全部固定列且不可激活 |
+| 源端真实PG/DPAPI/故障测试、原回归 | clear与seal竞争、未知/陈旧包、活动run、错误target、未经批准、审计/SQL/文件失败、幂等并发、文件丢失/损坏、缺文件但SQL已pending、旧SQL但文件已有fence、普通查询/写入/导出拒绝与原事实任务不变 |
+| 原README/台账/本变更/PUBLIC_AUDIT/manifest | 实际证据、可追溯公开hash、独立审查与最终Windows/Ubuntu CI；正式107/147/94及Gate不变 |
+
+目标坐标不是目标已建立或获准的证明；本单元只绑定坐标并冻结源，后续必须由目标ISB核验新Owner/空业务库、保留来源作者与恢复操作者差异、隔离旧run且不自动dispatch。source audit不能直接变成target可信audit。当前没有HTTP/UI/Agent入口，不能用此功能冻结真实现有实例。发生不确定结果时保留fence，不因超时、文件删除、源码revert或更换attempt解冻；已显式迁移的D1只能受控前滚/停用，不能破坏性降级。新身份/跨机可验证证明及撤销pending的受控协议仍待后续实现；没有这些条件时拒绝目标激活。
+
+## D1-13b实际实现与候选证据
+
+已实现封闭命令、固定DPAPI文件、0020原control的transfer_id/hash/at三字段、人工Risk.X批准及file-first SQL/audit收口。27表不变；只对显式D1新增这3列的runtime UPDATE，不给Agent增加工具或扩大原R1字段权限。共享Proposal仅补类型注解，原wire/R1命令解码器未增加seal。Gateway新增边界检查：普通R1 Store必须核对实际0016，D1 Store必须先验证注入restriction根与已有DB锚点，再判断file/SQL冻结；拒绝仍走原audit。专用豁免绑定store/owner/action/proposal，状态读取复用独立QG，不把查询塞进BCG。源无活动run、当前业务hash/未过期包和异target坐标才可seal；源清除与seal只有一个可提交。
+
+两项独立真实PG发现已修复：仅相信构造参数profile会让默认r1对象读取被冻结的D1；只看空根中无file会绕过audit失败后file-only冻结。已补actual head/root-authority检查、普通读取及已有批准class.update提交拒绝，独立2项20.15秒通过。首轮测试另外发现状态查询挂错Gateway，以及测试误用姓名命令构造参数，均修正接线/fixture后重跑，不把失败当通过。
+
+最终source port/PG组合33通过96.32秒，含实际子进程硬退出、link后残留、clear/seal竞争、并发幂等、SQL/audit失败、文件丢失/损坏/部分SQL回滚和Windows实际DPAPI+PG。随后真实旧v2离线CLI与重算hash的v3冻结字段拒绝加入，port单文件16通过4.38秒。独立四文件组合76通过150.97秒发生于最后兼容用例加入前，不声称包含该新增用例。原clear/storage/backup/current-proof/R1Gateway回归96通过340.50秒，出口v2/v3真实PG组合43通过47.44秒；最终全非DB431通过4项宿主能力跳过、431 DB项未在该命令运行42.32秒。原始XML仅在忽略的test-results目录。
+
+v3显式覆盖全部新control列，仅允许未冻结源导出；旧v2验证器、默认core-v1保留，旧v2不会冒充0020出口。所有新包仍固定不可激活。原0019 owned checkpoint精确head绑定，不自动升级。没有目标导入、源退休或admission；目标坐标仍需后续可信握手验证，不能因source receipt存在就释放目标。普通同源业务读写被有意阻断，不是假称已完成恢复或教师日常工作功能。
+
+运维限制保留：pending重试仍需原artifact在30分钟有效期内、有效身份/批准；过期会保持冻结，后续必须增加受控诊断/前滚而非自动解除。initial link后硬退出可能留nlink2，源保持冻结，不自动删证据或生成新attempt。源码revert不能安全解冻或降级已迁移D1；当前没有对用户实例执行迁移/冻结。完整恢复与UI/SDK/文书Goal仍未完成，正式107/147/94与Gate不变。公开hash、扫描、独立最终字节审查与完整两平台CI须以最后head收口。

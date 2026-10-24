@@ -61,6 +61,7 @@ class GatewayBase:
             try:
                 if identity_expired or not tx.synthetic_workspace(subject.workspace_id):
                     raise CommandRejected()
+                tx.authorize_boundary(binding, action, proposal_id)
                 result = callback(tx, binding, now)
             except CommandRejected:
                 denied = True
