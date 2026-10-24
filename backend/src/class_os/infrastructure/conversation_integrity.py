@@ -1,6 +1,43 @@
 """Fixed D1 relational consistency checks, not authorization or restore admission."""
 from sqlalchemy import text
 
+from .conversation_restrictions import RestrictionHead, RestrictionSnapshot
+
+
+def restriction_head(connection, workspace_id):
+    rows = connection.execute(text("""SELECT workspace_id,authority_id,epoch,head_hash
+        FROM class_os.conversation_control ORDER BY workspace_id LIMIT 2""")).mappings().all()
+    if len(rows) != 1 or rows[0]["workspace_id"] != workspace_id:
+        raise ValueError("Invalid restriction anchor")
+    row = rows[0]
+    return RestrictionHead(row["authority_id"], row["workspace_id"], row["epoch"], row["head_hash"])
+
+
+def validate_restriction_snapshot(connection, snapshot):
+    """Fixed metadata-only relation check; never a freshness/activation grant."""
+    if type(snapshot) is not RestrictionSnapshot or restriction_head(connection, snapshot.head.workspace_id) != snapshot.head:
+        raise ValueError("Restriction evidence mismatch")
+    rows = connection.execute(text("""SELECT workspace_id,thread_id,title,status,version,cleared_at,updated_at
+        FROM class_os.conversation_thread ORDER BY thread_id LIMIT 10001""")).mappings().all()
+    if len(rows) > 10000:
+        raise ValueError("Restriction snapshot too large")
+    markers = {marker.thread_id: marker for marker in snapshot.markers}
+    seen = set()
+    for row in rows:
+        marker = markers.get(row["thread_id"])
+        if row["workspace_id"] != snapshot.head.workspace_id:
+            raise ValueError("Restriction scope mismatch")
+        if row["status"] == "cleared":
+            if (marker is None or row["version"] != marker.version_after or row["cleared_at"] != marker.restricted_at
+                    or row["updated_at"] < marker.restricted_at or row["title"] != "已清除的会话"):
+                raise ValueError("Restriction row mismatch")
+        elif marker is not None or row["cleared_at"] is not None:
+            raise ValueError("Restriction row mismatch")
+        seen.add(row["thread_id"])
+    if not markers.keys() <= seen:
+        raise ValueError("Orphan restriction marker")
+    validate_conversation_integrity(connection)
+
 
 def validate_conversation_integrity(connection):
     # These predicates do not return message bodies or execute model content.
