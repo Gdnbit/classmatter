@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-23。当前公开main基线为W4-01合并`2f45ab6`；W2已由PR #9收口，W3在独立Draft PR #10继续，真实Provider质量仍blocked。W1 `161a583`、W2-01 `9e97a08`为历史阶段证据。此表是工程状态索引，不替代 canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-24。当前已验收公开main为`d9400c1`：D0真实数据闭环由PR #13—16收口，[PR #16最终验收](https://github.com/Gdnbit/classmatter/pull/16)及[完整两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40004215292)均成功；Ubuntu DB/browser312通过、6平台跳过，Windows非DB304/Web55/desktop18。W3在独立Draft PR #10继续，真实Provider质量仍blocked；W4仍非完整生命周期/跨机恢复。早期main/W1/W2提交号和候选状态保留为历史，不能覆盖本摘要。此表不替代canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 
@@ -14,6 +14,8 @@
 6. W5：依据真实任务证据选择通知责任闭环或其他下一切片；新release change，不偷渡进冻结R1。
 
 W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR #9最终CI](https://github.com/Gdnbit/classmatter/actions/runs/39921094043)收口冻结R1真实界面与故障矩阵，W4-01按[PR #11最终CI](https://github.com/Gdnbit/classmatter/actions/runs/39941521068)通过后合并。完整Demo所有页面并不属于R1；W3真实Provider质量与完整W4/W5仍未完成。此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
+
+当前下一阶段（用户2026-10-24确认）：先交付真实桌面明确入口/只读检查与操作验收；再按独立post-R1变更推进D1耐久会话；W3只推进不需凭据/费用的工程准备；随后纵向验证“班级工作小结，引用已有事实与任务”。用户另明确允许创建全新本机合成实例，Owner本人稍后设置；本机操作结果不应写入公开配置/凭据。新能力仍不获得真实数据或Agent业务写权限，不因计划确认改正式Gate。
 
 ## 能力、代码与追溯
 
@@ -237,3 +239,11 @@ U2最终交付：[PR #15](https://github.com/Gdnbit/classmatter/pull/15)，提�
 独立审查要求补足真正PG业务重启：`test_local_runtime.py::test_owned_business_entities_survive_actual_pg_process_restart`在新临时SCRAM/DPAPI运行时经BCG写学生/事实/关联任务，关闭全部连接再stop/start自有PG，新建ISB/QG和数据库对象核对原实体ID/version/count、关联及完整投影；不是仅检查数据库元数据。local-runtime文件6项通过31.50秒，随后固定合成时钟的最终单项仍须核验。此证据只证明同机自有实例重启，不升级跨机迁移/容灾/恢复准入。README空白行导致docs首次拒绝，清理后72Markdown/引用/UTF8及图检查通过；正式107需求/147eval/94任务与green0不变。U3公开guard/历史扫描/精确清单、独立PR及完整两平台CI必须按实际结果收口。
 
 最终PG业务重启单项（固定合成时钟版本）1通过9.93秒。该补充缺口已由实际测试消除，不再把此前的metadata smoke当成业务持久性证明。最终公开CI/提交/合并收口证据记录在本单元独立PR验收评论；其成功之前本Goal不宣告完成。
+
+## 下一阶段 E1：真实桌面入口（2026-10-24，候选）
+
+基线main `d9400c1`。新增`apps/desktop/runtime-check.cjs`只读固定路径/描述/profile检查，输出闭合布尔和步骤码；不读取受保护凭据正文、不写文件/启动服务，不将前置文件齐备冒充Owner/服务ready。`runtime-launch.cjs`拒绝缺条件、旧checkout及测试fixture描述；`open:runtime`构建当前源码后走原自有API握手/readiness，原Demo入口不变。新增4项测试覆盖空目录不变、正常元数据不等于就绪、跨checkout/fixture拒绝、坏/过大配置和受保护文件缺失；desktop22通过。真实隔离Electron/API/PG链1通过40.44秒，原持久化/故障断言保留。
+
+独立审查指出隔离Electron测试不直接覆盖新launcher拒绝入口；补真实Node子进程启动临时checkout的launcher，验证缺条件/坏JSON/fixture描述退出2、无路径/原文回显、不加载Electron或生成cluster。最终desktop23项通过；真实正常入口另已构建/打开并由原握手与API readiness核验（不外推Owner已创建）。
+
+用户明确授权全新合成实例，Owner本人稍后设置；本人使用链因此仍pending-owner，不能用测试账号冒充其验收。测试集不依赖/覆盖这个实例。文书下一切片选择“班级工作小结，引用已有事实与任务”；不是新增学校授权/自动责任判断。此单元无数据库Schema/API/角色权限/模型调用改变，沿原T-RWEB与desktop工程追溯。公开清单/安全扫描及本PR两平台CI待核验，回滚revert代码不删除已创建的合成实例或凭据。
