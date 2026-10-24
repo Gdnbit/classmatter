@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-24。当前已验收公开main为`e95863a`：D0由PR #13—16收口；E1真实桌面入口由[PR #17](https://github.com/Gdnbit/classmatter/pull/17)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40058146095)验收，Windows非DB304/Web55/desktop23，Ubuntu非DB302+2跳过、DB/browser312+6跳过。Owner仍由本人稍后设置，不能把服务ready视为个人验收。W3在独立Draft PR #10继续，真实Provider质量仍blocked；W4仍非完整生命周期/跨机恢复。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-24。当前已验收公开main为`eae4ca4`：D0由PR #13—16收口，E1真实桌面入口由PR #17验收；D1-00规则/默认迁移保护由[PR #18](https://github.com/Gdnbit/classmatter/pull/18)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40059582389)验收，Windows非DB339/Web55/desktop23，Ubuntu非DB337+2跳过、DB/browser313+6跳过。D1耐久存储/生命周期/UI仍待实施；Owner仍由本人稍后设置，不能把服务ready视为个人验收。W3在独立Draft PR #10继续，真实Provider质量仍blocked；W4仍非完整生命周期/跨机恢复。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 
@@ -13,7 +13,7 @@
 5. W4：补齐退出/恢复/运维，形成候选证据；先合成shadow，再作教师净负担研究和正式准入决定。
 6. W5：依据真实任务证据选择通知责任闭环或其他下一切片；新release change，不偷渡进冻结R1。
 
-W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR #9最终CI](https://github.com/Gdnbit/classmatter/actions/runs/39921094043)收口冻结R1真实界面与故障矩阵，W4-01按[PR #11最终CI](https://github.com/Gdnbit/classmatter/actions/runs/39941521068)通过后合并。完整Demo所有页面并不属于R1；W3真实Provider质量与完整W4/W5仍未完成。此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
+W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR #9最终CI](https://github.com/Gdnbit/classmatter/actions/runs/39921094043)收口冻结R1真实界面与故障矩阵，W4-01/02已通过各自两平台CI后合并。完整Demo所有页面并不属于R1；W3已建立12例Provider工程评测但真实质量仍blocked，完整W4/W5仍未完成。此结论不是“整个前端功能已完成”或正式R1 Gate晋级。
 
 当前下一阶段（用户2026-10-24确认）：先交付真实桌面明确入口/只读检查与操作验收；再按独立post-R1变更推进D1耐久会话；W3只推进不需凭据/费用的工程准备；随后纵向验证“班级工作小结，引用已有事实与任务”。用户另明确允许创建全新本机合成实例，Owner本人稍后设置；本机操作结果不应写入公开配置/凭据。新能力仍不获得真实数据或Agent业务写权限，不因计划确认改正式Gate。
 
@@ -149,6 +149,18 @@ W2-01验证：后端非DB284项、完整隔离DB回归315项（包含真实浏�
 
 PR #9首轮Ubuntu完整CI在320px最新来源可见性断言失败（其余309项DB通过、5项平台跳过），Windows通过；没有合并或跳过失败。修复viewport尺寸变化触发scroll早于ResizeObserver时误取消跟随最新回复的问题，保留主动上滚阅读历史时不抢回位置。最终状态以修复后的两平台完整CI为准。
 
+W2最终证据：[PR #9](https://github.com/Gdnbit/classmatter/pull/9)目标`3ae2ba0`的[完整CI 39921094043](https://github.com/Gdnbit/classmatter/actions/runs/39921094043)为success，Windows/Ubuntu均成功。修复后本机真实浏览器全链重跑通过，未增大原1500ms断言超时；默认拒绝公开清单、历史扫描及70份Markdown校验通过。按约定验收后才合并/启动W3，不提升正式Gate。
+
+### 单元3：真实Provider评测工程基线（Draft / live blocked）
+
+复用原Pydantic AI与SDK、ISB/QG/BCG；代码位于`backend/evaluate_provider.py`、`infrastructure/provider_evaluation.py`及对应pytest。12例每例3次，区分离线边界、Provider前拒绝、故障注入和真实模型质量。首轮人民币10元总预算、价格/供应商限额核验、原UI受保护配置与本进程重新test/enable均是前置条件；不新增模型业务写权限。
+
+当前未获得满足入口条件的真实配置，operator默认执行明确blocked/0付费请求；真实Token/延迟/质量不填假数，PR保持Draft。测试初轮误用conversation参数导致失败，修正为原有接口后重跑；不修改生产接口迁就测试。详细命令、报告/回归口径、风险与回滚见[既有实验计划第10节](research/2026-10-22-agent-runtime-and-work-evaluation-plan.md)。正式Eval/Task/Gate保持原状态。
+
+本机工程证据：新增12场景各3次的离线合成QG/PG回归及真实SDK的离线HTTP计量用例通过；来源检查同时核对实际审计行范围/当前hash，业务表及命令回执无额外写入。新增预算/blocked入口/回归比较测试通过，默认operator实际执行返回blocked且付费请求0。真实Provider结果仍未运行，代码CI不替代真实质量成绩。
+
+W3本轮加固：发现预算预检漏算PE-03第二轮，修正保守请求上界146→158；历史比较报告在任何认证/付费前必须通过完整性校验。补环境和模型设置指纹、逐案例模型/usage覆盖一致性与新增失败告警，不能以总通过数不变掩盖局部退化。首次新增测试的阈值/指纹夹具错误已修正，不改变生产接口。独立只读审查发现并推动修复缺少指纹的预检、请求/模型不一致、通过数互抵三个问题；最终验证和CI见PR #10，不把上一目标SHA的绿色CI冒称本次结果。无API/Tool/迁移/Requirement/Eval/Task/Gate语义变化；追溯仍为T-RAGT-001—004及既有E-AGT，真实质量、人工审查和费用前置仍blocked。回滚可revert本轮加固提交；无数据迁移。
+
 ### W4-01：同机checkpoint发现与中断保护（2026-10-23）
 
 本单元从已合并PR #9后的main建立独立分支；不依赖W3真实Provider付费评测，不改Pydantic AI、业务模型、权限或正式Gate。教师的实际价值是故障后无需另记备份UUID，操作员可在数据库停止时找到可检查的同机checkpoint，避免把损坏/未写完的文件当作恢复凭据；教师平时无新增维护步骤。
@@ -159,15 +171,17 @@ PR #9首轮Ubuntu完整CI在320px最新来源可见性断言失败（其余309�
 - 验收：真实临时PG snapshot/隔离恢复及源库存量不变；实际Windows DPAPI+SCRAM CLI在stop后发现、start后check；同步/发布失败及UUID碰撞不产生可见半包且不覆盖；坏包、链接和清单上限拒绝。符号链接创建受宿主策略限制时明确skip，不当作通过。
 - 复用T-ROPS-003/006及E-OPS-005/006/007既有目标，仅形成合成工程证据，不将完整任务/正式Eval标绿。不覆盖retention、生命周期ledger重放、跨机迁移或退出完整性；这些仍待实施。回滚为revert本PR，无数据库迁移；旧checkpoint格式保持兼容。
 
-具体本地结果与完整Windows/Ubuntu CI按PR记录，远端全绿前不合并。使用方法及限制见[backend README](../backend/README.md)。
+W4-01已通过[完整CI 39941521068](https://github.com/Gdnbit/classmatter/actions/runs/39941521068)后由[PR #11](https://github.com/Gdnbit/classmatter/pull/11)合并为`2f45ab6`。Windows非DB288项、Ubuntu非DB286项/2项平台跳过，Ubuntu完整隔离DB310项/5项平台跳过；Web/桌面与公开检查均通过。本机实际Windows DPAPI/SCRAM恢复及角色边界34项通过/1项符号链接策略跳过，不拿跳过当通过。完整W4仍未完成。使用方法及限制见[backend README](../backend/README.md)。
 
-### W4-02：离线退出包复制核对（候选）
+### W4-02：离线退出包复制核对（implemented-synthetic）
 
 教师问题：更换设备/交付备份前，操作员不应仅凭“文件能打开”判断资料复制完整。复用原`verify_exit.py`和固定`validate_package`，新增`--compare-with`，一次命令分别核对文件字节、规范包及核心数据摘要；正常使用无额外业务录入。两份均合法但不同返回2（包括仅格式变化），坏包返回1，完全一致返回0。不是来源认证或恢复授权，不导入/写入数据库。
 
 验收覆盖真实BCG批准/QG下载包→复制→离线核对，比较前后事实/任务/收据/导出/审计数量及文件字节不变；格式、元数据和核心内容差异分开报告。坏包、重复字段、NaN/Infinity、编码/深度/尺寸、缺失、目录/特殊文件/叶子链接拒绝，错误不回显原文/路径。新增文件打开约束不改变退出包wire schema、BCG授权或导出行为；父目录链接不在本机只读operator的隔离保证内。
 
 复用T-REXP-001—003、T-ROPS-006和既有退出完整性目标，不修改正式Eval/Task/Gate语义或状态；`--require-complete`继续拒绝。Windows/Linux各自通过不证明实际两台机器的导入恢复。跨机业务写入、身份重新配置、生命周期账本和退役证明仍待实施。独立PR记录最终测试/CI，回滚为revert，无迁移；首轮Windows目录异常测试断言过窄已修正，不当作生产成功。详细操作见backend README。
+
+W4-02最终证据：[PR #12](https://github.com/Gdnbit/classmatter/pull/12)在[完整CI 39956007791](https://github.com/Gdnbit/classmatter/actions/runs/39956007791)两平台成功后合并为`3d8d750`。Windows非DB303项、Ubuntu非DB301项/2项平台跳过，Ubuntu完整DB/浏览器310项/5项平台跳过；本机退出相关定向76项通过/1项叶子链接策略跳过。源码、文档和公开检查通过；无实际跨机导入或完整W4准入。
 
 ### 数据库与真实接入：设计准备（design-proposal，未实施）
 
@@ -253,3 +267,5 @@ E1收口：[PR #17](https://github.com/Gdnbit/classmatter/pull/17)已在[完整C
 ## D1-00：耐久会话前置规则（2026-10-24，候选）
 
 按[独立变更单](changes/2026-10-24-d1-durable-conversation.md)推进后续D1-01—09，不修改正式Requirement/Eval/Task/Gate。先实现有限消息origin、含全部既有请求字段的scope绑定哈希、闭合run状态与版本/generation/lease规则；默认迁移明确停在冻结0016，拒绝未来schema。无新表、API、权限、SDK工具或前端接线。域单元和实际隔离PG兼容测试属于工程前置，不证明聊天已持久化或DB CAS并发安全。下一单元必须把受控store、生命周期/退出/恢复与QG/BCG一起交付，不能先向用户启用一份无出口的聊天存储。
+
+D1-00收口见上述PR #18最终CI；局部组合44通过14.85秒，独立审查两项时间边界问题已修复/复核，35项域测试独立通过。回滚为代码revert，无新schema/用户实例操作。W3已验收E1集成提交091b0bb的完整CI40059173213：Windows非DB334，Ubuntu非DB332+2跳过、DB/browser325+6跳过；均含Web55/Windows desktop23。随后W3继续合入已接受D1-00，合并只处理公开清单内容登记，保留全部新旧代码及台账；该新head的组合/安全/完整CI仍须独立核验，不复用上一head绿色结果。真实Provider仍未运行且不合并Draft，不阻断后续独立D1工程。

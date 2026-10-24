@@ -2,6 +2,15 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "backend/evaluate_provider.py": {
+      "sha256": "10f5bc37b5e9b88d24fe47d2cc3fd6a19907529f5d9469f4ce03913710b12c3d"
+    },
+    "backend/src/class_os/infrastructure/provider_evaluation.py": {
+      "sha256": "92d1837829761f34c0d6d2a2bb071861ca49f393fd0397d26f3815578d96fad1"
+    },
+    "backend/tests/test_provider_evaluation.py": {
+      "sha256": "22871cd95bb5fafb80baa9732f52cca0b6ac05703bb49bcc7182deed98345e99"
+    },
     "backend/src/class_os/domain/durable_conversation.py": {
       "sha256": "1f782680512cba080b13b49036f544eebbcd53790a6d38b1184a299e1fe09a9f"
     },
@@ -117,7 +126,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "e226774e1f3fb1358a147e4f00d8acda21d51987d9a1d822ef25d030d89e76e6"
+      "sha256": "07fa2542bb3982b09efbfc418bdbf6327d3210c80b7b631009f955296432c6e7"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -2231,7 +2240,7 @@
       "sha256": "8ed5a5f2fbaf951d71e6a531aafa1d30f85572ee56741423fcbe2be9a8fe4aa6"
     },
     "docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md": {
-      "sha256": "74bd10a94cdf111df95e16717f3aad79555a1b02869a1e7ce70a5b33fd4d7313"
+      "sha256": "82810d9bffa1e4b618fa2629f0c87409705e8a38f53767db4a992de0d522ef80"
     },
     "docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md": {
       "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"
