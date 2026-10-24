@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-24。当前已验收公开main为`d9400c1`：D0真实数据闭环由PR #13—16收口，[PR #16最终验收](https://github.com/Gdnbit/classmatter/pull/16)及[完整两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40004215292)均成功；Ubuntu DB/browser312通过、6平台跳过，Windows非DB304/Web55/desktop18。W3在独立Draft PR #10继续，真实Provider质量仍blocked；W4仍非完整生命周期/跨机恢复。早期main/W1/W2提交号和候选状态保留为历史，不能覆盖本摘要。此表不替代canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-24。当前已验收公开main为`e95863a`：D0由PR #13—16收口；E1真实桌面入口由[PR #17](https://github.com/Gdnbit/classmatter/pull/17)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40058146095)验收，Windows非DB304/Web55/desktop23，Ubuntu非DB302+2跳过、DB/browser312+6跳过。Owner仍由本人稍后设置，不能把服务ready视为个人验收。W3在独立Draft PR #10继续，真实Provider质量仍blocked；W4仍非完整生命周期/跨机恢复。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 

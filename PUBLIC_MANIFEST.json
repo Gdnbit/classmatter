@@ -117,7 +117,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "bb0c2da477c6a18dd76aeb7b7f5474e33bdda4db0a7b807d2349d69b1b608ca7"
+      "sha256": "e226774e1f3fb1358a147e4f00d8acda21d51987d9a1d822ef25d030d89e76e6"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
