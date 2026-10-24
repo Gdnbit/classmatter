@@ -11,15 +11,30 @@ import pytest
 from sqlalchemy import text
 
 from class_os.application.identity import IdentityBoundary
-from class_os.application.roster import BusinessGateway, QueryGateway
+from class_os.application.roster import BusinessGateway, QueryGateway, CommandRejected
 from class_os.domain.activity import CreateTask
 from class_os.domain.roster import ChangeClass, ChangeTerm
 from class_os.infrastructure.identity import PostgresIdentityStore
-from class_os.infrastructure.roster import PostgresBusinessStore
+from class_os.infrastructure.roster import PostgresBusinessStore, BusinessTransaction
 from class_os.infrastructure.persistence.database import Database, migrate
 from class_os.infrastructure.persistence.schema_inventory import REGISTERED_TABLES
 from test_activity_gateway import seed, submit
 from test_identity import setup, CLIENT
+
+
+class Legacy0015Transaction(BusinessTransaction):
+    """Test-only old boundary, usable exclusively while constructing 0015 rows."""
+
+    def authorize_boundary(self, binding, action, proposal_id):
+        assert self._store.database.profile == "r1"
+        assert self._connection.execute(text(
+            "SELECT version_num FROM class_os.alembic_version"
+        )).scalar_one() == "0015"
+
+
+class Legacy0015Store(PostgresBusinessStore):
+    def _transaction(self, connection):
+        return Legacy0015Transaction(connection, self)
 
 
 def snapshot(owner):
@@ -59,7 +74,10 @@ def test_nonempty_0015_upgrade_preserves_rows_legacy_approval_and_exact_new_gran
         boundary = IdentityBoundary(PostgresIdentityStore(identity_database), PasswordHash.recommended(), clock=lambda: clock[0])
         auth = setup(boundary)
         credentials = (auth.token, CLIENT, auth.csrf, auth.subject.workspace_id)
-        store = PostgresBusinessStore(runtime_database)
+        current = PostgresBusinessStore(runtime_database)
+        with pytest.raises(CommandRejected):
+            QueryGateway(boundary, current, clock=lambda: clock[0]).context(*credentials)
+        store = Legacy0015Store(runtime_database)
         business = BusinessGateway(boundary, store, clock=lambda: clock[0])
         query = QueryGateway(boundary, store, clock=lambda: clock[0])
         classroom, student, record = seed((business, query, store, credentials, boundary, owner, clock))
@@ -71,6 +89,10 @@ def test_nonempty_0015_upgrade_preserves_rows_legacy_approval_and_exact_new_gran
         before, acl = snapshot(owner), term_acl(owner)
         assert all(not acl[column] for column in ("name", "start_date", "end_date"))
         migrate(owner)
+        # All post-upgrade operations use the actual current production boundary.
+        store = PostgresBusinessStore(runtime_database)
+        business = BusinessGateway(boundary, store, clock=lambda: clock[0])
+        query = QueryGateway(boundary, store, clock=lambda: clock[0])
         assert snapshot(owner) == before
         assert term_acl(owner) == {**acl, "name": True, "start_date": True, "end_date": True}
         with owner.transaction(read_only=True) as connection:

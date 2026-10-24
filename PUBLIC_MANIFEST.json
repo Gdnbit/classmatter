@@ -90,7 +90,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "c80146bf40216e81567f200654c70f96545b885321262fe7b2d556470d847bc9"
+      "sha256": "e220ffb858770b31c935632cb69b2b5cd32210f68e86f65f225790757f46f184"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
@@ -825,7 +825,7 @@
       "sha256": "b166727713170044769b89bdcc6ee661df8d2f155ceee4e00bc7d8da05223588"
     },
     "backend/tests/test_0015_to_0016_upgrade.py": {
-      "sha256": "7d3bd5848f5f805423fecf66eaf8764dec2f60156130ba6889ab5820818d50be"
+      "sha256": "0f4269e0768e23b91438285f560cfcf0696856d59ce68784871f61509a9282d4"
     },
     "backend/tests/test_activity_domain.py": {
       "sha256": "21cdcc5d09a4ce727a1634e538c70e665538fefeba84537f61b0357bb196d86c"
@@ -1171,7 +1171,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "d18369620ea85aa8d6086a71a7e21e998541bcd954baa58f1e51d51c4ca1a09b"
+      "sha256": "a388d58a99d729317b257f8d3c35d24764a09065d6b7be641eca96a90d5db1cd"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"
