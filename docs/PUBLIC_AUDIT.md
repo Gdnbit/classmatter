@@ -1,5 +1,9 @@
 # ClassMatter public candidate audit
 
+## 2026-10-24 owner-designated Logo archive
+
+Reviewed first-party asset registration and exact local-ignore rules. Two owner-supplied PNG originals are retained byte-for-byte locally, not tracked or included in the public manifest. Visual review found a giraffe/book symbol and ClassMatter wordmark; source metadata remains unmodified and is not exported or asserted privacy-free. The public registration contains only user-designated filenames, dimensions, byte counts, hashes and explicit local-only limitations. No binary exception, disguised asset, image transformation, application-icon replacement, business code or formal Gate change. The existing binary-publication ban remains unchanged; GitHub cloning does not transfer these images. Future public asset admission requires a separate reviewed decision.
+
 This is a safe summary, not private evidence or an anonymity guarantee. **Public open-source repository · Pre-alpha / synthetic-only; no GitHub Release and no real-student-data authorization.** The owner selected Apache-2.0/Gdnbit attribution and confirmed project/prototype redistribution rights.
 
 Source was exported through a SHA-locked private allowlist into a clean history, then published to this independent GitHub repository. The first commit has no parents; the original source repository remains Private. Private research, source ledgers, images, archives, operational logs and databases are not transferred. Useful product conclusions are abstracted without quotations, interview dates or private source IDs. Explicitly synthetic demo labels replace unverified prototype name/school provenance.
