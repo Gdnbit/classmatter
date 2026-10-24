@@ -54,3 +54,7 @@ Thumbs.db
 # Desktop staging, executable bundles and automated GUI evidence.
 /apps/desktop/.build/
 /apps/desktop/out/
+
+# Owner-supplied original logo bytes remain local under the binary-publication ban.
+/assets/brand/originals/classmatter-wordmark.original.png
+/assets/brand/originals/classmatter-symbol.original.png
