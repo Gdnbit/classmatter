@@ -53,6 +53,25 @@ Electron 的安装脚本由 `pnpm-workspace.yaml` 精确允许；若机器全局
 
 ## 合成持久化开发入口（W2-01，非发行版）
 
+2026-10-24：D0真实页面/恢复已在[PR #16](https://github.com/Gdnbit/classmatter/pull/16)验收；这不等于本README上方离线Demo自动变成真实实例。`pnpm start`仍打开离线Demo；真实持久化入口为以下命令，依赖本机Windows/Python/PG，不是免安装发行包：
+
+```powershell
+pnpm check:runtime
+pnpm open:runtime
+```
+
+`check:runtime`只读检查，JSON仅输出固定步骤码及布尔结果，不读取/输出密码或恢复码，不启动服务、不写文件。退出0只表示文件前置条件齐备，**不表示PG已启动、Owner已建立或服务ready**；退出2表示需处理`next_steps`。`open:runtime`先构建当前源码再执行同一检查，随后复用原自有API进程握手/readiness；无失败回退Demo、自动安装、建库、迁移、设置Owner或旧请求重放。
+
+| next_steps | 本机操作者动作 |
+| --- | --- |
+| windows | 当前持久化开发profile仅支持Windows；不要绕过DPAPI |
+| backend | 在backend执行`uv sync --frozen`，确认固定desktop.py入口存在 |
+| electron | 在apps/desktop执行`pnpm install --frozen-lockfile` |
+| build / source | `pnpm build:runtime`；移动checkout或测试fixture描述必须重建，不能手改路径冒充用户实例 |
+| database_configuration / protected_credentials | 尚无完整自有实例或配置不符；先确认是否全新目录，按backend README显式初始化。已有实例不得重建或复制DPAPI；缺文件先诊断，不用init修复 |
+
+准备好数据库后，在backend显式执行`uv run --frozen python local.py start`。首次Owner由本人在受信终端执行`uv run --frozen python local.py bootstrap`，设置密码并离线保存一次性恢复码；不要把密码/恢复码发给Agent或写入命令行、日志、Git。此后返回桌面登录，完成“班级→学生→事实→预览确认→任务→关闭重开核对”。只使用合成内容。应用关闭仅停止自有API，不停止PG。
+
 原离线Demo命令和快捷方式不变。另有独立的开发入口，复用已有R1业务页面、API和PostgreSQL，不是把Demo内存当数据库，也不表示全部冻结页面已迁移。
 
 先按[后端运行说明](../../backend/README.md)准备本机自有合成runtime、启动PostgreSQL并由本人交互bootstrap owner；不要重建已有实例。同步冻结依赖后，在本目录执行：

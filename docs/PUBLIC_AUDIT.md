@@ -68,3 +68,7 @@ Reviewed first-party runtime navigation/student presentation, bounded HTTP shell
 ## 2026-10-24 U3 deadline and fault acceptance candidate
 
 Reviewed first-party UI refresh wiring and synthetic fixture/browser assertions only. Existing server `as_of`/deadline projections remain authoritative; no new endpoint, dependency, business grant, Agent write, schema or real data. Fixture clocks, passwords and faults are synthetic; raw screenshots, XML, runtime databases and machine paths stay ignored. Precise content hashes and full CI are required before public delivery; exception lists are unchanged. This review is not formal release or real-data admission.
+
+## 2026-10-24 real desktop entry candidate
+
+Reviewed first-party operator-only prerequisite checker, launch wiring, synthetic tests and updated status/usage instructions. Output contains closed step codes/booleans, not local paths, protected credential bytes or Owner state. Files present do not assert readiness. No new renderer IPC, arbitrary command runner, database mutation, Provider call or dependency. The explicitly authorized fresh synthetic runtime and DPAPI files remain ignored local state; public sources contain no machine-specific runtime configuration. Exact manifest hashes and full CI remain required, with unchanged exceptions.
