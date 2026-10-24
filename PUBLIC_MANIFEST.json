@@ -11,6 +11,15 @@
     "backend/tests/test_provider_evaluation.py": {
       "sha256": "22871cd95bb5fafb80baa9732f52cca0b6ac05703bb49bcc7182deed98345e99"
     },
+    "backend/src/class_os/domain/durable_conversation.py": {
+      "sha256": "1f782680512cba080b13b49036f544eebbcd53790a6d38b1184a299e1fe09a9f"
+    },
+    "backend/tests/test_durable_conversation.py": {
+      "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
+    },
+    "docs/changes/2026-10-24-d1-durable-conversation.md": {
+      "sha256": "e6fdb8d6691924193d17a31c1fe2859e544f904765bd72b8a4a3be82c94a45d7"
+    },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
     },
@@ -117,7 +126,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "348f6503bca6510bfdecbce6bf1e62b74b81cc72e6cbfea4598ff0e7d330ef51"
+      "sha256": "07fa2542bb3982b09efbfc418bdbf6327d3210c80b7b631009f955296432c6e7"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -684,7 +693,7 @@
       "sha256": "43fde57fdf4c97fb50216ebd5f7491d20f7998192506fb510a12444674b02432"
     },
     "backend/src/class_os/infrastructure/persistence/database.py": {
-      "sha256": "72c0d5d8f3dd3ba197ca7fa275af1b045cf01107697cb99675469f56ba337198"
+      "sha256": "0f4373fa7d75b5a9cb82877a77f021e73088c00ad58afe38cfb851333f946094"
     },
     "backend/src/class_os/infrastructure/persistence/role_guards.py": {
       "sha256": "2eae75a19f6538a0e9e9633af33acc1f0aba3871b9763295bf4c58171b69911e"
@@ -913,7 +922,7 @@
       "sha256": "57232628e05786804edb86bb9117e6737fc2f49293494184c73d03f3e0a0af7b"
     },
     "backend/tests/test_schema_inventory.py": {
-      "sha256": "514675ca181694651dcef3b382906074ec48fbeb79e06287cbb78d33e993ae64"
+      "sha256": "c1d9b5b3716bae4f707e9a13635bc9869192e14c77aa8d998402b995e7004ba9"
     },
     "backend/tests/test_student_name.py": {
       "sha256": "9ccd4e50d2693a429be48e54d9ceb93265de8763694a99ddf15f43654642ab40"
@@ -1090,7 +1099,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "e695fd9fe441c08034af0e6f21744239d3dcb1434efe84e7129a295a90a23798"
+      "sha256": "6f2f521f4d4ee036025f6dfdc3addba29f9707f9c5e1c2fa84a6ed8e8954c207"
     },
     "docs/README.md": {
       "sha256": "c27648890e17daccf94655ba7366b9abc4289af94990cd82f36d144fd3626daa"

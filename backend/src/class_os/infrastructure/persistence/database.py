@@ -12,6 +12,10 @@ from sqlalchemy.pool import NullPool
 from .schema_inventory import validate_surface
 
 
+# New development migrations must never silently change the frozen R1 default.
+R1_MIGRATION_TARGET = "0016"
+
+
 class Database:
     def __init__(self, url, *, migration=False, identity=False):
         try:
@@ -90,8 +94,9 @@ def migrate(database: Database, *, connection=None):
     version_table = connection.execute(text("SELECT to_regclass('class_os.alembic_version')")).scalar_one()
     if version_table:
         revisions = connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalars().all()
-        if len(revisions) != 1 or revisions[0] not in {item.revision for item in scripts.walk_revisions()}:
+        if len(revisions) != 1 or revisions[0] not in {
+                item.revision for item in scripts.iterate_revisions(R1_MIGRATION_TARGET, "base")}:
             raise RuntimeError("Unknown database revision")
     connection.exec_driver_sql("CREATE SCHEMA IF NOT EXISTS class_os AUTHORIZATION class_os_migrator")
-    command.upgrade(config, "head")
+    command.upgrade(config, R1_MIGRATION_TARGET)
     validate_surface(connection, complete=True)
