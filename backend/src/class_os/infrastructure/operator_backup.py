@@ -255,11 +255,43 @@ class SyntheticBackup:
             raise BackupRejected() from None
 
     def check(self, artifact):
+        return self._check(artifact)
+
+    def check_current_restrictions(self, artifact, restrictions):
+        """Trusted same-runtime point-in-time preflight, NOT import authority.
+
+        Requires the actual protected file port, never a caller's proof dict.
+        A source change during restore fails closed. No lock/lease is returned
+        for a later import: that must establish its own commit-time authority.
+        """
+        from .conversation_restrictions import ProtectedConversationRestrictions
+        if (self.profile != "conversation-d1" or type(restrictions) is not ProtectedConversationRestrictions
+                or restrictions.root != self.runtime.root):
+            raise BackupRejected()
+        return self._check(artifact, restrictions=restrictions)
+
+    def _current_restrictions(self, database, restrictions):
+        from .conversation_integrity import restriction_head, validate_restriction_snapshot
+        with database.transaction(read_only=True) as connection:
+            connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
+            self._state(connection, profile=self.profile)
+            head = restriction_head(connection, restrictions.workspace_id)
+            compared = restrictions.compare(head)
+            if compared.state != "aligned":
+                raise BackupRejected()
+            validate_restriction_snapshot(connection, compared.snapshot)
+            # Recheck the file after inspecting metadata; a race is refusal,
+            # not a promise of a durable lease past this observation.
+            restrictions.require_current(head)
+            return compared.snapshot
+
+    def _check(self, artifact, *, restrictions=None):
         packet, archive = self._open(artifact)  # Never create a DB for an invalid artifact.
         temporary = "class_os_synthetic_restore_" + uuid4().hex
         database = self.runtime.database("migrator")
         created = False
         try:
+            current = self._current_restrictions(database, restrictions) if restrictions is not None else None
             with self.runtime.admin() as root:
                 root.execute(sql.SQL("CREATE DATABASE {} OWNER class_os_migrator TEMPLATE template0").format(sql.Identifier(temporary)))
                 created = True
@@ -272,8 +304,13 @@ class SyntheticBackup:
                     self._state(connection, profile=self.profile)
                     if self._inventory(connection, profile=self.profile) != packet["inventory"]:
                         raise BackupRejected()
+                    if current is not None:
+                        from .conversation_integrity import validate_restriction_snapshot
+                        validate_restriction_snapshot(connection, current)
             finally:
                 restored.close()
+            if current is not None and self._current_restrictions(database, restrictions) != current:
+                raise BackupRejected()
             result = {"schema_version": "class-os.synthetic-backup-check.v1", "verified": True,
                     "source_preserved": True, "temporary_clone_removed": True,
                     "portable": False, "complete_exit": False, "table_count": len(self.tables)}
@@ -281,6 +318,8 @@ class SyntheticBackup:
                 result.pop("verified")
                 result.update(schema_version="classmatter.conversation-backup-check.v1",
                               snapshot_integrity_verified=True, activation_allowed=False)
+                if current is not None:
+                    result.update(current_restrictions_verified_at_check=True, observation_only=True)
             return result
         except Exception:
             raise BackupRejected() from None

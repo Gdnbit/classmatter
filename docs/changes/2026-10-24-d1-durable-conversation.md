@@ -165,3 +165,20 @@ PR #23最终de409a3已由CI40081114526两平台验收合并为main b177567：Win
 独立对抗审查发现marker只向前核对thread，未反向检查孤立marker；现按D1不删除thread的既有语义要求每条marker引用已导出thread，并加入重算两层hash后仍拒绝的负向用例。初轮独立纯格式+PG42通过48.62秒；修复后独立纯格式32通过0.33秒。最终本机新旧v1/v2/CLI/活动领域组合125通过、1项平台跳过57.39秒；全非DB414通过4项宿主能力跳过、397项DB未在该命令执行35.89秒。前一条旧版回归因漏传`--pg-root`产生2个fixture错误，不计为通过；此处125组合已带真实PG参数重跑。
 
 当前无新API/Tool、导入、激活或worker接线。下载前限制proof必须与当前源一致，但不能撤回已下载副本，也不物理擦除export_job旧字节。1MiB/每集合10000行硬上限超限拒绝而非部分导出；未提供大规模分片/裁剪。源码revert不能无损降级已迁移D1，保留文件/停用profile或前滚。后续完整恢复和耐久UI仍未完成，不能因此宣布Goal通过。最终公开哈希、历史扫描、完整两平台CI及PR按实际证据收口。
+
+D1-12最终由PR #24在两平台CI40083796925通过后合并main e8fb126：Windows非DB418/Web55/desktop23，Ubuntu非DB415+3跳过、实际PG/browser388+9跳过。独立复算668项hash；源工作树与验收main内容一致。以上候选文字为阶段历史。
+
+## D1-13a：恢复快照当前限制核对（文件级计划）
+
+目标：恢复准备不能把清除前旧checkpoint的结构完整，当成当前限制仍兼容；不以本单元替代新身份typed导入和后续耐久UI目标。
+
+- `operator_backup.py`复用原临时clone/精确inventory/ACL/清理，新增显式`check_current_restrictions`，仅D1可用。受信operator绑定本runtime根目录及workspace，从源DB锚点与备份外文件读取当前证明；恢复clone必须具有同一head及一致清除关系，检查后再读源证明，变化/缺失/pending/损坏拒绝。不输出正文，不返回激活授权，不接受调用者提供的proof或路径。
+- `conversation_integrity.py`新增固定anchor/marker/thread双向关系核对，供源/clone复用；不修改R1规则、QG/BCG或既有check输出，不读凭据或更改业务行。
+- 新`test_conversation_backup_restrictions.py`走真实PG/原BCG清除/实际pg_restore，证明旧包拒绝、新包匹配、部分回滚/孤立标记/缺文件/检查期间推进/还原失败均不假成功，源库与原包保留且临时clone清理；Windows实际DPAPI另测。
+- 更新原README/台账/本变更与公开审查/真实manifest；复用既有退出与运维目标，仅增加post-R1工程证据，不改正式Requirement/Eval/Task/Gate。最终独立审查、扫描、完整两平台CI后交付独立PR。
+
+该结果只表示检查时点兼容，检查结束后可立即变旧；绝不是持久恢复凭据。后续真正导入仍需受控新身份、来源证明、目标授权、提交时新鲜度和跨源目标故障协议；一次读proof再目标commit存在竞态，不能复用本布尔值绕过。无用户实例升级、业务写入或新store，回滚revert代码即可，不删除任何已有备份或限制文件。
+
+实际实现保持原`check`返回值和语义，显式新方法增加源/clone/源三阶段核对。最终专项17通过100.91秒，含真实BCG清除、实际pg_restore、Windows DPAPI、缺失/损坏/pending/异根/异workspace/proof字典拒绝、检查期间clear、恢复失败/最终证据损坏后的clone清理，以及源库/原包保留。新旧backup回归26通过1项平台跳过125.85秒；全非DB415通过4项宿主能力跳过、当时412项DB未执行46.90秒（随后另加1个DB用例，最终收集数以CI为准）。日志仅存忽略的test-results，不公开。
+
+独立首轮14通过81.47秒，指出篡改clone会先被旧inventory检查拒绝，证据不能归因于新关系检查；已补实际生成inventory自洽但marker关系错误的坏包，并明确断言旧check通过/新check拒绝，独立关键用例1通过15.02秒。无剩余实现阻断发现；不将独立首轮成绩冒称最后3个新增用例已全量独立重跑。公开清单、扫描、完整两平台CI仍按最终head收口。教师正常工作新增操作为零；该operator开发能力尚无UI，不声称已经完成用户净负担验收、新身份恢复或耐久会话链路。

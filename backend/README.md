@@ -32,6 +32,10 @@ Discovery rejects rather than returning a partial result above 128 directory ent
 
 The local NTFS and CI Linux filesystems support this hard-link publication. Atomic visibility is not a guarantee of power-loss durability: directory metadata is not separately fsynced, so a successful command is not evidence that a newly published filename survives a sudden host power loss. Preserve earlier checked checkpoints and verify again after an abnormal shutdown; no RPO/RTO promise is made.
 
+For explicit D1 development composition, `SyntheticBackup.check_current_restrictions(backup_id, restrictions)` additionally compares the source database anchor and same-runtime protected file, validates the actual restored clone against those markers, then rechecks the source. Missing/corrupt/pending evidence, an old head, orphan markers or old visible rows behind a current anchor reject. The port must be the fixed `ProtectedConversationRestrictions` for this runtime; a supplied proof dictionary or foreign root is not accepted. The unchanged `check` method still tests snapshot integrity only, so an old structurally valid snapshot may pass `check` and fail this stronger check.
+
+The stronger report explicitly returns `current_restrictions_verified_at_check=true`, `observation_only=true` and `activation_allowed=false`. It is an observation, not a lease, permanent recovery credential or imported-data authorization: restrictions can change immediately afterwards. No new CLI/HTTP/Agent route, database writes, target activation or existing-instance upgrade is registered. A future typed import must independently establish current-source/target authority at commit and handle cross-database failures. Whole-host rollback, physical erasure and portable/new-identity recovery are not proven by this check.
+
 ## Offline core exit transfer checks
 
 An owner-approved core JSON download can be checked without a running database, login, model or network connection:
