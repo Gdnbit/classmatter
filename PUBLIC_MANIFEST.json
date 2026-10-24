@@ -11,6 +11,12 @@
     "backend/tests/test_provider_evaluation.py": {
       "sha256": "22871cd95bb5fafb80baa9732f52cca0b6ac05703bb49bcc7182deed98345e99"
     },
+    "apps/desktop/runtime-check.cjs": {
+      "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
+    },
+    "apps/desktop/tests/runtime-check.test.cjs": {
+      "sha256": "5865f69e36fdbe4144cc52d876fbd32c619e2895d487fc8adcdf31bae7a58373"
+    },
     "apps/web/tests/runtime-deadline-browser.mjs": {
       "sha256": "5214c4c0f6f77e077741a70a694fc39d8450d8d2f3641524a41f2a40c4d22ca3"
     },
@@ -45,7 +51,7 @@
       "sha256": "bb036d19d48a159faab1a8f8327d43ef78331eae0de46fe1ae5f625cfd0f2547"
     },
     "docs/design/live-data-delivery-acceptance.md": {
-      "sha256": "b51399f3b9997dcde04bb543816ce10a950bf49bcc93c78c3dc3ef2fab600195"
+      "sha256": "cbf24d78908d0f94c8e9ffaba13e6679035ac620e300f9b94ebcda4390a9f733"
     },
     "docs/design/database-live-data-design.md": {
       "sha256": "beecbcaa2cbb9a7c7d42c5806906ed8e0c994d69174004fd646ca657c33adb0a"
@@ -84,7 +90,7 @@
       "sha256": "7d6368598eb3c5eb4de77fee1e8602194857aad725566b012db15c64bebcd2de"
     },
     "apps/desktop/scripts/runtime-launch.cjs": {
-      "sha256": "afcdce4a4184c9a44dcd68f71a83bf6af922891c27b9a767ff892d08e156b5d2"
+      "sha256": "c4749bd82b8c9158b1bbfaea5f0975ec4ad4f820685aff2ff0276822866622c2"
     },
     "apps/desktop/tests/runtime-integration.cjs": {
       "sha256": "b904b1089c70c683d1438d310292f16b124f4e8c63a26facd5e28b345e96470a"
@@ -111,7 +117,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "721a5fd24750746d68aeb1c80067dea4fcebe6889f24df7f90d15685e4fb6a08"
+      "sha256": "348f6503bca6510bfdecbce6bf1e62b74b81cc72e6cbfea4598ff0e7d330ef51"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -147,7 +153,7 @@
       "sha256": "be2c6879293bc6fed1ad12245208b0d235dd40174bfd7745eabeb6fa5a96171d"
     },
     "apps/desktop/package.json": {
-      "sha256": "022f074eee07482a3e5b9fe78dbacf8aeddc0c1f20c35e112c7784d0cfe600ee"
+      "sha256": "b818c1c246b4c67ff5ae7746b970b1db64de0177548efa2bf260f790869e8d9b"
     },
     "apps/desktop/pnpm-lock.yaml": {
       "sha256": "11c1f20d52f0b44b34ca6f249d5bb4695286cd21904e982269f5ba41fb87c1e9"
@@ -159,7 +165,7 @@
       "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
     },
     "apps/desktop/README.md": {
-      "sha256": "5b21f8febb26ac5e9a214d3f4484cd4cecd7ff2bf8c4ad7e72b17fdb01737cee"
+      "sha256": "e605be4fce8bd83e736932e9c30bf7cd835d3ad4ceaf1d1844b2bb0e69c15753"
     },
     "apps/desktop/scripts/build.cjs": {
       "sha256": "586d17fa8f21ce2eda947c78a55d2139f4c979fd6110a9f0336d585fb777b7fc"
@@ -1084,7 +1090,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "75980846b58cf88833c5889917c5e370269b3afd85aab9ccf724e413029d4319"
+      "sha256": "e695fd9fe441c08034af0e6f21744239d3dcb1434efe84e7129a295a90a23798"
     },
     "docs/README.md": {
       "sha256": "c27648890e17daccf94655ba7366b9abc4289af94990cd82f36d144fd3626daa"
@@ -2225,7 +2231,7 @@
       "sha256": "8ed5a5f2fbaf951d71e6a531aafa1d30f85572ee56741423fcbe2be9a8fe4aa6"
     },
     "docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md": {
-      "sha256": "e947d62c0e207fa570ba1fec6caf52eee292f565aa4071941832d8f6b113a3f3"
+      "sha256": "82810d9bffa1e4b618fa2629f0c87409705e8a38f53767db4a992de0d522ef80"
     },
     "docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md": {
       "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"
