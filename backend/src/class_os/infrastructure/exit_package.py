@@ -11,7 +11,13 @@ from class_os.domain.roster import Receipt
 
 
 class ExitTransaction:
+    def _require_core_profile(self):
+        # v1 is an exact R1 profile, not a partial export of later stores.
+        if self._connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0016":
+            raise ValueError("Core exit profile is incompatible with database revision")
+
     def core_snapshot(self, workspace):
+        self._require_core_profile()
         core = {}
         for table, columns in CORE_COLUMNS.items():
             # Identifiers come exclusively from the immutable source registry,
@@ -55,6 +61,7 @@ class ExitTransaction:
         return Receipt(uuid4(), command.export_id, 1)
 
     def exit_artifact(self, binding, export_id, now):
+        self._require_core_profile()
         row = self._connection.execute(text("""SELECT package_hash,bundle FROM class_os.export_job
             WHERE workspace_id=:workspace_id AND actor_id=:actor_id AND export_id=:id AND state='ready' AND :now<expires_at"""),
             {**binding, "id": export_id, "now": now}).mappings().one_or_none()

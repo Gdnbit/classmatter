@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-24。当前已验收公开main为`e95863a`：D0由PR #13—16收口；E1真实桌面入口由[PR #17](https://github.com/Gdnbit/classmatter/pull/17)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40058146095)验收，Windows非DB304/Web55/desktop23，Ubuntu非DB302+2跳过、DB/browser312+6跳过。Owner仍由本人稍后设置，不能把服务ready视为个人验收。W3在独立Draft PR #10继续，真实Provider质量仍blocked；W4仍非完整生命周期/跨机恢复。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-24。当前已验收公开main为`eae4ca4`：D0由PR #13—16收口，E1由PR #17收口；D1-00规则/默认迁移保护已由[PR #18](https://github.com/Gdnbit/classmatter/pull/18)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40059582389)验收，Windows非DB339/Web55/desktop23，Ubuntu非DB337+2跳过、DB/browser313+6跳过。D1-10存储基础在独立候选分支；持久会话/生命周期/UI还未交付。Owner仍由本人稍后设置，服务ready不等于个人验收。W3仍在Draft PR #10，真实Provider质量blocked；完整生命周期/跨机恢复尚未完成。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 
@@ -253,3 +253,11 @@ E1收口：[PR #17](https://github.com/Gdnbit/classmatter/pull/17)已在[完整C
 ## D1-00：耐久会话前置规则（2026-10-24，候选）
 
 按[独立变更单](changes/2026-10-24-d1-durable-conversation.md)推进后续D1-01—09，不修改正式Requirement/Eval/Task/Gate。先实现有限消息origin、含全部既有请求字段的scope绑定哈希、闭合run状态与版本/generation/lease规则；默认迁移明确停在冻结0016，拒绝未来schema。无新表、API、权限、SDK工具或前端接线。域单元和实际隔离PG兼容测试属于工程前置，不证明聊天已持久化或DB CAS并发安全。下一单元必须把受控store、生命周期/退出/恢复与QG/BCG一起交付，不能先向用户启用一份无出口的聊天存储。
+
+D1-00已由[PR #18](https://github.com/Gdnbit/classmatter/pull/18)及[最终两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40059582389)验收合并为main `eae4ca4`：Windows非DB339/Web55/desktop23，Ubuntu非DB337+2跳过、DB/browser313+6跳过。旧候选文字/先前提交号为阶段历史，不代替本收口证据。
+
+## D1-10：显式存储profile基础（2026-10-24，候选）
+
+用户已明确建立新Goal，持续到D1/恢复/文书工程验收和GitHub同步；外部Owner/真实Provider条件单列。当前独立分支新迁移0017仅由`conversation-d1` profile明确选择，增加thread/turn/message/run四张受控表、enrollment完整scope FK、发送键/ordinal/运行槽唯一约束、来源/正文/状态时间规则与精确列ACL。默认R1仍0016/22表；旧核心v1退出在源读取或下载前拒绝新schema，原backup拒绝未知表。不开放HTTP/UI/SDK或用户实例，不据表存在声称聊天已耐久可用。继承D1-01—09的工程追溯，正式107/147/94及Gate不变。
+
+新存储首轮25通过，补充后与原inventory/非空旧版升级组合37通过94.04秒；非DB338通过+2宿主跳过。精确列清单最后加固后的最终重跑、安全检查/完整CI和独立PR待收口。已明确下一生命周期单元必须补原子清除、防恢复复活、版本化出口/备份/恢复；当前DDL不承担这些应用语义。回滚只能停止未启用的开发profile/兼容前滚或已验证快照；本轮没有迁移用户实例，不能删表假装无损降级。
