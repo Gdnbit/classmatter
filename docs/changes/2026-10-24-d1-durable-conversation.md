@@ -72,3 +72,16 @@ run规则固定queued/running/cancel_requested与五类终态；有版本前置�
 Goal状态active，按独立单元持续推进：D1-10存储基础→版本化生命周期/退出/备份/恢复→QG/BCG/ISB与真实会话UI/原SDK接线→班级工作小结纵向切片。每一单元实际验收、独立对抗复核、精确公开清单及两平台CI通过后再收口；所有相关代码/必要文档同步GitHub后才能标记工程完成。用户本人Owner设置、真实Provider配置/有效价格/费用授权及人工质量评估仍为外部待验证，不用测试Owner、fake模型或绿色CI冒充。
 
 最终合成工程必须证明：刷新/业务与PG进程重启恢复相同内容和scope；重复发送/回执丢失不会重复运行；过期scope/撤权拒绝；取消/超时/迟到worker/终态保存故障不假成功；新store有受控退出/恢复及清除防复活；工作小结只引用当前QG事实/任务，观察/AI推断不晋升事实，产物可编辑且不自动发送。真实教师减负效果保持discovery，不以工程验收代替用户研究。
+
+## D1-11a：显式profile快照核验（文件级计划）
+
+D1-10已由PR #19在最终两平台CI40063379109通过后合并。恢复先拆出一个可运行、不可激活的checkpoint单元，随后实现备份外限制水位＋BCG清除，再做typed退出/新身份恢复；不是删去后续验收。
+
+- `infrastructure/operator_backup.py`：显式选择r1或conversation-d1，复用原快照/DPAPI/原子发布/临时clone清理；D1使用独立包格式、head/表清单和profile绑定。旧v1结构/默认调用语义不变。D1结果只证明snapshot完整性，固定activation_allowed=false，不提供恢复激活或模型调度。
+- `infrastructure/conversation_integrity.py`：固定关系/来源/清除一致性检查；孤立turn、终态/可见消息不符、cleared正文残留或归档中的active run拒绝。它不证明限制水位新鲜，也不阻止可信SQL绕过应用层。
+- `tests/test_conversation_backup.py`：真实dump/clone对比包含26表；source/已存在备份不变；跨profile、坏元数据/ACL/不一致内容拒绝；active run仍无恢复激活；fixture codec不冒称加密，Windows实际DPAPI另验。
+- 变更单/台账/公开审计和manifest：只登记实际来源和结果；独立审查、历史scan、完整两平台CI。
+
+重要限制：旧快照可能含清除前正文，不能声称物理抹除。仅把tombstone也放在同一备份里不能防回滚复活；下一单元需要备份之外的当前限制证明，缺失/损坏/无法确认新鲜度时拒绝激活。这个checkpoint API既不释放正文，也不启动服务/导入业务/接受任何激活标志；正式恢复仍未交付。用户实例和R1默认不变。
+
+本单元初轮16项通过58.84秒，增加clone ACL变宽拒绝后17项通过68.86秒；既有R1 backup/recovery组合35通过、1项宿主链接策略跳过113.61秒。最后补“检查清除前旧快照后当前受限库不变”的实际对比，最终重跑和完整CI仍待收口。独立审查未发现本范围阻断问题；关系检查依赖已登记FK/UNIQUE/CHECK，并非任意DDL篡改指纹验证。清除处理器也不能为通过checkpoint而提前假报interrupted/cancelled。

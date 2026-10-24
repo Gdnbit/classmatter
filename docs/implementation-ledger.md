@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-24。当前已验收公开main为`eae4ca4`：D0由PR #13—16收口，E1由PR #17收口；D1-00规则/默认迁移保护已由[PR #18](https://github.com/Gdnbit/classmatter/pull/18)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40059582389)验收，Windows非DB339/Web55/desktop23，Ubuntu非DB337+2跳过、DB/browser313+6跳过。D1-10存储基础在独立候选分支；持久会话/生命周期/UI还未交付。Owner仍由本人稍后设置，服务ready不等于个人验收。W3仍在Draft PR #10，真实Provider质量blocked；完整生命周期/跨机恢复尚未完成。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-24。当前已验收公开main为`21a7169`：D0/E1由PR #13—17收口，D1-00由PR #18收口；D1-10显式存储基础已由[PR #19](https://github.com/Gdnbit/classmatter/pull/19)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40063379109)验收，Windows非DB340/Web55/desktop23，Ubuntu非DB338+2跳过、DB/browser341+6跳过。新Goal active；D1-11a快照核验在独立候选分支，持久会话/完整生命周期/UI还未交付。Owner仍由本人稍后设置，服务ready不等于个人验收。W3仍在Draft PR #10，真实Provider质量blocked；完整生命周期/跨机恢复尚未完成。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 
@@ -261,3 +261,11 @@ D1-00已由[PR #18](https://github.com/Gdnbit/classmatter/pull/18)及[最终两�
 用户已明确建立新Goal，持续到D1/恢复/文书工程验收和GitHub同步；外部Owner/真实Provider条件单列。当前独立分支新迁移0017仅由`conversation-d1` profile明确选择，增加thread/turn/message/run四张受控表、enrollment完整scope FK、发送键/ordinal/运行槽唯一约束、来源/正文/状态时间规则与精确列ACL。默认R1仍0016/22表；旧核心v1退出在源读取或下载前拒绝新schema，原backup拒绝未知表。不开放HTTP/UI/SDK或用户实例，不据表存在声称聊天已耐久可用。继承D1-01—09的工程追溯，正式107/147/94及Gate不变。
 
 新存储首轮25通过，补充后与原inventory/非空旧版升级组合37通过94.04秒；非DB338通过+2宿主跳过。精确列清单最后加固后的最终重跑、安全检查/完整CI和独立PR待收口。已明确下一生命周期单元必须补原子清除、防恢复复活、版本化出口/备份/恢复；当前DDL不承担这些应用语义。回滚只能停止未启用的开发profile/兼容前滚或已验证快照；本轮没有迁移用户实例，不能删表假装无损降级。
+
+D1-10最终收口见PR #19上述CI，局部最终新存储29通过77.79秒、原退出/数据库/恢复权限44通过117.87秒；精确652项公开清单和独立复审通过。没有HTTP/UI/SDK或用户实例激活。
+
+## D1-11a：不可激活的D1 checkpoint（2026-10-24，候选）
+
+复用`operator_backup.py`原有快照/DPAPI/原子发布/随机临时clone/finally清理，增加显式conversation-d1独立包格式及26表inventory，r1/v1默认结构/语义保持。`conversation_integrity.py`对固定聚合关系校验，无任意SQL/SDK对象/Agent调用。D1返回snapshot_integrity_verified且固定activation_allowed=false；metadata、源码关系、ACL或hash不符拒绝，不能借check导入业务、启动服务或激活run。
+
+首轮新单元16通过，增加clone ACL故障后17通过68.86秒；旧R1备份/恢复组合35通过+1宿主跳过113.61秒，最终补旧快照与当前受限源库对比后的重跑/公开检查/完整CI待收口。独立审查无范围内阻断问题，明确不证明限制水位新鲜、完整DDL指纹或正式恢复。后续继续备份外限制水位、受控BCG清除、typed退出/新身份BCG恢复；不以本单元缩小Goal。回滚revert代码；用户实例未迁移，已存在checkpoint不删除。
