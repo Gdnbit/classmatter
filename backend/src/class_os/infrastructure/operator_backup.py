@@ -20,7 +20,7 @@ from sqlalchemy import text
 
 from .local_runtime import protect
 from .persistence.database import Database
-from .persistence.schema_inventory import REGISTERED_TABLES, validate_surface
+from .persistence.schema_inventory import REGISTERED_TABLES, validate_surface, schema_profile
 from .persistence.role_guards import validate_role_guards
 
 
@@ -51,12 +51,19 @@ def encoded(value):
 
 
 class SyntheticBackup:
-    def __init__(self, runtime, *, codec=protect):
+    def __init__(self, runtime, *, codec=protect, profile="r1"):
+        if profile not in ("r1", "conversation-d1"):
+            raise ValueError("Unsupported checkpoint profile")
+        self.head, self.tables = schema_profile(profile)
+        self.profile = profile
+        self.kind = "class-os.owned-synthetic-backup.v1" if profile == "r1" else "classmatter.owned-conversation-backup.v1"
         self.runtime, self.codec = runtime, codec
 
     def _binding(self):
-        return hashlib.sha256(encoded({"root": str(self.runtime.root.resolve()),
-                                       "configuration": self.runtime.configuration()})).hexdigest()
+        binding = {"root": str(self.runtime.root.resolve()), "configuration": self.runtime.configuration()}
+        if self.profile != "r1":
+            binding["schema_profile"] = self.profile
+        return hashlib.sha256(encoded(binding)).hexdigest()
 
     def _directory(self, *, create=True):
         root = self.runtime.root.resolve()
@@ -111,24 +118,32 @@ class SyntheticBackup:
                         except BackupRejected:
                             pass
                         entries.append(row)
-            return {"schema_version": "class-os.synthetic-backup-catalog.v1", "portable": False,
+            result = {"schema_version": "class-os.synthetic-backup-catalog.v1", "portable": False,
                     "complete_exit": False, "checkpoints": sorted(entries, key=lambda row: row["backup_id"]),
                     "pending_files": pending, "unrecognized_files": unrecognized}
+            if self.profile != "r1":
+                result.update(schema_version="classmatter.conversation-backup-catalog.v1", activation_allowed=False)
+            return result
         except Exception:
             raise BackupRejected() from None
 
     @staticmethod
-    def _state(connection):
-        validate_surface(connection, complete=True)
-        if (connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != HEAD
+    def _state(connection, *, profile="r1"):
+        head, _ = schema_profile(profile)
+        validate_surface(connection, complete=True, profile=profile)
+        if (connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != head
                 or connection.execute(text("SELECT data_mode FROM class_os.database_state WHERE singleton=true")).scalar_one() != "synthetic-only"):
             raise BackupRejected()
-        validate_role_guards(connection)
+        validate_role_guards(connection, profile=profile)
+        if profile != "r1":
+            from .conversation_integrity import validate_conversation_integrity
+            validate_conversation_integrity(connection)
 
     @staticmethod
-    def _inventory(connection):
+    def _inventory(connection, *, profile="r1"):
         result, total = {}, 0
-        for table in sorted(REGISTERED_TABLES):
+        _, tables = schema_profile(profile)
+        for table in sorted(tables):
             # Closed source registry, never a caller/model-selected identifier.
             rows, size = connection.execute(text(f"SELECT count(*),coalesce(sum(octet_length(to_jsonb(t)::text)),0) FROM class_os.{table} t")).one()
             total += size
@@ -170,7 +185,7 @@ class SyntheticBackup:
                 connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
                 if not connection.execute(text("SELECT pg_try_advisory_xact_lock_shared(607103003)")).scalar_one():
                     raise BackupRejected()
-                self._state(connection)
+                self._state(connection, profile=self.profile)
                 if connection.execute(text("SELECT pg_database_size(current_database())")).scalar_one() > 32 * MIB:
                     raise BackupRejected()
                 snapshot = connection.execute(text("SELECT pg_export_snapshot()")).scalar_one()
@@ -178,14 +193,16 @@ class SyntheticBackup:
                     raise BackupRejected()
                 # Bound logical data before a subprocess captures the archive;
                 # a physically small TOAST-compressed DB may expand substantially.
-                inventory = self._inventory(connection)
+                inventory = self._inventory(connection, profile=self.profile)
                 archive = self._pg("pg_dump", database.engine.url.database, "--format=custom", "--no-large-objects", f"--snapshot={snapshot}")
                 if not archive.startswith(b"PGDMP") or len(archive) > ARCHIVE_LIMIT:
                     raise BackupRejected()
-            packet = {"kind": "class-os.owned-synthetic-backup.v1", "id": str(artifact), "head": HEAD,
+            packet = {"kind": self.kind, "id": str(artifact), "head": self.head,
                       "created_at": datetime.now(timezone.utc).isoformat(), "binding": self._binding(),
                       "archive_sha256": hashlib.sha256(archive).hexdigest(),
                       "archive": base64.b64encode(archive).decode("ascii"), "inventory": inventory}
+            if self.profile != "r1":
+                packet.update(schema_profile=self.profile, activation_allowed=False)
             sealed = self.codec(encoded(packet))
             if type(sealed) is not bytes or not 1 <= len(sealed) <= PACKET_LIMIT:
                 raise BackupRejected()
@@ -214,13 +231,17 @@ class SyntheticBackup:
             if type(plain) is not bytes or not 1 <= len(plain) <= PACKET_LIMIT:
                 raise BackupRejected()
             packet = json.loads(plain, object_pairs_hook=unique)
-            if (type(packet) is not dict or set(packet) != {"kind", "id", "head", "created_at", "binding", "archive_sha256", "archive", "inventory"}
-                    or packet["kind"] != "class-os.owned-synthetic-backup.v1" or packet["id"] != str(artifact)
-                    or packet["head"] != HEAD or packet["binding"] != self._binding()
+            fields = {"kind", "id", "head", "created_at", "binding", "archive_sha256", "archive", "inventory"}
+            if self.profile != "r1":
+                fields |= {"schema_profile", "activation_allowed"}
+            if (type(packet) is not dict or set(packet) != fields
+                    or packet["kind"] != self.kind or packet["id"] != str(artifact)
+                    or packet["head"] != self.head or packet["binding"] != self._binding()
+                    or (self.profile != "r1" and (packet["schema_profile"] != self.profile or packet["activation_allowed"] is not False))
                     or type(packet["created_at"]) is not str or len(packet["created_at"]) > 50
                     or datetime.fromisoformat(packet["created_at"]).utcoffset() != timedelta(0)
                     or type(packet["archive"]) is not str or len(packet["archive"]) > 24 * MIB
-                    or type(packet["inventory"]) is not dict or set(packet["inventory"]) != REGISTERED_TABLES):
+                    or type(packet["inventory"]) is not dict or set(packet["inventory"]) != self.tables):
                 raise BackupRejected()
             for value in packet["inventory"].values():
                 if (type(value) is not dict or set(value) != {"rows", "sha256"} or type(value["rows"]) is not int
@@ -245,17 +266,22 @@ class SyntheticBackup:
                 root.execute(sql.SQL("REVOKE CONNECT ON DATABASE {} FROM PUBLIC").format(sql.Identifier(temporary)))
                 root.execute(sql.SQL("GRANT CONNECT ON DATABASE {} TO class_os_migrator,class_os_identity,class_os_runtime").format(sql.Identifier(temporary)))
             self._pg("pg_restore", temporary, "--no-owner", "--single-transaction", "--exit-on-error", archive=archive)
-            restored = Database(database.engine.url.set(database=temporary), migration=True)
+            restored = Database(database.engine.url.set(database=temporary), migration=True, profile=self.profile)
             try:
                 with restored.transaction(read_only=True) as connection:
-                    self._state(connection)
-                    if self._inventory(connection) != packet["inventory"]:
+                    self._state(connection, profile=self.profile)
+                    if self._inventory(connection, profile=self.profile) != packet["inventory"]:
                         raise BackupRejected()
             finally:
                 restored.close()
-            return {"schema_version": "class-os.synthetic-backup-check.v1", "verified": True,
+            result = {"schema_version": "class-os.synthetic-backup-check.v1", "verified": True,
                     "source_preserved": True, "temporary_clone_removed": True,
-                    "portable": False, "complete_exit": False, "table_count": len(REGISTERED_TABLES)}
+                    "portable": False, "complete_exit": False, "table_count": len(self.tables)}
+            if self.profile != "r1":
+                result.pop("verified")
+                result.update(schema_version="classmatter.conversation-backup-check.v1",
+                              snapshot_integrity_verified=True, activation_allowed=False)
+            return result
         except Exception:
             raise BackupRejected() from None
         finally:
