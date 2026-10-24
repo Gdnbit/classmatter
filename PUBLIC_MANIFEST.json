@@ -2,17 +2,35 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "backend/db/migrations/versions/0019_conversation_exit.py": {
+      "sha256": "8e8b9c4e4ab18e5153e9dd823ed39bd370e064ed06a8dd12fceab5b45b9efa6f"
+    },
+    "backend/src/class_os/application/conversation_exit.py": {
+      "sha256": "4e4deb170a6d0e51bf01f9e0188b7c81640043d1bbcd9f7413225b732637c090"
+    },
+    "backend/src/class_os/domain/conversation_exit.py": {
+      "sha256": "e095dbdcd5b5b1c0caa2447fe8a63e3d525104c9f400723f784187e50f212249"
+    },
+    "backend/src/class_os/infrastructure/conversation_exit.py": {
+      "sha256": "bd244ef3b0e1d0eb0a9cd717fc79d64a40ebd39e1fb667106c3bbeffa60e273a"
+    },
+    "backend/tests/test_conversation_exit.py": {
+      "sha256": "8922e001c7782991bc9e3c56fcce9c191778dc84b158d8800e4b047c73a4bc39"
+    },
+    "backend/tests/test_conversation_exit_gateway.py": {
+      "sha256": "fc38d81779337d01bb1d7c2a8dc46f4a38ce02ab302379dbf9ddd7234739455c"
+    },
     "backend/db/migrations/versions/0018_conversation_control.py": {
       "sha256": "50948beb1f10060ddf43d6fa9d954695b46d0347e758ccc79d701ae4ace344b4"
     },
     "backend/src/class_os/application/conversation_control.py": {
-      "sha256": "c9e42543f7d75b0ca41031f34f94485955e6de04b61098df4577a64aa3299871"
+      "sha256": "552438eaf80f7617f6508ffa6f81aea640094f1bdb64e07bb70e4669d0ab0fae"
     },
     "backend/src/class_os/domain/conversation_control.py": {
       "sha256": "8e3fbee1febb1c1046586499e0a9839102d539c23f4261784c0f6b883ef4def9"
     },
     "backend/src/class_os/infrastructure/conversation_control.py": {
-      "sha256": "418ef87d9bdf22a5e6de5488e073ea810fbbec5ef75612a922c7a01bd9b23f01"
+      "sha256": "c72ac1f40263849c6bddf50dd50f61173b1de85eaa7f7625edbc8647899be6d9"
     },
     "backend/tests/test_conversation_control.py": {
       "sha256": "dec09cd8d93dc78d259b05ebb48211b4f55a4e60abf20f38d665ebc75de38da2"
@@ -36,7 +54,7 @@
       "sha256": "8912f5f4d2dcfb00fab9aa99bc76d6b44a42c321baa5e2f64d1f02d1f1d575d3"
     },
     "backend/tests/test_durable_conversation_storage.py": {
-      "sha256": "657ede47476b8145b95c35b809a0558d228da2b0f3730d77c090f59ee96d92d6"
+      "sha256": "7fe6b8508e33fddf07f8ea28bff28cd2eb2b92b6f92271c0b0d65ec579ec60f7"
     },
     "backend/src/class_os/domain/durable_conversation.py": {
       "sha256": "1f782680512cba080b13b49036f544eebbcd53790a6d38b1184a299e1fe09a9f"
@@ -45,7 +63,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "b11a3eb0ea64e77cda285f10208cce28ea500ff7b9c023d150f27b04c276312f"
+      "sha256": "0177866a70644fb00af95a2efdd6a7184fa406a9b388a1cff06d543bf8d74be9"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
@@ -153,7 +171,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "c4831ac2e350bfb61c8cb6e42d566b0cf276d8713166ab06c0bb56230b3dfdd7"
+      "sha256": "82e052c698f8792c0264e326d1976ba727dac7dae4308b48d21611f0cbdf769e"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -549,7 +567,7 @@
       "sha256": "51bfee0c564708f42efd96b6cb5ad707e720a6a84348317adfdab276d735d723"
     },
     "backend/README.md": {
-      "sha256": "278ca70ca38f3a664c8a6fbd123c28be4cb2e68fb5f2ff2c322ad60e666dbfcf"
+      "sha256": "a7d9799988ff380d4212bff7da914114af64c8a049823b25675a3497a27c2f0a"
     },
     "backend/db/migrations/env.py": {
       "sha256": "b2393f310d1d8a05229c29757dbd885fb275ca6bf7e87c81fa84270863b6edec"
@@ -627,7 +645,7 @@
       "sha256": "4d14b589e9c072c93b95d82ff234a38b25eb9a342cd3f09dfb03eab3bde6765c"
     },
     "backend/src/class_os/application/activity.py": {
-      "sha256": "f2fc5046ad93fed6eaa4d65996033f359e8d574e6e2cc60119d0a344879f38fe"
+      "sha256": "099b1d68b88628de666b812b2b74eb733c6281895db3247fa2c789b5faf2c70e"
     },
     "backend/src/class_os/application/agent.py": {
       "sha256": "29864ffe79291ed7a9881968a983ad7db20fc1dba595989e22d10e6da6f29a4c"
@@ -675,7 +693,7 @@
       "sha256": "09c8caacd975afe5a88d669d3fd0745588110429a3476d39d35f03376b9bdc0b"
     },
     "backend/src/class_os/domain/roster.py": {
-      "sha256": "727f74ae4ad0b59a989104e1ab134e184fd4d66c70fe10881eb2d313d239d546"
+      "sha256": "b4fa0b44e0068461ef590567c86f7939650da5f2a72b38c5d229b170f9f476e6"
     },
     "backend/src/class_os/domain/temporal.py": {
       "sha256": "0b97854dfd38021c201aaa2ebf0772762f10f9a66a6bde5131138a439c45e473"
@@ -726,7 +744,7 @@
       "sha256": "4a55be2e7adb39bde16781d2bbaf16355f910026bedf6c815967981143305d43"
     },
     "backend/src/class_os/infrastructure/persistence/schema_inventory.py": {
-      "sha256": "0585541a1c41b59e0a0e87f87d5e30316713c6f17ef58d4f62c934d2beed4c4a"
+      "sha256": "5c0f54877be7774e6bf8d6b7f0f871c5f7f0bf6db607b37f30633cd5eef38087"
     },
     "backend/src/class_os/infrastructure/roster.py": {
       "sha256": "1aea6da0b576a0c16e749f001295c9559efe6ff265373169902e89cea6d78eb8"
@@ -973,7 +991,7 @@
       "sha256": "b0d1977c0b54e83f7d5e7948ebc1e616080f7c5b2884882fa254b777ba509f7f"
     },
     "backend/verify_exit.py": {
-      "sha256": "8ea7990d597faab145f495c6ec9f4c82ae0fbf04615cf32f6431aee2199589a1"
+      "sha256": "47c0e69fac759c049b60ac27c03e30fdd984421a98f146f0358c6979996e564e"
     },
     "contracts/README.md": {
       "sha256": "fb84a3d03eed43d8ff981b5318c508173e6c7a8b47e027da4a82942458d31ec6"
@@ -1126,7 +1144,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "59d8c7a87e7bf48af45bd06949a54804bce75d586dde73c094e7030eaefa8b64"
+      "sha256": "c1cb37cb474baaff169e9608160b7c518d3b739e742b8fc4d19eac4d05c3bccb"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

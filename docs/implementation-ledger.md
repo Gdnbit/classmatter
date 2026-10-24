@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-更新时间：2026-10-24。最新验收main为`91a47a1`：[PR #22](https://github.com/Gdnbit/classmatter/pull/22)的限制记录适配器已经[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40078603025)验收，Windows非DB385/Web55/desktop23，Ubuntu非DB382+3跳过、实际PG/browser356+7跳过，独立审查657个真实hash。此前D0/E1、D1-00、D1-10、D1-11a分别由PR #13—20收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+更新时间：2026-10-24。最新验收main为`b177567`：[PR #23](https://github.com/Gdnbit/classmatter/pull/23)的数据库锚点/BCG清除已经[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40081114526)验收，Windows非DB386/Web55/desktop23，Ubuntu非DB383+3跳过、实际PG/browser378+8跳过，662个真实hash。此前D0/E1及D1前置由PR #13—22收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-D1-11b2为当前独立候选：显式0018/27表锚点、人工批准/近期认证的BCG清除及有界QG历史；原R1仍0016/22表。真实PG故障测试覆盖审计/SQL/文件失败后拒读与幂等重试、事实任务不变、run fence、scope和部分旧内容回填拒读。尚无HTTP/CLI/Agent/UI接线，未升级用户实例；D1备份仍固定不可激活。完整生命周期、typed退出/新身份恢复、真实耐久会话UI/SDK及班级工作小结仍是未完成工程目标。Owner本人设置和真实Provider配置/价格/费用授权/人工质量为外部待验证，合成测试不代替。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
+D1-12为当前独立候选：显式D1演进至0019/27表，8类core加5类conversation/control的v2出口经近期认证/BCG人工批准生成、QG重新核对当前限制后下载，再由显式离线profile校验/复制核对。默认R1仍0016/22表，v1格式/默认验证不变。尚无HTTP/Agent/UI接线、包导入或恢复激活，未升级用户实例；D1备份和v2出口均固定不可激活。完整生命周期、新身份恢复、真实耐久会话UI/SDK及班级工作小结仍是未完成工程目标。Owner本人设置和真实Provider配置/价格/费用授权/人工质量为外部待验证，合成测试不代替。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
 
 ## 状态与顺序
 

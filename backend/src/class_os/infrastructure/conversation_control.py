@@ -19,8 +19,11 @@ class ConversationBusinessStore(PostgresBusinessStore):
         self.restrictions = restrictions
 
     def _transaction(self, connection):
-        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0018":
+        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0019":
             raise RuntimeError("Explicit conversation control schema required")
+        return self._conversation_transaction(connection)
+
+    def _conversation_transaction(self, connection):
         return ConversationTransaction(connection, self)
 
 
