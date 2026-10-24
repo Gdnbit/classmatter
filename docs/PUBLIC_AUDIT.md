@@ -72,3 +72,7 @@ Reviewed first-party UI refresh wiring and synthetic fixture/browser assertions 
 ## 2026-10-24 real desktop entry candidate
 
 Reviewed first-party operator-only prerequisite checker, launch wiring, synthetic tests and updated status/usage instructions. Output contains closed step codes/booleans, not local paths, protected credential bytes or Owner state. Files present do not assert readiness. No new renderer IPC, arbitrary command runner, database mutation, Provider call or dependency. The explicitly authorized fresh synthetic runtime and DPAPI files remain ignored local state; public sources contain no machine-specific runtime configuration. Exact manifest hashes and full CI remain required, with unchanged exceptions.
+
+## 2026-10-24 D1 domain and frozen migration target
+
+Reviewed first-party closed conversation values/run transitions, synthetic domain and disposable PostgreSQL tests, and implementation notes derived from the existing public database design. No imported code, private transcripts, actual teacher/student records, runtime paths, credentials or Provider output. Scope UUIDs and text in tests are synthetic. This increment has no new store, endpoint, role grant, SDK/Agent tool, dependency or formal R1/Gate change; it pins default migrations to the existing R1 revision rather than admitting future schemas implicitly. Pure domain checks do not claim persistence or transactional CAS. Exact hashes, unchanged exceptions, historical scanning and full CI remain required before acceptance.

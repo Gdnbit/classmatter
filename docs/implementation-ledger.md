@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-24。当前已验收公开main为`d9400c1`：D0真实数据闭环由PR #13—16收口，[PR #16最终验收](https://github.com/Gdnbit/classmatter/pull/16)及[完整两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40004215292)均成功；Ubuntu DB/browser312通过、6平台跳过，Windows非DB304/Web55/desktop18。W3在独立Draft PR #10继续，真实Provider质量仍blocked；W4仍非完整生命周期/跨机恢复。早期main/W1/W2提交号和候选状态保留为历史，不能覆盖本摘要。此表不替代canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-24。当前已验收公开main为`e95863a`：D0由PR #13—16收口；E1真实桌面入口由[PR #17](https://github.com/Gdnbit/classmatter/pull/17)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40058146095)验收，Windows非DB304/Web55/desktop23，Ubuntu非DB302+2跳过、DB/browser312+6跳过。Owner仍由本人稍后设置，不能把服务ready视为个人验收。W3在独立Draft PR #10继续，真实Provider质量仍blocked；W4仍非完整生命周期/跨机恢复。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 
@@ -247,3 +247,9 @@ U2最终交付：[PR #15](https://github.com/Gdnbit/classmatter/pull/15)，提�
 独立审查指出隔离Electron测试不直接覆盖新launcher拒绝入口；补真实Node子进程启动临时checkout的launcher，验证缺条件/坏JSON/fixture描述退出2、无路径/原文回显、不加载Electron或生成cluster。最终desktop23项通过；真实正常入口另已构建/打开并由原握手与API readiness核验（不外推Owner已创建）。
 
 用户明确授权全新合成实例，Owner本人稍后设置；本人使用链因此仍pending-owner，不能用测试账号冒充其验收。测试集不依赖/覆盖这个实例。文书下一切片选择“班级工作小结，引用已有事实与任务”；不是新增学校授权/自动责任判断。此单元无数据库Schema/API/角色权限/模型调用改变，沿原T-RWEB与desktop工程追溯。公开清单/安全扫描及本PR两平台CI待核验，回滚revert代码不删除已创建的合成实例或凭据。
+
+E1收口：[PR #17](https://github.com/Gdnbit/classmatter/pull/17)已在[完整CI](https://github.com/Gdnbit/classmatter/actions/runs/40058146095)两平台成功后合并为`e95863a`；Windows非DB304/Web55/desktop23，Ubuntu非DB302+2平台跳过、DB/browser312+6平台跳过。Owner待本人设置仍未改变，不把工程CI替代个人链验收。
+
+## D1-00：耐久会话前置规则（2026-10-24，候选）
+
+按[独立变更单](changes/2026-10-24-d1-durable-conversation.md)推进后续D1-01—09，不修改正式Requirement/Eval/Task/Gate。先实现有限消息origin、含全部既有请求字段的scope绑定哈希、闭合run状态与版本/generation/lease规则；默认迁移明确停在冻结0016，拒绝未来schema。无新表、API、权限、SDK工具或前端接线。域单元和实际隔离PG兼容测试属于工程前置，不证明聊天已持久化或DB CAS并发安全。下一单元必须把受控store、生命周期/退出/恢复与QG/BCG一起交付，不能先向用户启用一份无出口的聊天存储。
