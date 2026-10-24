@@ -8,6 +8,7 @@ import {
   Settings,
   Users,
   LayoutDashboard,
+  LayoutList,
   X,
   LogOut,
   RefreshCw,
@@ -43,6 +44,9 @@ import { decodeTermMetadata } from "./term-metadata"
 import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
 import { filterWorkTasks, projectAttention, type WorkFilter } from "./work-projection"
 import { CommandPreview } from "./CommandPreview"
+import { createQueryRefresh, deadlineRefreshDelay } from "./query-refresh"
+import { useRuntimeNavigation } from "./useRuntimeNavigation"
+import { StudentDirectory } from "./StudentDirectory"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -83,7 +87,6 @@ const localDateValue = (value: string | null) => {
   const date = new Date(value)
   return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 23)
 }
-type Page = "conversation" | "dashboard" | "students" | "work" | "settings"
 type AgentInteraction = "read" | "draft" | "record-note" | "chat"
 type Form = "class" | "class-edit" | "term-edit" | "student" | "student-name" | "record" | "task" | "task-edit" | "identifier" | "identifier-edit" | "revise" | "complete" | "cancel" | "reauth" | "reissue" | "logout-all" | null
 type Pending = {
@@ -98,7 +101,6 @@ export default function R1App() {
   const [session, setSession] = useState<Session | null>(null)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState("")
-  const [page, setPage] = useState<Page>("conversation")
   const [classes, setClasses] = useState<Classroom[]>([])
   const [classroom, setClassroom] = useState<Classroom | null>(null)
   const [students, setStudents] = useState<Student[]>([])
@@ -106,13 +108,10 @@ export default function R1App() {
   const [identifiers, setIdentifiers] = useState<Identifier[]>([])
   const [replacingIdentifier, setReplacingIdentifier] = useState<Identifier | null>(null)
   const [duplicates, setDuplicates] = useState<Duplicate[]>([])
-  const [selectedStudent, setSelectedStudent] = useState("")
   const [search, setSearch] = useState("")
   const [form, setForm] = useState<Form>(null)
   const [termMetadata, setTermMetadata] = useState<Readonly<TermMetadata> | null>(null)
   const [record, setRecord] = useState<RecordItem | null>(null)
-  const [task, setTask] = useState<TaskItem | null>(null)
-  const [workFilter, setWorkFilter] = useState<WorkFilter>("all")
   const [pending, setPending] = useState<Pending | null>(null)
   const [busy, setBusy] = useState(false)
   const [refreshing, setRefreshing] = useState(true)
@@ -140,6 +139,15 @@ export default function R1App() {
   const alive = useRef(true)
   const termLoad = useRef(0)
   const loading = useRef(0)
+  const connectivity = useRef(0)
+  const navigationBlocked = busy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
+  const navigation = useRuntimeNavigation(navigationBlocked)
+  const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
+  const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
+  // A detail selection is an ID, not an older copy of a business object.
+  const task = activity?.tasks.find(item => item.task_id === navigation.route.taskId) || null
+  const setTask = (item: TaskItem | null) => navigation.setTaskId(item?.task_id || "")
+  const navigationScope = useRef<{ csrf: string; workspace: string; classId?: string; termId?: string } | null>(null)
   const conversationViewport = useRef<HTMLDivElement>(null)
   const conversationContent = useRef<HTMLDivElement>(null)
   const messageInput = useRef<HTMLTextAreaElement>(null)
@@ -182,7 +190,14 @@ export default function R1App() {
   useEffect(() => () => { runningAgent.current?.abort() }, [])
   useEffect(() => { setAuditPage(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   useEffect(() => { setSearch("") }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
-  useEffect(() => { setWorkFilter("all") }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
+  useEffect(() => {
+    if (!session) { navigationScope.current = null; return }
+    const before = navigationScope.current
+    const current = { csrf: session.csrf_token, workspace: session.subject.workspace_id, classId: classroom?.class_id, termId: classroom?.term_id }
+    if (before && (before.csrf !== current.csrf || before.workspace !== current.workspace
+      || (before.classId && (before.classId !== current.classId || before.termId !== current.termId)))) navigation.clearSelection()
+    navigationScope.current = current
+  }, [session?.csrf_token, session?.subject.workspace_id, classroom?.class_id, classroom?.term_id])
   useEffect(() => { termLoad.current++; setTermMetadata(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   const fail = useCallback((reason: unknown) => {
     setError(reason instanceof Error ? reason.message : "操作失败")
@@ -191,10 +206,8 @@ export default function R1App() {
       runningAgent.current?.abort()
       setSession(null)
       setQueryFresh(false)
-      setPage("conversation")
-      setSelectedStudent("")
+      navigation.reset()
       setRecord(null)
-      setTask(null)
       setClassroom(null)
       setClasses([])
       setStudents([])
@@ -238,6 +251,7 @@ export default function R1App() {
     async (chosen?: Classroom | null) => {
       if (!session) return
       const generation = ++loading.current
+      const connectionGeneration = connectivity.current
       setRefreshing(true)
       setQueryFresh(false)
       try {
@@ -281,7 +295,7 @@ export default function R1App() {
       setActivity(data?.activity || null)
       setIdentifiers(data?.identifiers || [])
       setDuplicates(data?.duplicates || [])
-      setQueryFresh(true)
+      setQueryFresh(navigator.onLine && connectionGeneration === connectivity.current)
       setError("")
       } catch (reason) {
         // A revoked old-session query cannot clear the new authenticated
@@ -300,6 +314,73 @@ export default function R1App() {
   useEffect(() => {
     if (session) void reload().catch(fail)
   }, [session]) // reload once per authenticated session
+
+  const refreshContext = useRef({ reload, fail, session, blocked: true })
+  refreshContext.current = {
+    reload, fail, session,
+    blocked: busy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage
+      || page === "settings" || !!runningAgent.current,
+  }
+  const foregroundRefresh = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
+  useEffect(() => {
+    if (!session) return
+    const controller = createQueryRefresh({
+      read: () => refreshContext.current.reload(),
+      invalidate: () => { connectivity.current++; setQueryFresh(false) },
+      fail: reason => refreshContext.current.fail(reason),
+      available: () => navigator.onLine && document.visibilityState === "visible",
+      idle: () => alive.current && refreshContext.current.session === session && !refreshContext.current.blocked,
+      now: () => performance.now(),
+      schedule: (callback, delay) => window.setTimeout(callback, delay),
+      cancel: timer => window.clearTimeout(timer as number),
+    })
+    foregroundRefresh.current = controller
+    const foreground = () => controller.request()
+    const visibility = () => {
+      if (document.visibilityState === "visible") controller.request()
+      else controller.resume()
+    }
+    const offline = () => controller.offline()
+    window.addEventListener("focus", foreground)
+    window.addEventListener("online", foreground)
+    window.addEventListener("offline", offline)
+    document.addEventListener("visibilitychange", visibility)
+    return () => {
+      controller.dispose()
+      if (foregroundRefresh.current === controller) foregroundRefresh.current = null
+      window.removeEventListener("focus", foreground)
+      window.removeEventListener("online", foreground)
+      window.removeEventListener("offline", offline)
+      document.removeEventListener("visibilitychange", visibility)
+    }
+  }, [session])
+  // Release deferred invalidation after the interaction that blocked it ends.
+  useEffect(() => { foregroundRefresh.current?.resume() })
+
+  useEffect(() => {
+    if (!session || !activity || !queryFresh) return
+    const delay = deadlineRefreshDelay(activity)
+    if (delay === null) return
+    const started = performance.now()
+    let timer: number | undefined
+    const clear = () => { window.clearTimeout(timer); timer = undefined }
+    const arm = () => {
+      clear()
+      if (document.visibilityState !== "visible" || !navigator.onLine) return
+      timer = window.setTimeout(() => {
+        timer = undefined
+        if (document.visibilityState === "visible" && navigator.onLine) foregroundRefresh.current?.request()
+      }, Math.max(0, delay - (performance.now() - started)))
+    }
+    arm()
+    document.addEventListener("visibilitychange", arm)
+    window.addEventListener("offline", clear)
+    return () => {
+      clear()
+      document.removeEventListener("visibilitychange", arm)
+      window.removeEventListener("offline", clear)
+    }
+  }, [session?.csrf_token, classroom?.class_id, classroom?.term_id, activity, queryFresh])
 
   async function action(operation: () => Promise<void>) {
     if (busy) return
@@ -381,7 +462,7 @@ export default function R1App() {
     setAgentRecordNote(null); setRecordNoteQuote("")
     setDraftTitle("")
     setRecord(null)
-    setTask(null)
+    navigation.clearTask()
     setReplacingIdentifier(null)
     setNotice(`已保存，版本 ${receipt.version}；回执 ${receipt.receipt_id}`)
     await reload()
@@ -468,7 +549,7 @@ export default function R1App() {
         setPending(null); setForm(null); setReplacingIdentifier(null); setMessages([]); setMessage(""); setConversationId("")
         setAgentDraft(null); setAgentRecordNote(null); setRecordNoteQuote(""); setAgentStatus(""); setDraftTitle(""); setExportId("")
         if (form === "logout-all") {
-          setPage("conversation"); setSelectedStudent(""); setRecord(null); setTask(null)
+          navigation.reset(); setRecord(null)
           setSession(null); setStudents([]); setActivity(null); setClasses([]); setClassroom(null)
           setIdentifiers([]); setDuplicates([]); setIssuedCodes(null)
         } else {
@@ -714,7 +795,7 @@ export default function R1App() {
     <div className="r1-shell">
       <aside className="r1-sidebar">
         <h2>
-          ClassMatter <small>合成开发</small>
+          ClassMatter <small>合成开发 · 数据库模式</small>
         </h2>
         <button
           className="r1-new"
@@ -751,11 +832,12 @@ export default function R1App() {
           ] as const).map(([id, label, Icon]) => (
             <button
               key={id}
-              aria-current={page === id ? "page" : undefined}
+              aria-current={page === id && (id !== "students" || studentView === "list") ? "page" : undefined}
               onClick={() => {
                 termLoad.current++
                 setTermMetadata(null)
                 setPage(id)
+                if (id === "students") setStudentView("list")
                 setTask(null)
               }}
             >
@@ -763,12 +845,16 @@ export default function R1App() {
               {label}
             </button>
           ))}
+          <button aria-current={page === "students" && studentView === "table" ? "page" : undefined} onClick={() => {
+            setSelectedStudent(""); setStudentView("table"); setPage("students")
+          }}><LayoutList size={17} />视图</button>
         </nav>
         <section className="r1-scope">
           <label>
             当前班级 / 学期
             <select
               aria-label="切换班级学期"
+              disabled={navigationBlocked}
               value={classroom?.class_id || ""}
               onChange={(event) => {
                 const target = classes.find(
@@ -806,10 +892,8 @@ export default function R1App() {
               await logoutIdentity(session.csrf_token)
               loading.current++
               setSession(null)
-              setPage("conversation")
-              setSelectedStudent("")
+              navigation.reset()
               setRecord(null)
-              setTask(null)
               setStudents([])
               setActivity(null)
               setClasses([])
@@ -838,7 +922,7 @@ export default function R1App() {
           </span>
           <button
             aria-label="刷新数据"
-            disabled={busy || refreshing}
+            disabled={navigationBlocked}
             onClick={() => void action(() => reload())}
           >
             <RefreshCw size={16} />
@@ -857,6 +941,7 @@ export default function R1App() {
             {notice}
           </div>
         )}
+        {navigation.deferred && <div className="r1-warning" role="status">页面切换已延后。当前表单、批准和对象保持不变；完成或取消当前操作后再切换，不会自动提交。</div>}
         {!refreshing && !queryFresh && (
           <div className="r1-warning" role="status">
             <strong>当前列表尚未刷新。</strong>这里只保留上次成功读取的快照（若有），不是最新数据；新业务预览已暂停。成功回执不因读取失败而失效，结果未知的提交仍须核对原请求。
@@ -875,12 +960,19 @@ export default function R1App() {
           followingConversation.current = viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop <= 48
           if (followingConversation.current) setNewReply(false)
         }}>
+          {page === "unavailable" && <section className="r1-card">
+            <h1>此页面尚未接入真实工作台</h1>
+            <p>文件、成绩、排座、专题、知识库和自动化等原型能力不属于当前 R1 数据链路。这里不会加载演示数据或声称已保存。</p>
+            <button onClick={() => setPage("conversation")}>返回对话</button>
+            <button onClick={() => { setSelectedStudent(""); setPage("students") }}>查看已接入的学生</button>
+          </section>}
           {page === "conversation" && (
             <>
               <div className="r1-heading">
                 <small>CLASSMATTER · 对话</small>
                 <h1>今天想处理什么？</h1>
                 <p>少记、少追、少重复。事实由你确认，系统帮你复用。</p>
+                <p className="r1-muted">对话仅为临时上下文，刷新或重启不保证恢复；已确认的事实与任务另由数据库保存。</p>
               </div>
               <div className="r1-attention">
                 <section>
@@ -991,6 +1083,8 @@ export default function R1App() {
                 <p>姓名不是唯一身份，关联使用稳定 ID。</p>
               </div>
               <div className="r1-toolbar">
+                <button aria-pressed={studentView === "list"} onClick={() => setStudentView("list")}>列表</button>
+                <button aria-pressed={studentView === "table"} onClick={() => setStudentView("table")}>表格</button>
                 <input
                   aria-label="搜索学生"
                   placeholder="搜索姓名或内部 ID"
@@ -1018,27 +1112,11 @@ export default function R1App() {
               {!classroom ? (
                 <p>请先建立班级与学期。</p>
               ) : (
-                <div className="r1-student-layout">
+                <div className={`r1-student-layout${studentView === "table" ? " r1-student-table-layout" : ""}`}>
                   <div className="r1-student-list">
                     <p className="r1-muted" role="status">显示 {matchingStudents.length} / {students.length} 位学生</p>
-                    {matchingStudents
-                      .map((item) => (
-                        <button
-                          key={item.student_id}
-                          aria-pressed={selectedStudent === item.student_id}
-                          onClick={() => {
-                            setSelectedStudent(item.student_id)
-                            setRecord(null)
-                            setTask(null)
-                          }}
-                        >
-                          <strong>{item.name}</strong>
-                          <small>
-                            版本 {item.version} · {item.student_id.slice(0, 8)}
-                            {item.status === "inactive" ? " · 已停用（历史可查）" : ""}
-                          </small>
-                        </button>
-                      ))}
+                    <StudentDirectory students={matchingStudents} activity={activity} selectedId={selectedStudent} view={studentView} disabled={navigationBlocked}
+                      onSelect={id => { setSelectedStudent(id); setRecord(null); setTask(null) }} />
                     {!students.length && (
                       <p className="r1-muted">尚无学生，添加后即可记录事实。</p>
                     )}
@@ -1047,7 +1125,13 @@ export default function R1App() {
                     )}
                   </div>
                   <section>
-                    {selected && (
+                    {selectedStudent && !selected && <p className="r1-warning" role="status">{queryFresh ? "此学生不在当前已授权班级查询中。请明确选择名单中的学生；不会自动替换为其他人。" : "正在核对所选学生；当前快照不能确认此对象。"}</p>}
+                    {selected && <nav className="r1-toolbar" aria-label="学生详情视图">
+                      {([["overview", "概览"], ["timeline", "时间线"], ["tasks", "跟进"], ["records", "记录"]] as const).map(([tab, label]) =>
+                        <button key={tab} aria-pressed={studentTab === tab} onClick={() => setStudentTab(tab)}>{label}</button>)}
+                    </nav>}
+                    {selected && studentTab === "unavailable" && <section className="r1-card"><h2>此学生视图尚未接入</h2><p>成绩、文件和关系不是当前查询字段；不展示样例画像。</p><button onClick={() => setStudentTab("overview")}>返回学生概览</button></section>}
+                    {selected && (studentTab === "overview" || studentTab === "tasks") && (
                       <section className="r1-card" aria-label="学生详情摘要">
                         <h2>学生详情</h2>
                         <p>内部 ID：{selected.student_id}</p>
@@ -1061,7 +1145,7 @@ export default function R1App() {
                         )) : <p className="r1-muted">此学生尚无关联跟进。</p>}
                       </section>
                     )}
-                    {selected && (
+                    {selected && studentTab !== "unavailable" && (
                       <div className="r1-toolbar">
                         <button disabled={!canEditStudent || busy} onClick={() => open("student-name")}>
                           更正学生姓名
@@ -1108,7 +1192,7 @@ export default function R1App() {
                         </button>
                       </div>
                     )}
-                    {selected &&
+                    {selected && studentTab !== "unavailable" &&
                       identifiers
                         .filter(
                           (item) => item.student_id === selected.student_id,
@@ -1133,8 +1217,8 @@ export default function R1App() {
                         有标识重复候选。保持独立，不自动合并。
                       </div>
                     ))}
-                    <h2>{selected ? "事实时间线" : search.trim() ? "选择匹配学生后查看详情" : "班级事实时间线"}</h2>
-                    {(!search.trim() || selected) && (records.length ? (
+                    {studentTab !== "tasks" && studentTab !== "unavailable" && <h2>{selected ? "事实时间线" : selectedStudent ? "所选学生不可用" : search.trim() ? "选择匹配学生后查看详情" : "班级事实时间线"}</h2>}
+                    {studentTab !== "tasks" && studentTab !== "unavailable" && (!search.trim() || selected) && (records.length ? (
                       records.map((item) => (
                         <RecordCard
                           key={item.record_id}
@@ -1182,6 +1266,7 @@ export default function R1App() {
                   onChange={(event) => { setSelectedStudent(event.target.value); setTask(null) }}
                 >
                   <option value="">全部学生 / 班级</option>
+                  {selectedStudent && !selected && <option value={selectedStudent} disabled>此学生不在当前查询范围</option>}
                   {students.map((item) => (
                     <option key={item.student_id} value={item.student_id}>
                       {item.name}
@@ -1196,6 +1281,8 @@ export default function R1App() {
                 </select>
                 {(selectedStudent || workFilter !== "all") && <button onClick={() => { setSelectedStudent(""); setWorkFilter("all"); setTask(null) }}>清空任务筛选</button>}
               </div>
+              {navigation.route.taskId && !task && <p className="r1-warning" role="status">所选任务不在当前已授权查询中；不会替换为其他任务。请重新读取或明确选择。</p>}
+              {task && !tasks.some(item => item.task_id === task.task_id) && <p className="r1-warning" role="status">所选任务不符合当前筛选，不会替换为其他任务。<button onClick={() => { setSelectedStudent(""); setWorkFilter("all"); setTask(task) }}>显示所选任务</button></p>}
               <p className="r1-muted" role="status">显示 {tasks.length} / {activity?.tasks.length || 0} 项任务 · 全班未结束 {openTasks.length} 项</p>
               {!tasks.length && <p className="r1-muted">{selectedStudent || workFilter !== "all" ? "当前筛选下没有任务，可清空筛选查看全部。" : "尚无任务。"}</p>}
               {tasks.map((item) => (
@@ -1292,7 +1379,7 @@ export default function R1App() {
                   }
                 }) }}>查看班级业务审计</button>
                 {!classes.some(item => item.status === "active") && <button disabled={busy || refreshing || !queryFresh} onClick={() => open("class")}>建立班级与学期</button>}
-                <label>切换查看班级<select aria-label="设置中切换班级" value={classroom?.class_id || ""} onChange={event => {
+                <label>切换查看班级<select aria-label="设置中切换班级" disabled={navigationBlocked} value={classroom?.class_id || ""} onChange={event => {
                   const target = classes.find(item => item.class_id === event.target.value)
                   setSelectedStudent("")
                   void action(() => reload(target || null))
@@ -1355,7 +1442,7 @@ export default function R1App() {
               <button disabled={busy} onClick={() => void action(async () => {
                 await logoutIdentity(session.csrf_token)
                 loading.current++
-                setPage("conversation"); setSelectedStudent(""); setRecord(null); setTask(null)
+                navigation.reset(); setRecord(null)
                 setSession(null); setStudents([]); setActivity(null); setClasses([]); setClassroom(null)
                 setIdentifiers([]); setReplacingIdentifier(null); setDuplicates([]); setMessages([]); setPending(null); setForm(null); setIssuedCodes(null); setExportId("")
               })}>注销当前会话</button>

@@ -50,3 +50,21 @@ Reviewed changes are first-party operator Python, synthetic tests, the backend r
 ## 2026-10-23 offline exit transfer verification
 
 Reviewed first-party changes extend the existing offline verifier, synthetic CLI/actual export tests and runbook/ledger. No third-party source, new dependency, private file, live Provider, external transfer or real class data is introduced. The verifier reports hashes, closed counts and comparison booleans, not filenames, people or content; malformed input yields a fixed error. Test exports and XML logs stay ignored. Existing reviewed scanner exceptions remain unchanged; final SHA-256, history scan and full Windows/Ubuntu CI are required. Exact copy checks are integrity evidence only, not source authentication, a database import or complete lifecycle/cross-machine recovery approval.
+
+## 2026-10-23 database/live-data design proposal
+
+Reviewed first-party design and navigation changes describe the existing public schema and candidate post-R1 data flows. Sources are official PostgreSQL, SQLite and Pydantic documentation linked in the proposal; no third-party code or dependency is imported. No interviews, private screenshots, runtime files, credentials, real school/person records or database extracts are included. Candidate schema/Tool names and design-only DB checks do not authorize implementation, Agent writes or Gate promotion. No new scanner exception, schema migration or canonical frozen definition change is introduced. The new design file and changed documents require final-byte SHA-256 registration, publication guard, historical scanning and link checks before any separate public publication decision.
+
+The owner subsequently authorized the live-data Goal and GitHub synchronization after verification. The first-party delivery acceptance document records bounded D0 work, explicit incomplete checks and post-R1 exclusions; it contains no private user transcript, runtime evidence or imported material. Publication still requires exact file hashes, normal checks and full two-platform CI before acceptance. Authorization is not a claim that the Goal or release has passed.
+
+## 2026-10-23 foreground query recovery increment
+
+Reviewed first-party Web controller, R1 integration, synthetic unit/browser tests and delivery notes. Automatic actions only re-read existing authorized QG endpoints; no new API, database permission, migration, dependency, model call or stored data is introduced. Synthetic test text/delivery gates are not private records or successful business stubs. Generated screenshots/XML/temp databases stay ignored. Manifest entries use actual final-byte SHA-256; reviewed exceptions and formal definitions remain unchanged. Full CI and independent review remain required; this increment does not claim all mock pages or post-R1 persistence are delivered.
+
+## 2026-10-24 real-mode navigation and view binding
+
+Reviewed first-party runtime navigation/student presentation, bounded HTTP shell routing, synthetic parser/browser/desktop tests and delivery notes. New GET routes serve only the fixed index file; they are not business APIs and never join user paths to files. Presentation query hints are closed and only allowed when Web is mounted; API, health and asset query rejection remains. URL/history state conveys no authorization or entity objects. Tests use deliberate synthetic names/IDs/passwords and actual disposable API/PG/BCG, with no live Provider or imported material. No database migration, permission, dependency, scanner exception or formal Gate change. Raw XML/screenshots/databases remain ignored. Exact final-byte manifest review and full two-platform CI are required; temporary chat and Future modules are not promoted.
+
+## 2026-10-24 U3 deadline and fault acceptance candidate
+
+Reviewed first-party UI refresh wiring and synthetic fixture/browser assertions only. Existing server `as_of`/deadline projections remain authoritative; no new endpoint, dependency, business grant, Agent write, schema or real data. Fixture clocks, passwords and faults are synthetic; raw screenshots, XML, runtime databases and machine paths stay ignored. Precise content hashes and full CI are required before public delivery; exception lists are unchanged. This review is not formal release or real-data admission.

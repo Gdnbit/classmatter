@@ -11,6 +11,45 @@
     "backend/tests/test_provider_evaluation.py": {
       "sha256": "22871cd95bb5fafb80baa9732f52cca0b6ac05703bb49bcc7182deed98345e99"
     },
+    "apps/web/tests/runtime-deadline-browser.mjs": {
+      "sha256": "5214c4c0f6f77e077741a70a694fc39d8450d8d2f3641524a41f2a40c4d22ca3"
+    },
+    "backend/tests/test_web_deadline.py": {
+      "sha256": "dfa19a05d78f4661f2589e6fdaec2cd8bd5f7b201f8f211b82afeab0a3f927e4"
+    },
+    "apps/web/src/runtime/StudentDirectory.tsx": {
+      "sha256": "73790e212f300108a9c40daf411c5f7c71e7fabe36933e1c0e23d3a2a14dd5a0"
+    },
+    "apps/web/src/runtime/navigation.ts": {
+      "sha256": "34f3ed8a7465a8bfb8ac6ef915ecd821da862658ed7bd78948f192ccf072fb2f"
+    },
+    "apps/web/src/runtime/student-directory.css": {
+      "sha256": "6d36ac80f7f5b5dd1cc6af410b6f34ded8db4501f3d71b6f78e3f1e612562da6"
+    },
+    "apps/web/src/runtime/useRuntimeNavigation.ts": {
+      "sha256": "49fdb0702faf5b96e98e924f4a777def8e4cead9cdfc4eb0f1199474adbd4c04"
+    },
+    "apps/web/tests/runtime-navigation-browser.mjs": {
+      "sha256": "761b03c632ff032e89d287a59b98ebb71b1af2b11af79d0b679cea8f7486ac9f"
+    },
+    "apps/web/tests/runtime-navigation.mjs": {
+      "sha256": "93f0554317bfb260983c474b0535354f9a32bdfc6a13b4654342906b9d7f8b5f"
+    },
+    "backend/tests/test_web_navigation.py": {
+      "sha256": "0662362324e8754e9ca379d7729aebf9a8bf4205ef1b46bf683225ae4aae5bd4"
+    },
+    "apps/web/src/runtime/query-refresh.ts": {
+      "sha256": "779b88126742d1b1ad1785a9b4eb2feeb8a4e51efa1ccdcf55359ec59bba06b7"
+    },
+    "apps/web/tests/query-refresh.mjs": {
+      "sha256": "bb036d19d48a159faab1a8f8327d43ef78331eae0de46fe1ae5f625cfd0f2547"
+    },
+    "docs/design/live-data-delivery-acceptance.md": {
+      "sha256": "b51399f3b9997dcde04bb543816ce10a950bf49bcc93c78c3dc3ef2fab600195"
+    },
+    "docs/design/database-live-data-design.md": {
+      "sha256": "beecbcaa2cbb9a7c7d42c5806906ed8e0c994d69174004fd646ca657c33adb0a"
+    },
     "apps/web/src/runtime/CommandPreview.tsx": {
       "sha256": "72efead16671285b03fca71bce2c905969ddbdd79bd042bdc81126c2645eba62"
     },
@@ -27,10 +66,10 @@
       "sha256": "eb797f90ddb743e282c9bfdf67ca88ddd4f1fdb3f3ed469c6c34c72f2dd300b5"
     },
     "apps/web/src/runtime/student-directory.ts": {
-      "sha256": "149fd6faa41aa0fd0edf4fb9f0d44ae9ecf02aa6364a12391e3e83e286c003a7"
+      "sha256": "93142163324775dad304c1bad7aaf3a78d7a26f532beaa7d7a1668541497a096"
     },
     "apps/web/tests/student-directory.mjs": {
-      "sha256": "50494a92e22bd7efe278f4de8e996394d993225651358633cebb60659b5b65d9"
+      "sha256": "b3d0d3e15885c04854979dcbc303f55823bd49b7c2cd618a908c97754ec201ab"
     },
     "apps/desktop/runtime-main.cjs": {
       "sha256": "39dfcb8675ac49bb4c45a758327373974ba3ba772f8b62f3ca94af6ad4770ca9"
@@ -48,7 +87,7 @@
       "sha256": "afcdce4a4184c9a44dcd68f71a83bf6af922891c27b9a767ff892d08e156b5d2"
     },
     "apps/desktop/tests/runtime-integration.cjs": {
-      "sha256": "2562cfe160de7e51035a48b837dce201e525570ed521d1bb617060f31afd753e"
+      "sha256": "b904b1089c70c683d1438d310292f16b124f4e8c63a26facd5e28b345e96470a"
     },
     "apps/desktop/tests/runtime-service.test.cjs": {
       "sha256": "85a61ac3feb761e1f39ad820d75bb1e685edf4087ee2a025ec35c86f9cd815ad"
@@ -72,7 +111,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "78e45cea836495aaadc0a62fdcbe9bea8666cda07ac779e4b888decde12750fc"
+      "sha256": "721a5fd24750746d68aeb1c80067dea4fcebe6889f24df7f90d15685e4fb6a08"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -243,13 +282,13 @@
       "sha256": "a916845977c93c4a807d1bf56dd224f0d8015d7a46620643b30eec79e843987b"
     },
     "apps/web/README.md": {
-      "sha256": "db07b13aaa6cdf5771a2851186f487c556afc6c74c57afafc251946643babf4c"
+      "sha256": "918fb5e630be438b4dc556b6cce90c61168721e34a4e7fa0c06c784e5923ba41"
     },
     "apps/web/index.html": {
       "sha256": "6857940a16627475250d8d98cf9711cf58e418459b8a7f97755f0c3180ed845f"
     },
     "apps/web/package.json": {
-      "sha256": "a79af5cd9149da3de6ecdf455e8d1c06b6b0ff6f210c11996f6551f71699be02"
+      "sha256": "28754ed8b7196562ced5f0e1b9a1884fcf097a311a60ee168f8cb3b20327e0dc"
     },
     "apps/web/pnpm-lock.yaml": {
       "sha256": "c684a8b108321e9dcce6bf62b4b1b4b6e8e64f4e55e3019ed95f1f95ca184251"
@@ -306,7 +345,7 @@
       "sha256": "fe5baeec654888996fa3a94a03251bea227325fa54dc53a4e351ecd72d8d4d9b"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "8aaa16d59981482a305a4a37a32e326bf88f61e42a1e50a6c66732d0c2debf27"
+      "sha256": "1b9dd5d2686f403c41250995a654aad3b980f6a06288f994651a5ea84b57444b"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "8f005293650b914c64f9649c7c70efe41080d6a310c275aff9fdf4707588160b"
@@ -450,7 +489,7 @@
       "sha256": "507d510cee982bdd2b6af4169e3701fb42642c849558155cdbdf0339d5442885"
     },
     "apps/web/tests/runtime.mjs": {
-      "sha256": "e3acbe292b90b1c5042707c7d4fff362b516e3b9a575611ae9b3c277cd5b425e",
+      "sha256": "bfa322d4b1d92c899c009b6522b61620d7d9d0c011bdb3b0343dc3ded02dfd4a",
       "reviewed_pattern_exceptions": [
         {
           "rule": "email-shape",
@@ -660,7 +699,7 @@
       "sha256": "b96bf7254dd9f0f708123d20a44511c1bb08f578f026fd7958b751e0fa3fce9f"
     },
     "backend/src/class_os/interfaces/http/app.py": {
-      "sha256": "fcbd54b0e310cfc826a82a41ca538d1733c30d707ab985c8ab53057c8e4bd0dc"
+      "sha256": "748bf18c565ac2b4285293661fbf2943d59d9799696675a1d8c36cc723c29583"
     },
     "backend/src/class_os/interfaces/http/contracts.py": {
       "sha256": "97909305991a549d7b8c43294856a8bd9086629d7f7261626a5349341e39e2e1"
@@ -684,7 +723,7 @@
       "sha256": "2d8a10bc828dc397f0913b56e1b639415f5acefc901427427553020bb2d637c0"
     },
     "backend/src/class_os/interfaces/http/web.py": {
-      "sha256": "6eba977ecaaec52c7c7094daff4331d9ceb1932faaef4eecb66e381af3e00cd3"
+      "sha256": "0a2a7d181faa50bc38a53da655dffc0e18645cf7777bda2e68763a8630f8542e"
     },
     "backend/src/class_os/interfaces/operator/__init__.py": {
       "sha256": "2da74d05e674c8a70e9109f8449c9ac89f867f25790e85c196d285b8b5987572"
@@ -807,7 +846,7 @@
       "sha256": "99be70872395e28688e75ed73ad22297e6e3adb4214ce758105c0068906febd1"
     },
     "backend/tests/test_local_runtime.py": {
-      "sha256": "10815103967f09b9c7e6a162da127a1c13525c217ca9199da5b7d0b77ee1678e"
+      "sha256": "6d39d9682c8ac7a4e67ea73934b160bb1e60b93a12aecf63e47098364c405d4b"
     },
     "backend/tests/test_logout_receipt.py": {
       "sha256": "272c2e3d0eea6cf720f242c52930a36307afa099baa0b27efd95956d2cae8a48"
@@ -883,7 +922,7 @@
       "sha256": "0b028a7aa07408423724b7ef666c7e07b2e689b3c306f67d5e67b8e2a474e6e8"
     },
     "backend/tests/test_web.py": {
-      "sha256": "e3647d8016c6c5ebba4468d9967bfdd254cb53d47e42a108971625c804a25c19"
+      "sha256": "932027e1a40fe7f3e2e5e600d7f4c8bf5a0dc439169c619ae1851b4cfcf9bf51"
     },
     "backend/tests/test_work_snapshot.py": {
       "sha256": "a08994631068002bc2ece8a2e4fa8784361046f84eb146d6683ee74e9d7e1bb4"
@@ -1039,16 +1078,16 @@
       "sha256": "556da89d40408994ecaad651e17422b9c2747fe3d9770198b21a05446af0803d"
     },
     "docs/ENGINEERING_OVERVIEW.md": {
-      "sha256": "b6f1086bf2be287c19c0dba249a1b7fbf7c0d75c0579897517d0d2f6032dee42"
+      "sha256": "7278b3f174518aad328d5b11f3405db00fc6b49e0183d1b87b788fa5957e7cf7"
     },
     "docs/OPEN_SOURCE_READINESS.md": {
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "460c672a833e02b201ecfdceb24f5f657ce5bb04c92c76d4d4474def22a23beb"
+      "sha256": "75980846b58cf88833c5889917c5e370269b3afd85aab9ccf724e413029d4319"
     },
     "docs/README.md": {
-      "sha256": "ce77626ce5828a613325bf8e68265be131dc42081ef05aa42badbe19ee81bbb6"
+      "sha256": "c27648890e17daccf94655ba7366b9abc4289af94990cd82f36d144fd3626daa"
     },
     "docs/changes/2026-10-08-synthetic-development-admission.md": {
       "sha256": "d67c0a71f21431a90f84301ceae2ce790f8a0aeb120052840b0b6032731a9f40"

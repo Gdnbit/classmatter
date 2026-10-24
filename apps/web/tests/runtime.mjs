@@ -214,6 +214,65 @@ try {
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
   const activityRoute = /\/terms\/[0-9a-f-]+\/activity$/;
+  // Foreground events only re-read the actual QG/PG; no successful route stubs.
+  let foregroundReads = 0, foregroundWrites = 0;
+  const countForeground = request => {
+    if (request.method() === 'GET' && activityRoute.test(new URL(request.url()).pathname)) foregroundReads++;
+    if (!['GET', 'HEAD'].includes(request.method())) foregroundWrites++;
+  };
+  page.on('request', countForeground);
+  const returnedRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
+  await page.evaluate(() => { for (let index = 0; index < 20; index++) window.dispatchEvent(new Event('focus')); });
+  await returnedRead;
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
+  assert.equal(foregroundReads, 1);
+  assert.equal(foregroundWrites, 0);
+  await page.getByRole('button', { name: '记录事实', exact: true }).click();
+  await page.getByLabel('事实原文（观察类型请留空）').fill('合成未提交表单，不能被自动刷新打断');
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await page.waitForTimeout(5250); // Exceed cooldown: idle protection, not the throttle, must prevent reads.
+  assert.equal(foregroundReads, 1);
+  assert.equal(await page.getByLabel('事实原文（观察类型请留空）').inputValue(), '合成未提交表单，不能被自动刷新打断');
+  const deferredRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
+  await page.keyboard.press('Escape');
+  await deferredRead;
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
+  assert.equal(foregroundReads, 2);
+  assert.equal(foregroundWrites, 0);
+  await page.context().setOffline(true);
+  await page.getByText('当前列表尚未刷新。', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: '记录事实', exact: true }).isDisabled(), true);
+  await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
+  const reconnectedRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
+  await page.context().setOffline(false);
+  await reconnectedRead;
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
+  assert.equal(foregroundReads, 3);
+  assert.equal(foregroundWrites, 0);
+  page.off('request', countForeground);
+  // A successful QG response from BEFORE an offline transition is not fresh
+  // merely because navigator.onLine is true again when its delivery arrives.
+  let releaseOldRead, markOldReadReady;
+  const oldReadReady = new Promise(resolve => { markOldReadReady = resolve; });
+  const oldReadRelease = new Promise(resolve => { releaseOldRead = resolve; });
+  await page.route(activityRoute, async route => {
+    const response = await route.fetch();
+    assert.equal(response.status(), 200);
+    markOldReadReady();
+    await oldReadRelease;
+    await route.fulfill({ response });
+  });
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await oldReadReady;
+  await page.context().setOffline(true);
+  await page.waitForFunction(() => !navigator.onLine);
+  await page.context().setOffline(false);
+  await page.waitForFunction(() => navigator.onLine);
+  releaseOldRead();
+  await page.getByText('当前列表尚未刷新。', { exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: '记录事实', exact: true }).isDisabled(), true);
+  await page.unroute(activityRoute);
+  await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
   let refreshWrites = 0;
   const countRefreshWrites = request => { if (request.method() === 'POST' && /\/commands\/(preview|approve|commit)$/.test(request.url())) refreshWrites++; };
   page.on('request', countRefreshWrites);
@@ -236,6 +295,16 @@ try {
   await page.getByLabel('跟进标题').fill('合成浏览器跟进任务');
   await page.getByLabel('截止时间（可不填，本机时区）').fill('2026-10-08T09:00');
   await page.getByRole('button', { name: '生成预览', exact: true }).click();
+  await page.getByRole('heading', { name: '确认这次变更', exact: true }).waitFor();
+  let pendingRefreshRequests = 0;
+  const countDuringApproval = request => { if (new URL(request.url()).pathname.startsWith('/api/')) pendingRefreshRequests++; };
+  page.on('request', countDuringApproval);
+  await page.evaluate(() => { for (let index = 0; index < 20; index++) window.dispatchEvent(new Event('focus')); });
+  await page.waitForTimeout(5250); // Hold the proposal beyond the automatic read cooldown.
+  assert.equal(pendingRefreshRequests, 0, 'Pending approval blocks automatic reads and all writes');
+  await page.getByRole('heading', { name: '确认这次变更', exact: true }).waitFor();
+  assert((await page.getByRole('dialog').innerText()).includes('合成浏览器跟进任务'));
+  page.off('request', countDuringApproval);
   let savedTaskCommits = 0;
   const countSavedTask = request => { if (request.method() === 'POST' && /\/commands\/commit$/.test(request.url())) savedTaskCommits++; };
   page.on('request', countSavedTask);
@@ -270,8 +339,11 @@ try {
   const nameTargetId = nameTarget.match(/[0-9a-f]{8}/)[0];
   let wrongReceiptDelivered = 0;
   let receiptLookupCount = 0;
+  const receiptLookupPaths = [];
   const countReceiptLookup = request => {
-    if (request.method() === 'GET' && /\/commands\/[0-9a-f-]+\/receipts\/[0-9a-f-]+$/.test(request.url())) receiptLookupCount++;
+    if (request.method() === 'GET' && /\/commands\/[0-9a-f-]+\/receipts\/[0-9a-f-]+$/.test(request.url())) {
+      receiptLookupCount++; receiptLookupPaths.push(new URL(request.url()).pathname);
+    }
   };
   page.on('request', countReceiptLookup);
   const receiptDelivery = /\/commands\/commit$/;
@@ -285,8 +357,10 @@ try {
   });
   for (const [previousName, nextName] of [['合成浏览器学生', '合成姓名更正'], ['合成姓名更正', '合成浏览器学生']]) {
     let unavailableDeliveryCount = 0;
+    let originalCommit;
     if (previousName === '合成姓名更正') {
       await page.route(receiptDelivery, async route => {
+        originalCommit = route.request().postDataJSON();
         const response = await route.fetch();
         assert.equal(response.status(), 200); // Actual commit succeeded; 503 is delivery loss, not rollback proof.
         unavailableDeliveryCount++;
@@ -311,8 +385,24 @@ try {
       await page.getByRole('alert').filter({ hasText: '先核对原请求结果，不要重复新建' }).waitFor({ timeout: 2000 });
       assert.equal(unavailableDeliveryCount, 1);
       assert(!(await page.getByRole('alert').innerText()).includes('synthetic-private-503-canary'));
+      const additionalCommands = [];
+      const countAdditionalCommands = request => {
+        if (request.method() === 'POST' && /\/commands\/(preview|approve|commit)$/.test(request.url())) additionalCommands.push(request.url());
+      };
+      page.on('request', countAdditionalCommands);
+      const historyLength = await page.evaluate(() => history.length);
+      // Native modal makes background navigation inert; browser history is
+      // the reachable navigation path. Do not force-click through modality.
+      await page.goBack(); await page.goForward();
+      await page.getByText('页面切换已延后。', { exact: false }).waitFor();
+      assert((await page.getByRole('dialog').innerText()).includes(nextName));
+      assert.equal(await page.evaluate(() => history.length), historyLength);
       await page.unroute(receiptDelivery);
       await page.getByRole('button', { name: '核对提交结果（不重复写入）', exact: true }).click();
+      await page.getByRole('dialog').waitFor({ state: 'hidden' });
+      assert(receiptLookupPaths.at(-1).endsWith(`/commands/${originalCommit.proposal_id}/receipts/${originalCommit.idempotency_key}`));
+      assert.deepEqual(additionalCommands, [], 'Navigation and reconciliation cannot approve/replay another command');
+      page.off('request', countAdditionalCommands);
     }
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     if (previousName === '合成浏览器学生') {
@@ -383,14 +473,31 @@ try {
   };
   await page.route('**/agent/events', delayReadDelivery);
   try {
+    await page.getByRole('button', { name: '总览', exact: true }).click();
+    await page.getByRole('button', { name: '对话', exact: true }).click();
     await page.getByLabel('输入消息').fill('合成延迟回复，阅读历史时不要抢回滚动');
     await page.getByRole('button', { name: '发送消息', exact: true }).click();
     await readReady;
+    let requestsDuringAgent = 0;
+    const countWhileAgent = request => { if (new URL(request.url()).pathname.startsWith('/api/')) requestsDuringAgent++; };
+    page.on('request', countWhileAgent);
+    const agentHistoryLength = await page.evaluate(() => history.length);
+    await page.goBack();
+    await page.getByText('页面切换已延后。', { exact: false }).waitFor();
+    await page.getByLabel('输入消息').waitFor();
+    await page.goForward(); // Latest queued destination is the same conversation.
+    await page.evaluate(() => { for (let index = 0; index < 20; index++) window.dispatchEvent(new Event('focus')); });
+    await page.waitForTimeout(5250); // Keep Agent delivery held beyond the read cooldown.
+    assert.equal(requestsDuringAgent, 0, 'An active Agent delivery blocks automatic queries and writes');
+    assert.equal(await page.getByRole('button', { name: '停止 Agent', exact: true }).count(), 1);
+    page.off('request', countWhileAgent);
     await page.locator('.r1-scroll').hover();
     await page.mouse.wheel(0, -5000);
     await page.waitForFunction(() => document.querySelector('.r1-scroll').scrollTop <= 1);
     releaseReadDelivery();
     await page.getByRole('button', { name: '查看新回复', exact: true }).waitFor();
+    assert.equal(new URL(page.url()).pathname, '/');
+    assert.equal(await page.evaluate(() => history.length), agentHistoryLength);
     assert((await page.locator('.r1-scroll').evaluate(element => element.scrollTop)) <= 1);
     const readingViewport = await page.locator('.r1-scroll').boundingBox();
     const newReplyButton = await page.getByRole('button', { name: '查看新回复', exact: true }).boundingBox();
@@ -405,6 +512,47 @@ try {
   } finally {
     releaseReadDelivery();
     await page.unroute('**/agent/events', delayReadDelivery);
+  }
+  // A real response can finish upstream before the teacher stops delivery.
+  // The stopped browser run still must not adopt its answer or repeat a call.
+  let releaseCancelled, cancelledReady, cancelledDelivered;
+  const cancelledGate = new Promise(resolve => { releaseCancelled = resolve; });
+  const cancelReady = new Promise(resolve => { cancelledReady = resolve; });
+  const cancelDone = new Promise(resolve => { cancelledDelivered = resolve; });
+  const holdCancelled = async route => {
+    const response = await route.fetch();
+    assert.equal(response.status(), 200);
+    cancelledReady(); await cancelledGate;
+    try { await route.fulfill({ response }); } catch { /* The browser intentionally aborted this delivery. */ }
+    cancelledDelivered();
+  };
+  await page.route('**/agent/events', holdCancelled);
+  try {
+    await page.getByRole('button', { name: '总览', exact: true }).click();
+    await page.getByRole('button', { name: '对话', exact: true }).click();
+    const answersBeforeStop = await page.locator('.r1-messages article.assistant').count();
+    await page.getByLabel('输入消息').fill('合成取消后迟到结果不得采纳');
+    await page.getByRole('button', { name: '发送消息', exact: true }).click();
+    await cancelReady;
+    const commandsAfterStop = [];
+    const noReplay = request => { if (request.method() === 'POST') commandsAfterStop.push(request.url()); };
+    page.on('request', noReplay);
+    const cancelHistoryLength = await page.evaluate(() => history.length);
+    await page.goBack();
+    await page.getByText('页面切换已延后。', { exact: false }).waitFor();
+    await page.getByRole('button', { name: '停止 Agent', exact: true }).click();
+    await page.getByRole('heading', { name: '今天的班级工作', exact: true }).waitFor();
+    releaseCancelled(); await cancelDone;
+    await page.getByRole('button', { name: '对话', exact: true }).click();
+    await page.getByText('已停止 · 未采纳未完成结果', { exact: true }).waitFor();
+    assert.equal(await page.locator('.r1-messages article.assistant').count(), answersBeforeStop);
+    assert.equal(await page.getByRole('heading', { name: '未提交的任务草稿', exact: true }).count(), 0);
+    assert.equal(await page.evaluate(() => history.length), cancelHistoryLength);
+    assert.deepEqual(commandsAfterStop, []);
+    page.off('request', noReplay);
+  } finally {
+    releaseCancelled(); await cancelDone;
+    await page.unroute('**/agent/events', holdCancelled);
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
   await studentScope.selectOption('');

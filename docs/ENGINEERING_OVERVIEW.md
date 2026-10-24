@@ -32,6 +32,12 @@ Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任�
 
 [框架与社区调研](research/2026-10-22-pydantic-ai-pi-runtime-assessment.md) 推荐保留默认 Pydantic AI；[候选实验计划](research/2026-10-22-agent-runtime-and-work-evaluation-plan.md) 规定合成对照、安全 Hard Gate 和新增能力的价值验证。**三个文档均不改变 R1 范围、版本、正式业务写入/审批权限或安全准入。**
 
+## 数据库与实时接入：下一阶段提案
+
+[数据库与实时数据演进设计](design/database-live-data-design.md)核对当前PostgreSQL模型与完整Demo之间的缺口，并细化会话/运行、工作专题、跨页一致、变更订阅、索引、迁移和退出。当前主库与QG/BCG/ISB继续复用；“实时”不代表已存在业务订阅流，“工作专题”不等于授权workspace，“聊天可保存”不等于人物事实或长期记忆。
+
+该文档是后续设计提案，不取代canonical SDD或批准新release。D0可先复用既有R1接口绑定真实页面；耐久聊天、工作专题及新事件表须另立后续change，并同步schema inventory/最小权限/备份/退出/生命周期验证。当前无对应新迁移、性能或真实用户验收；不把所有演示栏目接假数据后声称生产化。
+
 ## 验证与发行
 
 保留 107 项需求、147 项 Eval、94 个原子任务及其源行哈希；合成开发准入不代表正式 task/eval promotion。`scripts/verify.ps1` 为统一入口，`all` 包括 disposable PG/浏览器与 spikes；正式 security target 与真实数据/发布签名另受 Gate 管理。

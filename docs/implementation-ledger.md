@@ -180,3 +180,74 @@ W4-01已通过[完整CI 39941521068](https://github.com/Gdnbit/classmatter/actio
 复用T-REXP-001—003、T-ROPS-006和既有退出完整性目标，不修改正式Eval/Task/Gate语义或状态；`--require-complete`继续拒绝。Windows/Linux各自通过不证明实际两台机器的导入恢复。跨机业务写入、身份重新配置、生命周期账本和退役证明仍待实施。独立PR记录最终测试/CI，回滚为revert，无迁移；首轮Windows目录异常测试断言过窄已修正，不当作生产成功。详细操作见backend README。
 
 W4-02最终证据：[PR #12](https://github.com/Gdnbit/classmatter/pull/12)在[完整CI 39956007791](https://github.com/Gdnbit/classmatter/actions/runs/39956007791)两平台成功后合并为`3d8d750`。Windows非DB303项、Ubuntu非DB301项/2项平台跳过，Ubuntu完整DB/浏览器310项/5项平台跳过；本机退出相关定向76项通过/1项叶子链接策略跳过。源码、文档和公开检查通过；无实际跨机导入或完整W4准入。
+
+### 数据库与真实接入：设计准备（design-proposal，未实施）
+
+2026-10-23在main `3d8d750`上核对现有22表、QG/BCG/ISB、界面Store与刷新链。新增[专题设计提案](design/database-live-data-design.md)，建议保留PostgreSQL/SQLAlchemy Core/Alembic/Psycopg；先绑定真实学生/记录/任务投影，再以单独后续change处理耐久聊天、运行、工作专题和可靠变更订阅。本文没有执行迁移、增加Tool、启用Provider或替换当前Demo。
+
+设计把会话消息与正式事实分开、明确工作专题不是授权workspace，补齐并发幂等/终态、分页计数、跨页快照、提交水位、deadline无写变化及备份退出升级条件。D0复用既有T-RWEB-002—004/T-RDOM-009/010/013；D1—D3与DB-*为后续候选，不是新正式Task/Eval，原107/147/94定义和Gate状态不变。设计和官方资料核验不等于真实性能、模型质量或教师净负担验收；先前W4-02实际通过与合并证据见[PR #12](https://github.com/Gdnbit/classmatter/pull/12)。
+
+### D0 Goal：真实数据闭环执行与验收（2026-10-23，进行中）
+
+用户已明确授权持续推进及验收后GitHub同步。见[执行目标与验收台账](design/live-data-delivery-acceptance.md)：U0固定范围，U1恢复刷新，U2主界面真实绑定，U3综合验收/公开交付。11项LD验收索引不是正式Eval；目前未标通过。D1—D3不作为偷偷扩大R1的手段，无真实数据/付费Provider/Agent业务写入权限变更。设计原提交`b8bf32a`的81脚本测试、71份Markdown检查、公开guard及历史扫描为前轮设计证据，不等于本Goal完成。
+
+### D0-U1：前台恢复与断网重读（候选，未整体验收）
+
+基线为设计PR #13在两平台完整CI通过后的main `5fcc2e2`。教师返回应用或恢复网络时不必手动重复刷新；复用现有QG `reload()`与BCG/ISB边界，不新增API、表、Store或Agent权限，不将原Demo改成真实业务模式。
+
+- `runtime/query-refresh.ts`合并focus/visibility/online事件，250ms合并窗、自动读取启动间隔至少5秒；只在可见、联网、空闲时执行。失败不自主循环重试，没有周期轮询；新事件/显式重读可恢复。卸载注销事件和timer。
+- `R1App.tsx`保留最近成功快照和既有generation校验；断网立即标旧，跨断网代次的旧成功响应不能因后来online而重新标fresh。表单、待确认proposal、busy提交/核对、恢复码、审计、设置和Agent运行期间延后自动重读；不自动批准、提交、切身份或调用模型。
+- `tests/query-refresh.mjs`覆盖事件风暴、执行前空闲重检、断网/隐藏、无重叠、失败无轮询、卸载迟到错误。`tests/runtime.mjs`走实际QG/PG，只有交付延迟/故障注入，不stub成功业务；验证表单保留、重连、跨offline/online迟到响应，以及待确认/Agent交付期间无额外API请求。普通恢复窗口统计所有非GET/HEAD请求为0，不只统计command POST。
+- 已有本地真实Web/PG两轮分别1通过（87.37秒；加入连接代次后92.06秒）；真实Electron/API/PG重启链1通过（43.14秒），监督器18通过，Web49单测/类型/build通过。后续补充待确认/Agent交付断言后须重新跑最终Web链；最终结果、审查和远端CI以独立PR为准，不拿前轮测试覆盖新增断言。
+- 独立只读对抗审查未发现已证实P1/P2缺陷，同时指出idle布尔单测不等于真实批准/Agent竞态覆盖，以及最初只计command POST不足以证明零其他写入；已补真实断言/全非GET计数，仍不宣称覆盖所有身份轮换窗口。
+
+审计进一步发现350ms观察可能被5秒冷却掩盖，不能证明交互保护确实工作。已把表单、待确认、Agent交付的真实浏览器观察延长到5250ms并保持交互未结束；fixture总体子进程上限100→130秒只容纳新增场景等待，所有业务/响应断言仍保留。加强前第三轮Web/PG1通过93.50秒只作历史记录；加强后的最终运行必须另取证据。真实gateway30项通过79.07秒，覆盖既有版本/幂等/授权/审计/Memory到期，不表示已经穷尽前端所有身份竞态。
+
+加强后最终真实Web/PG链1通过99.04秒，忽略日志`test-results/live-data-refresh-web.xml`；合成上下游真实业务成功、故障/交付延迟受测试控制，外部请求仍为空。后端全非DB301通过、2个宿主链接能力跳过、315个DB项未在该命令执行，日志`test-results/live-data-refresh-nondb.xml`；定向gateway与桌面日志分别为`live-data-refresh-gateways.xml`/`live-data-refresh-desktop.xml`。独立复审确认冷却掩盖已修复、未发现新的已证实实现缺陷；远端完整两平台CI通过之前不标本单元最终验收，不标Goal完成。
+
+当前前台持续停留、无任何事件时不会自动更新到期投影；LD-08与主界面真实绑定U2、综合验收U3仍待完成。不以本单元宣布全部页面、耐久聊天、工作专题或跨窗口推送已完成。回滚为revert独立PR，无schema/data迁移；原用户工作树修改不动。
+
+U1最终远端验收：[PR #14](https://github.com/Gdnbit/classmatter/pull/14)在[完整CI39979232478](https://github.com/Gdnbit/classmatter/actions/runs/39979232478)的Windows/Ubuntu均成功后合并为main `ee44bfe`；Ubuntu实际310个DB/browser通过、5个平台跳过，非DB301通过、2个平台跳过。此处只收口U1，不提升正式Gate或整个Goal。
+
+### D0-U2：真实主界面导航与同源投影（2026-10-24，候选）
+
+从已验收main `ee44bfe`建立独立`codex/live-data-navigation`。目标是当前非Demo主入口中的真实页面可刷新/返回，列表、表格、详情和工作筛选不切到MockStore；不是把全部未来原型生产化。教师无需重复选取已有页面来核对同一事实，导航本身不新增业务录入、批准、模型或后台业务动作。
+
+| 当前页面 | 实际数据/操作路径 | U2新增或保留的明确边界 |
+| --- | --- | --- |
+| 对话首页/三类注意力 | 原roster/activity QG及既有Agent客户端 | 需要处理/等待按原Task投影；可能遗漏仍无通知责任候选。聊天显式临时，不承诺刷新/重启恢复 |
+| 总览 | 原学生/记录/任务授权快照及原统计投影 | 不额外维护统计副本或把AI推断写成事实 |
+| 学生列表/表格/详情/时间线/跟进/记录 | `StudentDirectory`与原typed QG/BCG | 一个学生身份/一份记录修订/一项任务，多种表现；更正不增加记录数，停用保留历史。成绩/文件/关系不填样例 |
+| 工作/筛选/任务详情 | 原activity及BCG命令 | 路径保存闭合filter和UUID；详情按当前activity解析，跨窗口更正后重读采用新版本，不保留旧对象作为事实 |
+| 设置/审计/核心退出 | 原ISB、QG、BCG与配置控制器 | 不把UI导航变成身份、批准或恢复授权；原型未来模块与核心导出完整性限制不变 |
+| 数据/专题/自动化等未来页面 | 仅固定页面壳GET | 明确未接入，不加载MockStore，也不创建Store/Schema/Task |
+
+实现文件：`runtime/navigation.ts`闭合路由提示、`useRuntimeNavigation.ts`轻量原生History接线、`StudentDirectory.tsx`/`student-directory.ts`纯表现/计数、局部`student-directory.css`及R1App接线。URL/history不保存姓名、搜索词、正文、草稿、CSRF、供应商配置或批准。`history.state`不读取，挂载/恢复时规范化清除；交互期间只排队最新导航，不弹跳或增长历史；可信身份清理优先清除旧选择/排队。URL不包含旧class/term授权，不承诺刷新恢复历史scope；未知UUID显示缺失，不回落他人。
+
+源码核验发现原`mount_web`只有`/`且middleware全拒query，真实deep-link刷新将404/400。因此新增有限UI壳GET路径，始终返回同一固定index文件，不拼文件路径或catch-all吞掉API/asset错误。只在Web mounted时允许学生view/tab和工作UUID/filter闭合参数；API/health/assets、重复字段、未知字段/值、超长输入和非GET仍拒绝。无业务API、Tool、数据库或权限变化。
+
+验收文件：新`tests/runtime-navigation-browser.mjs`与`backend/tests/test_web_navigation.py`，原Web回归和桌面runtime链。合成内容经原UI预览/提交→实际PG，再验证表格/详情tabs/工作深链刷新、Back/Forward、未提交表单与待确认proposal延后导航、未知对象/Future/伪造history、注销后不释放事实；第二窗口经原BCG更正任务后，第一窗口focus重读及编辑表单须采用新标题。测试末尾另直接只读核对2学生、1记录的2修订、1项waiting/version3任务。截图/原始日志留忽略目录，不作为公开数据导出。
+
+失败保留：最初HTTP缺深链；早期断言未等待提交后重读/排队导航；恢复dashboard不含学生ID却误期望隐式旧选择；Playwright便捷单页context不能再建共享页；桌面“视图”与原生菜单同名。分别补受限壳路由、等待真实完成、明确重选、显式共享context及侧栏范围定位，没有改产品去自动猜对象或删业务断言。独立审查发现并修复detail丢table view与规范URL未清history.state，补真实work/多窗口证据；U3身份/Agent导航/未知提交矩阵仍不可从本单元外推。
+
+当前已验证Web54单测/类型/build、HTTP拒绝边界、真实聚焦链及Electron链的定向运行；加入最终数据库数量断言后，组合Web/PG/Electron仍在重跑，最终日志/计数及两平台CI按独立PR记录，不提前标U2或Goal完成。回滚为revert该独立PR，无schema/data迁移。LD-08持续到期刷新和U3完整故障矩阵仍待实施。
+
+最终本地组合：`uv run --frozen pytest tests/test_web_navigation.py tests/test_web.py tests/test_desktop_runtime.py -q --pg-root <owned-PG18.6> --junitxml=../test-results/live-navigation-final.xml` 4通过150.32秒（含最终数据库数量/版本断言、规范history清理及detail表格刷新）。全非DB302通过、2项宿主链接能力跳过、316项DB未在该命令执行；Web54/类型/build、桌面边界18通过。独立审查发现的两项导航问题均修复，并补真实work/多窗口及桌面深链证据；未提升跨scope恢复、Agent/身份/未知提交完整矩阵。截图实查320px表格只在自身区域横向滚动，页面无横向溢出。公开审查、最终清单及远端完整两平台CI仍须以该单元PR的实际结果收口。
+
+U2最终交付：[PR #15](https://github.com/Gdnbit/classmatter/pull/15)，提交`3b321696`，在[完整CI39999026807](https://github.com/Gdnbit/classmatter/actions/runs/39999026807)两平台成功及独立审查后合并main `5244047`。实际远端日志：Windows非DB304/Web54/desktop18；Ubuntu非DB302+2平台跳过、DB/browser311+5平台跳过。两平台公开guard、8.30.1历史扫描（4已审查、0未解决）、验证器81、文档72及图检查通过；643清单哈希独立复算零差异，例外元数据不变。不是完整Goal通过。
+
+### U3：时钟重读与综合故障验收（2026-10-24，实施中）
+
+基线main `5244047`；沿T-RWEB-002—004及原E-CMD/E-AUD/E-WEB/E-LOCAL，LD索引仅是本轮工程证据，不修改正式Requirement/Eval/Task/Gate。教师价值：不额外点击刷新即可看到既有任务跨到期变化，不因切页/未知回执重复操作；新增教师维护步骤为零。
+
+文件级范围：`query-refresh.ts`依据既有QG `activity.as_of/due_at/overdue/status`计算下次到期重读；`R1App.tsx`一次性可见窗口定时失效仍交U1控制器，沿原session/generation与idle保护。已结束、已逾期、无截止不定时；最短5秒、最长浏览器安全上限，避免零延迟循环和timer溢出。隐藏/断网清timer，返前台由原事件合并重读；失败停止自动尝试。客户端墙钟不判定逾期、不改状态，不是定时任务、提醒或可靠推送系统；后台无实时保证，响应传输及交互延后有滞后，多API仍非原子快照。
+
+验收增加`runtime-deadline-browser.mjs`/`test_web_deadline.py`：原BCG合成种子3项未来截止，真实服务器单调时钟跨到期，错误浏览器墙钟，表单延后、受控503交付、隐藏事件和可见空闲重读；无Agent adapter、外部请求及业务POST，最终PG三任务version1。隐藏由受控浏览器visibility事件验证接线，不冒称操作系统物理最小化。`runtime.mjs`加强未知提交Back/Forward后只GET原proposal/key、零额外preview/approve/commit，及Agent延迟交付期间Back/Forward不重读、不新增历史。`runtime-navigation-browser.mjs`增加实际旧200/撤销后401交付跨登录代次，以及原班归档→新空班后旧scope不回填；不手改React state或放开单active约束。
+
+首次加强组合3通过、1失败：新会话测试错误地把“未选择学生的授权班级时间线”期望为空；随后聚焦复现定位，改为交付前后同源内容一致，新增真实换班空时间线强断言，而非修改产品隐藏合法事实。最终组合、完整CI和公开清单仍待执行。回滚为独立PR revert，无schema/data迁移，不影响原工作区用户脏改动。D1聊天耐久、D2专题、D3可靠变更流及真实Provider/用户研究仍未获得本轮实现或质量证据。
+
+最终本地证据：Web/PG/Electron `tests/test_web_navigation.py tests/test_web.py tests/test_web_deadline.py tests/test_desktop_runtime.py` 5通过227.16秒；其中主链含实际停止Agent再交付迟到响应，答案/草稿未采纳、零额外POST及单次排队导航。Web55/类型/build、desktop18、非DB302+2宿主链接跳过（318项DB的最终收集数以后续CI为准；该非DB运行时为317项DB未执行）通过。U2基线另完整本机DB316通过957.39秒，不冒充新增U3全DB。失败保留：会话timeline错误预期、清理未等待交付而掩盖原异常、同名新建按钮需侧栏定位、新建班不自动替换教师当前归档选择需明确select；均修测试同步/合法动线，没有删安全断言或改变产品授权。
+
+独立审查要求补足真正PG业务重启：`test_local_runtime.py::test_owned_business_entities_survive_actual_pg_process_restart`在新临时SCRAM/DPAPI运行时经BCG写学生/事实/关联任务，关闭全部连接再stop/start自有PG，新建ISB/QG和数据库对象核对原实体ID/version/count、关联及完整投影；不是仅检查数据库元数据。local-runtime文件6项通过31.50秒，随后固定合成时钟的最终单项仍须核验。此证据只证明同机自有实例重启，不升级跨机迁移/容灾/恢复准入。README空白行导致docs首次拒绝，清理后72Markdown/引用/UTF8及图检查通过；正式107需求/147eval/94任务与green0不变。U3公开guard/历史扫描/精确清单、独立PR及完整两平台CI必须按实际结果收口。
+
+最终PG业务重启单项（固定合成时钟版本）1通过9.93秒。该补充缺口已由实际测试消除，不再把此前的metadata smoke当成业务持久性证明。最终公开CI/提交/合并收口证据记录在本单元独立PR验收评论；其成功之前本Goal不宣告完成。
