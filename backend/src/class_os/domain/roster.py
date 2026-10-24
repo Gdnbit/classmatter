@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from .exit_package import CreateExitExport
     from .model_control import ModelControl
     from .conversation_control import InitializeConversationControl, ClearConversation
+    from .conversation_exit import CreateConversationExit
 
 
 def name(value):
@@ -237,7 +238,7 @@ class Proposal:
     payload_hash: str
     risk: str
     expires_at: datetime
-    command: CreateClass | CreateStudent | ChangeClass | ChangeTerm | ChangeStudentName | DeactivateStudent | UpdateIdentifier | CreateRecord | ReviseRecord | CreateTask | ChangeTask | CreateExitExport | ModelControl | InitializeConversationControl | ClearConversation
+    command: CreateClass | CreateStudent | ChangeClass | ChangeTerm | ChangeStudentName | DeactivateStudent | UpdateIdentifier | CreateRecord | ReviseRecord | CreateTask | ChangeTask | CreateExitExport | ModelControl | InitializeConversationControl | ClearConversation | CreateConversationExit
 
 
 @dataclass(frozen=True)

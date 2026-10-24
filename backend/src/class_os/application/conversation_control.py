@@ -13,6 +13,12 @@ CONTROLS = (InitializeConversationControl, ClearConversation)
 _recent = ContextVar("conversation_control_reauthentication", default=None)
 
 
+def require_recent_control(now):
+    recent = _recent.get()
+    if recent is None or not timedelta(0) <= now - recent <= timedelta(minutes=5):
+        raise CommandRejected()
+
+
 @dataclass(frozen=True)
 class ControlDecision:
     # Separate post-R1 policy: does NOT change the closed R1 risk evaluator.
@@ -49,9 +55,7 @@ class ConversationBusinessGateway(BusinessGateway):
     def _validate(self, tx, binding, command, now):
         if type(command) not in CONTROLS:
             return super()._validate(tx, binding, command, now)
-        recent = _recent.get()
-        if recent is None or not timedelta(0) <= now - recent <= timedelta(minutes=5):
-            raise CommandRejected()
+        require_recent_control(now)
         tx.validate_conversation_control(binding, command, now)
 
 

@@ -5,6 +5,9 @@ from class_os.domain.risk import Assessment, Command, DataClass, evaluate
 
 
 def validate_activity(tx, binding, command, now):
+    if type(command) not in (ChangeClass, ChangeTerm, ChangeStudentName, DeactivateStudent, UpdateIdentifier,
+                             CreateRecord, ReviseRecord, CreateTask, ChangeTask):
+        return False
     workspace = binding["workspace_id"]
     context = tx.class_context(workspace, command.class_id, command.term_id)
     if not context or context["status"] != "active" or context["term_status"] != "active":

@@ -45,6 +45,21 @@ Both files must pass the same existing fixed-domain validator. The report includ
 
 No file or database is written, imported, initialized or switched. Checksums detect differences, not an authorized sender or forged but rehashed data; use a separately trusted source/digest when authenticating provenance. `--require-complete` still rejects this core-only profile. Tests copy a synthetic actual BCG/QG export into another local file and check no database changes; Windows/Ubuntu CI verifies the code on each platform, not a physical cross-machine restoration. Complete lifecycle, identity re-enrolment, cross-host import and retirement remain unimplemented.
 
+## Explicit D1 v2 exit evidence (development only)
+
+The opt-in `conversation-d1` schema now targets0019 with27 fixed tables; default R1 remains0016/22. `ConversationExitBusinessGateway` reuses ISB, recent human authentication, preview/approval, idempotent receipt and transactional audit. Its QG exposes metadata and a bounded v2 artifact covering8 core and5 conversation/control collections. There is no registered HTTP/UI/Agent export command and no implicit upgrade of existing instances.
+
+For an already obtained synthetic v2 artifact, the offline operator can run:
+
+```powershell
+uv run --frozen python verify_exit.py '<download.json>' --profile conversation-v2
+uv run --frozen python verify_exit.py '<original.json>' --profile conversation-v2 --compare-with '<copied.json>'
+```
+
+Default `core-v1` behavior is unchanged. V2 rejects invalid relations, extra/unknown fields, orphan clear markers, visible cleared bodies, duplicate keys, oversized input and `--require-complete`; formatting-only copy changes return2. It never connects to a database or imports/activates data. Runs are source evidence only, not dispatch authority; AI replies remain unverified, not facts. Checksums do not authenticate the sender or prove current restrictions. Actual new-identity import, source freshness and complete recovery remain unimplemented.
+
+QG download refuses old artifacts after a clear or when restriction evidence is missing, corrupt or pending; clearing does not physically erase previously downloaded copies or old artifact bytes. The source artifact expires after30 minutes. Explicitly migrated D1 databases cannot be downgraded by reverting code: disable the development profile or forward-fix while preserving restriction evidence. This does not modify formal release admission or grant Agent business writes.
+
 ## Contracts and authority
 
 `src/class_os/domain` holds closed business rules; `application` owns QG/BCG/ISB; infrastructure adapters implement SQL/model/secrets; HTTP interfaces own strict wire DTOs and composition. `uv run --frozen python export_contracts.py --check` rejects contract drift. All business changes require validated command/preview/approval as applicable, idempotent receipt and transactional audit. Agent has no business-write or approval tool.

@@ -140,3 +140,28 @@ PR #20 已以最终 head ce0a2c7、两平台 CI 40064737955 验收，合并 main
 剩余边界：尚无SDK上下文/迟到输出放行接线、跨机新身份typed恢复、业务包导入或真实耐久聊天UI。QG限制校验只证明当前受控读取事务，不代替未来SDK终态输出前复核。完整主机回滚、硬链接残留的受控修复、容量演进仍需后续单元；不假称物理删除、Provider取消或全生命周期完成。用户Owner/真实Provider外部条件不改变，Goal保持未完成。
 
 独立审计最终重跑24/24通过78.97秒，无剩余阻断发现；root81、docs74/UTF8/本地链接与public_guard/license通过，107/147/94及formalgreen0不变。公开安全和CI需以最终提交再次核验，PR记录承载最终远端结果，不将本地/独立成绩外推为完整发布准入。
+
+PR #23最终de409a3已由CI40081114526两平台验收合并为main b177567：Windows非DB386/Web55/desktop23；Ubuntu非DB383+3跳过、实际PG/browser378+8跳过。下个单元不得重写其迁移或把候选历史当当前状态。
+
+## D1-12：版本化出口闭环（文件级计划）
+
+目标是让8类core和5类conversation/control集合实际可受控导出、下载、离线校验，为随后typed导入与新身份恢复提供完整输入；不是把可读包冒充可激活恢复。本单元不缩减完整Goal。
+
+- 新`domain/conversation_exit.py`：封闭v2格式、13类固定集合、字段/关系/来源/时间/限制证据校验、有界字节与记录数；复用现有core校验而不放宽v1。身份/批准/SDK对象和运行权限明确不迁移，run仅为源证据，checksum不是来源认证或当前准入。
+- 新`infrastructure/conversation_exit.py`、`application/conversation_exit.py`：复用原ISB/BCG批准/幂等/audit和QG；预览哈希只含稳定业务快照及当前限制证据，不因自身audit变化失效。集合读取前做有限列的字节/数量预检，禁止越权读取audit的session_digest。下载前重新核对当前限制head，清除/损坏/未收口时拒绝释放旧包；任一步失败不保存部分包或假回执。
+- 新`0019_conversation_exit.py`及现有D1 profile/store/version测试：只在显式D1中允许独立高风险export命令、两条audit action、v2 export_job；不增表或角色权限，不修改原迁移/默认R1。D1明确0019/27表，v1仍仅0016。
+- `domain/roster.py`仅补充共享Proposal类型，`application/conversation_control.py`提取等价近期认证检查，`infrastructure/conversation_control.py`增加固定事务工厂便于复用；不向HTTP/CLI业务执行器/Agent开放导出命令。
+- `backend/verify_exit.py`：显式profile选择，默认v1；v2只做离线完整性/源快照对比，拒绝require-complete，永不导入/激活。不能自动把格式变化当来源可信或迁移成功。
+- 新纯格式/真实PG/离线进程测试：包含AI回复未验证来源、活动run证据不得续跑、清除后旧artifact拒读、新artifact只含受限正文、scope/角色、审批/幂等/时效/审计故障、缺失/多余/关联错误/过大/乱码包、原v1回归；然后独立审计、真实manifest、历史scan/docs及最终两平台CI。
+
+恢复仍必须独立实现：新Owner/空目标、明确来源和当前限制证明、source author与target restorer分离、原audit仅源证据、所有INSERT经BCG、active run隔离且不自动dispatch。无法证明当前限制新鲜度的离线旧包不可激活；整机回滚/物理删除不作虚假承诺。源码回滚不能降级已显式迁移的D1数据库；停用profile/forward-fix且保留限制文件。当前用户实例、正式107/147/94与Gate不变。
+
+## D1-12实际实现与候选证据
+
+上述13集合出口、BCG生成/QG下载及离线显式v2检查已实现。所有新源/测试/迁移为首方内容，fixture仅合成；无新依赖、公开例外或用户实例变更。复用既有退出/运维目标作为工程追溯，不新增或改写正式Requirement/Eval/Task/Gate语义或结果。日常教师操作为零；未来入口预计一次预览批准/下载，不要求老师再录入已有信息，真实净负担尚待入口原型验证。
+
+实际PG测试发现未发布迁移草稿误选同表CHECK名称，已改为仅替换0018的风险约束，增加0018→0019对其余payload/权限约束定义逐项保持的回归。原R1拒绝未知命令时暴露activity属性访问异常，`application/activity.py`增加原9种活动命令的精确类型白名单，未知命令先拒绝，不改变任何原准入类型。artifact过期测试需保持ISB会话活跃才能真正到达30分钟出口失效检查，已用原QG读维持而非放宽会话策略。
+
+独立对抗审查发现marker只向前核对thread，未反向检查孤立marker；现按D1不删除thread的既有语义要求每条marker引用已导出thread，并加入重算两层hash后仍拒绝的负向用例。初轮独立纯格式+PG42通过48.62秒；修复后独立纯格式32通过0.33秒。最终本机新旧v1/v2/CLI/活动领域组合125通过、1项平台跳过57.39秒；全非DB414通过4项宿主能力跳过、397项DB未在该命令执行35.89秒。前一条旧版回归因漏传`--pg-root`产生2个fixture错误，不计为通过；此处125组合已带真实PG参数重跑。
+
+当前无新API/Tool、导入、激活或worker接线。下载前限制proof必须与当前源一致，但不能撤回已下载副本，也不物理擦除export_job旧字节。1MiB/每集合10000行硬上限超限拒绝而非部分导出；未提供大规模分片/裁剪。源码revert不能无损降级已迁移D1，保留文件/停用profile或前滚。后续完整恢复和耐久UI仍未完成，不能因此宣布Goal通过。最终公开哈希、历史扫描、完整两平台CI及PR按实际证据收口。
