@@ -1,5 +1,9 @@
 # ClassMatter public candidate audit
 
+## 2026-10-24 D1 local restriction evidence port
+
+Reviewed first-party closed local metadata/protocol, bounded file reads and protected publication, cooperating-process locks and synthetic failure tests. No imported source, personal transcript, external service, runtime path, credential or actual student record is published. Default protection reuses current-user Windows DPAPI; the cross-platform fixture codec is explicitly not encryption. The port is not wired to HTTP, CLI, database, QG/BCG, SDK or restoration and grants no history release or activation. Missing/mismatched evidence fails closed; a one-step-ahead result is unresolved, not a committed clear. It cannot prove freshness after whole-host rollback or repair every crash. No R1 schema/role/dependency/formal Gate or reviewed exception change; final-byte manifest, historical scan and complete CI remain required.
+
 This is a safe summary, not private evidence or an anonymity guarantee. **Public open-source repository · Pre-alpha / synthetic-only; no GitHub Release and no real-student-data authorization.** The owner selected Apache-2.0/Gdnbit attribution and confirmed project/prototype redistribution rights.
 
 Source was exported through a SHA-locked private allowlist into a clean history, then published to this independent GitHub repository. The first commit has no parents; the original source repository remains Private. Private research, source ledgers, images, archives, operational logs and databases are not transferred. Useful product conclusions are abstracted without quotations, interview dates or private source IDs. Explicitly synthetic demo labels replace unverified prototype name/school provenance.

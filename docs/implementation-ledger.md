@@ -1,6 +1,6 @@
 # 实现与验收台账
 
-更新时间：2026-10-24。当前已验收公开main为`21a7169`：D0/E1由PR #13—17收口，D1-00由PR #18收口；D1-10显式存储基础已由[PR #19](https://github.com/Gdnbit/classmatter/pull/19)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40063379109)验收，Windows非DB340/Web55/desktop23，Ubuntu非DB338+2跳过、DB/browser341+6跳过。新Goal active；D1-11a快照核验在独立候选分支，持久会话/完整生命周期/UI还未交付。Owner仍由本人稍后设置，服务ready不等于个人验收。W3仍在Draft PR #10，真实Provider质量blocked；完整生命周期/跨机恢复尚未完成。早期提交号和候选状态保留为历史，不能覆盖本摘要。本表不替代canonical SDD、正式任务状态、签名或发布准入。
+更新时间：2026-10-24。当前已验收业务main为`71b6a41`：D0/E1由PR #13—17、D1-00由PR #18、D1-10由PR #19收口；D1-11a显式快照完整性由[PR #20](https://github.com/Gdnbit/classmatter/pull/20)及[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40064737955)验收，Windows非DB341/Web55/desktop23，Ubuntu非DB339+2跳过、DB/browser356+7跳过。D1仍固定不可恢复激活。D1-11b1限制证据端口为当前独立候选单元：本机专项42通过2宿主symlink跳过，实际Windows DPAPI和跨进程竞争通过；没有数据库锚点/BCG清除/历史读取或SDK接线，不能称防恢复复活已完成。Goal工程范围仍未完成，不因本单元缩减；持久会话、完整生命周期/UI和班级工作小结待后续交付。Owner本人设置和真实Provider质量为外部条件，服务ready/合成测试不代替个人验收或付费评测。早期提交号和候选状态保留为历史，不能覆盖本摘要；本表不替代canonical SDD、正式任务状态、签名或发布准入。
 
 ## 状态与顺序
 

@@ -2,6 +2,12 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "backend/src/class_os/infrastructure/conversation_restrictions.py": {
+      "sha256": "8a0ada769daef756abd0498094f666ea9923da3cc2bf5e6ab20817a8ccfd5297"
+    },
+    "backend/tests/test_conversation_restrictions.py": {
+      "sha256": "e11e6fa4013d8afe36f60f71b401a3866a2dc4c18ecac25b1b8d7b948f99b542"
+    },
     "backend/src/class_os/infrastructure/conversation_integrity.py": {
       "sha256": "6228b4f5d5c77e6aa522f698a9f8de2c9d102fdeedb0847a347fbd0ee17f83da"
     },
@@ -21,7 +27,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "39aff9a1f66e1591de9570a0fb8185319a2a401d37fa644388e2cbbd2eb5f32d"
+      "sha256": "da6f03016e0795050ee9917473f7479b524055ff37d555fdbf5cd70068fbda2d"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
@@ -129,7 +135,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "c3d13a6a3f031455795c9149432d0776760e36c759f09616d1abf469241b4a20"
+      "sha256": "17c4b2f3016107c58377b28b8ba3cd80fac966334562844b30c2168ae52600c8"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -1102,7 +1108,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "eb73567da292e8c4f28cd2f5f587e4c2f6605b13c636dc59f15125b6512946fa"
+      "sha256": "7414e24fa55d5aa2e2ebe3a1fe289a9d65f659aac3963ba74e0ba692f3e5cef3"
     },
     "docs/README.md": {
       "sha256": "c27648890e17daccf94655ba7366b9abc4289af94990cd82f36d144fd3626daa"
