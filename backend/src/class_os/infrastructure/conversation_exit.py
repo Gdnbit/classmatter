@@ -8,8 +8,9 @@ from sqlalchemy import text
 from class_os.application.roster import CommandRejected
 from class_os.domain.exit_package import CORE_COLUMNS, PRIMARY_KEYS, AUDIT_COLUMNS, ExitArtifact
 from class_os.domain.roster import Receipt
-from class_os.domain.conversation_exit import (CONVERSATION_COLUMNS, CONVERSATION_KEYS, MAX_BYTES, MAX_ROWS,
-    CreateConversationExit, ConversationExitSummary, build_package, snapshot_hash, validate_v2)
+from class_os.domain.conversation_exit import (CONVERSATION_KEYS, MAX_BYTES, MAX_ROWS,
+    CreateConversationExit, ConversationExitSummary, snapshot_hash)
+from class_os.domain.conversation_exit_v3 import CONVERSATION_COLUMNS, build_package, validate_v3
 from .conversation_control import ConversationBusinessStore, ConversationTransaction
 from .conversation_integrity import validate_conversation_integrity
 from .conversation_restrictions import RestrictionUnavailable
@@ -96,7 +97,7 @@ class ConversationExitTransaction(ConversationTransaction):
         try:
             if bundle.get("restriction_evidence") != proof:
                 raise CommandRejected()
-            validate_v2(bundle)
+            validate_v3(bundle)
             if row["package_hash"] != bundle["package_checksum"]:
                 raise CommandRejected()
         except (ValueError, TypeError, AttributeError):

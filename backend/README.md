@@ -49,20 +49,31 @@ Both files must pass the same existing fixed-domain validator. The report includ
 
 No file or database is written, imported, initialized or switched. Checksums detect differences, not an authorized sender or forged but rehashed data; use a separately trusted source/digest when authenticating provenance. `--require-complete` still rejects this core-only profile. Tests copy a synthetic actual BCG/QG export into another local file and check no database changes; Windows/Ubuntu CI verifies the code on each platform, not a physical cross-machine restoration. Complete lifecycle, identity re-enrolment, cross-host import and retirement remain unimplemented.
 
-## Explicit D1 v2 exit evidence (development only)
+## Explicit D1 versioned exit evidence (development only)
 
-The opt-in `conversation-d1` schema now targets0019 with27 fixed tables; default R1 remains0016/22. `ConversationExitBusinessGateway` reuses ISB, recent human authentication, preview/approval, idempotent receipt and transactional audit. Its QG exposes metadata and a bounded v2 artifact covering8 core and5 conversation/control collections. There is no registered HTTP/UI/Agent export command and no implicit upgrade of existing instances.
+The opt-in `conversation-d1` schema now targets0020 with27 fixed tables; default R1 remains0016/22. `ConversationExitBusinessGateway` reuses ISB, recent human authentication, preview/approval, idempotent receipt and transactional audit. Its QG now emits a bounded v3 artifact covering8 core and5 conversation/control collections, including the3 new source-transfer control columns. There is no registered HTTP/UI/Agent export command and no implicit upgrade of existing instances.
 
-For an already obtained synthetic v2 artifact, the offline operator can run:
+For an already obtained synthetic artifact, the offline operator selects its exact profile:
 
 ```powershell
 uv run --frozen python verify_exit.py '<download.json>' --profile conversation-v2
 uv run --frozen python verify_exit.py '<original.json>' --profile conversation-v2 --compare-with '<copied.json>'
+uv run --frozen python verify_exit.py '<new-v3.json>' --profile conversation-v3
 ```
 
 Default `core-v1` behavior is unchanged. V2 rejects invalid relations, extra/unknown fields, orphan clear markers, visible cleared bodies, duplicate keys, oversized input and `--require-complete`; formatting-only copy changes return2. It never connects to a database or imports/activates data. Runs are source evidence only, not dispatch authority; AI replies remain unverified, not facts. Checksums do not authenticate the sender or prove current restrictions. Actual new-identity import, source freshness and complete recovery remain unimplemented.
 
+V2 offline validation remains unchanged and is tested with a genuine old-format file. V3 has its own exact schema/revision, projects only the original fields through the unchanged v2 validator, and rejects non-null transfer metadata: a frozen source cannot emit another ordinary exit. A0020 source requires a new v3 export; old v2 artifacts are not silently promoted. Owned D1 checkpoints remain exact-head bound, so old0019 checkpoints require their compatible isolated verifier rather than automatic upgrade/activation.
+
 QG download refuses old artifacts after a clear or when restriction evidence is missing, corrupt or pending; clearing does not physically erase previously downloaded copies or old artifact bytes. The source artifact expires after30 minutes. Explicitly migrated D1 databases cannot be downgraded by reverting code: disable the development profile or forward-fix while preserving restriction evidence. This does not modify formal release admission or grant Agent business writes.
+
+## Source-transfer freeze (synthetic composition only)
+
+`SourceTransferGateway` registers one closed human command, `conversation.transfer.seal`, in the opt-in development profile only. It reuses recent authentication, Risk.X preview/approval, idempotent receipts and transactional audit. It verifies a current unexpired export against the current business snapshot and rejects active runs and self-target coordinates. Target coordinates are only a binding, not proof that a target exists or is authorized; target ISB/empty-store admission is subsequent work.
+
+The fixed protected `conversation-transfer.dpapi` metadata file is published first, without overwrite. Only then are the SQL control marker, receipt and audit committed together. Any file evidence or SQL marker freezes ordinary D1 QG/BCG reads/writes, exports and body/context access. The narrowly scoped source command/status paths may finish or query the same attempt; normal Gateways cannot borrow this exception. A mislabeled default-R1 connection is rejected using the actual database revision, and the D1 restriction root must match the existing SQL authority before its apparent absence of a transfer file is trusted.
+
+SQL/audit failure retains the file and freezes the source; a valid same-attempt retry may finish. There is no automatic thaw, timeout-based reset, target import/admission, source retirement or cross-host proof in this unit. A retry still needs the original artifact within its30-minute expiry and a valid approval/session; after expiry it remains frozen pending a future controlled diagnostic/forward-fix protocol. A hard exit after initial link publication can leave a temporary second hard link: evidence is retained and reads refuse, not auto-repaired. Source code rollback must not delete evidence or destructively downgrade0020. This is not a physical-erasure or whole-host rollback guarantee. No CLI/HTTP/UI/Agent route or existing-instance migration enables this command.
 
 ## Contracts and authority
 

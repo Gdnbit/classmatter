@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-更新时间：2026-10-24。最新验收main为`e8fb126`：[PR #24](https://github.com/Gdnbit/classmatter/pull/24)的v2版本化出口已经[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40083796925)验收，Windows非DB418/Web55/desktop23，Ubuntu非DB415+3跳过、实际PG/browser388+9跳过，668个真实hash。此前D0/E1及D1前置由PR #13—23收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+更新时间：2026-10-24。最新验收main为`80cbaf8`：[PR #25](https://github.com/Gdnbit/classmatter/pull/25)的当前限制checkpoint核对已经[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40101895174)验收，Windows非DB419/Web55/desktop23，Ubuntu非DB416+3跳过、实际PG/browser403+10跳过，669个真实hash。此前D0/E1及D1前置由PR #13—24收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-D1-13a为当前独立候选：复用实际checkpoint clone，增加源锚点/备份外当前限制文件、clone双向清除关系及检查后源证明核对；结果仅为检查时点观察，不授予恢复激活或持久lease。显式D1仍0019/27表，默认R1仍0016/22表，v1格式/默认验证不变。尚无HTTP/Agent/UI接线、包导入或恢复激活，未升级用户实例；D1备份和v2出口均固定不可激活。完整生命周期、新身份恢复、真实耐久会话UI/SDK及班级工作小结仍是未完成工程目标。Owner本人设置和真实Provider配置/价格/费用授权/人工质量为外部待验证，合成测试不代替。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
+D1-13b为当前独立候选：人工BCG source seal先写不可覆盖的受保护元数据，再保存SQL冻结标记/回执/审计；普通D1 QG/BCG拒绝，只有同attempt的有限操作/状态查询可收口。显式D1演进0020/27表，新增3个固定control字段及v3出口，默认R1仍0016/22表、v1/v2离线格式不变。尚无HTTP/Agent/UI接线、目标包导入、源退休或恢复激活，未升级用户实例。完整生命周期、新身份恢复、真实耐久会话UI/SDK及班级工作小结仍是未完成工程目标。Owner本人设置和真实Provider配置/价格/费用授权/人工质量为外部待验证，合成测试不代替。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
 
 ## 状态与顺序
 

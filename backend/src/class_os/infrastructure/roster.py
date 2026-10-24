@@ -44,6 +44,13 @@ class BusinessTransaction(ActivityTransaction, ExitTransaction, ModelConfigurati
     def __init__(self, connection, store):
         self._connection, self._store = connection, store
 
+    def authorize_boundary(self, binding, action, proposal_id):
+        # A generic R1 store must not silently bypass opt-in D1 lifecycle gates.
+        if (self._store.database.profile != "r1"
+                or self._connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0016"):
+            from class_os.application.roster import CommandRejected
+            raise CommandRejected()
+
     def _mutate(self, statement, values, *, expected=1):
         """Fixed owning SQL only; fail the enclosing transaction on lost writes."""
         result = self._connection.execute(statement, values)
