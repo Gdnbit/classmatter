@@ -2,6 +2,7 @@
 from sqlalchemy import text
 from types import MappingProxyType
 from class_os.domain.target_import import IMPORT_COLUMNS
+from class_os.domain.recovery_admission import ADMISSION_COLUMNS
 
 
 REGISTERED_TABLES = frozenset({"alembic_version", "database_state", "workspace", "owner_account", "bootstrap_capability",
@@ -9,9 +10,10 @@ REGISTERED_TABLES = frozenset({"alembic_version", "database_state", "workspace",
                              "student", "enrollment", "command_proposal", "approval_receipt", "command_receipt", "business_audit",
                              "student_identifier", "record_revision", "manual_task", "export_job", "model_configuration"})
 
-D1_TABLES = frozenset({"conversation_thread", "conversation_turn", "conversation_message", "conversation_run", "conversation_control", *IMPORT_COLUMNS})
+D1_TABLES = frozenset({"conversation_thread", "conversation_turn", "conversation_message", "conversation_run", "conversation_control", *IMPORT_COLUMNS, *ADMISSION_COLUMNS})
 D1_COLUMNS = MappingProxyType({
     **{table: frozenset(columns) for table, columns in IMPORT_COLUMNS.items()},
+    **{table: frozenset(columns) for table, columns in ADMISSION_COLUMNS.items()},
     "conversation_control": frozenset({"workspace_id", "owner_id", "authority_id", "epoch", "head_hash", "created_at", "updated_at",
                                         "transfer_id", "transfer_hash", "transfer_at"}),
     "conversation_thread": frozenset({"workspace_id", "thread_id", "owner_id", "class_id", "term_id", "student_id",
@@ -25,7 +27,7 @@ D1_COLUMNS = MappingProxyType({
         "input_tokens", "output_tokens", "duration_ms"}),
 })
 SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
-                                   "conversation-d1": ("0022", REGISTERED_TABLES | D1_TABLES)})
+                                   "conversation-d1": ("0023", REGISTERED_TABLES | D1_TABLES)})
 
 
 def schema_profile(value="r1"):

@@ -1,5 +1,6 @@
 """Fixed D1 SQL inside existing ISB/BCG/QG transactions only."""
 from uuid import uuid4
+from datetime import datetime, timedelta
 
 from sqlalchemy import text
 
@@ -19,7 +20,7 @@ class ConversationBusinessStore(PostgresBusinessStore):
         self.restrictions = restrictions
 
     def _transaction(self, connection):
-        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0022":
+        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0023":
             raise RuntimeError("Explicit conversation control schema required")
         return self._conversation_transaction(connection)
 
@@ -28,6 +29,12 @@ class ConversationBusinessStore(PostgresBusinessStore):
 
 
 class ConversationTransaction(BusinessTransaction):
+    def _now_for_admission(self):
+        now = getattr(self, "authorized_at", None)
+        if type(now) is not datetime or now.tzinfo is None or now.utcoffset() != timedelta(0):
+            raise CommandRejected()
+        return now
+
     def authorize_boundary(self, binding, action, proposal_id):
         from .target_import_store import target_boundary
         if target_boundary(self, binding, action, proposal_id):

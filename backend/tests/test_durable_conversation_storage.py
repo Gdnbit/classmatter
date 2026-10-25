@@ -1,6 +1,10 @@
 """D1 schema foundation on disposable PG; not an application write pathway."""
 from datetime import timedelta
+from pathlib import Path
 from uuid import uuid4
+
+from alembic import command as alembic_command
+from alembic.config import Config
 
 import pytest
 from sqlalchemy import text
@@ -65,7 +69,7 @@ def message(connection, values, *, body="合成原文", role="user", origin="use
 
 def test_profile_is_closed_without_database_or_model_discovery():
     assert schema_profile() == ("0016", REGISTERED_TABLES)
-    assert schema_profile("conversation-d1") == ("0022", REGISTERED_TABLES | D1_TABLES)
+    assert schema_profile("conversation-d1") == ("0023", REGISTERED_TABLES | D1_TABLES)
     for profile in (None, {}, "head", "d1", "r1 "):
         with pytest.raises(ValueError, match="schema profile"):
             schema_profile(profile)
@@ -79,7 +83,7 @@ def test_nonempty_r1_upgrade_is_explicit_idempotent_and_not_default_admitted(sto
     migrate(owner)
     with owner.transaction(read_only=True) as connection:
         assert validate_surface(connection, complete=True, profile="conversation-d1") == REGISTERED_TABLES | D1_TABLES
-        assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0022"
+        assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0023"
         assert connection.execute(text("SELECT count(*) FROM class_os.student WHERE student_id=:student"), values).scalar_one() == 1
         validate_role_guards(connection, profile="conversation-d1")
         with pytest.raises(RuntimeError, match="Unregistered"):
@@ -94,6 +98,40 @@ def test_nonempty_r1_upgrade_is_explicit_idempotent_and_not_default_admitted(sto
         migrate(runtime)
     with pytest.raises(PermissionError):
         migrate(private)
+
+
+@pytest.mark.db
+def test_nonempty_0022_conversation_upgrade_preserves_rows_and_acl(roster, database_urls):
+    classroom, student, _ = seed(roster)
+    auth = roster[4].authenticate(*roster[3][:3])
+    owner = Database(database_urls["migrator"], migration=True, profile="conversation-d1")
+    try:
+        with owner.transaction() as connection:
+            config = Config()
+            config.set_main_option("script_location", str(Path(__file__).resolve().parents[1] / "db/migrations"))
+            config.attributes["connection"] = connection
+            alembic_command.upgrade(config, "0022")
+            enrollment = connection.execute(text("SELECT enrollment_id FROM class_os.enrollment WHERE student_id=:student"),
+                                            {"student": student.student_id}).scalar_one()
+            values = {"workspace": auth.workspace_id, "owner": auth.owner_id, "class": classroom.class_id,
+                "term": classroom.term_id, "student": student.student_id, "enrollment": enrollment,
+                "at": roster[6][0], "thread": uuid4(), "turn": uuid4(), "run": uuid4(), "key": uuid4()}
+            thread(connection, values)
+            turn(connection, values)
+            queued(connection, values)
+            message(connection, values)
+            tables = ("student", "enrollment", "conversation_thread", "conversation_turn", "conversation_message", "conversation_run")
+            before = {table: tuple(connection.execute(text("SELECT row_to_json(t)::text FROM class_os." + table + " t")).scalars()) for table in tables}
+            assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0022"
+        migrate(owner)
+        with owner.transaction(read_only=True) as connection:
+            after = {table: tuple(connection.execute(text("SELECT row_to_json(t)::text FROM class_os." + table + " t")).scalars()) for table in tables}
+            assert before == after
+            assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0023"
+            validate_role_guards(connection, profile="conversation-d1")
+            assert connection.execute(text("SELECT count(*) FROM class_os.conversation_admission")).scalar_one() == 0
+    finally:
+        owner.close()
 
 
 @pytest.mark.db

@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from .source_transfer import SealConversationSource
     from .target_import import StageConversationImport
     from .source_retirement import RetireConversationSource
+    from .recovery_admission import AdmitConversationTarget
 
 
 def name(value):
@@ -241,7 +242,7 @@ class Proposal:
     payload_hash: str
     risk: str
     expires_at: datetime
-    command: CreateClass | CreateStudent | ChangeClass | ChangeTerm | ChangeStudentName | DeactivateStudent | UpdateIdentifier | CreateRecord | ReviseRecord | CreateTask | ChangeTask | CreateExitExport | ModelControl | InitializeConversationControl | ClearConversation | CreateConversationExit | SealConversationSource | StageConversationImport | RetireConversationSource
+    command: CreateClass | CreateStudent | ChangeClass | ChangeTerm | ChangeStudentName | DeactivateStudent | UpdateIdentifier | CreateRecord | ReviseRecord | CreateTask | ChangeTask | CreateExitExport | ModelControl | InitializeConversationControl | ClearConversation | CreateConversationExit | SealConversationSource | StageConversationImport | RetireConversationSource | AdmitConversationTarget
 
 
 @dataclass(frozen=True)

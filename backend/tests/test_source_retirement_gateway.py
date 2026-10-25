@@ -77,8 +77,8 @@ def test_real_import_retirement_replay_reopen_and_checkpoint(world, target, tmp_
     with pytest.raises(CommandRejected):
         gateway.preview(*world[6], command)
     with world[4].transaction(read_only=True) as connection:
-        assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0022"
-    assert data.artifact.bundle["source_revision"] == "0021"  # Fixed v4 projection, not DB migration authority.
+        assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0023"
+    assert data.artifact.bundle["source_revision"] == "0023"  # Current v5; genuine old v4 remains separately tested.
     ordinary_denied(data)
     with pytest.raises(CommandRejected):
         world[1].roster(*world[6], world[5]["class"], world[5]["term"])
@@ -110,7 +110,7 @@ def test_real_import_retirement_replay_reopen_and_checkpoint(world, target, tmp_
     backup = SyntheticBackup(Runtime(), codec=fixture_codec, profile="conversation-d1")
     artifact = backup.create()
     checked = backup.check(artifact)
-    assert checked["activation_allowed"] is False and checked["table_count"] == 30
+    assert checked["activation_allowed"] is False and checked["table_count"] == 32
 
 
 @pytest.mark.db

@@ -1,5 +1,5 @@
 """Fixed target INSERTs, provenance and audit inside the existing BCG UoW."""
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
@@ -13,10 +13,12 @@ from class_os.domain.exit_package import CORE_COLUMNS
 from class_os.domain.conversation_exit_v3 import CONVERSATION_COLUMNS
 from class_os.domain.conversation_exit import MAX_BYTES
 from class_os.domain.roster import Receipt
-from class_os.domain.conversation_exit_v4 import build_package
+from class_os.domain.conversation_exit_v5 import build_package
+from class_os.domain.recovery_admission import RECOVERY_COLUMNS, RECOVERY_KEYS
 from .conversation_exit import ConversationExitStore, ConversationExitTransaction
 from .conversation_restrictions import ClearMarker, RestrictionUnavailable
 from .target_import import ProtectedTargetImport, ImportUnavailable
+from .recovery_commit_evidence import require_recovery_commit
 
 
 def validate_projection_budget(connection, projected):
@@ -34,20 +36,19 @@ def validate_import_integrity(connection):
     rows = connection.execute(text("SELECT workspace_id,restorer_id,imported_at FROM class_os.conversation_import LIMIT 2")).mappings().all()
     if not rows:
         if any(connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os." + table + ")")).scalar_one()
-               for table in ("conversation_provenance", "conversation_source_audit")):
+               for table in ("conversation_provenance", "conversation_source_audit", "conversation_admission", "conversation_origin")):
             raise ValueError("Orphan import evidence")
         return
     if len(rows) != 1:
         raise ValueError("Unsupported import scope")
     from class_os.domain.exit_package import PRIMARY_KEYS
     from class_os.domain.conversation_exit import CONVERSATION_KEYS
-    from class_os.domain.target_import import IMPORT_KEYS
     row = rows[0]
     binding, budget = {"workspace_id": row["workspace_id"]}, [0]
     reader = ConversationExitTransaction(connection, None)
     core = {k: reader._collection(binding, k, v, PRIMARY_KEYS[k], budget) for k, v in CORE_COLUMNS.items()}
     conversations = {k: reader._collection(binding, k, v, CONVERSATION_KEYS[k], budget) for k, v in CONVERSATION_COLUMNS.items()}
-    recovery = {k: reader._collection(binding, k, v, IMPORT_KEYS[k], budget) for k, v in IMPORT_COLUMNS.items()}
+    recovery = {k: reader._collection(binding, k, v, RECOVERY_KEYS[k], budget) for k, v in RECOVERY_COLUMNS.items()}
     if len(conversations["conversation_control"]) != 1:
         raise ValueError("Missing import control")
     control = conversations["conversation_control"][0]
@@ -55,7 +56,8 @@ def validate_import_integrity(connection):
                for r in conversations["conversation_thread"] if r["status"] == "cleared"]
     markers.sort(key=lambda r: (r["restricted_at"], r["thread_id"]))
     proof = {"authority_id": control["authority_id"], "epoch": control["epoch"], "source_head_hash": control["head_hash"], "markers": markers}
-    build_package(row["workspace_id"], row["restorer_id"], row["imported_at"], core, conversations, proof, [], recovery)
+    at = datetime.now(timezone.utc) if recovery["conversation_admission"] else row["imported_at"]
+    build_package(row["workspace_id"], row["restorer_id"], at, core, conversations, proof, [], recovery)
 
 
 def target_boundary(tx, binding, action, proposal_id):
@@ -64,10 +66,19 @@ def target_boundary(tx, binding, action, proposal_id):
     row = tx._connection.execute(text("""SELECT attempt_id,restorer_id,target_binding,package_hash,source_fence_hash,source_receipt_id FROM class_os.conversation_import
         WHERE workspace_id=:workspace_id"""), binding).mappings().one_or_none()
     try:
+        from .recovery_admission_store import admission_boundary, AdmissionTransaction
+        from .recovery_admission import AdmissionUnavailable
+        from .recovery_admission import ProtectedTargetAdmission
+        from class_os.application.recovery_admission import admission_operation_permitted
+        if admission_boundary(tx, binding, action, proposal_id):
+            return False  # Still enforce source freeze/retirement on this root.
         present = port.present()
-        if not present and row is None:
+        if not present and row is None and not ProtectedTargetAdmission(tx._store.restrictions).present():
             return False
-        if not target_operation_permitted(tx._store, binding, action, proposal_id):
+        admitting = admission_operation_permitted(tx._store, binding, action, proposal_id)
+        if admitting and type(tx) is not AdmissionTransaction:
+            raise CommandRejected()
+        if not target_operation_permitted(tx._store, binding, action, proposal_id) and not admitting:
             raise CommandRejected()
         fence = port.read()  # SQL pending + missing/corrupt file is never an exemption.
         anchor = tx._connection.execute(text("""SELECT owner_id,authority_id,epoch,head_hash FROM class_os.conversation_control
@@ -85,10 +96,20 @@ def target_boundary(tx, binding, action, proposal_id):
             raise CommandRejected()
         if action not in ("command.preview", "conversation.transfer.proof"):
             proposal = tx.proposal(binding["workspace_id"], proposal_id)
-            if not proposal or proposal["actor_id"] != binding["actor_id"] or proposal["payload"] != fence.command.canonical():
+            if not proposal or proposal["actor_id"] != binding["actor_id"]:
+                raise CommandRejected()
+            if admitting:
+                from class_os.domain.recovery_admission import decode_admission
+                try:
+                    command = decode_admission(proposal["payload"])
+                except ValueError:
+                    raise CommandRejected() from None
+                if command.attempt_id != fence.command.attempt_id:
+                    raise CommandRejected()
+            elif proposal["payload"] != fence.command.canonical():
                 raise CommandRejected()
         return True
-    except (ImportUnavailable, RestrictionUnavailable):
+    except (ImportUnavailable, RestrictionUnavailable, AdmissionUnavailable):
         raise CommandRejected() from None
 
 
@@ -120,6 +141,8 @@ class TargetImportTransaction(ConversationExitTransaction):
         from class_os.domain.source_retirement import CommittedStage
         from class_os.domain.conversation_exit_v4 import snapshot_hash
         try:
+            if self._connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os.conversation_admission WHERE workspace_id=:workspace_id)"), binding).scalar_one():
+                raise CommandRejected()
             port = ProtectedTargetImport(self._store.restrictions)
             fence = port.read()
             batch = self._connection.execute(text("""SELECT imported_at FROM class_os.conversation_import
@@ -133,12 +156,21 @@ class TargetImportTransaction(ConversationExitTransaction):
             if (batch is None or len(receipts) != 1 or fence.command.attempt_id != attempt_id
                     or receipts[0]["resource_version"] != 1 or receipts[0]["payload"] != fence.command.canonical()):
                 raise CommandRejected()
+            require_recovery_commit(self._connection, binding, fence.command, receipts[0]["receipt_id"], 1, fence.created_at)
             core, conversations, proof, recovery, _ = self._snapshot(binding, batch["imported_at"])
+            # A source must not permanently retire into a predictably oversized
+            # target. This is only a private capacity simulation, not admission.
+            from class_os.domain.recovery_admission import admission_capacity_projection
+            expanded = admission_capacity_projection(core, conversations, recovery)
+            capacity_at = datetime.fromisoformat(expanded["conversation_admission"][0]["created_at"])
+            build_package(binding["workspace_id"], binding["actor_id"], capacity_at,
+                          core, conversations, proof, [], expanded)
+            validate_projection_budget(self._connection, (core, conversations, proof, expanded))
             packet = port._packet(self._store.restrictions._root(), fence)
             from class_os.domain.exit_package import checksum
             return CommittedStage(fence, checksum(packet), receipts[0]["receipt_id"],
                                   self._store.restrictions._binding(self._store.restrictions._root()),
-                                  snapshot_hash(core, conversations, proof, recovery), batch["imported_at"])
+                                  snapshot_hash(core, conversations, proof, {key: recovery[key] for key in IMPORT_COLUMNS}), batch["imported_at"])
         except (ImportUnavailable, RestrictionUnavailable, ValueError):
             raise CommandRejected() from None
 
@@ -220,7 +252,8 @@ class TargetImportTransaction(ConversationExitTransaction):
         recovery = {"conversation_import": [batch],
             "conversation_provenance": provenance_rows(bundle, binding["workspace_id"], command.attempt_id),
             "conversation_source_audit": [{**row, "workspace_id": str(binding["workspace_id"]), "attempt_id": str(command.attempt_id),
-                "source_workspace_id": str(source.fence.workspace_id)} for row in bundle["audit_refs"]]}
+                "source_workspace_id": str(source.fence.workspace_id)} for row in bundle["audit_refs"]],
+            "conversation_admission": [], "conversation_origin": []}
         return core, conversations, proof, recovery
 
     def apply(self, binding, command, now):
