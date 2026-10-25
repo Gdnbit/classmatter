@@ -19,7 +19,7 @@ class ConversationBusinessStore(PostgresBusinessStore):
         self.restrictions = restrictions
 
     def _transaction(self, connection):
-        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0021":
+        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0022":
             raise RuntimeError("Explicit conversation control schema required")
         return self._conversation_transaction(connection)
 
@@ -34,6 +34,7 @@ class ConversationTransaction(BusinessTransaction):
             return
         from class_os.application.source_transfer import source_operation_permitted
         from .source_transfer import ProtectedSourceTransfer, TransferUnavailable
+        from .source_retirement import ProtectedSourceRetirement, RetirementUnavailable
         port = ProtectedSourceTransfer(self._store.restrictions)
         row = self._connection.execute(text("""SELECT authority_id,epoch,head_hash,transfer_id FROM class_os.conversation_control
             WHERE workspace_id=:workspace_id AND owner_id=:actor_id"""), binding).mappings().one_or_none()
@@ -44,7 +45,8 @@ class ConversationTransaction(BusinessTransaction):
                 # cannot hide a file-first fence after SQL rollback.
                 self._store.restrictions.compare(RestrictionHead(row["authority_id"], binding["workspace_id"], row["epoch"], row["head_hash"]))
             present = port.present()
-            if not present and (row is None or row["transfer_id"] is None):
+            retired = ProtectedSourceRetirement(self._store.restrictions).present()
+            if not present and not retired and (row is None or row["transfer_id"] is None):
                 return
             if not source_operation_permitted(self._store, binding, action, proposal_id):
                 raise CommandRejected()
@@ -54,12 +56,14 @@ class ConversationTransaction(BusinessTransaction):
             if action not in ("command.preview", "conversation.transfer.proof"):
                 proposal = self.proposal(binding["workspace_id"], proposal_id)
                 if (not proposal or proposal["actor_id"] != binding["actor_id"]
-                        or proposal["payload"].get("command") != "conversation.transfer.seal"
+                        or proposal["payload"].get("command") not in ("conversation.transfer.seal", "conversation.transfer.retire")
                         or row is not None and row["transfer_id"] is not None
                            and proposal["payload"].get("attempt_id") != str(row["transfer_id"])
-                        or fence is not None and proposal["payload"] != fence.command.canonical()):
+                        or fence is not None and proposal["payload"].get("attempt_id") != str(fence.command.attempt_id)
+                        or fence is not None and proposal["payload"].get("command") == "conversation.transfer.seal"
+                           and proposal["payload"] != fence.command.canonical()):
                     raise CommandRejected()
-        except (TransferUnavailable, RestrictionUnavailable):
+        except (TransferUnavailable, RestrictionUnavailable, RetirementUnavailable):
             raise CommandRejected() from None
 
     def _anchor(self, binding):
