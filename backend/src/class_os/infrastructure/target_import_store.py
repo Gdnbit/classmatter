@@ -83,7 +83,7 @@ def target_boundary(tx, binding, action, proposal_id):
                     or row["source_fence_hash"] != fence.command.source_fence_hash or row["source_receipt_id"] != fence.source_receipt_id
                     or anchor["epoch"] != snapshot.head.epoch or anchor["head_hash"] != snapshot.head.digest)):
             raise CommandRejected()
-        if action != "command.preview":
+        if action not in ("command.preview", "conversation.transfer.proof"):
             proposal = tx.proposal(binding["workspace_id"], proposal_id)
             if not proposal or proposal["actor_id"] != binding["actor_id"] or proposal["payload"] != fence.command.canonical():
                 raise CommandRejected()
@@ -116,12 +116,36 @@ def sql_value(key, value):
 
 
 class TargetImportTransaction(ConversationExitTransaction):
+    def committed_stage(self, binding, attempt_id):
+        from class_os.domain.source_retirement import CommittedStage
+        from class_os.domain.conversation_exit_v4 import snapshot_hash
+        try:
+            port = ProtectedTargetImport(self._store.restrictions)
+            fence = port.read()
+            batch = self._connection.execute(text("""SELECT imported_at FROM class_os.conversation_import
+                WHERE workspace_id=:workspace_id AND restorer_id=:actor_id AND attempt_id=:attempt AND phase='pending'"""),
+                {**binding, "attempt": attempt_id}).mappings().one_or_none()
+            receipts = self._connection.execute(text("""SELECT r.receipt_id,r.resource_version,p.payload
+                FROM class_os.command_receipt r JOIN class_os.command_proposal p USING(proposal_id)
+                WHERE r.workspace_id=:workspace_id AND r.actor_id=:actor_id AND r.resource_id=:attempt
+                AND p.command_type='conversation.import.stage' AND p.state='committed' LIMIT 2"""),
+                {**binding, "attempt": attempt_id}).mappings().all()
+            if (batch is None or len(receipts) != 1 or fence.command.attempt_id != attempt_id
+                    or receipts[0]["resource_version"] != 1 or receipts[0]["payload"] != fence.command.canonical()):
+                raise CommandRejected()
+            core, conversations, proof, recovery, _ = self._snapshot(binding, batch["imported_at"])
+            packet = port._packet(self._store.restrictions._root(), fence)
+            from class_os.domain.exit_package import checksum
+            return CommittedStage(fence, checksum(packet), receipts[0]["receipt_id"],
+                                  self._store.restrictions._binding(self._store.restrictions._root()),
+                                  snapshot_hash(core, conversations, proof, recovery), batch["imported_at"])
+        except (ImportUnavailable, RestrictionUnavailable, ValueError):
+            raise CommandRejected() from None
+
     def validate_target_import(self, binding, command, now):
         try:
-            source = self._store.source.current()
             restrictions = self._store.restrictions
             root_binding = restrictions._binding(restrictions._root())
-            bundle = self._store.candidate.match(command, source, binding["workspace_id"], binding["actor_id"], root_binding, now)
             anchor = self._connection.execute(text("""SELECT authority_id,epoch,head_hash,created_at,updated_at,transfer_id,transfer_hash,transfer_at FROM class_os.conversation_control
                 WHERE workspace_id=:workspace_id AND owner_id=:actor_id"""), binding).mappings().one_or_none()
             if (anchor is None or anchor["transfer_id"] is not None or anchor["epoch"] != 0 or anchor["updated_at"] > now
@@ -130,6 +154,10 @@ class TargetImportTransaction(ConversationExitTransaction):
             for table in (*ENTITY_KEYS, "export_job", "model_configuration"):
                 if self._connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os." + table + " WHERE workspace_id=:workspace_id)"), binding).scalar_one():
                     raise CommandRejected()
+            # Refuse already-staged targets before acquiring a peer lock.
+            # Retirement observes committed targets in the reverse direction.
+            source = self._store.source.current()
+            bundle = self._store.candidate.match(command, source, binding["workspace_id"], binding["actor_id"], root_binding, now)
             current = restrictions.read()
             markers = tuple(ClearMarker(UUID(m["thread_id"]), m["version_after"], datetime.fromisoformat(m["restricted_at"]))
                             for m in bundle["restriction_evidence"]["markers"])

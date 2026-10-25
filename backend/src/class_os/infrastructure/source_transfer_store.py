@@ -8,6 +8,7 @@ from class_os.domain.roster import Receipt
 from class_os.domain.source_transfer import SealConversationSource, SourceFence, CommittedSource
 from .conversation_exit import ConversationExitStore, ConversationExitTransaction
 from .source_transfer import ProtectedSourceTransfer, TransferUnavailable
+from .source_retirement import ProtectedSourceRetirement, RetirementUnavailable
 
 
 class SourceTransferStore(ConversationExitStore):
@@ -16,9 +17,11 @@ class SourceTransferStore(ConversationExitStore):
 
 
 class SourceTransferTransaction(ConversationExitTransaction):
-    def committed_source(self, binding, attempt_id):
+    def committed_source(self, binding, attempt_id, *, allow_retired=False):
         port = ProtectedSourceTransfer(self._store.restrictions)
         try:
+            if not allow_retired and ProtectedSourceRetirement(self._store.restrictions).present():
+                raise CommandRejected()
             fence = port.read()
             row = self._connection.execute(text("""SELECT transfer_id,transfer_hash,transfer_at,authority_id,epoch,head_hash
                 FROM class_os.conversation_control WHERE workspace_id=:workspace_id AND owner_id=:actor_id"""), binding).mappings().one_or_none()
@@ -36,7 +39,7 @@ class SourceTransferTransaction(ConversationExitTransaction):
             self._proof(binding)  # A missing/pending/foreign restriction file never authorizes this observation.
             return CommittedSource(fence, row["transfer_hash"], receipt[0]["receipt_id"],
                                    self._store.restrictions._binding(self._store.restrictions._root()))
-        except TransferUnavailable:
+        except (TransferUnavailable, RetirementUnavailable):
             raise CommandRejected() from None
 
     def validate_source_seal(self, binding, command, now):
@@ -44,6 +47,8 @@ class SourceTransferTransaction(ConversationExitTransaction):
             raise CommandRejected()
         port = ProtectedSourceTransfer(self._store.restrictions)
         try:
+            if ProtectedSourceRetirement(self._store.restrictions).present():
+                raise CommandRejected()
             if (command.target_workspace_id == binding["workspace_id"] or command.target_owner_id == binding["actor_id"]
                     or command.target_binding == self._store.restrictions._binding(self._store.restrictions._root())):
                 raise CommandRejected()
@@ -68,7 +73,7 @@ class SourceTransferTransaction(ConversationExitTransaction):
                     raise CommandRejected()
                 fence = existing
             return fence
-        except (TransferUnavailable, ValueError):
+        except (TransferUnavailable, RetirementUnavailable, ValueError):
             raise CommandRejected() from None
 
     def apply(self, binding, command, now):

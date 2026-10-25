@@ -244,3 +244,31 @@ D1-13b已由PR #26合并main72c14cc；最终head d3723cf的CI40106194706两平�
 最后独立审查实证未seal源的proof查询被正常拒绝后留下新audit action，旧v3私有投影不认识该动作而使后续正常export失败。现仅新v4自有严格audit校验完整承载该动作，再以过滤后的私有旧动作投影复用旧core验证；对外v4与source audit不丢行，不修改v2/v3。未知动作仍拒绝，新增实际链与纯格式回归独立2通过16.53秒；之前685项hash校验须由修复后的真实字节重新核验，不能当最终通过。
 
 当前仍无源退休、目标admission、正式作者读取投影、跨机可信握手、多跳导入或耐久UI/SDK/工作小结。不能以pending receipt或checkpoint完整性宣称恢复完成；所有这些后续目标保留。没有自动迁移用户实例，原R1App并发17+/3-改动未触碰，正式107/147/94与Gate不变。教师日常新增维护步骤为零，恢复入口和真实净减负研究未验收。已显式迁移的D1不能revert后破坏性降级，异常时保留双方fence与来源文件，停用未激活profile或受控前滚。
+
+## D1-13d：已提交目标证明与源退役（文件级计划）
+
+基线为PR #27实际合并main29e2cce；其CI40162167299两平台成功：Windows非DB469/Web55/desktop23，Ubuntu非DB464+5平台跳过、真实PG/browser441+12跳过。685个真实hash及独立审查已收口。以下是新的依赖单元，不把13c的pending导入改称完整恢复。
+
+| 文件 | 范围与验收 |
+| --- | --- |
+| `domain/source_retirement.py`、原`application/target_import.py`及`infrastructure/target_import_store.py` | 固定已提交目标DTO：实际目标fence、import receipt、root与完整pending快照hash；只经当前ISB授权的QG读取元数据，不释放正文，不接受离线dict替代，不允许未提交或被篡改的数据 |
+| `application/source_retirement.py`、`infrastructure/source_retirement.py`及`source_retirement_store.py` | 人工近期认证Risk.X退役命令；受信同机composition持有临时目标QG身份，不存储凭据。实际已提交源seal和当前目标stage完全匹配后先写固定DPAPI退役证明，再复用现有proposal/receipt/audit事务；回滚保留证明、同attempt重试，普通源读写永不自动恢复 |
+| 显式`0022`迁移、原schema/control/source边界 | 只扩闭合命令枚举，不新增业务表、任意DDL入口或新的business写入口；默认R1仍0016/22。新增退役文件单独存在也必须冻结，错误根、缺失/损坏证据、旧批准不得绕过。退役查询以当前文件+源seal+已提交命令/回执核验，file-only不是已提交退役 |
+| 新纯/文件/真实双PG测试和原回归 | 真实导入→目标QG证明→批准退役→重启构造→回执/退役证明重读；未提交/篡改目标、撤销身份、错误hash/attempt/根、陈旧认证、SQL/audit失败、并发重试、实际DPAPI及子进程硬退出；所有普通源/目标入口继续拒绝，无模型调用 |
+| README/台账/本变更、公开审查与manifest | 已完成/未完成证据及来源审查、逐文件真实SHA、固定扫描/文档/两平台CI、独立对抗审查。正式Requirement/Eval/Task/Gate无变化；回滚停用未激活profile或受控前滚，不删除证明、不解冻、不破坏性降级 |
+
+目标准入、修改后的来源校验/作者投影、UI/SDK和文书仍是同一完整Goal的后续必做内容。当前v4只能验证未修改pending内容，因此准入必须与可演进的固定来源语义一起交付，不能先开放再补校验。退役文件是备份外单调证据，与原seal一样不复制为可重放离线授权；owned checkpoint仍只证明SQL完整性、不可激活。教师正常使用新增维护步骤为零，本轮尚无用户恢复入口或真实净负担证据。
+
+## D1-13d实际实现与候选证据
+
+已按计划实现固定目标stage DTO/QG和人工源退役BCG，显式0022只扩两项command/risk约束，仍30表且ACL不变。固定退役文件先发布，原proposal/receipt/audit事务收口；没有第二套写入口、万能业务模型、正文复制或Agent工具。退役证明读必须匹配当前源seal、文件和已提交回执；目标始终pending。默认R1仍0016/22，v4投影结构与旧离线验证器不变，`source_revision=0021`明确仅指固定投影基线，实际live Store独立要求0022，不把包字段当Schema或准入权威。
+
+首轮新组合27通过114.07秒。独立审查指出退役文件保留、source seal文件及SQL部分回滚后，专用seal入口仍可能重开handoff；已在seal校验最前拒绝任何退役证据，补实际旧artifact重新seal拒绝。还禁止为已提交退役创建新proposal，只能重放原receipt；普通source-staging proof在任何退役证据存在时拒绝，内部退役同attempt重试/证明路径仍需完整源/目标/文件/回执核验，没有对外或Agent开关。旧nonce与响应丢失不得制造第二份退休。
+
+独立审查另指出跨DB反序锁：已提交目标的新import preview现先本地检查batch/非空再拒绝，不重新获取源锁；真实并发duplicate-target-preview与source-retirement均收口，普通目标仍拒绝。现有5秒lock/statement timeout保留，不宣称分布式原子性或无死锁。目标file-only、来源/源audit被篡改、目标身份撤销、陈旧认证、未知attempt/hash、audit或SQLfinish失败、并发幂等、退休证据丢失/损坏/目录/缺回执均有实际负向；新端口有真实子进程硬退出、nlink2拒绝和Windows DPAPI测试。
+
+最后source-proof加固后的新纯/文件/双PG组合35通过249.00秒，含实际双端DPAPI+PG、完整导入→目标证明→批准退役→回执重放→重建Store读取→实际pg_dump/pg_restore checkpoint不可激活。之前35通过255.21秒及source/target四文件73通过527.26秒发生于最后加固前，仅为阶段回归；两项锁/本地先拒绝和file-only/reseal定向3通过37.58秒。全非DB480通过4项宿主能力跳过、473 DB未执行49.18秒也先于最后source-proof加固，最终当前head全量以独立两平台CI为准。
+
+独立真实PG：file-only/reseal、audit回滚和完整重开/checkpoint3通过36.58秒；锁并发、SQLfinish回滚及缺失/损坏proof6通过89.32秒，均为最后加固前证据；最后加固后完整链/audit回滚重试2通过44.69秒。纯规则/文件/硬退出/DPAPI独立15通过4.25秒。独立当前无新增阻断；仍需最终692项真实hash复核、固定files/history scan、docs与完整Windows/Ubuntu CI。原始XML/数据库/受保护文件仅存忽略目录，不上传运行日志或凭据。
+
+公开guard/license、固定8.30.1 files/history扫描4项已审查且0未解决、root81及docs74/图/合成scope/契约检查已实际通过；最后文档改动后须重算hash并重查。Requirement/Eval/Task/Gate仍107/147/94/green0；原R1App并发17+/3-未触碰，用户实例未升级，原Logo哈希一致且本地忽略。回滚保留全部fence/checkpoint，只停用未激活profile或前滚，不删除文件、自动解冻或降级0022。整个Goal仍须完成目标准入与可修改作者来源、耐久UI/SDK和事实引用工作小结；Owner本人设置及真实Provider条件没有被合成测试代替。

@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-更新时间：2026-10-25。最新验收main为`72c14cc`：[PR #26](https://github.com/Gdnbit/classmatter/pull/26)源端持久冻结已在[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40106194706)验收，Windows非DB435/Web55/desktop23，Ubuntu非DB431+4跳过、实际PG/browser420+11跳过，677个真实hash。此前D0/E1及D1前置由PR #13—25收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+更新时间：2026-10-25。最新验收main为`29e2cce`：[PR #27](https://github.com/Gdnbit/classmatter/pull/27)隔离typed import已在[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40162167299)验收，Windows非DB469/Web55/desktop23，Ubuntu非DB464+5跳过、实际PG/browser441+12跳过，685个真实hash。此前D0/E1及D1前置由PR #13—26收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-D1-13c为当前独立候选：受信同机composition复用当前源QG的已提交seal元数据证明，人工BCG将无活动run的原生包实际typed导入新Owner的空目标；文件先持久化、固定实体/逐版本来源/独立源audit/回执在SQL事务内收口。显式D1演进0021/30表，新增3个只准INSERT/SELECT的固定来源集合与v4出口，默认R1仍0016/22表、v1/v2/v3离线格式不变。目标始终pending，普通QG/BCG/上下文/导出拒绝；没有源退休、目标admission、正式作者读取投影、UI/SDK接线、跨机握手或多跳导入，未升级用户实例。以上仍是后续必做目标，不以隔离导入替代完整恢复。Owner本人设置和真实Provider配置/价格/费用授权/人工质量为外部待验证，合成测试不代替。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
+D1-13c已交付受信同机composition、人工BCG、新Owner空目标的terminal-only typed import；目标始终pending。当前D1-13d独立候选复用目标QG已提交文件/回执/完整快照证明，在源端经近期认证Risk.X批准后发布备份外固定DPAPI退役证据，并以原proposal/receipt/audit事务收口。显式D1为0022/30表，0022只扩闭合命令约束，无新表/ACL；默认R1仍0016/22，v4固定投影基线0021不等于live DB head。普通源与目标QG/BCG/上下文/导出仍拒绝；尚无目标准入、修改后的来源校验、正式作者投影、耐久UI/SDK或工作小结，也无跨机握手/多跳导入。完整Goal保留，不以退役文件或pending receipt替代成功恢复。没有迁移用户实例，Owner本人设置及真实Provider配置/价格/费用授权/人工质量仍为外部待验证。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
 
 ## 状态与顺序
 
