@@ -19,7 +19,7 @@ class ConversationBusinessStore(PostgresBusinessStore):
         self.restrictions = restrictions
 
     def _transaction(self, connection):
-        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0020":
+        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0021":
             raise RuntimeError("Explicit conversation control schema required")
         return self._conversation_transaction(connection)
 
@@ -29,6 +29,9 @@ class ConversationBusinessStore(PostgresBusinessStore):
 
 class ConversationTransaction(BusinessTransaction):
     def authorize_boundary(self, binding, action, proposal_id):
+        from .target_import_store import target_boundary
+        if target_boundary(self, binding, action, proposal_id):
+            return
         from class_os.application.source_transfer import source_operation_permitted
         from .source_transfer import ProtectedSourceTransfer, TransferUnavailable
         port = ProtectedSourceTransfer(self._store.restrictions)
@@ -48,7 +51,7 @@ class ConversationTransaction(BusinessTransaction):
             fence = port.read() if present else None
             if fence is not None and (fence.workspace_id != binding["workspace_id"] or fence.owner_id != binding["actor_id"]):
                 raise CommandRejected()
-            if action != "command.preview":
+            if action not in ("command.preview", "conversation.transfer.proof"):
                 proposal = self.proposal(binding["workspace_id"], proposal_id)
                 if (not proposal or proposal["actor_id"] != binding["actor_id"]
                         or proposal["payload"].get("command") != "conversation.transfer.seal"

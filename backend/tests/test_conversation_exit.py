@@ -46,7 +46,8 @@ def test_thirteen_fixed_collections_cover_all_d1_columns_without_identity_author
     bundle = sample()
     assert len(validate_v2(bundle)) == 13
     from class_os.domain.conversation_exit_v3 import CONVERSATION_COLUMNS as V3_COLUMNS
-    assert {key: set(columns) for key, columns in V3_COLUMNS.items()} == dict(D1_COLUMNS)
+    from class_os.domain.target_import import IMPORT_COLUMNS
+    assert {key: set(columns) for key, columns in {**V3_COLUMNS, **IMPORT_COLUMNS}.items()} == dict(D1_COLUMNS)
     assert set(CONVERSATION_COLUMNS["conversation_control"]) < D1_COLUMNS["conversation_control"]
     assert bundle["conversations"]["conversation_run"][0]["state"] == "queued"
     assert bundle["activation_allowed"] is False and bundle["run_authority"] == "source-evidence-only"

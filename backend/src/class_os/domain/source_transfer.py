@@ -84,3 +84,23 @@ def decode_fence(value):
     if result.canonical() != value:
         raise ValueError("Noncanonical source fence")
     return result
+
+
+@dataclass(frozen=True)
+class CommittedSource:
+    """Live QG observation of a committed freeze, never an offline capability."""
+    fence: SourceFence
+    fence_hash: str
+    receipt_id: UUID
+    root_binding: str
+
+    def __post_init__(self):
+        if type(self.fence) is not SourceFence:
+            raise ValueError("Invalid committed source")
+        identifiers(self.receipt_id)
+        _hash(self.fence_hash)
+        _hash(self.root_binding)
+
+    def canonical(self):
+        return {"fence": self.fence.canonical(), "fence_hash": self.fence_hash,
+                "receipt_id": str(self.receipt_id), "root_binding": self.root_binding}

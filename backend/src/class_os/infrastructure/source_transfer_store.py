@@ -5,7 +5,7 @@ from sqlalchemy import text
 
 from class_os.application.roster import CommandRejected
 from class_os.domain.roster import Receipt
-from class_os.domain.source_transfer import SealConversationSource, SourceFence
+from class_os.domain.source_transfer import SealConversationSource, SourceFence, CommittedSource
 from .conversation_exit import ConversationExitStore, ConversationExitTransaction
 from .source_transfer import ProtectedSourceTransfer, TransferUnavailable
 
@@ -16,6 +16,29 @@ class SourceTransferStore(ConversationExitStore):
 
 
 class SourceTransferTransaction(ConversationExitTransaction):
+    def committed_source(self, binding, attempt_id):
+        port = ProtectedSourceTransfer(self._store.restrictions)
+        try:
+            fence = port.read()
+            row = self._connection.execute(text("""SELECT transfer_id,transfer_hash,transfer_at,authority_id,epoch,head_hash
+                FROM class_os.conversation_control WHERE workspace_id=:workspace_id AND owner_id=:actor_id"""), binding).mappings().one_or_none()
+            receipt = self._connection.execute(text("""SELECT r.receipt_id,p.payload FROM class_os.command_receipt r
+                JOIN class_os.command_proposal p USING(proposal_id)
+                WHERE r.workspace_id=:workspace_id AND r.actor_id=:actor_id AND r.resource_id=:attempt
+                AND p.command_type='conversation.transfer.seal' AND p.state='committed' LIMIT 2"""),
+                {**binding, "attempt": attempt_id}).mappings().all()
+            if (row is None or len(receipt) != 1 or row["transfer_id"] != attempt_id or fence.command.attempt_id != attempt_id
+                    or fence.workspace_id != binding["workspace_id"] or fence.owner_id != binding["actor_id"]
+                    or row["transfer_hash"] != port.digest(fence) or row["transfer_at"] != fence.created_at
+                    or row["authority_id"] != fence.authority_id or row["epoch"] != fence.restriction_epoch
+                    or row["head_hash"] != fence.restriction_hash or receipt[0]["payload"] != fence.command.canonical()):
+                raise CommandRejected()
+            self._proof(binding)  # A missing/pending/foreign restriction file never authorizes this observation.
+            return CommittedSource(fence, row["transfer_hash"], receipt[0]["receipt_id"],
+                                   self._store.restrictions._binding(self._store.restrictions._root()))
+        except TransferUnavailable:
+            raise CommandRejected() from None
+
     def validate_source_seal(self, binding, command, now):
         if type(command) is not SealConversationSource:
             raise CommandRejected()

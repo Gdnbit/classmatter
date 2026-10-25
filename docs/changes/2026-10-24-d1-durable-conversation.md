@@ -213,3 +213,34 @@ v3显式覆盖全部新control列，仅允许未冻结源导出；旧v2验证器
 运维限制保留：pending重试仍需原artifact在30分钟有效期内、有效身份/批准；过期会保持冻结，后续必须增加受控诊断/前滚而非自动解除。initial link后硬退出可能留nlink2，源保持冻结，不自动删证据或生成新attempt。源码revert不能安全解冻或降级已迁移D1；当前没有对用户实例执行迁移/冻结。完整恢复与UI/SDK/文书Goal仍未完成，正式107/147/94与Gate不变。公开hash、扫描、独立最终字节审查与完整两平台CI须以最后head收口。
 
 PR #26首轮CI40104849802：Windows成功；Ubuntu实际PG阶段1失败、419通过、11跳过。唯一失败为0015→0016非空升级fixture：当前Store新增的实际head检查正确拒绝在0015上种样本。修复仅在该测试内模拟严格限定0015的旧Store/Transaction，并明确验证当前QG拒绝0015；迁移后立即重建当前生产Store/Gateway，继续验证旧批准提交、精确ACL和原数据不变。没有放宽生产允许版本、修改历史迁移或删除安全断言。独立实际PG该升级测试1通过10.34秒；本机升级与source-transfer真实PG组合19通过84.95秒。真实hash及修复后两平台CI仍须按新head核验，不能拼用首轮Windows成绩。
+
+D1-13b已由PR #26合并main72c14cc；最终head d3723cf的CI40106194706两平台成功：Windows非DB435/Web55/desktop23，Ubuntu非DB431+4跳过、真实PG/browser420+11跳过。实际合并后树与本机验收树一致，未触碰原工作区并发改动。
+
+## D1-13c：隔离目标typed import（文件级计划）
+
+在源持久冻结之后实际恢复到新Owner的空目标，但本单元不激活目标；源退休和目标admission仍为后续必做步骤。先只接受无active run的原生退出包，终态原样保存且不生成dispatch能力，不先建设通用run恢复或Actor框架。
+
+| 文件范围 | 实施与验收 |
+| --- | --- |
+| `domain/target_import.py`、`application/target_import.py`、`infrastructure/target_import.py`及固定SQL store | 封闭命令、1MiB原生候选、当前源QG元数据证明、人工近期认证Risk.X批准、受保护目标pending证据先写，再同事务写固定实体/来源/回执/audit；SQL失败保留隔离证据，只可同attempt重试 |
+| 原source transfer应用/store/边界及新显式迁移 | 源QG仅释放已提交seal的固定元数据，不释放正文或批准能力；目标普通QG/BCG/Agent读取/出口保持拒绝，错误根或文件丢失不绕过SQL pending；原r1/default0016不变 |
+| 新固定import batch/entity provenance/source audit表及schema/role guards | 不伪造源Owner、不恢复登录/会话/批准。local作者外键记录实际导入人，原作者由固定批次及逐实体版本来源保留；在正式QG作者投影完成前绝不开放普通读取；源audit不插入目标可信business_audit |
+| 显式v4出口/离线验证、原backup/integrity | 完整承载新固定集合，不扩大v1/v2/v3；native旧格式仍独立校验。新profile checkpoint包含全部新表且不可激活；清除限制不复活，来源不能在再次导出时静默丢失。多跳导入暂拒绝，不能以单跳证据宣称完整迁移 |
+| 新纯格式/文件与两个真实PG数据库测试、原回归 | 新身份/空目标、严格scope与包hash/已提交源fence匹配、terminal-only、清除marker、原作者与restorer区别、审计/SQL/文件失败、并发幂等、源缺失/损坏/不匹配、普通读取/旧批准写入拒绝、原库保留、实际checkpoint与格式闭合 |
+| 原README/台账/本变更/公开审查和manifest | 真实证据、独立对抗审查、677基线外新文件逐项来源/真实SHA及全Windows/Ubuntu CI；正式Requirement/Eval/Task/Gate无语义或状态改变 |
+
+只在测试拥有的合成数据库及受信同机composition实施；没有HTTP/UI/CLI/Agent工具，不读取或复制外部凭据，不迁移用户实例。目标pending不是成功恢复或激活，不因超时、重启、删除证据、revert或改attempt解冻；回滚保留双方证据，停用profile或前滚。教师正常使用无新维护步骤；最终恢复入口及真实净减负仍待后续端到端验证。
+
+## D1-13c实际实现与候选证据
+
+已实现上述同机双身份、原生terminal-only包的隔离typed INSERT；固定batch/逐实体版本来源/source audit三表只授予runtime SELECT/INSERT，identity零访问，默认R1和Agent工具不变。原作者由batch与精确来源hash保存，local FK仅表示导入操作人；普通QG/BCG仍拒绝，不能把底层local字段直接展示成原作者。v4及owned checkpoint覆盖全部30表并验证来源；多跳输入明确拒绝。源QG只提供当前已提交freeze元数据，不提供正文/旧批准/离线激活凭据。
+
+独立审查发现并修复：turn/message/run复合身份缺thread_id；Python bool可冒充版本及source audit必填event_id可为空；SQL写入后的CommandRejected可能被旧Gateway转换成已提交denied audit。现保留完整复合身份、严格类型/nullable规则，后置验证异常强制整笔SQL回滚。随后补同PG JSONB row-text口径的预展开预算，避免canonical包未超限、文件发布后读取预算却超限而留下不必要pending。没有放宽原读取上限或修改旧v2/v3验证规则。
+
+候选实际证据：最后修复后新port/双PG完整组合56通过200.92秒，包含denied-proof→正常export/seal/import、旧CLI、PG预算边界、1800学生展开上限、后置真实restriction损坏及Windows DPAPI/PG。此前54通过190.07秒、52通过217.42秒为阶段历史；旧v3/v4 CLI独立兼容1通过2.34秒，PG预算临界1通过8.43秒，1800学生原生合法包展开超限在target文件发布前拒绝1通过37.47秒，后置真实restriction损坏与Windows DPAPI/PG另2通过25.09秒。原clear/source/exit/storage/backup/current-proof/0015升级七文件117通过465.02秒发生于最后audit兼容修复前，最终全量以新CI为准；最后全非DB465通过4项宿主能力跳过、453 DB项未在该命令执行46.88秒。首轮新fixture误调用BCG查询方法、audit故障未解除便断言业务拒绝，均只修测试接线/断言时点后重跑，不放宽生产边界。
+
+独立真实PG关键回归3通过32.23秒，后置真实restriction故障与checkpoint/provenance篡改2通过34.78秒，PG预算临界与主正常导入2通过20.65秒；独立port32通过3.80秒发生于新增CLI用例之前。独立检查新增8文件为首方实现/合成测试，无外部来源或隐私材料。原始XML、临时DB与受保护文件仍仅在忽略的测试目录，最终真实manifest、历史scan和完整两平台CI待收口。
+
+最后独立审查实证未seal源的proof查询被正常拒绝后留下新audit action，旧v3私有投影不认识该动作而使后续正常export失败。现仅新v4自有严格audit校验完整承载该动作，再以过滤后的私有旧动作投影复用旧core验证；对外v4与source audit不丢行，不修改v2/v3。未知动作仍拒绝，新增实际链与纯格式回归独立2通过16.53秒；之前685项hash校验须由修复后的真实字节重新核验，不能当最终通过。
+
+当前仍无源退休、目标admission、正式作者读取投影、跨机可信握手、多跳导入或耐久UI/SDK/工作小结。不能以pending receipt或checkpoint完整性宣称恢复完成；所有这些后续目标保留。没有自动迁移用户实例，原R1App并发17+/3-改动未触碰，正式107/147/94与Gate不变。教师日常新增维护步骤为零，恢复入口和真实净减负研究未验收。已显式迁移的D1不能revert后破坏性降级，异常时保留双方fence与来源文件，停用未激活profile或受控前滚。
