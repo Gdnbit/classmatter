@@ -298,3 +298,30 @@ D1-13b已由PR #26合并main72c14cc；最终head d3723cf的CI40106194706两平�
 本机初轮规则及完整准入/3回滚组合30通过70.53秒；随后规则/故障矩阵48通过254.11秒，当前规则/文件端口43通过5.66秒（含真实Windows DPAPI及硬退出）。最新非DB523通过/4跳过/496未选59.04秒，契约检查通过。非空0022升级/存储/准入并发组合50通过404.64秒；此前控制/退出/checkpoint/封存/暂存/退役完整组合112通过775.72秒。升级测试首次Alembic配置错误已按既有固定script_location模式修正，未放宽生产检查。最终审查另发现stage proof helper只比声明hash而未比payload本体；现同时按固定canonical JSONB核验，并补stage-payload篡改拒绝，须按最终head再验，不能用早期计数冒充最后字节全量。
 
 独立临时PG负向14通过210.18秒；实际admission→更名/事实修订/任务更新→归因→clear→真实PG重启→checkpoint/pg_restore/v5及回滚隔离5通过113.92秒；规则/端口43通过10.29秒。公开审查702项SHA全部匹配、10个新文件为first-party；例外/正式Gate/R1/CI未改。固定8.30.1 files/history扫描4项已审查0未解决，root81及docs74/图/合成scope通过。原始XML/受保护文件/数据库留在忽略目录；最终两平台CI及最后字节复核仍待，不据本段宣称已合并或整个Goal完成。
+
+D1-13e最终已由PR #29合并为main dbb09e7；最终head4911d49的CI40176772294两平台成功：Windows非DB527/Web55/desktop23；Ubuntu非DB520+7跳过、真实PG/browser484+13跳过726.91秒。702项真实hash最后复核通过，merge树与验收head一致。实际stage提交证据/篡改及happy组合5通过91.53秒；独立stage receipt/audit缺失2通过36.17秒、payload篡改1通过27.98秒；测试进程恢复旧helper后同反例确实失败。另只读内存容量探测440条额外合成revision产生844653字节合法pending包，实际origin扩展被限额拒绝，无文件/DB写入；该探测不是已提交回归测试。前述“候选待CI”为阶段历史，不覆盖本收口；整体Goal继续。
+
+## D1-14：人类会话输入耐久链（文件级计划）
+
+目标：先让明确人类操作的会话新建/改名/归档、输入及唯一排队run成为可重开数据库状态，再接原Pydantic AI和原界面。前置D1-13e已验收。追溯D1-01—09，不改变正式R1或构建另一套Memory/Harness。持久消息不是正式学生事实，Agent没有会话/业务写工具。
+
+| 文件范围 | 范围与验收 |
+| --- | --- |
+| 固定conversation interaction domain及纯测试 | 闭合创建/改名/归档及发送元数据，复用SendIntent的完整scope/原文hash；不可变owner/class/term/student，正文不进入canonical proposal/receipt/audit |
+| 原BCG/QG与固定interaction SQL实现 | 人类输入通过BCG，复用ISB、事务锁、receipt/audit；新建/改名/归档为显式W1。发送单事务记录唯一turn/user-message/queued-run及元数据回执，使用已授权调用的短生命周期参数，不建通用Candidate/Memory框架。相同key同payload返回原run，相同key不同payload拒绝；无Provider调用或自动重试 |
+| 显式后续开发迁移、schema/role inventory | 只扩闭合命令约束和明确D1 head，不改变32表或原角色列权限；默认R1保持0016/22。v5固定投影基线与实际head明确区分，旧实例不自动升级 |
+| QG列表/历史/状态及原退出/恢复 | 有界授权列表、清楚归档与clear差异；不为保留旧标题/SDK对象复制聊天原文。native和已准入目标均可工作，pending/retired依旧拒绝；现有v5/checkpoint继续覆盖所有写入 |
+| 真实临时PG/权限/并发/故障测试 | 消息与run先保存，audit/SQL失败全部回滚；同key双请求一次排队、作用域/失效身份/归档拒绝；新Store/重启读取及clear后不经proposal正文副本复活。后续SDK完成前不能宣称已运行模型 |
+| 文档/公开清单/独立PR | 真实SHA、固定扫描、静态/完整两平台CI及独立审查；所有测试仅合成。UI/SDK实际接线作为紧随其后的闭环，未实现不得改完成状态 |
+
+主要风险：把聊天原文直接塞入通用command_proposal会产生清除后残留副本；因此proposal仅保存固定发送元数据和request_hash，原文只进入受控message列。人类发送无需增加人工业务批准步骤，但仍通过BCG事务、重放和audit；这不是授权模型选择或修改业务事实。先完成该受控输入基础，再接既有SDK状态/输出和现有UI；不引入通用事件总线、Workflow或付费自动恢复。回滚保留限制及数据，通过停用未启用profile/前滚完成，不删表或解冻证据。
+
+### D1-14 首轮实现（WIP，未验收/未发布）
+
+当前分支在已接受main dbb09e7上新增固定interaction领域、人类BCG/QG及原AdmissionTransaction的SQL mixin，显式0024只扩闭合命令约束，32表与角色列权限不变；v5的0023仍是固定投影基线，不等于live head。创建/改名通过明确人类方法在同一BCG事务写元数据proposal/receipt/audit；排队保存turn/user-message/queued-run，Provider调用数0。没有SDK/HTTP/UI接线，不能宣称完整D1交付。
+
+独立审查捕获标题在proposal中的残留副本、重放只比声明hash，以及标题重放缺原提交审计。已改为title_hash及短生命周期词法输入，正文/标题不存入proposal；enqueue重放还比实际user body/origin/visibility/mode/draft，固定交互回执校验复用到title，核验原receipt hash/version、command/purpose/state和commit-audit。合法后续改名不使原创建回执失效。明确当前班级/学期和原enrollment有效性；pending文件存在且无已验证准入时拒绝普通交互。无通用Candidate/Memory框架。
+
+纯交互及原run规则48通过0.14秒。首轮实际PG5通过22.73秒；标题hash修复后组合18通过22.01秒，实际input/audit重放补齐9通过32.88秒；最后标题回执完整性及合法旧回执组合14通过48.03秒。一次故障注入被原DB command/payload一致性CHECK提前拒绝，测试修正为一致更改两个字段后验证应用拒绝，未移除/放宽CHECK。非DB536通过4跳过/511未选46.90秒；这不是后续最后字节/完整CI成绩。后续补齐pending/跨scope/退出恢复后，可提交已审查候选PR运行CI，但最后独立复核及两平台CI通过前不得合并或标记验收；整体Goal保持active。
+
+补齐后真实PG交互20通过77.31秒，覆盖失效学生/班级/学期/原enrollment、错误Store受控拒绝，以及pending拒绝→实际admission→新输入归本地Owner→重开QG→v5→真实checkpoint/pg_restore。单独恢复链1通过20.01秒；独立规则13+原PG14组合27通过48.56秒，最后错误Store/资格和出口补充后还需最终独立复核。原Store混入固定SQL方法而非放宽原admission实际事务类型。最新规则/run48通过0.14秒，契约与docs74/图/合成scope检查通过。最终公开清单和完整两平台CI仍待，未将queued冒充SDK执行或改任何正式Gate。

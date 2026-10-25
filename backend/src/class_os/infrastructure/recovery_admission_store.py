@@ -19,6 +19,7 @@ from .conversation_exit import ConversationExitStore, ConversationExitTransactio
 from .recovery_admission import ProtectedTargetAdmission, AdmissionUnavailable
 from .target_import import ProtectedTargetImport
 from .recovery_commit_evidence import require_recovery_commit
+from .conversation_interaction import InteractionTransaction
 
 
 def admission_boundary(tx, binding, action, proposal_id):
@@ -79,7 +80,7 @@ class AuthorAwareHistory:
     message_attributions: tuple[dict, ...]
 
 
-class AdmissionTransaction(TargetImportTransaction):
+class AdmissionTransaction(InteractionTransaction, TargetImportTransaction):
     def has_committed_admission(self, binding):
         return self._connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os.conversation_admission WHERE workspace_id=:workspace_id)"), binding).scalar_one()
 
@@ -121,7 +122,10 @@ class AdmissionTransaction(TargetImportTransaction):
 
     def apply(self, binding, command, now):
         if type(command) is not AdmitConversationTarget:
-            result = super().apply(binding, command, now)
+            from class_os.domain.conversation_interaction import CreateConversation, RenameConversation, ArchiveConversation, EnqueueConversation
+            result = (self.apply_interaction(binding, command, now) if type(command) in
+                      (CreateConversation, RenameConversation, ArchiveConversation, EnqueueConversation)
+                      else super().apply(binding, command, now))
             try:
                 self._snapshot(binding, now)
             except Exception:

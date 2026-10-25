@@ -27,7 +27,7 @@ D1_COLUMNS = MappingProxyType({
         "input_tokens", "output_tokens", "duration_ms"}),
 })
 SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
-                                   "conversation-d1": ("0023", REGISTERED_TABLES | D1_TABLES)})
+                                   "conversation-d1": ("0024", REGISTERED_TABLES | D1_TABLES)})
 
 
 def schema_profile(value="r1"):
