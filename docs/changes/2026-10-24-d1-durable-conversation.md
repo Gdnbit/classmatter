@@ -272,3 +272,29 @@ D1-13b已由PR #26合并main72c14cc；最终head d3723cf的CI40106194706两平�
 独立真实PG：file-only/reseal、audit回滚和完整重开/checkpoint3通过36.58秒；锁并发、SQLfinish回滚及缺失/损坏proof6通过89.32秒，均为最后加固前证据；最后加固后完整链/audit回滚重试2通过44.69秒。纯规则/文件/硬退出/DPAPI独立15通过4.25秒。独立当前无新增阻断；仍需最终692项真实hash复核、固定files/history scan、docs与完整Windows/Ubuntu CI。原始XML/数据库/受保护文件仅存忽略目录，不上传运行日志或凭据。
 
 公开guard/license、固定8.30.1 files/history扫描4项已审查且0未解决、root81及docs74/图/合成scope/契约检查已实际通过；最后文档改动后须重算hash并重查。Requirement/Eval/Task/Gate仍107/147/94/green0；原R1App并发17+/3-未触碰，用户实例未升级，原Logo哈希一致且本地忽略。回滚保留全部fence/checkpoint，只停用未激活profile或前滚，不删除文件、自动解冻或降级0022。整个Goal仍须完成目标准入与可修改作者来源、耐久UI/SDK和事实引用工作小结；Owner本人设置及真实Provider条件没有被合成测试代替。
+
+## D1-13e：目标准入、可修改来源与作者读取（文件级计划）
+
+基线main668ed15，PR #28最终CI40164342955两平台成功：Windows非DB484/Web55/desktop23，Ubuntu非DB478+6跳过、真实PG/browser460+13跳过614.94秒；692项真实hash独立核验。前一单元已验收源退役，目标仍pending；以下必须完成完整修改链，不以只读激活或仅预检查替代。
+
+| 文件范围 | 必须实现的范围和证据 |
+| --- | --- |
+| 新`domain/recovery_admission.py`、`conversation_exit_v5.py`与原当前出口/候选适配器 | 固定每kind不可变字段/可修改字段、真实复合键、源版本及来源集合hash；原record revisions/terminal turns/runs完整hash，可见消息正文hash、清除后NULL和限制marker例外。本地新修订与原作者区分；只存hash，不复制baseline正文或建设万能JSON |
+| 新显式0023迁移、schema/role guards及固定SQL store | 两张固定append-only表保存准入锚点和原导入创建/正文指纹，runtime仅SELECT/INSERT，默认R1仍0016/22。已有import/source audit不改写；原业务持久变更仍经BCG，不增加Agent写权限或运行时DDL |
+| 新application/受保护admission文件/store及原target/source边界 | 近期认证Risk.X人工批准；实际已提交源retirement与当前target stage完全匹配，再文件先行、SQL来源集合/锚点/receipt/audit同事务。文件、当前root/Owner/authority、stage/retirement receipt/hash、origin集合任一缺失/不符均拒绝；SQL失败保持pending，只可同attempt重试。准入后可独立于源在线运行，但不能上传dict替代初次live证明 |
+| 作者感知QG/历史投影 | 原始revision作者仍源Owner，新本地revision作者为实际本地Owner；可变实体保留创建来源、后续修改者归本地；assistant-unverified不能归为老师事实。含正文的旧无归因读取不得静默释放导入数据；普通Roster/context不伪造人物身份，不创建源Owner账号 |
+| 原checkpoint、当前v5出口与CLI校验 | v5独立承载可修改来源与准入集合，不放宽旧v4。原生修改/clear后实际pg_dump/pg_restore与v5继续校验；v4 pending snapshot hash维持历史projection以读取既有retirement证明。多跳未实现时既拒绝import，也在再次seal前拒绝，避免先冻结再发现无法导入 |
+| 新纯格式/端口/双PG测试及原回归 | 实际退役→准入→原生更名/事实修订/任务修改→QG归因→clear→重建Store→checkpoint/pg_restore→v5；audit/SQL/文件失败、旧DB回滚、origin新增/缺失/篡改、visible正文替换、旧terminal run修改、跨Owner/root/过期认证、重放/并发、原默认R1不隐式升级 |
+| README/台账/本变更/公开审查/manifest | 最终字节审查、真实SHA、固定历史scan、docs、独立对抗审查与完整两平台CI；正式107需求/147eval/94task及Gate不变。当前用户实例/原脏改动/Logo原图不动 |
+
+先实现固定语义与新format，再迁移及store/边界/QG，最后完整故障验收；这些是同一依赖PR，未闭环不合并。最大包/集合预算在文件发布前检查，超限不放宽原边界；退出校验不等于离线恢复或多跳授权。回滚只能停用未激活profile或受控前滚，保留两端全部证据，不自动解冻/清文件/破坏性降级。教师正常工作无新增来源维护步骤；真实恢复UI、耐久发送/SDK和工作小结仍在完整Goal后续，合成结果不代替Owner/Provider/真实净负担验收。
+
+### D1-13e 候选实施与独立审查记录
+
+已实施固定准入/作者感知QG和v5，复用既有BCG/ISB、receipt和audit；没有Agent写工具、用户实例升级或新HTTP/UI入口。新两表仅允许runtime SELECT/INSERT。源Owner保留为固定来源元数据而非新增本地账号；原revision与新本地revision分别归因，assistant仍未核实。v5原生修改/clear后可校验，不把原创建者改成restorer，也不保留baseline正文副本。
+
+独立审查捕获并修复：仅凭新Gateway名字但实际使用旧未归因事务的组合旁路、已准入批次和源audit集合未完全绑定、原始commit-audit缺失仍可证明提交，以及源退休后才发现准入容量不足。现在要求实际AdmissionTransaction；受保护witness绑定完整batch/source-audit/origin摘要；seal/stage/retire/admit各证明要求原始payload/receipt/commit-audit，准入后仍核验本地stage和admit原提交证据。目标QG在源退役前模拟固定准入扩展的canonical与PG JSONB预算，UUID/hash长度固定、时间采用最长微秒宽度，模拟不发布为authority。当前容量失败测试注入预算拒绝，证明调用位置和不发布退役；不是实测接近1MiB膨胀样本。
+
+本机初轮完整准入+3回滚场景30通过70.53秒（含当时规则）；随后规则/故障矩阵48通过254.11秒，当前规则/文件端口43通过5.66秒（含真实Windows DPAPI及硬退出）。全量非DB523通过/4跳过/492未选67.48秒，契约检查通过。后续新增原stage提交证据及0022非空升级测试需各自最终复验，不能用早期计数冒充最终head全量。升级测试首次Alembic配置错误已按既有固定script_location模式修正，未放宽生产检查。
+
+独立临时PG负向14通过210.18秒；实际admission→更名/事实修订/任务更新→归因→clear→真实PG重启→checkpoint/pg_restore/v5及回滚隔离5通过113.92秒；规则/端口43通过10.29秒。公开审查702项SHA全部匹配、10个新文件为first-party；例外/正式Gate/R1/CI未改。固定8.30.1 files/history扫描4项已审查0未解决，root81及docs74/图/合成scope通过。原始XML/受保护文件/数据库留在忽略目录；最终两平台CI及最后字节复核仍待，不据本段宣称已合并或整个Goal完成。

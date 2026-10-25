@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-更新时间：2026-10-25。最新验收main为`29e2cce`：[PR #27](https://github.com/Gdnbit/classmatter/pull/27)隔离typed import已在[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40162167299)验收，Windows非DB469/Web55/desktop23，Ubuntu非DB464+5跳过、实际PG/browser441+12跳过，685个真实hash。此前D0/E1及D1前置由PR #13—26收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+更新时间：2026-10-25。最新验收main为`668ed15`：[PR #28](https://github.com/Gdnbit/classmatter/pull/28)源退役已在[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40164342955)验收，Windows非DB484/Web55/desktop23，Ubuntu非DB478+6跳过、实际PG/browser460+13跳过，692个真实hash。此前D0/E1及D1前置由PR #13—27收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-D1-13c已交付受信同机composition、人工BCG、新Owner空目标的terminal-only typed import；目标始终pending。当前D1-13d独立候选复用目标QG已提交文件/回执/完整快照证明，在源端经近期认证Risk.X批准后发布备份外固定DPAPI退役证据，并以原proposal/receipt/audit事务收口。显式D1为0022/30表，0022只扩闭合命令约束，无新表/ACL；默认R1仍0016/22，v4固定投影基线0021不等于live DB head。普通源与目标QG/BCG/上下文/导出仍拒绝；尚无目标准入、修改后的来源校验、正式作者投影、耐久UI/SDK或工作小结，也无跨机握手/多跳导入。完整Goal保留，不以退役文件或pending receipt替代成功恢复。没有迁移用户实例，Owner本人设置及真实Provider配置/价格/费用授权/人工质量仍为外部待验证。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
+D1-13c/13d已交付隔离typed import与实际源退役。当前D1-13e独立候选实现近期认证Risk.X人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验；显式D1为0023/32表，新增两张固定append-only表，默认R1仍0016/22。当前v5独立演进，不放宽旧v2/v3/v4；未准入目标和退役源仍隔离。原生更名/事实修订/任务更新可在准入目标继续通过BCG，旧无归因正文投影不得借用新网关名绕过。源退役前先检查准入容量。所有证明要求固定文件及原proposal/receipt/commit-audit；来源批次、源audit与origin集合均绑定摘要。局部合成链路已跑通，候选仍待最终完整CI/独立复核，不等于已合并或整个Goal完成。耐久发送/UI/SDK、工作小结、跨机握手及多跳仍未实现；用户实例未迁移，Owner本人设置及真实Provider条件仍外部待验证。早期候选状态为历史，不覆盖本摘要；正式107/147/94和Gate不变。
 
 ## 状态与顺序
 

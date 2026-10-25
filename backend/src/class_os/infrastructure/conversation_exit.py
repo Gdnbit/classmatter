@@ -10,8 +10,9 @@ from class_os.domain.exit_package import CORE_COLUMNS, PRIMARY_KEYS, AUDIT_COLUM
 from class_os.domain.roster import Receipt
 from class_os.domain.conversation_exit import (CONVERSATION_KEYS, MAX_BYTES, MAX_ROWS,
     CreateConversationExit, ConversationExitSummary)
-from class_os.domain.conversation_exit_v4 import CONVERSATION_COLUMNS, build_package, validate_v4
-from class_os.domain.target_import import IMPORT_COLUMNS, IMPORT_KEYS
+from class_os.domain.conversation_exit_v3 import CONVERSATION_COLUMNS
+from class_os.domain.conversation_exit_v5 import build_package, validate_v5
+from class_os.domain.recovery_admission import RECOVERY_COLUMNS, RECOVERY_KEYS
 from .conversation_control import ConversationBusinessStore, ConversationTransaction
 from .conversation_integrity import validate_conversation_integrity
 from .conversation_restrictions import RestrictionUnavailable
@@ -58,8 +59,8 @@ class ConversationExitTransaction(ConversationTransaction):
         core = {table: self._collection(binding, table, columns, PRIMARY_KEYS[table], budget) for table, columns in CORE_COLUMNS.items()}
         conversations = {table: self._collection(binding, table, columns, CONVERSATION_KEYS[table], budget)
                          for table, columns in CONVERSATION_COLUMNS.items()}
-        recovery = {table: self._collection(binding, table, columns, IMPORT_KEYS[table], budget)
-                    for table, columns in IMPORT_COLUMNS.items()}
+        recovery = {table: self._collection(binding, table, columns, RECOVERY_KEYS[table], budget)
+                    for table, columns in RECOVERY_COLUMNS.items()}
         # Validate clear markers against every exported thread, not only the
         # selected screen. No hidden old-body replay behind a current anchor.
         build_package(binding["workspace_id"], binding["actor_id"], now, core, conversations, proof, [], recovery)
@@ -101,7 +102,7 @@ class ConversationExitTransaction(ConversationTransaction):
         try:
             if bundle.get("restriction_evidence") != proof:
                 raise CommandRejected()
-            validate_v4(bundle)
+            validate_v5(bundle)
             if row["package_hash"] != bundle["package_checksum"]:
                 raise CommandRejected()
         except (ValueError, TypeError, AttributeError):

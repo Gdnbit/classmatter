@@ -78,7 +78,7 @@ def test_real_d1_snapshot_clone_verifies_all_tables_without_activation_or_source
     assert packet["kind"] == "classmatter.owned-conversation-backup.v1"
     assert packet["schema_profile"] == "conversation-d1" and packet["activation_allowed"] is False
     assert packet["head"] == schema_profile("conversation-d1")[0]
-    assert packet["inventory"] == before and len(before) == 30
+    assert packet["inventory"] == before and len(before) == 32
     assert all(before[table]["rows"] == count for table, count in
                (("conversation_thread", 1), ("conversation_turn", 1), ("conversation_message", 2), ("conversation_run", 1)))
     path = runtime.root / "backups" / (str(artifact) + ".dpapi")
@@ -87,7 +87,7 @@ def test_real_d1_snapshot_clone_verifies_all_tables_without_activation_or_source
     assert report == {"schema_version": "classmatter.conversation-backup-check.v1",
                       "snapshot_integrity_verified": True, "activation_allowed": False,
                       "source_preserved": True, "temporary_clone_removed": True, "portable": False,
-                      "complete_exit": False, "table_count": 30}
+                      "complete_exit": False, "table_count": 32}
     assert "合成checkpoint" not in json.dumps(report)
     assert inventory(runtime) == before and path.read_bytes() == sealed
     assert backup.catalog()["activation_allowed"] is False

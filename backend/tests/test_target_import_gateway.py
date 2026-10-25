@@ -374,7 +374,7 @@ def test_pending_checkpoint_covers_new_stores_and_refuses_provenance_tamper(worl
     backup = SyntheticBackup(Runtime(), codec=fixture_codec, profile="conversation-d1")
     artifact = backup.create()
     result = backup.check(artifact)
-    assert result["table_count"] == 30 and result["activation_allowed"] is False
+    assert result["table_count"] == 32 and result["activation_allowed"] is False
     with data.dbs["migrator"].transaction() as connection:
         connection.execute(text("UPDATE class_os.conversation_provenance SET source_hash=:hash WHERE entity_kind='student'"), {"hash": "0" * 64})
     from class_os.infrastructure.operator_backup import BackupRejected

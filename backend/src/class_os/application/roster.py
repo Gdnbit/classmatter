@@ -57,6 +57,7 @@ class GatewayBase:
             now = self.clock()
             if now.tzinfo is None or now.utcoffset() != timedelta(0):
                 raise RuntimeError("Business clock must be UTC")
+            tx.authorized_at = now  # One post-lock clock for opt-in D1 proof reads too.
             identity_expired = now >= subject.expires_at
             try:
                 if identity_expired or not tx.synthetic_workspace(subject.workspace_id):

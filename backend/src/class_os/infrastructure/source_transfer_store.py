@@ -9,6 +9,7 @@ from class_os.domain.source_transfer import SealConversationSource, SourceFence,
 from .conversation_exit import ConversationExitStore, ConversationExitTransaction
 from .source_transfer import ProtectedSourceTransfer, TransferUnavailable
 from .source_retirement import ProtectedSourceRetirement, RetirementUnavailable
+from .recovery_commit_evidence import require_recovery_commit
 
 
 class SourceTransferStore(ConversationExitStore):
@@ -37,6 +38,7 @@ class SourceTransferTransaction(ConversationExitTransaction):
                     or row["head_hash"] != fence.restriction_hash or receipt[0]["payload"] != fence.command.canonical()):
                 raise CommandRejected()
             self._proof(binding)  # A missing/pending/foreign restriction file never authorizes this observation.
+            require_recovery_commit(self._connection, binding, fence.command, receipt[0]["receipt_id"], 1, fence.created_at)
             return CommittedSource(fence, row["transfer_hash"], receipt[0]["receipt_id"],
                                    self._store.restrictions._binding(self._store.restrictions._root()))
         except (TransferUnavailable, RetirementUnavailable):
@@ -49,6 +51,8 @@ class SourceTransferTransaction(ConversationExitTransaction):
         try:
             if ProtectedSourceRetirement(self._store.restrictions).present():
                 raise CommandRejected()
+            if self._connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os.conversation_import WHERE workspace_id=:workspace_id)"), binding).scalar_one():
+                raise CommandRejected()  # Never freeze a source for unsupported multi-hop.
             if (command.target_workspace_id == binding["workspace_id"] or command.target_owner_id == binding["actor_id"]
                     or command.target_binding == self._store.restrictions._binding(self._store.restrictions._root())):
                 raise CommandRejected()

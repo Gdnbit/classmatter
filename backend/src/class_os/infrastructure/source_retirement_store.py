@@ -9,6 +9,7 @@ from class_os.domain.roster import Receipt
 from class_os.domain.source_retirement import RetireConversationSource, RetirementFence, CommittedRetirement
 from .source_transfer_store import SourceTransferStore, SourceTransferTransaction
 from .source_retirement import ProtectedSourceRetirement, RetirementUnavailable
+from .recovery_commit_evidence import require_recovery_commit
 
 
 class SourceRetirementStore(SourceTransferStore):
@@ -61,6 +62,7 @@ class SourceRetirementTransaction(SourceTransferTransaction):
                     or receipts[0]["resource_version"] != 2 or receipts[0]["payload"] != fence.command.canonical()
                     or receipts[0]["committed_at"] < fence.created_at):
                 raise CommandRejected()
+            require_recovery_commit(self._connection, binding, fence.command, receipts[0]["receipt_id"], 2, fence.created_at)
             return CommittedRetirement(fence, port.digest(fence), receipts[0]["receipt_id"])
         except RetirementUnavailable:
             raise CommandRejected() from None

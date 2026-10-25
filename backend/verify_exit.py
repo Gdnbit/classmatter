@@ -12,6 +12,7 @@ from class_os.domain.exit_package import validate_package
 from class_os.domain.conversation_exit import validate_v2, MAX_BYTES
 from class_os.domain.conversation_exit_v3 import validate_v3
 from class_os.domain.conversation_exit_v4 import validate_v4
+from class_os.domain.conversation_exit_v5 import validate_v5
 
 
 def unique(pairs):
@@ -24,7 +25,7 @@ def unique(pairs):
 
 
 def load_package(path, *, require_complete=False, profile="core-v1"):
-    if profile not in ("core-v1", "conversation-v2", "conversation-v3", "conversation-v4"):
+    if profile not in ("core-v1", "conversation-v2", "conversation-v3", "conversation-v4", "conversation-v5"):
         raise ValueError("Unknown exit profile")
     limit = 2097152 if profile == "core-v1" else MAX_BYTES
     # Local operator input only. Do not block on FIFOs or follow a leaf link.
@@ -41,7 +42,7 @@ def load_package(path, *, require_complete=False, profile="core-v1"):
         raise ValueError("Package too large")
     bundle = json.loads(raw, object_pairs_hook=unique,
                         parse_constant=lambda _: (_ for _ in ()).throw(ValueError()))
-    validator = {"core-v1": validate_package, "conversation-v2": validate_v2, "conversation-v3": validate_v3, "conversation-v4": validate_v4}[profile]
+    validator = {"core-v1": validate_package, "conversation-v2": validate_v2, "conversation-v3": validate_v3, "conversation-v4": validate_v4, "conversation-v5": validate_v5}[profile]
     counts = validator(bundle, require_complete=require_complete)
     return bundle, counts, hashlib.sha256(raw).hexdigest()
 
@@ -50,7 +51,7 @@ def main():
     parser = argparse.ArgumentParser(description="Validate synthetic core exit; no database writes")
     parser.add_argument("path", type=Path)
     parser.add_argument("--require-complete", action="store_true")
-    parser.add_argument("--profile", choices=("core-v1", "conversation-v2", "conversation-v3", "conversation-v4"), default="core-v1")
+    parser.add_argument("--profile", choices=("core-v1", "conversation-v2", "conversation-v3", "conversation-v4", "conversation-v5"), default="core-v1")
     parser.add_argument("--compare-with", type=Path, help="Second local synthetic package; checks integrity, never imports")
     args = parser.parse_args()
     try:
@@ -65,7 +66,7 @@ def main():
     except (OSError, ValueError, TypeError, KeyError, RecursionError):
         print("Package rejected: invalid/incomplete synthetic exit. No database was changed.", file=sys.stderr)
         return 1
-    if args.profile in ("conversation-v2", "conversation-v3", "conversation-v4"):
+    if args.profile in ("conversation-v2", "conversation-v3", "conversation-v4", "conversation-v5"):
         print(json.dumps({"valid_synthetic_conversation": True, "lifecycle_complete": False, "activation_allowed": False,
                           "run_authority": "source-evidence-only", "counts": counts, "file_sha256": file_hash,
                           "package_checksum": bundle["package_checksum"], "snapshot_hash": bundle["snapshot_hash"], "comparison": comparison,
