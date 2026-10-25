@@ -325,3 +325,32 @@ D1-13e最终已由PR #29合并为main dbb09e7；最终head4911d49的CI4017677229
 纯交互及原run规则48通过0.14秒。首轮实际PG5通过22.73秒；标题hash修复后组合18通过22.01秒，实际input/audit重放补齐9通过32.88秒；最后标题回执完整性及合法旧回执组合14通过48.03秒。一次故障注入被原DB command/payload一致性CHECK提前拒绝，测试修正为一致更改两个字段后验证应用拒绝，未移除/放宽CHECK。非DB536通过4跳过/511未选46.90秒；这不是后续最后字节/完整CI成绩。后续补齐pending/跨scope/退出恢复后，可提交已审查候选PR运行CI，但最后独立复核及两平台CI通过前不得合并或标记验收；整体Goal保持active。
 
 补齐后真实PG交互20通过77.31秒，覆盖失效学生/班级/学期/原enrollment、错误Store受控拒绝，以及pending拒绝→实际admission→新输入归本地Owner→重开QG→v5→真实checkpoint/pg_restore。单独恢复链1通过20.01秒；独立规则13+原PG14组合27通过48.56秒，最后错误Store/资格和出口补充后还需最终独立复核。原Store混入固定SQL方法而非放宽原admission实际事务类型。最新规则/run48通过0.14秒，契约与docs74/图/合成scope检查通过。最终公开清单和完整两平台CI仍待，未将queued冒充SDK执行或改任何正式Gate。
+
+D1-14已由PR #30验收合并为main c0da0eb，实际树与head d128893一致。最终CI40179768035两平台成功：Windows非DB540/Web55/desktop23；Ubuntu非DB533+7跳过、真实PG/browser504+13跳过727.65秒。708项真实hash/default-deny、固定8.30.1 files/history4项已审查0未解决、root81/docs74/契约/图检查通过。原存储/控制/退役74通过332.06秒；独立最后6PG41.08秒及此前27规则/PG48.56秒完成，无新增阻断。用户实例、默认R1、Agent权限及正式Gate不变；输入排队不是模型执行或完整Goal。
+
+## D1-15：运行状态、输出保存与原SDK接线（文件级计划）
+
+目标：将已耐久排队的人类输入实际接到既有Pydantic AI，不另造Agent loop。追溯D1-02—08；后续HTTP/UI和完整来源引用展示必须继续交付，不能以本后端切片代替整个Goal。
+
+| 文件范围 | 实施与验收 |
+| --- | --- |
+| 固定run命令/私有claim对象及规则测试 | claim、finish、cancel、reconcile四类闭合元数据，复用ConversationRun状态/版本/generation/lease；输出仅存assistant-unverified消息，proposal/audit只存hash和有限指标 |
+| 原BCG/QG、AdmissionTransaction的固定SQL mixin、显式下一开发迁移 | 原ISB/当前scope/原enrollment/限制与pending边界不变，实际原enqueue receipt/audit/input校验后才可claim；claim提交后才给一次私有运行对象。SQL CAS+审计失败不得调用Provider；重复claim不返回可再次dispatch的对象。仍32表/既有列ACL，R1默认0016/22 |
+| 新耐久编排adapter与原PydanticAgentRuntime/可见历史转换 | 复用原SDK工具/loop/usage limits；只按当前授权可见历史重建有限临时上下文，不存raw SDK dump。buffer最终文本/草稿事件，保存终态/消息/审计成功后才释放。先用现成FunctionModel，Provider调用无费用；不自动重跑未知结果 |
+| 取消/超时/过期/重启核对 | queued过期可取消、running租约到期为interrupted；迟到generation/版本不符拒绝。取消请求不等于已取消，更不保证供应商未计费。身份或scope失效不释放输出；保存失败输出未知且不返回completed |
+| 真实PG/SDK组合与原生命周期/退出回归 | 两请求最多一次claim/SDK，模拟Provider计数；完成后重开历史；取消/超时/迟到/审计/保存失败/clear及恢复矩阵。v5/checkpoint仍涵盖现有存储，无恢复自动dispatch |
+| 文档/公开审核/独立PR | 真实SHA、固定扫描、全套两平台CI和独立对抗审查。无HTTP/UI/生产Provider配置或自动实例升级，不修改正式Eval/Gate |
+
+风险与未交付项：不能把worker写权限交给模型工具；私有claim不能序列化成用户可携带的授权。当前可见历史只有正文/origin/作者，完整历史来源引用与可编辑草稿恢复仍需在首次UI接线前明确typed协议和退出语义，不把旧引用当当前事实。当前SDK按整段答案发消息，不能冒称逐token持久流。回退保留已写入状态/限制，不重置已运行run或自动付费重试。
+
+### D1-15 候选实现与阶段证据
+
+已实现四类闭合server run command、原BCG/ISB/AdmissionTransaction固定SQL CAS，显式0025仅扩命令/W1约束，32表/ACL不变；默认R1仍0016/22，v5的0023投影不改。claim在原输入/原提交证据通过后写generation/一分钟lease，直到receipt/audit提交才返回一次私有对象；重复claim无对象。finish重查输入及启动原canonical payload/hash/receipt/audit，只保存assistant-unverified正文和有限nullable指标。cancel_requested不等于已停供应商；超时/未知不自动重试或证明零费用。
+
+为使本批可独立验收，SDK组合明确先限普通班级chat：复用原Pydantic AI loop/model context/usage limits，只重建有限可见不可信历史。原SDK没有BCG引用。最终答复/完成须先持久化和审计，再每事件经QG重查可见性；临时SDK历史每次清理。read/draft结构化历史、来源卡片和原UI/generation/clear fence仍为首次启用前必做，不把本批当完整D1或工作小结完成。无HTTP/UI入口、用户实例迁移、真实Provider或费用调用。
+
+独立审查用实际PG复现claim后user正文替换仍能保存旧响应，现finish复用完整worker_input并比ticket，另核原claim证据；补body/claim-audit/claim-payload三项负向。审查另指出finish提交后clear但buffer仍可能放行，现每个输出/完成事件前通过当前QG重查exact turn/assistant/正文/active。实际clear-after-finish回归通过；它不撤回已经发送的内容或承诺原子网络显示，后续UI仍须原generation fence。
+
+本机worker/SDK/原交互组合38通过182.44秒（最后clear用例加入前）；最后SDK+域规则11通过44.06秒。真实已准入目标完成→clear→v5→实际checkpoint/pg_restore1通过32.85秒。非DB542通过4跳过、537 DB未执行62.33秒，不是完整PG全量成绩。独立finish负向及最后SDK8通过45.66秒、独立完整恢复链1通过23.10秒，当前无新增阻断。新文件均first-party、只合成数据，无外部源码/真实身份/图像/凭据。最终manifest/固定历史scan/docs及完整两平台CI仍待，以PR最终证据收口。
+
+追溯仍D1-02—08及原工程任务，不改正式107需求/147eval/94task/green0。教师额外维护步骤零，但尚无真实净减负研究。回滚只能停用未激活profile或兼容前滚，保留run/消息/receipt/witness；不破坏性降级或重置Provider结果。下一单元补typed历史来源/草稿协议和出口兼容，再原界面/HTTP持久接线与故障验收，随后班级工作小结。整个Goal保持active。

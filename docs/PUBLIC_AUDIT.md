@@ -1,5 +1,13 @@
 # ClassMatter public candidate audit
 
+## 2026-10-25 D1 server run lifecycle candidate
+
+Reviewed first-party closed run metadata, BCG/ISB orchestration, fixed SQL CAS and original Pydantic AI chat adapter/tests. No imported implementation, dependency, real identity, private source, credential, image, paid request or recorded Provider output is included. Explicit0025 only extends four W1 constraints;32 tables/ACLs remain unchanged, default R1 stays0016/22 and v5 retains its fixed0023 projection baseline. No HTTP/UI/Agent write route or user-instance migration.
+
+Independent review reproduced claim-time input substitution still accepting an old answer; finish now revalidates actual input and complete original enqueue/claim commit evidence. Clear-after-finish is checked through current QG before each buffered release, not a promise to revoke delivered text or replace future UI fences. Only class-level plain chat is composed; structured history/UI remain pending. Synthetic tests use original FunctionModel and disposable PG for claim/cancel/expiry/late output/rollback/clear/reopen and actual checkpoint clone validation. Uncertain outcomes never authorize automatic Provider retries or prove zero charges.
+
+All new/changed paths require final-byte hashes, unchanged default-deny exceptions, pinned file/history scans, docs/contracts, independent audit and full Windows/Ubuntu CI. Raw XML/databases/witnesses and local Logo originals remain ignored; formal Requirement/Eval/Task/Gate and overall Goal completion remain unchanged.
+
 ## 2026-10-25 D1 human durable-input candidate
 
 First-party closed interaction metadata/application/fixed SQL and synthetic tests; no dependency, imported source, transcript, real student information, screenshot, binary or credential. Explicit0024 only extends four fixed human W1 command types, preserving32 tables and exact role access; default R1 remains0016/22. No HTTP/UI/SDK dispatch, Agent write tool, Provider request or user-instance migration is enabled. V5 keeps its0023 fixed projection baseline, not a live schema authority.
