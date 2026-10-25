@@ -15,7 +15,7 @@
       "sha256": "8bb5fc3a12e3d9ccc90a74a66084e1da110cd985408959bbb24207a59a46925c"
     },
     "backend/src/class_os/infrastructure/durable_agent.py": {
-      "sha256": "ab49c002945fd9ec024a9a97d0c7a7dab1d7ea6c46a875d09b4ca5dabdb78930"
+      "sha256": "c3ce32c2bdd2d2273ea29e9db4aba2c68606b71d2a998103c674add639ce8bd6"
     },
     "backend/tests/test_conversation_worker.py": {
       "sha256": "c3594047783f82aee344d800f8e05698c424247ed5702bd66312ea485d824086"
@@ -24,7 +24,7 @@
       "sha256": "ab369dd499273b3913eae4e9fa670a2a35944fc479e25329d22f3b248fba39b1"
     },
     "backend/tests/test_durable_agent.py": {
-      "sha256": "505b1aceae5f922894720442661f352d0c19134a93f2408d84b2e3aff2357846"
+      "sha256": "2d9ddbdaca617b4eea881793a961fa87fd2a789872b91ea318179ce2968eb40f"
     },
     "backend/db/migrations/versions/0024_human_conversation.py": {
       "sha256": "411d7656bbbb5298c3c4a9a0424ab0009e93ac532a0623dc209d7e8f748fd558"
@@ -207,7 +207,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "5985a8b460c70fc9515122e56d029689f419779bddf9c5ede19248ea30ea14d9"
+      "sha256": "1b5a9a39ec5430b8ec2f6547e554c513ce972f2d9e339f7ec5ca5602ad684180"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
@@ -711,7 +711,7 @@
       "sha256": "51bfee0c564708f42efd96b6cb5ad707e720a6a84348317adfdab276d735d723"
     },
     "backend/README.md": {
-      "sha256": "f956799469dcadb0b9fede55dd00edf098fbc4a9a55dab9393c4223ece0239ab"
+      "sha256": "34541275a4c452d9deaf5ed578be81bfc860e121b0fd8a6f8354c3d2af1e2903"
     },
     "backend/db/migrations/env.py": {
       "sha256": "b2393f310d1d8a05229c29757dbd885fb275ca6bf7e87c81fa84270863b6edec"
@@ -1288,7 +1288,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "b2f0944fad638178aeb3d32cbb13148317ff2a5c7d77e7916232bfd528e3325d"
+      "sha256": "c23935244b1fc572a65e85ada1b27d0a5b8bb3dea960daabe95fab91aa7d4dc9"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

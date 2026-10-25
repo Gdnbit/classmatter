@@ -354,3 +354,7 @@ D1-14已由PR #30验收合并为main c0da0eb，实际树与head d128893一致。
 本机worker/SDK/原交互组合38通过182.44秒（最后clear用例加入前）；最后SDK+域规则11通过44.06秒。真实已准入目标完成→clear→v5→实际checkpoint/pg_restore1通过32.85秒。非DB542通过4跳过、537 DB未执行62.33秒，不是完整PG全量成绩。独立finish负向及最后SDK8通过45.66秒、独立完整恢复链1通过23.10秒，当前无新增阻断。新文件均first-party、只合成数据，无外部源码/真实身份/图像/凭据。最终manifest/固定历史scan/docs及完整两平台CI仍待，以PR最终证据收口。
 
 追溯仍D1-02—08及原工程任务，不改正式107需求/147eval/94task/green0。教师额外维护步骤零，但尚无真实净减负研究。回滚只能停用未激活profile或兼容前滚，保留run/消息/receipt/witness；不破坏性降级或重置Provider结果。下一单元补typed历史来源/草稿协议和出口兼容，再原界面/HTTP持久接线与故障验收，随后班级工作小结。整个Goal保持active。
+
+D1-15已创建独立PR #31，候选9cb044d干净Windows CI通过非DB546/Web55/desktop23及实际打包Electron启动/导航/单实例/退出。额外本机Web55/build和desktop23通过，但打包smoke启动遇缓存访问拒绝/CDP断开；当时已有Demo进程，固定userData及单实例锁可能冲突，未关闭用户进程或删除缓存，不把本机失败改称通过。原存储/控制/备份/退役实际PG回归91通过445.67秒。以上不覆盖随后补强字节或最终Ubuntu全量。
+
+最后启动前补强：已提交claim后若调度延迟超过lease或已有cancel_requested，原代码仍可能进入SDK。现SDK入口前重读当前QG run_id/state/version并复核lease；两项实际PG/FunctionModel负向均模型调用0，过期仍须原授权reconcile为interrupted，不自动重启。最后SDK7项通过51.69秒；需要新head重跑两平台CI，不能挪用旧head的绿灯。当前可见性与租约复核仍非跨数据库/供应商原子事务。

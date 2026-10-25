@@ -1,6 +1,7 @@
 """Original SDK FunctionModel on owned real PostgreSQL, never paid credentials."""
 import asyncio
 from contextlib import aclosing
+from datetime import timedelta
 from uuid import uuid4
 
 import pytest
@@ -125,3 +126,31 @@ async def test_clear_after_finish_commit_before_release_drops_buffered_answer(co
     events = [event async for event in stream(value, uuid4())]
     assert events[-1].type == "run.failed"
     assert not any(item.type in ("message.delta", "run.completed") for item in events)
+
+
+@pytest.mark.db
+@pytest.mark.parametrize("fault", ["expired", "cancelled"])
+async def test_dispatch_rechecks_current_lease_and_cancel_before_sdk(control, monkeypatch, fault):
+    calls = []
+    def respond(messages, info):
+        calls.append(messages)
+        return ModelResponse(parts=[TextPart("must not execute")])
+    value = setup(control, respond)
+    original = value.worker.claim
+    def delayed(*args):
+        ticket = original(*args)
+        if fault == "expired":
+            control[7][0] += timedelta(seconds=61)
+        else:
+            value.worker.cancel_run(value.auth, value.ids["class"], value.ids["term"], value.thread, ticket.run.run_id, ticket.run.version)
+        return ticket
+    monkeypatch.setattr(value.worker, "claim", delayed)
+    key = uuid4()
+    events = [event async for event in stream(value, key)]
+    assert events[-1].type == "run.failed" and not calls
+    assert not any(item.type in ("run.started", "message.delta", "run.completed") for item in events)
+    if fault == "expired":
+        value.worker.reconcile_run(value.auth, value.ids["class"], value.ids["term"], value.thread, status(value, key)["run_id"])
+        assert status(value, key)["state"] == "interrupted"
+    else:
+        assert status(value, key)["state"] == "unknown"

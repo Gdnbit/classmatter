@@ -55,6 +55,10 @@ class DurableChatRuntime:
                                     else ModelResponse(parts=[TextPart(item.content.text)]) for item in messages]
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket.intent.text, Mode.CHAT)
+            current = await anyio.to_thread.run_sync(lambda: self.query.turn_status(*credentials, class_id, term_id, thread_id, request_id))
+            if (current["run_id"] != ticket.run.run_id or current["state"] != "running"
+                    or current["version"] != ticket.run.version or self.worker.clock() >= ticket.run.lease_until):
+                raise AgentRejected()
             async with aclosing(self.runtime.stream(credentials, request)) as stream:
                 async for item in stream:
                     if item.type in ("message.delta", "run.completed"):
