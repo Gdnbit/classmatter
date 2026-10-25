@@ -138,6 +138,8 @@ class SyntheticBackup:
         if profile != "r1":
             from .conversation_integrity import validate_conversation_integrity
             validate_conversation_integrity(connection)
+            from .target_import_store import validate_import_integrity
+            validate_import_integrity(connection)
 
     @staticmethod
     def _inventory(connection, *, profile="r1"):

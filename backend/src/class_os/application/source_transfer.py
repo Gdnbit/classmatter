@@ -1,5 +1,6 @@
 """Human-only source freeze. No target import, admission or automatic thaw."""
 from contextvars import ContextVar
+from uuid import UUID
 
 from class_os.domain.source_transfer import SealConversationSource, decode_seal
 from .conversation_exit import ConversationExitBusinessGateway
@@ -11,7 +12,7 @@ _source_operation = ContextVar("classmatter_source_transfer_operation", default=
 
 
 def source_operation_permitted(store, binding, action, proposal_id):
-    return (action in {"command.preview", "command.approve", "command.reject", "command.commit", "command.status"}
+    return (action in {"command.preview", "command.approve", "command.reject", "command.commit", "command.status", "conversation.transfer.proof"}
             and _source_operation.get() == (id(store), binding["workspace_id"], binding["actor_id"], action, proposal_id))
 
 
@@ -25,7 +26,18 @@ class SourceOperation:
 
 
 class SourceTransferQueryGateway(SourceOperation, QueryGateway):
-    """Only existing metadata status gets a frozen-source exemption."""
+    """Only status and committed-freeze metadata get scoped exemptions."""
+
+    @staticmethod
+    def audit_purpose(action):
+        return "exit-recovery" if action == "conversation.transfer.proof" else QueryGateway.audit_purpose(action)
+
+    def committed_source(self, token, client, csrf, workspace_id, attempt_id):
+        def read(tx, binding, now):
+            if type(attempt_id) is not UUID:
+                raise CommandRejected()
+            return tx.committed_source(binding, attempt_id)
+        return self._run((token, client, csrf, workspace_id), "conversation.transfer.proof", read, resource_id=attempt_id)
 
 
 class SourceTransferGateway(SourceOperation, ConversationExitBusinessGateway):

@@ -56,7 +56,8 @@ def validate_role_guards(connection, *, profile="r1"):
         reject()
 
     if profile == "conversation-d1":
-        updates = {"conversation_control": {"epoch", "head_hash", "updated_at", "transfer_id", "transfer_hash", "transfer_at"},
+        updates = {"conversation_import": set(), "conversation_provenance": set(), "conversation_source_audit": set(),
+                   "conversation_control": {"epoch", "head_hash", "updated_at", "transfer_id", "transfer_hash", "transfer_at"},
                    "conversation_thread": {"title", "status", "version", "updated_at", "cleared_at"},
                    "conversation_turn": set(), "conversation_message": {"body", "visibility"},
                    "conversation_run": {"state", "version", "generation", "started_at", "lease_until", "ended_at",
