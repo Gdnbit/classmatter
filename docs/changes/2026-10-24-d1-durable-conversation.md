@@ -295,6 +295,6 @@ D1-13b已由PR #26合并main72c14cc；最终head d3723cf的CI40106194706两平�
 
 独立审查捕获并修复：仅凭新Gateway名字但实际使用旧未归因事务的组合旁路、已准入批次和源audit集合未完全绑定、原始commit-audit缺失仍可证明提交，以及源退休后才发现准入容量不足。现在要求实际AdmissionTransaction；受保护witness绑定完整batch/source-audit/origin摘要；seal/stage/retire/admit各证明要求原始payload/receipt/commit-audit，准入后仍核验本地stage和admit原提交证据。目标QG在源退役前模拟固定准入扩展的canonical与PG JSONB预算，UUID/hash长度固定、时间采用最长微秒宽度，模拟不发布为authority。当前容量失败测试注入预算拒绝，证明调用位置和不发布退役；不是实测接近1MiB膨胀样本。
 
-本机初轮完整准入+3回滚场景30通过70.53秒（含当时规则）；随后规则/故障矩阵48通过254.11秒，当前规则/文件端口43通过5.66秒（含真实Windows DPAPI及硬退出）。全量非DB523通过/4跳过/492未选67.48秒，契约检查通过。后续新增原stage提交证据及0022非空升级测试需各自最终复验，不能用早期计数冒充最终head全量。升级测试首次Alembic配置错误已按既有固定script_location模式修正，未放宽生产检查。
+本机初轮规则及完整准入/3回滚组合30通过70.53秒；随后规则/故障矩阵48通过254.11秒，当前规则/文件端口43通过5.66秒（含真实Windows DPAPI及硬退出）。最新非DB523通过/4跳过/496未选59.04秒，契约检查通过。非空0022升级/存储/准入并发组合50通过404.64秒；此前控制/退出/checkpoint/封存/暂存/退役完整组合112通过775.72秒。升级测试首次Alembic配置错误已按既有固定script_location模式修正，未放宽生产检查。最终审查另发现stage proof helper只比声明hash而未比payload本体；现同时按固定canonical JSONB核验，并补stage-payload篡改拒绝，须按最终head再验，不能用早期计数冒充最后字节全量。
 
 独立临时PG负向14通过210.18秒；实际admission→更名/事实修订/任务更新→归因→clear→真实PG重启→checkpoint/pg_restore/v5及回滚隔离5通过113.92秒；规则/端口43通过10.29秒。公开审查702项SHA全部匹配、10个新文件为first-party；例外/正式Gate/R1/CI未改。固定8.30.1 files/history扫描4项已审查0未解决，root81及docs74/图/合成scope通过。原始XML/受保护文件/数据库留在忽略目录；最终两平台CI及最后字节复核仍待，不据本段宣称已合并或整个Goal完成。

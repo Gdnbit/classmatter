@@ -21,13 +21,13 @@
       "sha256": "133070da619afc15d56688bbc54ebfe9eccd4494b46ba122b15b19c51fab0a3a"
     },
     "backend/src/class_os/infrastructure/recovery_commit_evidence.py": {
-      "sha256": "640fafaa4a0bcca95e23fc41789006a3ec0dc8b615efcbf2e917c89ef2037fcd"
+      "sha256": "cd9b10d8c017be738bbfe8ee3989dce5c659b40ca15894f421e47838af0798b2"
     },
     "backend/tests/test_recovery_admission.py": {
       "sha256": "72644acca08c4c9aeb0d64ed5549c5b9683712c6deca18bbd909f7c9e2a39e6d"
     },
     "backend/tests/test_recovery_admission_gateway.py": {
-      "sha256": "463b81cc6220e1a7baa8e661f46b149b678a9a40b2670557852da3f02d57633d"
+      "sha256": "770a9c8b02689f3d05fb7bbe02c13ab7322499044b72d0ab1e3a9ba2e809ed2a"
     },
     "backend/tests/test_recovery_admission_port.py": {
       "sha256": "be34e9dd662098d8530dede9bbf1957e7cfaadc65b4655e96e1d47de40825ab2"
@@ -165,7 +165,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "f14bbf59d737eca762d16de24bd756d663b3d3742e7f54aff584f169d9b6080e"
+      "sha256": "6ec7b936c75c7b00a89e53b28b90ed642bea88b44d3f3ff5691e9b6e22b551a2"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"

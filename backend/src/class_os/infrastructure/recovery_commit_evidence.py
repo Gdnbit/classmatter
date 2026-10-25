@@ -1,5 +1,6 @@
 """Require the original trusted commit audit for four fixed recovery commands."""
 from sqlalchemy import text
+from psycopg.types.json import Jsonb
 
 from class_os.application.roster import CommandRejected, fingerprint
 
@@ -14,7 +15,7 @@ def require_recovery_commit(connection, binding, command, receipt_id, version, n
         WHERE r.workspace_id=:workspace_id AND r.actor_id=:actor_id AND r.receipt_id=:receipt
           AND r.resource_id=:attempt AND r.resource_version=:version AND r.payload_hash=:hash
           AND p.workspace_id=r.workspace_id AND p.actor_id=r.actor_id AND p.state='committed'
-          AND p.command_type=:command AND p.payload_hash=:hash AND p.purpose='exit-recovery'
+          AND p.command_type=:command AND p.payload_hash=:hash AND p.payload=CAST(:payload AS jsonb) AND p.purpose='exit-recovery'
           AND EXISTS(SELECT 1 FROM class_os.business_audit a
             WHERE a.workspace_id=r.workspace_id AND a.actor_id=r.actor_id
               AND a.action='command.commit' AND a.outcome='allowed' AND a.purpose='exit-recovery'
@@ -22,6 +23,6 @@ def require_recovery_commit(connection, binding, command, receipt_id, version, n
               AND a.resource_id=r.resource_id AND a.resource_version=r.resource_version
               AND a.occurred_at=r.committed_at)"""),
         {**binding, "receipt": receipt_id, "attempt": command.attempt_id, "version": version,
-         "hash": fingerprint(payload), "command": payload["command"]}).all()
+         "hash": fingerprint(payload), "command": payload["command"], "payload": Jsonb(payload)}).all()
     if len(rows) != 1 or rows[0][0] < not_before:
         raise CommandRejected()

@@ -245,7 +245,7 @@ def test_gateway_name_never_substitutes_for_author_aware_transaction(world, targ
 
 
 @pytest.mark.db
-@pytest.mark.parametrize("fault", ["batch", "source-audit", "origin", "body", "file-missing", "file-corrupt", "file-directory", "receipt", "audit", "stage-receipt", "stage-audit"])
+@pytest.mark.parametrize("fault", ["batch", "source-audit", "origin", "body", "file-missing", "file-corrupt", "file-directory", "receipt", "audit", "stage-receipt", "stage-audit", "stage-payload"])
 def test_admitted_corruption_denies_reads_writes_and_exit(world, target, fault):
     value = ready(world, target)
     submit(value, approve(value))
@@ -268,6 +268,7 @@ def test_admitted_corruption_denies_reads_writes_and_exit(world, target, fault):
                 "audit": "DELETE FROM class_os.business_audit WHERE receipt_id IN (SELECT receipt_id FROM class_os.command_receipt WHERE resource_version=3) AND action='command.commit'",
                 "stage-receipt": "DELETE FROM class_os.command_receipt WHERE resource_version=1 AND resource_id IN (SELECT attempt_id FROM class_os.conversation_import)",
                 "stage-audit": "DELETE FROM class_os.business_audit WHERE action='command.commit' AND proposal_id IN (SELECT proposal_id FROM class_os.command_proposal WHERE command_type='conversation.import.stage')",
+                "stage-payload": "UPDATE class_os.command_proposal SET payload=jsonb_set(payload,'{package_hash}',to_jsonb(repeat('0',64))) WHERE command_type='conversation.import.stage'",
             }
             result = connection.execute(text(statements[fault]))
             assert result.rowcount > 0
