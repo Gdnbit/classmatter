@@ -20,6 +20,7 @@ from .recovery_admission import ProtectedTargetAdmission, AdmissionUnavailable
 from .target_import import ProtectedTargetImport
 from .recovery_commit_evidence import require_recovery_commit
 from .conversation_interaction import InteractionTransaction
+from .conversation_worker import WorkerTransaction
 
 
 def admission_boundary(tx, binding, action, proposal_id):
@@ -80,7 +81,7 @@ class AuthorAwareHistory:
     message_attributions: tuple[dict, ...]
 
 
-class AdmissionTransaction(InteractionTransaction, TargetImportTransaction):
+class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImportTransaction):
     def has_committed_admission(self, binding):
         return self._connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os.conversation_admission WHERE workspace_id=:workspace_id)"), binding).scalar_one()
 
@@ -123,7 +124,9 @@ class AdmissionTransaction(InteractionTransaction, TargetImportTransaction):
     def apply(self, binding, command, now):
         if type(command) is not AdmitConversationTarget:
             from class_os.domain.conversation_interaction import CreateConversation, RenameConversation, ArchiveConversation, EnqueueConversation
-            result = (self.apply_interaction(binding, command, now) if type(command) in
+            from class_os.domain.conversation_worker import ClaimRun, FinishRun, CancelRun, ReconcileRun
+            result = (self.apply_worker(binding, command, now) if type(command) in (ClaimRun, FinishRun, CancelRun, ReconcileRun)
+                      else self.apply_interaction(binding, command, now) if type(command) in
                       (CreateConversation, RenameConversation, ArchiveConversation, EnqueueConversation)
                       else super().apply(binding, command, now))
             try:

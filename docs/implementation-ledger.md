@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-更新时间：2026-10-25。最新验收main为`dbb09e7`：[PR #29](https://github.com/Gdnbit/classmatter/pull/29)人工目标准入/可修改来源已在[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40176772294)验收，Windows非DB527/Web55/desktop23，Ubuntu非DB520+7跳过、实际PG/browser484+13跳过726.91秒，702个真实hash。此前D0/E1及D1前置由PR #13—28收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+更新时间：2026-10-25。最新验收main为`c0da0eb`：[PR #30](https://github.com/Gdnbit/classmatter/pull/30)人工耐久输入已通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40179768035)，Windows非DB540/Web55/desktop23，Ubuntu非DB533+7跳过、实际PG/browser504+13跳过727.65秒，708个真实hash。此前D0/E1及D1前置由PR #13—29收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。显式D1为0023/32表，默认R1仍0016/22；v5独立演进，不放宽旧v2/v3/v4。原生更名/事实修订/任务更新可在已准入目标通过BCG，未准入目标和退役源仍隔离。源退役前先检查准入容量；批次/源audit/origin绑定摘要，证明核验固定文件及原proposal实际内容/receipt/commit-audit。实际merge树与最终验收head4911d49一致，不能据此宣称整个Goal完成。当前D1-14开始耐久会话的人工作用域/输入排队链路，仍无耐久发送/UI/SDK完整交付；工作小结、跨机握手及多跳尚未实现。用户实例未迁移，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。
+D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-14为0024/32表；本轮D1-15候选显式0025仍32表，默认R1仍0016/22，v5保留固定0023投影，不放宽旧验证器。D1-14已完成明确人工会话与输入排队，不能当模型执行。D1-15复用原SDK推进普通班级对话的单次claim、取消/租约/终态和回复保存；仍未开放HTTP/UI，完整来源/草稿历史、真实界面和工作小结继续必做。用户实例未迁移，跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。
 
 ## 状态与顺序
 
