@@ -1,5 +1,13 @@
 # ClassMatter public candidate audit
 
+## 2026-10-25 D1 human durable-input candidate
+
+First-party closed interaction metadata/application/fixed SQL and synthetic tests; no dependency, imported source, transcript, real student information, screenshot, binary or credential. Explicit0024 only extends four fixed human W1 command types, preserving32 tables and exact role access; default R1 remains0016/22. No HTTP/UI/SDK dispatch, Agent write tool, Provider request or user-instance migration is enabled. V5 keeps its0023 fixed projection baseline, not a live schema authority.
+
+Independent review caught plaintext title copies, declared-hash-only input replay, and missing original title-commit audit. Fixes use title_hash plus lexical human input and verify actual saved user input/mode/origin/visibility plus original proposal/receipt/hash/version/kind/purpose/audit. Clear removes message bodies/current title without proposal plaintext copies; archive is distinct. Synthetic tests prove same-key concurrent queueing, rollback, wrong scope/eligibility, pending refusal, author-aware reopen, current v5 and actual checkpoint clone verification. Queue receipt never means model ran. Bounded list is not full pagination or general workflow/memory infrastructure.
+
+Final candidate byte review, real manifest hashes, pinned history scan, docs/contracts, independent audit and full Windows/Ubuntu CI remain required. No public-review exceptions, formal SDD/Gates or real-data admission are changed. Keep local Logo originals and test/runtime artifacts ignored. Entire Goal remains active beyond this input foundation.
+
 ## 2026-10-25 D1 editable target admission candidate
 
 First-party changes only: fixed human admission DTO/BCG, two append-only origin/anchor tables in explicit0023, root-bound append-once DPAPI witness, author-aware QG and bounded v5 export/verification. No imported third-party source or new dependency. Default R1 stays0016/22; no formal requirement/eval/task/Gate promotion, Agent write tool, HTTP/UI activation, user-instance migration, real data or paid Provider call. All fixtures are disposable synthetic identities/text; no transcript, interview, screenshot, credential or Logo binary is published.

@@ -51,7 +51,7 @@ No file or database is written, imported, initialized or switched. Checksums det
 
 ## Explicit D1 versioned exit evidence (development only)
 
-The opt-in `conversation-d1` development schema now targets0023 with32 fixed tables; default R1 remains0016/22. `ConversationExitBusinessGateway` reuses ISB, recent human authentication, preview/approval, idempotent receipt and transactional audit. Its QG emits bounded v5 artifacts covering8 core,5 conversation/control and5 fixed recovery collections. There is no registered HTTP/UI/Agent export or admission command and no implicit upgrade of existing instances. Historical formats below remain exact offline validators, not live migration heads.
+The opt-in `conversation-d1` development schema now targets0024 with32 fixed tables; default R1 remains0016/22. `ConversationExitBusinessGateway` reuses ISB, recent human authentication, preview/approval, idempotent receipt and transactional audit. Its QG emits bounded v5 artifacts covering8 core,5 conversation/control and5 fixed recovery collections. There is no registered HTTP/UI/Agent export, admission or durable-input command and no implicit upgrade of existing instances. Historical formats below remain exact offline validators, not live migration heads.
 
 For an already obtained synthetic artifact, the offline operator selects its exact profile:
 
@@ -93,7 +93,7 @@ The target QG verifies its actual protected pending file, committed import recei
 
 Any retirement evidence also blocks resealing a different handoff after partial SQL/seal-file rollback and revokes the old source-staging proof. Only the private retirement retry/proof path may verify the old seal; there is no caller/Agent flag to bypass retirement. Missing/corrupt/foreign evidence never grants target admission, and neither timeout nor deleting a file thaws ordinary source operations. Existing5-second database lock/statement timeouts bound peer-lock conflicts; an already committed target rejects a new import preview before reentering its source. This is not a distributed transaction or a claim of no deadlocks.
 
-Historical revision0022 only extended closed human command/risk constraints, leaving its30 tables unchanged. V4's `source_revision=0021` identifies its fixed projection baseline, **not** migration/ACL authority. Current live Stores independently require0023; old v2/v3/v4 offline validators remain unchanged. SQL-only checkpoints do not contain external witnesses or authorize activation. Whole-host rollback, physical erasure and cross-host handoff are not proven. No user runtime has been migrated.
+Historical revision0022 only extended closed human command/risk constraints, leaving its30 tables unchanged. V4's `source_revision=0021` identifies its fixed projection baseline, **not** migration/ACL authority. Current live Stores independently require0024; old v2/v3/v4 offline validators remain unchanged. V5 retains its fixed0023 projection baseline, not a live-head authorization. SQL-only checkpoints do not contain external witnesses or authorize activation. Whole-host rollback, physical erasure and cross-host handoff are not proven. No user runtime has been migrated.
 
 ## Human target admission and editable origins (synthetic composition only)
 
@@ -107,9 +107,17 @@ Actual synthetic tests cover native rename/record correction/task update, author
 
 ## Contracts and authority
 
+### Durable human input (development composition, no dispatch)
+
+`ConversationInteractionGateway` reuses the existing BCG/ISB transaction, metadata proposal, idempotent receipt and trusted audit. Explicit human create/rename methods bind a validated title only during that call; proposals contain `title_hash`, never the title. Human enqueue similarly persists the exact input only in the controlled user-message column, while its proposal records closed request metadata/hash. No universal candidate cache or Memory store is added. A committed queued receipt means input saved, **not** a Provider call or completed model response.
+
+The fixed SQL implementation is mixed into the existing exact `AdmissionTransaction`, not a new database writer. Current class/term, original enrollment eligibility, restrictions and import/admission quarantine are checked. Concurrent same-key/same-input requests return the original run; differing input/mode/scope is rejected. Replays verify actual stored input and original proposal/receipt hash/version/kind/purpose/commit audit, not just a declared hash. Historical creation receipts remain valid after a legitimate rename. Archive is not delete and cannot hide an active run; clear cancels queued input and leaves no plaintext title/input copy in proposals.
+
+QG returns an explicitly bounded latest50 list with a truncation flag, attributed visible history and metadata-only turn status without a generation/dispatch capability. This is not full history pagination, a worker lease, automatic restart/retry, HTTP/UI binding or SDK integration. Native and admitted-target synthetic tests cover queue/clear/rollback/reopen/v5 and actual checkpoint clone verification. Revision0024 adds only four closed W1 command types;32 tables and role column access remain unchanged. No Agent tool can invoke these human operations; all run dispatch, output persistence and UI work remains subsequent implementation. Preserve all data/witnesses; disable unused profile or forward-fix rather than destructively downgrade.
+
 `src/class_os/domain` holds closed business rules; `application` owns QG/BCG/ISB; infrastructure adapters implement SQL/model/secrets; HTTP interfaces own strict wire DTOs and composition. `uv run --frozen python export_contracts.py --check` rejects contract drift. All business changes require validated command/preview/approval as applicable, idempotent receipt and transactional audit. Agent has no business-write or approval tool.
 
-Default R1 migration head0016, 22 registered tables, risk r1.3; explicit D1 development head0023/32 is not R1 admission. Existing runtime instances have not been implicitly upgraded. No Agent/runtime DDL. Student IDs/references remain stable across display-name or term metadata correction. Permission, session, version or audit failure is fail-closed. Readiness/doctor/support are bounded diagnostics, not production certification or automatic repair.
+Default R1 migration head0016, 22 registered tables, risk r1.3; explicit D1 development head0024/32 is not R1 admission. Existing runtime instances have not been implicitly upgraded. No Agent/runtime DDL. Student IDs/references remain stable across display-name or term metadata correction. Permission, session, version or audit failure is fail-closed. Readiness/doctor/support are bounded diagnostics, not production certification or automatic repair.
 
 ## Verification and known limits
 
