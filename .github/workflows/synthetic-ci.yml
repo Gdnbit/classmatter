@@ -17,7 +17,9 @@ jobs:
   baseline:
     name: Static, contracts and Web / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 20
+    # Full real-PG/browser regression alone measured 17m51s; retain every
+    # check while budgeting setup/teardown and dependency-download variance.
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

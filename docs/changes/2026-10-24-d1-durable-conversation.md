@@ -8,6 +8,8 @@ D1-16已由PR #32在最终head06d1fb5的完整CI40255153105及独立审查后合
 
 ## D1-17 文件级实施计划（745f600基线，未验收）
 
+CI预算修正计划及证据：最终应用head ff76b14的CI40311789213第一次Ubuntu字体依赖下载用11分49秒，未完成全套；只重试原Ubuntu作业后，实际PG/browser已跑完577通过/13跳过/583非DB未执行1071.39秒，但作业结束阶段仍被取消，不能标绿或合并。日志显示准备阶段11:23—11:25、PG阶段11:25:~—11:43:53，符合20分钟整作业预算耗尽；第二次依赖下载已恢复正常，故不继续无信息重试。最小修改范围为`.github/workflows/synthetic-ci.yml`显式30分钟有界预算、`scripts/tests/test_ci_workflow.py`正负预算验证、本说明/公开审计和真实manifest SHA。全部原步骤、命令、矩阵、版本锁、失败可见性、读权限和安全审查不改，不拆掉慢测试或伪造正式Gate。风险是异常作业最多额外消耗10分钟CI时间；仍有30分钟硬上限，无Provider费用或凭据。重新运行验证器、public_guard/历史scan、独立diff审查及最终head完整两平台CI后才能验收；未验收前回滚只撤销该预算修正，保留已完成测试的原始失败状态。
+
 目标：向后续原界面提供真实、受控、可恢复的会话HTTP链和完整分页，不以Demo/临时SDK memory冒充数据库。追溯D1-01—09，正式R1/Requirement/Eval/Task/Gate不改。教师不用重复录入已有消息、引用或草稿；真实净负担仍需研究。
 
 - `application/conversation_interaction.py`、`infrastructure/conversation_interaction.py`及`conversation_control.py`/`recovery_admission_store.py`：原QG的有限会话列表和完整轮次分页。列表固定元数据snapshot hash/offset，历史绑定当前thread version和before ordinal；每页重新ISB/scope/限制/原完成证据核验，cursor不是授权，变化时拒绝而不拼接混合快照。Agent上下文继续有限，旧默认reader语义不扩大。

@@ -282,7 +282,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "ed61e3f4e1c122309af68bda34569b7f6f151ecc826b1e2967351f28910c3faa"
+      "sha256": "68613ee4b2d02781aa67d2ec963074f6bbdb6eb295d4f20f98fca7e1b5cd1bf6"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
@@ -513,7 +513,7 @@
       "sha256": "c5b195dd96f32a9f0156dafbe8a6438a7d28e33d7ce151f9b75f5dec3361ee3b"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "cf24b3051bb5e8b62b492a90f119127847c46ae51ab7b0a076fa9ff3062dd7c6"
+      "sha256": "67f80679dafa71d191c095db7c29f4fdd30cb91f75977d9392f651b79a2abad2"
     },
     ".gitignore": {
       "sha256": "c34bf3956a066550e5680221b82b4bfd8aaef7363305a1c5949b729a2d02b588"
@@ -1363,7 +1363,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "8b1e10ce8125713e61e03c54372033bdec13e0f764e317674e3b1868d4dbfb38"
+      "sha256": "08107e2843e4971b3641a0605700a5e7e3750588ed9bd58009f7e5c21c6fe257"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"
@@ -1519,7 +1519,7 @@
       "sha256": "32fe60502d9b9587797f4022d9e50751f29eefa17b4087ae2cb31638a7d31796"
     },
     "scripts/tests/test_ci_workflow.py": {
-      "sha256": "3877d89b99808255044abb1d3e581239e8f0ea0ff6b36339e98b2c1bb00d6fe6"
+      "sha256": "6b38b99e7069dd1ce2f1c86c480d7ae05be9659301392bde57eb22d6f8ead43f"
     },
     "scripts/tests/test_generate_synthetic_fixtures.py": {
       "sha256": "6c1074c4227fea921b9096e6b2f563499c2851bf80f0976b32655cf59b5ba478",
