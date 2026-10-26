@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-更新时间：2026-10-26。最新验收main为`62d97c0`：[PR #31](https://github.com/Gdnbit/classmatter/pull/31)运行与普通对话已通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40202044230)，Windows非DB546/Web55/desktop23，Ubuntu非DB539+7跳过、实际PG/browser526+13跳过598.74秒，716个真实hash。此前D0/E1及D1前置由PR #13—30收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+更新时间：2026-10-26。最新验收main为`745f600`：[PR #32](https://github.com/Gdnbit/classmatter/pull/32)固定来源/草稿与生命周期单元通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40255153105)，Windows非DB582/Web55/desktop23，Ubuntu非DB575+7跳过、实际PG/browser563+13跳过999.35秒，728个真实hash。原SDK普通对话已由PR #31收口，此前D0/E1及D1前置由PR #13—30收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-15为0025/32表；本轮D1-16候选显式0026/35，新增固定摘要回执、查询来源和未提交task草稿，原SDK实际工具链与BCG/QG/清除/v6/恢复联动。默认R1仍0016/22，旧v2—v5及共享注册表冻结。真实界面、分页和工作小结继续必做，未开放HTTP/UI或迁移用户实例。跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。D1-16最终公开清单/独立复核/完整两平台CI未完成前不能称该单元验收。
+D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-16显式0026/35，固定摘要回执、查询来源和未提交task草稿与原SDK/BCG/QG/清除/v6/恢复联动，独立复现的历史读取降级绕过已修复；默认R1仍0016/22，旧v2—v5及共享注册表冻结。当前D1-17候选补完整分页与显式HTTP factory，不在默认R1/桌面注册，也不迁移用户实例；真实界面和工作小结继续必做。跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。
 
 ## 状态与顺序
 
@@ -33,7 +33,7 @@ W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR 
 | 班级/学期建立、切换、归档 | implemented-synthetic | backend roster、runtime term metadata | T-RWEB-006、T-RDOM-011；E-CLS-001；桌面接入需保留范围/版本与只读历史 |
 | Agent loop/查询/任务及原文草稿 | implemented-synthetic | backend infrastructure agent、application agent_tool_contracts | T-RAGT-001—004；E-AGT-001/002/009—014；仅3个封闭查询/草稿工具，非通用本地执行 |
 | 模型配置/测试/启停 | partial | runtime ModelConfiguration、backend model_control/provider/secrets | 现有模型契约/合成协议测试；Demo设置不连网；真实provider质量pending-validation |
-| Conversation Memory | partial | backend agent_memory | 临时内存15分钟/10轮/32会话；无跨进程checkpoint/长期画像/持久偏好 |
+| Conversation Memory | partial | backend agent_memory、D1 conversation stores | R1临时内存15分钟/10轮/32会话；D1后端已验证耐久可见历史/来源/草稿及受控出口恢复，HTTP/原UI仍候选/待接；无长期画像/持久偏好 |
 | SSE状态与取消 | partial | backend HTTP agent、runtime R1App | 有事件与取消，答案完成后整段发出；逐token/replay/checkpoint未实现 |
 | 核心退出包/同机checkpoint | partial | backend exit_package、operator_backup、local.py | T-REXP-001—003、T-ROPS-003/006；核心验证≠完整退出，lifecycle仍不完整 |
 | 生命周期/跨机恢复/退役 | partial | schema inventory及退出/备份边界 | T-RLIFE-001—005、T-ROPS-001—007；权利/限制/删除/保留/admission账本、重放与退役证明待实现 |

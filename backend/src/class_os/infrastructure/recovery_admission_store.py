@@ -92,6 +92,12 @@ class AuthorAwareHistory:
     results: tuple[HistoricalResult, ...] = ()
 
 
+@dataclass(frozen=True)
+class HistoryPage:
+    value: AuthorAwareHistory
+    next_before: int | None
+
+
 class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImportTransaction):
     def has_committed_admission(self, binding):
         return self._connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os.conversation_admission WHERE workspace_id=:workspace_id)"), binding).scalar_one()
@@ -194,7 +200,11 @@ class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImpo
                 "tasks": tuple({**row, "attribution": self._attribution(snapshot, owner, "manual_task", row["task_id"], row["version"])} for row in value["tasks"])}
 
     def conversation_history(self, binding, class_id, term_id, thread_id):
-        history = super().conversation_history(binding, class_id, term_id, thread_id)
+        return self.conversation_page(binding, class_id, term_id, thread_id).value
+
+    def conversation_page(self, binding, class_id, term_id, thread_id, *, before_ordinal=None, expected_version=None):
+        history = super().conversation_history(binding, class_id, term_id, thread_id,
+            before_ordinal=before_ordinal, expected_version=expected_version)
         snapshot = self._snapshot(binding, self._now_for_admission())
         attribution = self._attribution(snapshot, binding["actor_id"], "conversation_thread", thread_id, history.version)
         messages = tuple({"message_id": str(row.message_id), "attribution": self._attribution(snapshot, binding["actor_id"],
@@ -214,4 +224,8 @@ class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImpo
             if (message["message_id"] in visible and message_key(message) in groups
                     and groups[message_key(message)]["receipt"]["protocol"] == "fixed-result"):
                 results.append(HistoricalResult(UUID(message["message_id"]), result_value(threads[message["thread_id"]], message, groups[message_key(message)])))
-        return AuthorAwareHistory(history, attribution, messages, tuple(results))
+        selected = {row.turn_id for row in history.messages}
+        ordinals = [row["ordinal"] for row in conversations["conversation_turn"]
+                    if row["thread_id"] == str(thread_id) and UUID(row["turn_id"]) in selected]
+        return HistoryPage(AuthorAwareHistory(history, attribution, messages, tuple(results)),
+                           min(ordinals) if history.truncated else None)

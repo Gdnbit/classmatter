@@ -1,0 +1,32 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "text": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "chat",
+        "read",
+        "draft"
+      ],
+      "title": "Mode",
+      "type": "string"
+    }
+  },
+  "required": [
+    "request_id",
+    "text",
+    "mode"
+  ],
+  "title": "SendBody",
+  "type": "object"
+}

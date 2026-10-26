@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "thread_id": {
+      "format": "uuid",
+      "title": "Thread Id",
+      "type": "string"
+    },
+    "request_id": {
+      "format": "uuid",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "student_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Student Id"
+    }
+  },
+  "required": [
+    "thread_id",
+    "request_id",
+    "title"
+  ],
+  "title": "CreateBody",
+  "type": "object"
+}

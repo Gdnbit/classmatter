@@ -1,0 +1,68 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.conversation-run.v1",
+      "default": "classmatter.conversation-run.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "run_id": {
+      "format": "uuid",
+      "title": "Run Id",
+      "type": "string"
+    },
+    "state": {
+      "enum": [
+        "queued",
+        "running",
+        "cancel_requested",
+        "completed",
+        "failed",
+        "cancelled",
+        "interrupted",
+        "unknown"
+      ],
+      "title": "State",
+      "type": "string"
+    },
+    "version": {
+      "maximum": 2147483647,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "queued_until": {
+      "format": "date-time",
+      "title": "Queued Until",
+      "type": "string"
+    },
+    "ended_at": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Ended At"
+    }
+  },
+  "required": [
+    "run_id",
+    "state",
+    "version",
+    "created_at",
+    "queued_until",
+    "ended_at"
+  ],
+  "title": "RunStatus",
+  "type": "object"
+}

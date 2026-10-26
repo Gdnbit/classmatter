@@ -13,6 +13,9 @@ from class_os.interfaces.http.agent import TurnBody, ConversationResponse, Query
 from class_os.interfaces.http.agent import ScopedConversationBody, ScopedConversationResponse
 from class_os.interfaces.http.agent import RecordNoteTurnBody, RecordNoteCandidateResponse
 from class_os.application.agent_tool_contracts import catalog
+from class_os.interfaces.http.durable_conversation import (ListingResponse as DurableListing, HistoryResponse as DurableHistory,
+    CreateBody as DurableCreate, RenameBody as DurableRename, SendBody as DurableSend, VersionBody as DurableVersion,
+    EmptyBody as DurableEmpty, RunStatus as DurableRun, ControlPreview as DurablePreview, ControlStatus as DurableControlStatus)
 from class_os.interfaces.operator.support import SupportReport
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
@@ -45,7 +48,12 @@ def main():
                         ("model-configuration-body.v1", ModelConfigurationBody), ("model-configuration.v1", ModelConfigurationResponse),
                         ("model-status.v1", ModelStatus), ("model-staged.v1", ModelStaged), ("model-stage-body.v1", ModelStageBody),
                         ("model-test-body.v1", ModelTestBody), ("model-enable-body.v1", ModelEnableBody),
-                        ("synthetic-core-exit.v1", ExitPackageResponse), ("agent-query-source.v1", QueryReceiptReference)]:
+                        ("synthetic-core-exit.v1", ExitPackageResponse), ("agent-query-source.v1", QueryReceiptReference),
+                        ("conversation-d1-list.v1", DurableListing), ("conversation-d1-history.v1", DurableHistory),
+                        ("conversation-d1-create.v1", DurableCreate), ("conversation-d1-rename.v1", DurableRename),
+                        ("conversation-d1-send.v1", DurableSend), ("conversation-d1-version.v1", DurableVersion),
+                        ("conversation-d1-empty.v1", DurableEmpty), ("conversation-d1-run.v1", DurableRun),
+                        ("conversation-d1-preview.v1", DurablePreview), ("conversation-d1-control-status.v1", DurableControlStatus)]:
         target = root / f"{name}.schema.json"
         content = json.dumps(model.model_json_schema(), indent=2, ensure_ascii=False) + "\n"
         if args.check:

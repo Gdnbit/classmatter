@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.conversation-control.v1",
+      "default": "classmatter.conversation-control.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "const": "read-status-required",
+      "default": "read-status-required",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "title": "ControlStatus",
+  "type": "object"
+}

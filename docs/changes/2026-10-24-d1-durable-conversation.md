@@ -4,6 +4,24 @@
 
 ## 目标和验收
 
+D1-16已由PR #32在最终head06d1fb5的完整CI40255153105及独立审查后合并main745f600：Windows非DB582/Web55/desktop23，Ubuntu非DB575+7跳过、实际PG/browser563+13跳过999.35秒。最终Windows两个实际PG组共112个不同用例通过（507.87/320.60秒），728项真实SHA、固定扫描和正式图通过；旧本机全量568通过/1跳过/1旧夹具失败明确保留，未改称全绿。此处只收口服务端成果/生命周期单元，不是界面或整个Goal完成。
+
+## D1-17 文件级实施计划（745f600基线，未验收）
+
+目标：向后续原界面提供真实、受控、可恢复的会话HTTP链和完整分页，不以Demo/临时SDK memory冒充数据库。追溯D1-01—09，正式R1/Requirement/Eval/Task/Gate不改。教师不用重复录入已有消息、引用或草稿；真实净负担仍需研究。
+
+- `application/conversation_interaction.py`、`infrastructure/conversation_interaction.py`及`conversation_control.py`/`recovery_admission_store.py`：原QG的有限会话列表和完整轮次分页。列表固定元数据snapshot hash/offset，历史绑定当前thread version和before ordinal；每页重新ISB/scope/限制/原完成证据核验，cursor不是授权，变化时拒绝而不拼接混合快照。Agent上下文继续有限，旧默认reader语义不扩大。
+- 新独立`interfaces/http/durable_conversation.py`及闭合DTO：显式受信factory装配，复用原cookie/Origin/CSRF/8192字节/重复JSON/本地边界。新建、改名、归档、人类发送、取消/租约核对都走原BCG，GET只走QG；不把worker对象、generation、lease或模型配置放入wire，也不允许任意命令/SQL。
+- 原`DurableChatRuntime`仅增加固定预先入队接线点；原SDK还是唯一loop。发送先保存人类意图再开始SSE；重复请求只读已保存状态，不自动dispatch。保存失败/超时/取消/断线或迟到不假成功；历史来源是当时证据，task仍未提交。
+- 新DTO/真实HTTP/PG/SDK及分页测试：实际业务数据库和FunctionModel，覆盖重建app后历史、同键不同输入/并发一次SDK、纯GET零Provider/业务变更、跨workspace/class/term、坏JSON/CSRF/未知字段、保存/审计故障、取消/清空/过期状态和分页失效。既有R1契约、默认factory、SDK及恢复回归继续跑。
+- README/台账/本变更/公开审计与manifest：最终内容来源审核/真实SHA、固定扫描、docs/contracts、独立审查和完整两平台CI，独立PR验收。不把测试装配当个人Owner已设置或用户实例已启用。
+
+顺序：分页和typed transport → 实际HTTP/SDK故障链 → 独立审查/全套CI → 后续原UI/桌面显式D1接线及工作小结。风险为SSE开始后错误无法改HTTP状态、GET被误作重跑、分页间版本变化、历史草稿被误采纳；分别用预入队/固定失败事件、纯QG GET、严格cursor和未提交语义处理。本单元不新增Schema/store、不自动初始化控制authority或迁移实例，不开放HTTP任意DDL、Agent写工具或Provider费用。回滚停用未启用的transport/兼容前滚，保留全部数据/回执/限制，禁止删除或重跑冒充恢复。
+
+首轮实际ASGI/PG/原SDK9通过55.11秒；补完整分页/并发启动/运行中取消/原X批准清空/审计拒绝后15通过152.50秒，真实52轮不切半轮、52会话跨页不丢作者，变化后的cursor拒绝。后续补HTTP跨页回执关联、VisibleMessage完整8000字符/16000字节协议及读版本上限兼容，最终组合正在重跑；先前成绩不覆盖最后字节。默认R1路由缺失、所有GET零Provider启动、相同发送键不重复输入、重复events空流后须GET状态、超时/保存/claim故障不发完成均有定向证据。它不是实际socket断线/浏览器/桌面验收，也不完成Goal。
+
+上述增强组合44通过301.23秒，覆盖新分页/HTTP及原SDK/interaction回归；日志留忽略目录`test-results/d1-http-final-gateways.xml`。全非DB579通过/4宿主跳过/590 DB未执行59.24秒，原契约无漂移；独立741项真实SHA/13个新增首方文件与schema复核、固定scan4已审查0未解决、验证器81/文档74和正式图通过。列表摘要对已知SQL datetime从hasattr收紧为显式类型的末次等价修改另需最终分页/CI核验，不拿运行中加载的旧函数当最后字节证据。PR最终完整Windows/Ubuntu CI通过前仍是候选，不启用用户实例或提升正式Gate。
+
 | 开发需求 | 必须证明 | 最小实施/验收单元 |
 | --- | --- | --- |
 | D1-01 | 会话列表、新建、改名、归档和打开来自当前授权数据库，刷新/进程重启后身份及内容稳定 | typed会话/消息模型、QG/BCG、真实Web/PG |
