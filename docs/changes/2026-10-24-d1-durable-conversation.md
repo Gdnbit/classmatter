@@ -403,3 +403,5 @@ D1-15最终已由PR #31合并为main62d97c0，实际树与验收head c58e35e一�
 实际测试：原SDK/新成果故障组合26通过138.58秒；固定回执与旧空证明/实际单跳/角色组合11通过112.10秒；0025真实非空升级单项1通过8.95秒；classified clear纯/PG组合23通过45.66秒；摘要扩张预算拒绝1通过27.85秒，验证外部限制未改变、消息仍可读、摘要无部分保存。独立审查23通过42.73秒及native旧完成缺原audit拒绝1通过13.24秒，消除前述两项复现阻断；仍需最终内容/字节审查和完整两平台CI。
 
 失败与修复保留：全DB首轮111通过/3失败347.47秒，备份夹具直接插入无原提交audit的completed回复，不符合新完整性边界；改为原BCG实际enqueue/claim/finish，损坏/缺失/ACL/旧快照不激活断言保留，限制清除也走实际BCG和外部marker。随后备份17通过122.58秒，不把先前失败涂改成通过。协议开发中已运行的进程与后来DDL混用导致的独立长测失败也不冒充稳定字节成绩。当前稳定非DB578通过4跳过/570 DB未执行64.42秒，契约导出无漂移；全DB重跑中。最终PUBLIC_MANIFEST真实hash、固定files/history scan、docs/静态、独立最终复核与Windows/Ubuntu CI必须另行按结果收口，不改正式Gate或整体Goal状态。
+
+候选已由独立PR #32提交，尚未验收合并。稳定全DB第二轮133通过/3失败512.06秒，三项为`test_conversation_backup_restrictions`沿用原始夹具thread version1；真实BCG夹具已是version4。修正为实际版本并保留恢复后的version5；自洽坏checkpoint用例加强为正常publication先拒绝，再由自有测试构造真实pg_dump/重算inventory的坏packet，普通restore及当前限制check都必须拒绝，源数据和清理断言仍保留。该修正不修改业务代码或放宽测试，需定向重跑、内容/hash复核和新head完整CI，不能借旧head成绩合并。

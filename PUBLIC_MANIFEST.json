@@ -180,7 +180,7 @@
       "sha256": "4b8b17f88889e60fea027d4fa9dba83af366bca85876189d901f5f7be4ec6b39"
     },
     "backend/tests/test_conversation_backup_restrictions.py": {
-      "sha256": "13c9195400e3498be1d3d7efbfe02831f16864d8f3acd934e7b9f35595a7b98e"
+      "sha256": "3d16930e9e4a748d412dc278be2717695622af74df51fcf103f4835ea0ff8592"
     },
     "backend/db/migrations/versions/0019_conversation_exit.py": {
       "sha256": "8e8b9c4e4ab18e5153e9dd823ed39bd370e064ed06a8dd12fceab5b45b9efa6f"
@@ -243,7 +243,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "32b0de9e29bcac6c84d5856a37970a8cfb0372cb34a4523e624b528bc0991608"
+      "sha256": "050c13d874a8b31a8f244d305b6bccde1400735ec290770dbe08191826cfd7d2"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
