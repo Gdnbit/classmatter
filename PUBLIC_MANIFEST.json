@@ -180,7 +180,7 @@
       "sha256": "4b8b17f88889e60fea027d4fa9dba83af366bca85876189d901f5f7be4ec6b39"
     },
     "backend/tests/test_conversation_backup_restrictions.py": {
-      "sha256": "3d16930e9e4a748d412dc278be2717695622af74df51fcf103f4835ea0ff8592"
+      "sha256": "62d43b5a2ccab7f1a60a673376be4bb2551f9a7690de8cb1d1e33b75877bde2a"
     },
     "backend/db/migrations/versions/0019_conversation_exit.py": {
       "sha256": "8e8b9c4e4ab18e5153e9dd823ed39bd370e064ed06a8dd12fceab5b45b9efa6f"

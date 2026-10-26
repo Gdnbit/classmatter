@@ -253,6 +253,8 @@ def test_self_consistent_archive_with_current_head_but_old_visible_rows_is_rejec
             packet.update(id=str(bad), archive=base64.b64encode(archive).decode("ascii"),
                           archive_sha256=hashlib.sha256(archive).hexdigest(), inventory=inventory(runtime))
             backup._publish(bad, fixture_codec(encoded(packet)))
+            opened, reopened = backup._open(bad)
+            assert reopened == archive and opened["inventory"] == packet["inventory"]
         finally:
             with owner.transaction() as connection:
                 connection.execute(text("""UPDATE class_os.conversation_thread SET status='cleared',title='已清除的会话',
