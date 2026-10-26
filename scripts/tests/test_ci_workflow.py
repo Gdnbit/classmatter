@@ -19,6 +19,9 @@ def validate(document):
     if set(document.get("on", {})) != {"push", "pull_request", "workflow_dispatch"}:
         raise ValueError("No elevated pull request or chained workflow trigger")
     job = document["jobs"]["baseline"]
+    budget = job.get("timeout-minutes")
+    if type(budget) is not int or not 20 <= budget <= 30:
+        raise ValueError("Explicit bounded engineering job budget required")
     if job.get("permissions") or job.get("continue-on-error") or job.get("environment"):
         raise ValueError("No elevated permissions, deployment or suppressed failure")
     if job["strategy"]["matrix"]["os"] != ["ubuntu-24.04", "windows-2025"]:
@@ -47,6 +50,14 @@ class CiWorkflowTests(unittest.TestCase):
 
     def test_readonly_cross_host_baseline(self):
         validate(self.document)
+
+    def test_full_regression_budget_is_explicit_and_bounded(self):
+        self.assertEqual(30, self.document["jobs"]["baseline"]["timeout-minutes"])
+        for budget in (None, True, 0, 19, 31, "30"):
+            document = copy.deepcopy(self.document)
+            document["jobs"]["baseline"]["timeout-minutes"] = budget
+            with self.subTest(budget=budget), self.assertRaises(ValueError):
+                validate(document)
 
     def test_exact_byte_fixtures_are_lf_even_on_windows_checkout(self):
         fixtures = sorted((ROOT / "evals/class-os-v1/fixtures/r1").glob("*.synthetic.json"))

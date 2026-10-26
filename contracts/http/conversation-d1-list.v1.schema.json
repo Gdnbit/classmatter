@@ -1,0 +1,200 @@
+{
+  "$defs": {
+    "Attribution": {
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "enum": [
+            "source-import",
+            "local-owner"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "created_by": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Created By"
+        },
+        "last_modified_by": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Modified By"
+        },
+        "source_workspace_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Workspace Id"
+        },
+        "source_owner_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Owner Id"
+        },
+        "source_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Version"
+        },
+        "content_authority": {
+          "enum": [
+            "assistant-unverified",
+            "user-original",
+            "domain-data"
+          ],
+          "title": "Content Authority",
+          "type": "string"
+        }
+      },
+      "required": [
+        "origin",
+        "created_by",
+        "last_modified_by",
+        "source_workspace_id",
+        "source_owner_id",
+        "source_version",
+        "content_authority"
+      ],
+      "title": "Attribution",
+      "type": "object"
+    },
+    "ThreadItem": {
+      "additionalProperties": false,
+      "properties": {
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "archived",
+            "cleared"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "student_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Student Id"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "attribution": {
+          "$ref": "#/$defs/Attribution"
+        }
+      },
+      "required": [
+        "thread_id",
+        "title",
+        "status",
+        "version",
+        "student_id",
+        "updated_at",
+        "attribution"
+      ],
+      "title": "ThreadItem",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.conversation-list.v1",
+      "default": "classmatter.conversation-list.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "data": {
+      "items": {
+        "$ref": "#/$defs/ThreadItem"
+      },
+      "maxItems": 50,
+      "title": "Data",
+      "type": "array"
+    },
+    "snapshot": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Snapshot",
+      "type": "string"
+    },
+    "next_offset": {
+      "anyOf": [
+        {
+          "exclusiveMaximum": 10000,
+          "minimum": 50,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Offset"
+    }
+  },
+  "required": [
+    "data",
+    "snapshot"
+  ],
+  "title": "ListingResponse",
+  "type": "object"
+}

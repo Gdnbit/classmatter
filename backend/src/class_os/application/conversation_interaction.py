@@ -149,6 +149,20 @@ class ConversationInteractionGateway(AdmissionGateway):
 
 
 class ConversationInteractionQuery(AdmissionQueryGateway):
+    def conversation_page(self, token, client, csrf, workspace_id, class_id, term_id, thread_id, *, before_ordinal=None, expected_version=None):
+        def read(tx, binding, now):
+            if any(type(value) is not UUID for value in (class_id, term_id, thread_id)):
+                raise CommandRejected()
+            return tx.conversation_page(binding, class_id, term_id, thread_id,
+                before_ordinal=before_ordinal, expected_version=expected_version)
+        return self._run((token, client, csrf, workspace_id), "conversation.history", read,
+                         class_id=class_id, term_id=term_id, resource_id=thread_id)
+
+    def conversation_listing(self, token, client, csrf, workspace_id, class_id, term_id, *, snapshot=None, offset=0):
+        return self._run((token, client, csrf, workspace_id), "conversation.history",
+            lambda tx, binding, now: tx.interaction_list_page(binding, class_id, term_id, now, snapshot=snapshot, offset=offset),
+            class_id=class_id, term_id=term_id)
+
     def conversations(self, token, client, csrf, workspace_id, class_id, term_id):
         def read(tx, binding, now):
             if not callable(getattr(tx, "interaction_list", None)):

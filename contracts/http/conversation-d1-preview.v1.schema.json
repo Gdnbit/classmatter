@@ -1,0 +1,91 @@
+{
+  "$defs": {
+    "ControlPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "enum": [
+            "conversation.clear",
+            "conversation.archive"
+          ],
+          "title": "Command",
+          "type": "string"
+        },
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "command",
+        "thread_id",
+        "class_id",
+        "term_id",
+        "expected_version"
+      ],
+      "title": "ControlPayload",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.conversation-preview.v1",
+      "default": "classmatter.conversation-preview.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "payload_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Payload Hash",
+      "type": "string"
+    },
+    "risk": {
+      "enum": [
+        "W1",
+        "X"
+      ],
+      "title": "Risk",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "payload": {
+      "$ref": "#/$defs/ControlPayload"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "payload_hash",
+    "risk",
+    "expires_at",
+    "payload"
+  ],
+  "title": "ControlPreview",
+  "type": "object"
+}

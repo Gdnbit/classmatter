@@ -218,7 +218,7 @@ class ConversationTransaction(BusinessTransaction):
                 {**binding, "thread": thread_id, "turn": row["turn_id"], "message": row["message_id"],
                  "digest": checksum(row["body"]), "created": row["created_at"], "recorded": now})
 
-    def conversation_history(self, binding, class_id, term_id, thread_id):
+    def conversation_history(self, binding, class_id, term_id, thread_id, *, before_ordinal=None, expected_version=None):
         from .recovery_admission_store import AdmissionTransaction
         if type(self) is not AdmissionTransaction and self._connection.execute(text("""SELECT
             EXISTS(SELECT 1 FROM class_os.conversation_result_receipt
@@ -239,6 +239,10 @@ class ConversationTransaction(BusinessTransaction):
             if compared.state != "aligned":
                 raise CommandRejected()
             current = self._thread(binding, class_id, term_id, thread_id)
+            if ((before_ordinal is None) != (expected_version is None)
+                    or before_ordinal is not None and (type(before_ordinal) is not int or not 1 <= before_ordinal <= 10000
+                        or type(expected_version) is not int or expected_version != current["version"])):
+                raise CommandRejected()
             marker = next((item for item in compared.snapshot.markers if item.thread_id == thread_id), None)
             if ((current["status"] == "cleared") != (marker is not None)
                     or marker is not None and (current["version"] != marker.version_after
@@ -247,8 +251,8 @@ class ConversationTransaction(BusinessTransaction):
             messages, truncated = (), False
             if current["status"] != "cleared":
                 turns = self._connection.execute(text("""SELECT turn_id FROM class_os.conversation_turn
-                    WHERE workspace_id=:w AND thread_id=:thread ORDER BY ordinal DESC LIMIT 51"""),
-                    {"w": binding["workspace_id"], "thread": thread_id}).scalars().all()
+                    WHERE workspace_id=:w AND thread_id=:thread AND ordinal<:before ORDER BY ordinal DESC LIMIT 51"""),
+                    {"w": binding["workspace_id"], "thread": thread_id, "before": before_ordinal if before_ordinal is not None else 10001}).scalars().all()
                 truncated = len(turns) > 50
                 rows = self._connection.execute(text("""SELECT m.message_id,m.turn_id,m.role,m.origin,m.body,m.visibility,m.created_at
                     FROM class_os.conversation_message m JOIN class_os.conversation_turn t USING(workspace_id,thread_id,turn_id)

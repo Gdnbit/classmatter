@@ -1,6 +1,6 @@
 """Fixed interaction SQL mixed into the existing attributed BCG transaction."""
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
@@ -14,6 +14,13 @@ from class_os.domain.roster import Receipt, CommandStatus
 class ConversationPage:
     items: tuple[dict, ...]
     truncated: bool
+
+
+@dataclass(frozen=True)
+class ConversationListing:
+    items: tuple[dict, ...]
+    snapshot: str
+    next_offset: int | None
 
 
 class InteractionTransaction:
@@ -185,6 +192,29 @@ class InteractionTransaction:
         _, snapshot = self._attribution_snapshot(binding["workspace_id"], now)
         return ConversationPage(tuple({**row, "attribution": self._attribution(snapshot, binding["actor_id"], "conversation_thread", row["thread_id"], row["version"])}
                                       for row in rows[:50]), len(rows) > 50)
+
+    def interaction_list_page(self, binding, class_id, term_id, now, *, snapshot=None, offset=0):
+        from class_os.domain.exit_package import checksum
+        self.interaction_context(binding, class_id, term_id, active=False)
+        if (type(offset) is not int or not 0 <= offset < 10000 or offset % 50
+                or snapshot is None and offset != 0
+                or snapshot is not None and (type(snapshot) is not str or len(snapshot) != 64
+                    or any(char not in "0123456789abcdef" for char in snapshot))):
+            raise CommandRejected()
+        rows = self._connection.execute(text("""SELECT thread_id,title,status,version,student_id,updated_at FROM class_os.conversation_thread
+            WHERE workspace_id=:workspace_id AND owner_id=:actor_id AND class_id=:c AND term_id=:t
+            ORDER BY updated_at DESC,thread_id LIMIT 10001"""), {**binding, "c": class_id, "t": term_id}).mappings().all()
+        if len(rows) > 10000:
+            raise CommandRejected()
+        _, state = self._attribution_snapshot(binding["workspace_id"], now)
+        self.verified_result_bundle(binding, now, state)
+        items = tuple({**row, "attribution": self._attribution(state, binding["actor_id"], "conversation_thread", row["thread_id"], row["version"])}
+                      for row in rows)
+        digest = checksum([{key: str(value) if isinstance(value, UUID) else value.isoformat() if isinstance(value, datetime) else value
+                            for key, value in row.items()} for row in items])
+        if snapshot is not None and snapshot != digest:
+            raise CommandRejected()
+        return ConversationListing(items[offset:offset + 50], digest, offset + 50 if offset + 50 < len(items) else None)
 
     def interaction_status(self, binding, class_id, term_id, thread_id, request_id, now):
         self.interaction_thread(binding, class_id, term_id, thread_id, now, active=False)

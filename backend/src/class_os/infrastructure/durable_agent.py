@@ -1,6 +1,6 @@
 """Opt-in durable orchestration; original Pydantic AI owns every model loop.
 
-Not registered in HTTP/UI. No model receives this server-owned BCG handle.
+Default R1 composition does not register it. No model receives this BCG handle.
 """
 from contextlib import aclosing, suppress
 from time import monotonic
@@ -27,6 +27,13 @@ class DurableChatRuntime:
     async def stream(self, credentials, class_id, term_id, thread_id, request_id, text, mode="chat"):
         # Enqueue is human input, not model output or an Agent write tool.
         await anyio.to_thread.run_sync(lambda: self.worker.enqueue(*credentials, class_id, term_id, thread_id, request_id, text, mode))
+        async with aclosing(self.stream_queued(credentials, class_id, term_id, thread_id, request_id)) as source:
+            async for item in source:
+                yield item
+
+    async def stream_queued(self, credentials, class_id, term_id, thread_id, request_id):
+        # Explicit transport starts an already committed human request. GETs,
+        # startup and reconnect never call this; claim remains at-most-once.
         ticket = await anyio.to_thread.run_sync(lambda: self.worker.claim(credentials, class_id, term_id, thread_id, request_id))
         if ticket is None:
             return  # Caller reads QG status/history; never automatic redispatch.

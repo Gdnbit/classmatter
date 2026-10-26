@@ -1,0 +1,478 @@
+{
+  "$defs": {
+    "Attribution": {
+      "additionalProperties": false,
+      "properties": {
+        "origin": {
+          "enum": [
+            "source-import",
+            "local-owner"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "created_by": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Created By"
+        },
+        "last_modified_by": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Modified By"
+        },
+        "source_workspace_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Workspace Id"
+        },
+        "source_owner_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Owner Id"
+        },
+        "source_version": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Version"
+        },
+        "content_authority": {
+          "enum": [
+            "assistant-unverified",
+            "user-original",
+            "domain-data"
+          ],
+          "title": "Content Authority",
+          "type": "string"
+        }
+      },
+      "required": [
+        "origin",
+        "created_by",
+        "last_modified_by",
+        "source_workspace_id",
+        "source_owner_id",
+        "source_version",
+        "content_authority"
+      ],
+      "title": "Attribution",
+      "type": "object"
+    },
+    "DraftView": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "task.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "student_id": {
+          "default": null,
+          "title": "Student Id",
+          "type": "null"
+        },
+        "source_record_id": {
+          "default": null,
+          "title": "Source Record Id",
+          "type": "null"
+        },
+        "due_at": {
+          "default": null,
+          "title": "Due At",
+          "type": "null"
+        }
+      },
+      "required": [
+        "command",
+        "task_id",
+        "class_id",
+        "term_id",
+        "title"
+      ],
+      "title": "DraftView",
+      "type": "object"
+    },
+    "HistoryView": {
+      "additionalProperties": false,
+      "properties": {
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "archived",
+            "cleared"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "messages": {
+          "items": {
+            "$ref": "#/$defs/MessageView"
+          },
+          "maxItems": 100,
+          "title": "Messages",
+          "type": "array"
+        },
+        "truncated": {
+          "title": "Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "thread_id",
+        "title",
+        "status",
+        "version",
+        "messages",
+        "truncated"
+      ],
+      "title": "HistoryView",
+      "type": "object"
+    },
+    "MessageAttribution": {
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {
+          "format": "uuid",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "attribution": {
+          "$ref": "#/$defs/Attribution"
+        }
+      },
+      "required": [
+        "message_id",
+        "attribution"
+      ],
+      "title": "MessageAttribution",
+      "type": "object"
+    },
+    "MessageContent": {
+      "additionalProperties": false,
+      "properties": {
+        "role": {
+          "enum": [
+            "user",
+            "assistant"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "origin": {
+          "enum": [
+            "user-original",
+            "assistant-unverified"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 8000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "role",
+        "origin",
+        "text"
+      ],
+      "title": "MessageContent",
+      "type": "object"
+    },
+    "MessageView": {
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {
+          "format": "uuid",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "turn_id": {
+          "format": "uuid",
+          "title": "Turn Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "content": {
+          "$ref": "#/$defs/MessageContent"
+        }
+      },
+      "required": [
+        "message_id",
+        "turn_id",
+        "created_at",
+        "content"
+      ],
+      "title": "MessageView",
+      "type": "object"
+    },
+    "ResultContent": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/SourceView"
+          },
+          "maxItems": 2,
+          "title": "Sources",
+          "type": "array"
+        },
+        "draft": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DraftView"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "text",
+        "sources",
+        "draft"
+      ],
+      "title": "ResultContent",
+      "type": "object"
+    },
+    "ResultView": {
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {
+          "format": "uuid",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "result": {
+          "$ref": "#/$defs/ResultContent"
+        },
+        "content_authority": {
+          "const": "assistant-unverified",
+          "title": "Content Authority",
+          "type": "string"
+        },
+        "draft_status": {
+          "const": "uncommitted",
+          "title": "Draft Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "message_id",
+        "result",
+        "content_authority",
+        "draft_status"
+      ],
+      "title": "ResultView",
+      "type": "object"
+    },
+    "SourceView": {
+      "additionalProperties": false,
+      "properties": {
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "source_workspace_id": {
+          "format": "uuid",
+          "title": "Source Workspace Id",
+          "type": "string"
+        },
+        "source_owner_id": {
+          "format": "uuid",
+          "title": "Source Owner Id",
+          "type": "string"
+        },
+        "receipt_id": {
+          "format": "uuid",
+          "title": "Receipt Id",
+          "type": "string"
+        },
+        "projection_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Projection Hash",
+          "type": "string"
+        },
+        "as_of": {
+          "format": "date-time",
+          "title": "As Of",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source_id",
+        "source_workspace_id",
+        "source_owner_id",
+        "receipt_id",
+        "projection_hash",
+        "as_of"
+      ],
+      "title": "SourceView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.conversation-history.v1",
+      "default": "classmatter.conversation-history.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "student_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Student Id"
+    },
+    "history": {
+      "$ref": "#/$defs/HistoryView"
+    },
+    "thread_attribution": {
+      "$ref": "#/$defs/Attribution"
+    },
+    "message_attributions": {
+      "items": {
+        "$ref": "#/$defs/MessageAttribution"
+      },
+      "maxItems": 100,
+      "title": "Message Attributions",
+      "type": "array"
+    },
+    "results": {
+      "items": {
+        "$ref": "#/$defs/ResultView"
+      },
+      "maxItems": 50,
+      "title": "Results",
+      "type": "array"
+    },
+    "next_before": {
+      "anyOf": [
+        {
+          "maximum": 10000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next Before"
+    }
+  },
+  "required": [
+    "class_id",
+    "term_id",
+    "student_id",
+    "history",
+    "thread_attribution",
+    "message_attributions",
+    "results"
+  ],
+  "title": "HistoryResponse",
+  "type": "object"
+}

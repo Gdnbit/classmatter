@@ -4,6 +4,16 @@ Layered modular monolith, synthetic-only. Python 3.13, uv 0.11.7, PostgreSQL 18.
 
 ## Local entry point
 
+### Opt-in D1 transport candidate (not enabled by the commands below)
+
+`interfaces/http/durable_conversation.py:create_durable_app` is a trusted synthetic composition using the existing exact worker/QG/store/ISB and original Pydantic AI runtime. Default `create_app`, `local.py` and desktop R1 composition do not install it or migrate an instance. It assumes an already human-initialized D1 control; it cannot mint a missing authority or make Owner setup complete. Current explicit D1 remains0026/35, no new schema/store/tool in this transport slice.
+
+Closed paths below `/api/workspaces/{workspace}/conversation-d1/classes/{class}/terms/{term}` provide list/history, bounded whole-turn pages, create/rename, explicit enqueue, explicit event start, status, cancel/reconcile and fixed clear/archive previews. Enqueue and event start are two human POSTs; GET/rebuild/reconnect never starts a model or reconciles a run. Repeated event start yields no redispatch; clients must then read saved status/history, not infer failure, success or a free retry from an empty stream. Unknown/rejected completion never emits a saved answer. Running cancel means request acknowledged, not confirmed supplier cancellation or zero cost.
+
+List pages carry a full fixed-metadata snapshot hash and offsets in multiples of50. History pages carry current thread version and `before` ordinal; each returns at most50 complete turns/100 visible messages, with only those messages' authors, sources and uncommitted drafts. A changed snapshot/version refuses the old cursor. Every page rechecks ISB/scope/protected restrictions and original completion evidence; cursors are not capabilities. New DTO/schema snapshots are separate `conversation-d1-*.v1`, not changes to R1 contracts. Historical query receipts are not current facts, chat is not a formal record, and draft snapshots do not execute. Clear/archive previews still use original BCG approval/commit/status routes and their existing risk/recent-authentication rules; no Agent receives these handles.
+
+The real UI/desktop binding, explicit operator runtime profile/entry, startup history restore, UI cancellation/navigation fences, authenticated D1 exit controls and sourced editable work-summary remain required follow-up work. ASGI/PG/FunctionModel tests are not a real network/browser/desktop acceptance, paid Provider quality, cross-host recovery or formal release admission.
+
 Build `apps/web` first. From this directory:
 
 ```powershell
@@ -121,7 +131,7 @@ QG returns an explicitly bounded latest50 list with a truncation flag, attribute
 
 `DurableChatRuntime` retains its compatibility name and reuses the original Pydantic AI loop/model context/limits, without passing the BCG to the SDK. Chat, authorized current-work reads and title-only task drafts compose through the same adapter, rebuilding bounded visible history as untrusted text, never raw SDK/session/tool dumps. Immediately before SDK entry it rechecks current QG run state/version and lease; known pre-dispatch cancellation/expiry makes zero model calls. This is not atomic supplier dispatch/cancellation. Final answer/draft/completion wait for BCG persistence/audit and current QG visibility before each release. Clear-after-commit suppresses known stale output; this is not revocation of delivered text or an atomic UI guarantee. Disconnect/timeout/uncertain finalization are not false success or automatic paid retries; authorized lease reconciliation may still be needed. Temporary SDK history is discarded per run. Unknown outcome never proves zero Provider cost.
 
-## Fixed historical results (D1-16, candidate)
+## Fixed historical results (D1-16, accepted synthetic server unit)
 
 Explicit0026 adds three fixed stores: one digest-only result receipt per assistant outcome, up to two ordered original query receipts, and one uncommitted title-only task snapshot. There is no generic JSON, model-selected schema, approval/nonce, accepted-state flag or automatic business write. The private one-turn collector observes the original SDK's actual authorized QG returns and task tool; scope/time syntax or an arbitrary historical audit row cannot replace that correlation. Server BCG verifies the captured result, original input/claim and source audit, then commits text, fixed metadata, original receipt and audit atomically. Query snapshots remain historical, not current facts; restored source owner/workspace remain original-source metadata, never target authorization.
 
@@ -131,7 +141,7 @@ Old plain history transactions reject fixed metadata, an original fixed-result p
 
 For a genuine old visible plain reply, the same human BCG clear may record a `legacy-plain` digest only after verifying the original canonical FinishRun receipt/audit (source audit for imported messages). Its original completion time and later `recorded_at` are distinct; a post-admission integrity record does not become a fake imported origin. A SAVEPOINT conservatively checks the expanded full budget before any irreversible clear marker. It may reject a near-limit instance rather than leave a permanently pending clear; limits are not raised. Previously cleared historical replies without enough classified digest evidence, unaudited synthetic seed replies and unsupported multi-hop data fail closed, not silently repaired or promoted. No user instance is automatically migrated.
 
-`verify_exit.py --profile conversation-v6` is offline validation only, with the unchanged1MiB/10,000-row limits and `activation_allowed=false`. Clear cannot erase old downloaded copies. Recovery does not recreate a private SDK capture, restart a run or adopt a draft. HTTP/UI binding, pagination, work-summary closure and whole Goal acceptance remain subsequent required work. This candidate requires independent audit and final-head Windows/Ubuntu CI before merge.
+`verify_exit.py --profile conversation-v6` is offline validation only, with the unchanged1MiB/10,000-row limits and `activation_allowed=false`. Clear cannot erase old downloaded copies. Recovery does not recreate a private SDK capture, restart a run or adopt a draft. D1-16 was accepted in[PR32](https://github.com/Gdnbit/classmatter/pull/32) at main745f600 after complete CI40255153105 and independent review. The explicit HTTP/pagination candidate is described above; UI/desktop binding, work-summary closure and whole Goal acceptance remain required.
 
 No HTTP/UI activation or user-instance migration. HTTP/UI presentation of the now-stored historical query sources/draft cards, UI generation/clear fences, pagination and sourced work-summary remain subsequent required slices. Tests use offline FunctionModel, not real Provider quality/fee authorization. Teacher maintenance adds no step in this server-only slice; actual net-burden benefit remains unvalidated.
 
