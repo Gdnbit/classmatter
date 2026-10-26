@@ -8,6 +8,6 @@ function allowed(origin, value) {
 function exitDownload(origin,value,mime,size) {
   if(!allowed(origin,value) || mime!=='application/json' || !Number.isSafeInteger(size) || size<=0 || size>16*1024*1024)return false;
   const url=new URL(value),id='[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}';
-  return !url.search && !url.hash && new RegExp('^/api/workspaces/'+id+'/exit/'+id+'/download$').test(url.pathname);
+  return !url.search && !url.hash && new RegExp('^/api/workspaces/'+id+'/(?:conversation-d1/)?exit/'+id+'/download$').test(url.pathname);
 }
 module.exports={allowed,CSP,exitDownload};

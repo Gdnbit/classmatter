@@ -33,9 +33,12 @@ test('runtime renderer stays on the verified origin; same-origin CSP does not gr
   for(const url of ['http://127.0.0.1:8443/','https://example.com/','file:///tmp/local','classmatter://app/','blob:http://127.0.0.1:8000/123','http://user@127.0.0.1:8000/']) assert.equal(allowed(origin,url),false);
   assert.match(CSP,/connect-src 'self'/);assert.match(CSP,/frame-src 'none'/);assert.doesNotMatch(CSP,/unsafe-eval/);
 });
-test('only bounded JSON core exit receipt downloads may open a user Save dialog',()=>{
+test('only bounded JSON core or D1 exit receipt downloads may open a user Save dialog',()=>{
   const origin='http://127.0.0.1:8000',id='12345678-1234-1234-1234-123456789012',url=origin+'/api/workspaces/'+id+'/exit/'+id+'/download';
   assert.ok(exitDownload(origin,url,'application/json',100));
+  const d1=url.replace('/exit/','/conversation-d1/exit/');
+  assert.ok(exitDownload(origin,d1,'application/json',100));
+  for(const target of [d1+'?x=1',d1+'#x',d1.replace('/conversation-d1/','/conversation-d2/'),d1.replace('/download','/preview')])assert.equal(exitDownload(origin,target,'application/json',100),false);
   for(const [target,mime,size] of [[url+'?x=1','application/json',100],[url,'text/html',100],[url,'application/json',0],[url,'application/json',17*1024*1024],[origin+'/assets/index.js','application/json',100]])assert.equal(exitDownload(origin,target,mime,size),false);
 });
 test('proof is exact, keyed and challenge-bound, not merely a green health response',()=>{

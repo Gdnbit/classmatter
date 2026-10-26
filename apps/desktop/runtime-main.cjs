@@ -4,12 +4,24 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {desktopService}=require('./runtime-service.cjs');
 const {allowed,CSP,exitDownload}=require('./runtime-policy.cjs');
-app.setName('ClassMatter Synthetic Runtime');
-app.setPath('userData',path.join(app.getPath('appData'),'ClassMatter-Synthetic-Runtime'));
-app.setAppUserModelId('org.classmatter.synthetic-runtime');
+let source,d1=false,sourceInvalid=false;
+try {
+  source=JSON.parse(fs.readFileSync(path.join(__dirname,'runtime-source.json'),'utf8'));
+  const keys=Object.keys(source).sort().join(',');
+  d1=source.schema_version===2 && source.profile==='conversation-d1' && keys==='profile,repositoryRoot,runtimeRoot,schema_version,servicePort'
+    && Number.isInteger(source.servicePort) && source.servicePort>=1024 && source.servicePort<=65535;
+  if(!d1 && (source.schema_version!==1 || keys!=='repositoryRoot,runtimeRoot,schema_version'))sourceInvalid=true;
+} catch {sourceInvalid=true;}
+app.setName(d1?'ClassMatter Synthetic D1':'ClassMatter Synthetic Runtime');
+app.setPath('userData',path.join(app.getPath('appData'),d1?'ClassMatter-Synthetic-D1':'ClassMatter-Synthetic-Runtime'));
+app.setAppUserModelId(d1?'org.classmatter.synthetic-d1':'org.classmatter.synthetic-runtime');
 app.enableSandbox();
 let window,service,quitting=false,origin;
-if(!app.requestSingleInstanceLock()) app.quit();
+if(sourceInvalid) app.whenReady().then(()=>{
+  dialog.showErrorBox('运行环境尚未准备好','运行描述无效；未连接或接管其他实例。原数据未更改。');
+  app.exit(1);
+});
+else if(!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance',()=>{if(window){if(window.isMinimized())window.restore();window.show();window.focus();}});
   app.on('before-quit',event=>{
@@ -20,15 +32,14 @@ else {
   app.on('window-all-closed',()=>app.quit());
   app.whenReady().then(async()=>{
     if(app.isPackaged) throw new Error('This runtime entry is development-only; binary distribution is not approved.');
-    const source=JSON.parse(fs.readFileSync(path.join(__dirname,'runtime-source.json'),'utf8'));
-    if(source.schema_version!==1 || Object.keys(source).sort().join(',')!=='repositoryRoot,runtimeRoot,schema_version') throw new Error('Invalid runtime source');
+    if(sourceInvalid) throw new Error('Invalid runtime source');
     service=desktopService(source.repositoryRoot,path.join(__dirname,'ui'),()=>{
       if(window) window.close();
       // No automatic replay or reattachment after a service crash.
       app.quit();
-    },source.runtimeRoot);
+    },source.runtimeRoot,d1?'conversation-d1':'r1',d1?source.servicePort:8000);
     origin=await service.start();
-    const isolated=session.fromPartition('classmatter-synthetic-runtime');
+    const isolated=session.fromPartition(d1?'classmatter-synthetic-d1':'classmatter-synthetic-runtime');
     isolated.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
     isolated.setPermissionCheckHandler(()=>false);
     isolated.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!allowed(origin,details.url)}));
@@ -37,7 +48,7 @@ else {
       if(!window || contents!==window.webContents || !exitDownload(origin,item.getURL(),item.getMimeType(),item.getTotalBytes())){event.preventDefault();return;}
       // Only the existing authorized JSON receipt route; native Save dialog
       // leaves the destination to the user. Never set an arbitrary save path.
-      item.setSaveDialogOptions({title:'保存已批准的合成核心退出包',defaultPath:'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});
+      item.setSaveDialogOptions({title:'保存已批准的合成证据退出包',defaultPath:d1?'ClassMatter-synthetic-conversation-v6.json':'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});
     });
     window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · 合成持久化开发',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
     window.webContents.setWindowOpenHandler(()=>({action:'deny'}));

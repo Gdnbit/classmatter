@@ -12,7 +12,15 @@ test('supported R1 paths round-trip exact identity/view/filter without domain ob
     const route = parseRuntimeRoute(path)
     assert.equal(runtimePath(route), path)
     assert.deepEqual(parseRuntimeRoute(runtimePath(route)), route)
-    assert.deepEqual(Object.keys(route).sort(), ['page', 'studentId', 'studentTab', 'studentView', 'taskId', 'workFilter'])
+    assert.deepEqual(Object.keys(route).sort(), ['conversationClassId', 'conversationId', 'conversationTermId', 'page', 'studentId', 'studentTab', 'studentView', 'taskId', 'workFilter'])
+  }
+})
+
+test('D1 deep link retains only exact class/term/thread identifiers, never a capability', () => {
+  const path = `/conversations/${id}/${task}/00000000-0000-0000-0000-000000000003`
+  assert.equal(runtimePath(parseRuntimeRoute(path)), path)
+  for (const bad of [path + '?text=private', path + '#approval', path.replace(id, 'not-a-class'), path + '/events']) {
+    assert.equal(parseRuntimeRoute(bad).page, 'unavailable')
   }
 })
 

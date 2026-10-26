@@ -19,7 +19,7 @@ from class_os.interfaces.http.durable_conversation import (ListingResponse as Du
     EmptyBody as DurableEmpty, RunStatus as DurableRun, ControlPreview as DurablePreview, ControlStatus as DurableControlStatus)
 from class_os.interfaces.operator.support import SupportReport
 from class_os.interfaces.http.durable_views import (ActivityResponse as DurableActivity, AuditResponse as DurableAudit,
-    CapabilitiesResponse as DurableCapabilities)
+    CapabilitiesResponse as DurableCapabilities, ExitSummary as DurableExitSummary, ExitPreview as DurableExitPreview)
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
 from class_os.interfaces.http.roster import (ApprovalBody, ClassBody, CommitBody, ContextResponse,
@@ -56,6 +56,7 @@ def main():
                         ("conversation-d1-history.v2", DurableHistoryV2),
                         ("activity-d1.v1", DurableActivity), ("business-audit-d1.v1", DurableAudit),
                         ("runtime-capabilities-d1.v1", DurableCapabilities),
+                        ("conversation-d1-exit-summary.v1", DurableExitSummary), ("conversation-d1-exit-preview.v1", DurableExitPreview),
                         ("conversation-d1-create.v1", DurableCreate), ("conversation-d1-rename.v1", DurableRename),
                         ("conversation-d1-send.v1", DurableSend), ("conversation-d1-version.v1", DurableVersion),
                         ("conversation-d1-empty.v1", DurableEmpty), ("conversation-d1-run.v1", DurableRun),

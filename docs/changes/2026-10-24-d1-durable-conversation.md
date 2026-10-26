@@ -12,6 +12,14 @@ D1-16已由PR #32在最终head06d1fb5的完整CI40255153105及独立审查后合
 
 ## D1-18 原界面耐久会话纵向接线计划（e62f050基线，实施中）
 
+2026-10-27实施记录：原CLI/desktop显式D1、固定composition/readiness、history.v2 typed client、原R1App拆出耐久controller/展示和受控退出组件已接线。默认R1/旧wire不改，D1无临时数据回退，流文本不作为保存结果。独立审查发现离线迟到fresh、旧stop中止新stream、未发送输入跨scope及focus放大审计；已用连接代次、捕获controller/target、范围清空/导航阻止、原createQueryRefresh修复，并加同帧operation锁。未完成scope加载前输入禁用，避免老师刚输入就被初始化清空。预览批准失败未发commit时可取消；任何commit409/500/断线均保留原预览/同键，不将查询not_committed当撤销证明。认证规则、Gateway和数据库权限不放宽。
+
+独立审查实际复现file-after：首次clear commit也可先写限制文件再返回409，故已撤销“首次409必然零写入”的候选判断。唯一新增区分是D1应用的`ControlReauthenticationRequired`：沿原Gateway在验证阶段记录recent拒绝原因，仍写原拒绝审计并保持原CommandRejected继承，退出原事务后显式D1 HTTP映射428/原business_rejected闭合错误体；不改变默认R1 factory。只有首次业务commit收到该写前428且没有先前送达未知，UI才可取消返回设置重验。普通409、文件证据和原重试语义不改，不额外授权或自行修复文件。新增实际browser时序测试覆盖approve/commit边界过期、真实已提交响应丢失的原键GET、真实_publish后失败的409保键和同键收口；不以TypeScript判断代替原限制状态。
+
+最终主链候选本机结果：上述两种recent场景及真实file-after/回复丢失完整browser2通过96.45秒，另取消/超时/保存/claim/审计失败及同帧双提交、刷新不重跑browser5通过68.01秒；HTTP/owned runtime/actualElectron组23通过168.11秒。新CLI默认端口保持R1为8000，D1为8001，显式环境端口仍可选择，5项CLI/交互用例通过1.42秒。当前765公开路径default-deny/license及固定扫描4已审查0未解决通过；新原生保存对话框人工操作、完整control回归及CI尚待验收。各组可能有交集，历史失败及早期版本成绩保留，不累计为虚构unique总数。回滚保持前述禁DDL降级/禁删除限制策略，只停用显式D1入口或兼容前滚。
+
+独立Electron/API/PG实际重启测试第一次因脚本未选择新学生而找不到“记录事实”失败72.68秒；修正测试选择后1通过54.67秒。浏览器故障测试早期暴露scope就绪前可输入及测试延迟器拦多份响应悬挂，修复后原读/草稿/刷新/清除、迟到离线、focus合并、标题不覆盖、未发送导航隔离和views组6通过54.50秒。早前PG启动失败根因未确定，未改称端口冲突。Web61/tsc/build、desktop23通过；约649KB bundle警告保留，未关检查。新的两种recent过期与真实v6下载场景、完整故障矩阵及最终两平台CI仍需收口；上述不同版本局部证据不合并为最终验收。
+
 目标是一次真实读取/任务草稿在原界面保存、重启恢复正文和原来源、人工清除后不可复现，不新增Agent框架或让教师重录事实。追溯D1-01—09；正式Requirement/Eval/Task/Gate及R1定义不改。独立分支`codex/d1-desktop-conversation`，本单元完整验收后才合并，不以局部后端成绩冒充界面交付。
 
 | 文件/范围 | 具体实施与依赖 |

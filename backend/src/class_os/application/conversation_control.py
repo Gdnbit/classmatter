@@ -11,11 +11,17 @@ from .roster import BusinessGateway, QueryGateway, CommandRejected
 
 CONTROLS = (InitializeConversationControl, ClearConversation)
 _recent = ContextVar("conversation_control_reauthentication", default=None)
+_recent_refused = ContextVar("conversation_control_recent_refused", default=False)
+
+
+class ControlReauthenticationRequired(CommandRejected):
+    """Known pre-mutation recent-auth refusal; never a publication outcome."""
 
 
 def require_recent_control(now):
     recent = _recent.get()
     if recent is None or not timedelta(0) <= now - recent <= timedelta(minutes=5):
+        _recent_refused.set(True)
         raise CommandRejected()
 
 
@@ -31,9 +37,16 @@ class ControlDecision:
 class ConversationBusinessGateway(BusinessGateway):
     def _authorized_run(self, subject, client, csrf, action, callback, **metadata):
         token = _recent.set(subject.reauthenticated_at)
+        refused = _recent_refused.set(False)
         try:
-            return super()._authorized_run(subject, client, csrf, action, callback, **metadata)
+            try:
+                return super()._authorized_run(subject, client, csrf, action, callback, **metadata)
+            except CommandRejected:
+                if _recent_refused.get():
+                    raise ControlReauthenticationRequired() from None
+                raise
         finally:
+            _recent_refused.reset(refused)
             _recent.reset(token)
 
     @staticmethod

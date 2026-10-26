@@ -1,0 +1,72 @@
+{
+  "$defs": {
+    "ExitPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "export_id": {
+          "format": "uuid",
+          "title": "Export Id",
+          "type": "string"
+        },
+        "expected_snapshot_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Expected Snapshot Hash",
+          "type": "string"
+        },
+        "command": {
+          "const": "conversation_exit.create",
+          "title": "Command",
+          "type": "string"
+        }
+      },
+      "required": [
+        "export_id",
+        "expected_snapshot_hash",
+        "command"
+      ],
+      "title": "ExitPayload",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.conversation-exit-preview.v1",
+      "default": "classmatter.conversation-exit-preview.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "payload_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Payload Hash",
+      "type": "string"
+    },
+    "risk": {
+      "const": "X",
+      "title": "Risk",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "payload": {
+      "$ref": "#/$defs/ExitPayload"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "payload_hash",
+    "risk",
+    "expires_at",
+    "payload"
+  ],
+  "title": "ExitPreview",
+  "type": "object"
+}

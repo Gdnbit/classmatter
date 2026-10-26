@@ -47,6 +47,11 @@ import { CommandPreview } from "./CommandPreview"
 import { createQueryRefresh, deadlineRefreshDelay } from "./query-refresh"
 import { useRuntimeNavigation } from "./useRuntimeNavigation"
 import { StudentDirectory } from "./StudentDirectory"
+import { discoverD1, d1Client } from "./durable-conversation"
+import { useDurableConversation } from "./useDurableConversation"
+import { DurableHistory, DurableComposer } from "./DurableConversation"
+import { AttributionLabel } from "./AttributionLabel"
+import { DurableExit } from "./DurableExit"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -99,6 +104,10 @@ export default function R1App() {
   const [modelRevision, setModelRevision] = useState(0)
   const [modelUncertain, setModelUncertain] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
+  const [runtimeProfile, setRuntimeProfile] = useState<"loading" | "failed" | "r1" | "conversation-d1">("loading")
+  const [profileRetry, setProfileRetry] = useState(0)
+  const [durableBusy, setDurableBusy] = useState(false)
+  const [exitBusy, setExitBusy] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState("")
   const [classes, setClasses] = useState<Classroom[]>([])
@@ -140,7 +149,7 @@ export default function R1App() {
   const termLoad = useRef(0)
   const loading = useRef(0)
   const connectivity = useRef(0)
-  const navigationBlocked = busy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
+  const navigationBlocked = busy || durableBusy || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
   const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
@@ -227,6 +236,18 @@ export default function R1App() {
   }, [])
 
   useEffect(() => {
+    setRuntimeProfile("loading")
+    if (!session) return
+    const controller = new AbortController()
+    discoverD1(session, controller.signal).then(value => {
+      if (!controller.signal.aborted) setRuntimeProfile(value)
+    }).catch(reason => {
+      if (!controller.signal.aborted) { setRuntimeProfile("failed"); fail(reason) }
+    })
+    return () => controller.abort()
+  }, [session, profileRetry, fail])
+
+  useEffect(() => {
     alive.current = true
     identityRequest("session", "/api/identity/session")
       .then((value) => {
@@ -249,7 +270,7 @@ export default function R1App() {
 
   const reload = useCallback(
     async (chosen?: Classroom | null) => {
-      if (!session) return
+      if (!session || runtimeProfile === "loading" || runtimeProfile === "failed") return
       const generation = ++loading.current
       const connectionGeneration = connectivity.current
       setRefreshing(true)
@@ -258,9 +279,13 @@ export default function R1App() {
       const history = await request<{ data: Classroom[] }>(
         `${workspace(session)}/classes`,
       )
+      const deepClass = runtimeProfile === "conversation-d1" && navigation.route.conversationClassId
+        ? history.data.find(item => item.class_id === navigation.route.conversationClassId && item.term_id === navigation.route.conversationTermId) : undefined
+      if (runtimeProfile === "conversation-d1" && navigation.route.conversationClassId && !deepClass && chosen === undefined)
+        throw new Error("历史会话的班级/学期不在当前授权范围；未改查其他班级。")
       const target =
         chosen === undefined
-          ? history.data.find(
+          ? deepClass || history.data.find(
               (item) => item.class_id === classroom?.class_id,
             ) ||
             history.data.find((item) => item.status === "active") ||
@@ -277,7 +302,7 @@ export default function R1App() {
         const base = scope(session, target)
         const [roster, events, ids, dupes] = await Promise.all([
           request<{ data: Student[] }>(`${base}/students`),
-          request<{ data: Activity }>(`${base}/activity`),
+          runtimeProfile === "conversation-d1" ? d1Client(session, target).activity() : request<{ data: Activity }>(`${base}/activity`),
           request<{ data: Identifier[] }>(`${base}/identifiers`),
           request<{ data: Duplicate[] }>(`${base}/duplicates`),
         ])
@@ -308,17 +333,17 @@ export default function R1App() {
         if (generation === loading.current && alive.current) setRefreshing(false)
       }
     },
-    [session, classroom?.class_id],
+    [session, classroom?.class_id, runtimeProfile, navigation.route.conversationClassId, navigation.route.conversationTermId],
   )
 
   useEffect(() => {
-    if (session) void reload().catch(fail)
-  }, [session]) // reload once per authenticated session
+    if (session && runtimeProfile !== "loading" && runtimeProfile !== "failed") void reload().catch(fail)
+  }, [session, runtimeProfile, navigation.route.conversationClassId, navigation.route.conversationTermId])
 
   const refreshContext = useRef({ reload, fail, session, blocked: true })
   refreshContext.current = {
     reload, fail, session,
-    blocked: busy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage
+    blocked: busy || durableBusy || exitBusy || runtimeProfile === "loading" || runtimeProfile === "failed" || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage
       || page === "settings" || !!runningAgent.current,
   }
   const foregroundRefresh = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
@@ -753,6 +778,17 @@ export default function R1App() {
     } finally { if (runningAgent.current === controller) runningAgent.current = null }
   }
 
+  const durableScopeMatches = !navigation.route.conversationId ||
+    (navigation.route.conversationClassId === classroom?.class_id && navigation.route.conversationTermId === classroom?.term_id)
+  const durable = useDurableConversation({
+    enabled: runtimeProfile === "conversation-d1" && durableScopeMatches,
+    session, classroom, threadId: navigation.route.conversationId,
+    readable: queryFresh && !refreshing,
+    canWrite: editable && !busy && !form && !pending && !modelUncertain,
+    onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
+    onBusyChange: setDurableBusy, onError: fail,
+  })
+
   if (checking)
     return (
       <div className="r1-auth">
@@ -764,6 +800,16 @@ export default function R1App() {
       <Login error={error} busy={busy} onError={fail} onSession={value => { setError(""); setSession(value) }}
         onProbeSession={value => { setError(""); setNotice("登录状态已只读核对；没有重新执行前次身份操作，也不据此判定它已经完成。"); setSession(value) }} />
     )
+  if (runtimeProfile === "loading" || runtimeProfile === "failed") return <div className="r1-auth"><section>
+    <p role="status">{runtimeProfile === "loading" ? "正在核对真实数据入口…" : "数据入口核对失败；未回退演示或旧会话。"}</p>
+    {error && <p role="alert">{error}</p>}
+    {runtimeProfile === "failed" && <button onClick={() => setProfileRetry(value => value + 1)}>重新核对数据入口</button>}
+  </section></div>
+
+  if (runtimeProfile === "r1" && navigation.route.conversationId) return <div className="r1-auth"><section>
+    <p role="status">当前 R1 实例未启用耐久会话，不能读取此 D1 链接；未回退临时对话。</p>
+    <button onClick={() => navigation.setConversation("", "", "")}>返回当前实例</button>
+  </section></div>
 
   const taskCards = (items: TaskItem[]) =>
     items.length ? (
@@ -799,8 +845,9 @@ export default function R1App() {
         </h2>
         <button
           className="r1-new"
-          disabled={busy || !!runningAgent.current}
+          disabled={busy || durableBusy || !!runningAgent.current || (runtimeProfile === "conversation-d1" && !!durable.text.trim())}
           onClick={() => void action(async () => {
+            if (runtimeProfile === "conversation-d1") { navigation.setConversation("", "", ""); return }
             const generation = loading.current
             if (conversationId) {
               try { await request(`${workspace(session)}/agent/conversations/${conversationId}/forget`, {}, session.csrf_token) }
@@ -972,7 +1019,9 @@ export default function R1App() {
                 <small>CLASSMATTER · 对话</small>
                 <h1>今天想处理什么？</h1>
                 <p>少记、少追、少重复。事实由你确认，系统帮你复用。</p>
-                <p className="r1-muted">对话仅为临时上下文，刷新或重启不保证恢复；已确认的事实与任务另由数据库保存。</p>
+                <p className="r1-muted">{runtimeProfile === "conversation-d1"
+                  ? "已发送文字和完成结果由数据库保存。历史 AI 内容不是正式事实；不会因刷新而重新调用模型。"
+                  : "对话仅为临时上下文，刷新或重启不保证恢复；已确认的事实与任务另由数据库保存。"}</p>
               </div>
               <div className="r1-attention">
                 <section>
@@ -1016,7 +1065,9 @@ export default function R1App() {
                 </button>
                 <button onClick={() => setPage("students")}>查看学生</button>
               </div>
-              <div ref={conversationContent} className="r1-messages">
+              {runtimeProfile === "conversation-d1" && <DurableHistory state={durable} canWrite={editable && !busy && !form && !pending}
+                onDraft={title => { setDraftTitle(title); setRecord(null); open("task") }} />}
+              {runtimeProfile !== "conversation-d1" && <div ref={conversationContent} className="r1-messages">
                 {agentMode === "read" && <p className="r1-muted">助理查询范围：{agentStudent ? selectedAgentStudent?.name || "已选学生不可用，请重新选择；不会回落全班" : "全班当前工作"}。仅统计，不作评价。</p>}
                 {messages.map((item, i) => (
                   <article key={i} className={item.role}>
@@ -1028,7 +1079,7 @@ export default function R1App() {
                 {agentStatus && <p role="status" className="r1-muted">{agentStatus}</p>}
                 {agentDraft && <section className="r1-card"><h2>未提交的任务草稿</h2><p>{agentDraft}</p><p className="r1-muted">尚未保存。只有你核对表单、预览并明确提交，才会成为业务数据。</p><button onClick={() => { setDraftTitle(agentDraft); setRecord(null); open("task") }}>打开草稿并核对</button><button onClick={() => setAgentDraft(null)}>放弃草稿</button></section>}
                 {agentRecordNote && <section className="r1-card"><h2>待核对的原文草稿</h2><p>{agentRecordNote.note_quote}</p><p className="r1-warning">仅摘录你本轮的原文，不证明内容真实，尚未保存；学生、类型和发生时间都需要你明确核对，不能把猜测当事实。</p><button onClick={() => { setRecord(null); open("record"); setRecordNoteQuote(agentRecordNote.note_quote) }}>打开原文草稿并核对</button><button onClick={() => setAgentRecordNote(null)}>放弃原文草稿</button></section>}
-              </div>
+              </div>}
             </>
           )}
           {page === "dashboard" && (
@@ -1319,6 +1370,7 @@ export default function R1App() {
                         )) : <p>当前查询中来源不可用；请刷新后核对，不据此推断事实。</p>}
                     </details>
                   )}
+                  <AttributionLabel value={item.attribution} />
                   {item.evidence && <p>结果：{item.evidence}</p>}
                   {task?.task_id === item.task_id &&
                     editable &&
@@ -1372,7 +1424,8 @@ export default function R1App() {
                   if (!classroom) return
                   const generation = loading.current
                   try {
-                    const result = await request<AuditPage>(`${scope(session, classroom)}/audit`)
+                    const result = runtimeProfile === "conversation-d1" ? await d1Client(session, classroom).audit()
+                      : await request<AuditPage>(`${scope(session, classroom)}/audit`)
                     if (generation === loading.current && alive.current) setAuditPage(result)
                   } catch (reason) {
                     if (generation === loading.current && alive.current) throw reason
@@ -1430,7 +1483,10 @@ export default function R1App() {
                 </p>
               </section>
               <section className="r1-card"><h2>身份与恢复</h2><p>这些操作需要当前密码，不经 Agent。重新签发会撤销旧恢复码和全部旧会话；全部设备退出不改变密码。</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></div></section>
-              <section className="r1-card">
+              {runtimeProfile === "conversation-d1" ? (classroom
+                ? <DurableExit key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`} session={session} classroom={classroom}
+                    disabled={busy || !queryFresh || refreshing || !!pending || !!form} onBusyChange={setExitBusy} onError={fail} />
+                : <p>先建立班级与学期，再使用耐久会话退出导出。</p>) : <section className="r1-card">
                 <h2>退出导出</h2>
                 <p>当前可导出完整合成核心数据与历史版本；不含密码、会话和批准凭据。生命周期台账、退役证明与干净恢复仍在开发，不能将本包当作正式完整退出证明。</p>
                 <button disabled={busy} onClick={() => void action(async () => {
@@ -1438,7 +1494,7 @@ export default function R1App() {
                   await preview({ command: "exit_export.create", export_id: crypto.randomUUID(), expected_core_hash: summary.core_hash })
                 })}>生成合成核心退出包</button>
                 {exportId && <p><a href={`${workspace(session)}/exit/${exportId}/download`} download>下载已批准的核心包（30分钟内）</a></p>}
-              </section>
+              </section>}
               <button disabled={busy} onClick={() => void action(async () => {
                 await logoutIdentity(session.csrf_token)
                 loading.current++
@@ -1454,7 +1510,9 @@ export default function R1App() {
           scrollToLatest()
           messageInput.current?.focus({ preventScroll: true })
         }}>查看新回复</button>}
-        {page === "conversation" && (
+        {page === "conversation" && runtimeProfile === "conversation-d1" && <DurableComposer state={durable} students={students}
+          canWrite={editable && !busy && !form && !pending && !modelUncertain} />}
+        {page === "conversation" && runtimeProfile !== "conversation-d1" && (
           <form
             className="r1-composer"
             onSubmit={(event) => {
@@ -1811,6 +1869,7 @@ function RecordCard({
       </header>
       <p>{item.fact_text}</p>
       {item.observation_text && <p>教师观察：{item.observation_text}</p>}
+      <AttributionLabel value={item.attribution} />
       <small className="r1-muted">
         发生 {displayTime(item.occurred_at)} · 记录{" "}
         {displayTime(item.recorded_at)} · 来源：教师确认 / 合成

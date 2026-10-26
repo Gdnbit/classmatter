@@ -94,3 +94,48 @@ def test_d1_factory_binds_only_matching_original_model_controller_and_stays_offl
     assert app is not None and value.sdk.model_context.__self__ is controller
     assert value.sdk.provider_state(value.auth) == "synthetic-function-model"
     assert not controller._enabled and not controller._proofs
+
+
+@pytest.mark.db
+async def test_d1_human_exit_preview_requires_original_x_approval_and_download_is_fenced(control):
+    from class_os.domain.conversation_exit_v6 import validate_v6
+    value = setup(control)
+    base = f"/api/workspaces/{value.auth[3]}"
+    exit_path = base + "/conversation-d1/exit"
+    async with client(value) as api:
+        summary = await api.get(exit_path + "/summary")
+        assert summary.status_code == 200, summary.text
+        assert summary.json()["activation_allowed"] is False
+        export_id = str(uuid4())
+        body = {"export_id": export_id, "expected_snapshot_hash": summary.json()["snapshot_hash"]}
+        assert (await api.post(exit_path + "/preview", json=body)).status_code == 403
+        assert (await api.post(exit_path + "/preview", json={**body, "sql": "forbidden"}, headers=value.headers)).status_code == 400
+        response = await api.post(exit_path + "/preview", json=body, headers=value.headers)
+        assert response.status_code == 200, response.text
+        preview = response.json()
+        assert preview["risk"] == "X" and preview["payload"] == {"command": "conversation_exit.create", **body}
+        key = str(uuid4())
+        command = {"proposal_id": preview["proposal_id"], "idempotency_key": key, "approval": None}
+        assert (await api.post(base + "/commands/commit", json=command, headers=value.headers)).status_code == 409
+        approved = await api.post(base + "/commands/approve", json={"proposal_id": preview["proposal_id"],
+            "payload_hash": preview["payload_hash"]}, headers=value.headers)
+        assert approved.status_code == 200, approved.text
+        command["approval"] = approved.json()["approval"]
+        committed = await api.post(base + "/commands/commit", json=command, headers=value.headers)
+        assert committed.status_code == 200, committed.text
+        assert committed.json()["resource_id"] == export_id and committed.json()["version"] == 1
+        assert (await api.post(base + "/commands/commit", json=command, headers=value.headers)).json() == committed.json()
+        download = await api.get(exit_path + f"/{export_id}/download")
+        assert download.status_code == 200, download.text
+        assert download.headers["content-disposition"].endswith(f'{export_id}.json"')
+        assert len(validate_v6(download.json())) == 21
+        clear = await api.post(value.thread_path + "/clear/preview", headers=value.headers, json={"expected_version": 1})
+        assert clear.status_code == 200, clear.text
+        proposal = clear.json()
+        approved = await api.post(base + "/commands/approve", headers=value.headers,
+            json={"proposal_id": proposal["proposal_id"], "payload_hash": proposal["payload_hash"]})
+        result = await api.post(base + "/commands/commit", headers=value.headers,
+            json={"proposal_id": proposal["proposal_id"], "idempotency_key": str(uuid4()), "approval": approved.json()["approval"]})
+        assert result.status_code == 200, result.text
+        assert (await api.get(exit_path + f"/{export_id}/download")).status_code == 409
+        assert (await api.get(exit_path.replace(str(value.auth[3]), str(uuid4())) + "/summary")).status_code in (401,409)

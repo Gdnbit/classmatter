@@ -5,6 +5,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Request
 from pydantic import Field
+from starlette.responses import JSONResponse
 
 from .contracts import WireModel
 from .durable_conversation import Attribution
@@ -58,11 +59,58 @@ class CapabilitiesResponse(WireModel):
     history_protocol: Literal["classmatter.conversation-history.v2"]
 
 
-def router(query):
+class ExitSummary(WireModel):
+    schema_version: Literal["classmatter.conversation-exit-summary.v1"] = "classmatter.conversation-exit-summary.v1"
+    snapshot_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+    restriction_epoch: int = Field(strict=True, ge=0, le=2147483647)
+    activation_allowed: Literal[False] = False
+
+
+class ExitBody(WireModel):
+    export_id: UUID
+    expected_snapshot_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+
+
+class ExitPayload(ExitBody):
+    command: Literal["conversation_exit.create"]
+
+
+class ExitPreview(WireModel):
+    schema_version: Literal["classmatter.conversation-exit-preview.v1"] = "classmatter.conversation-exit-preview.v1"
+    proposal_id: UUID
+    payload_hash: str = Field(pattern=r"^[a-f0-9]{64}$")
+    risk: Literal["X"]
+    expires_at: datetime
+    payload: ExitPayload
+
+
+def router(query, worker):
     from class_os.application.conversation_interaction import ConversationInteractionQuery
     if type(query) is not ConversationInteractionQuery:
         raise ValueError("Exact attributed D1 query required")
     routes = APIRouter(prefix="/api/workspaces/{workspace_id}/conversation-d1")
+
+    @routes.get("/exit/summary", response_model=ExitSummary)
+    def exit_summary(workspace_id: UUID, request: Request):
+        summary = query.conversation_exit_summary(*credentials(request, workspace_id))
+        return {"snapshot_hash": summary.snapshot_hash, "restriction_epoch": summary.restriction_epoch}
+
+    @routes.post("/exit/preview", response_model=ExitPreview)
+    def exit_preview(workspace_id: UUID, request: Request, body: ExitBody):
+        from class_os.domain.conversation_exit import CreateConversationExit
+        proposal = worker.preview(*credentials(request, workspace_id, write=True),
+            CreateConversationExit(body.export_id, body.expected_snapshot_hash))
+        envelope = {"schema_version": "classmatter.conversation-exit-preview.v1",
+            "proposal_id": str(proposal.proposal_id), "payload_hash": proposal.payload_hash,
+            "risk": proposal.risk, "expires_at": proposal.expires_at.isoformat(), "payload": proposal.command.canonical()}
+        ExitPreview.model_validate(envelope)
+        return JSONResponse(envelope)
+
+    @routes.get("/exit/{export_id}/download")
+    def exit_download(workspace_id: UUID, export_id: UUID, request: Request):
+        artifact = query.conversation_exit_download(*credentials(request, workspace_id), export_id)
+        return JSONResponse(artifact.bundle, headers={"content-disposition":
+            f'attachment; filename="classmatter-synthetic-conversation-{export_id}.json"'})
 
     @routes.get("/capabilities", response_model=CapabilitiesResponse)
     def capabilities(workspace_id: UUID, request: Request):

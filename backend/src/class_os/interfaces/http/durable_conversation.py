@@ -216,9 +216,16 @@ def create_durable_app(settings, *, worker, query, sdk, readiness=None, model_co
         sdk.provider_state = model_controller.label
     app = create_app(settings, identity=worker.identity, business=worker, query=query, readiness=readiness,
                      model_controller=model_controller)
+    from class_os.application.conversation_control import ControlReauthenticationRequired
+    from .app import rejection
+    @app.exception_handler(ControlReauthenticationRequired)
+    async def recent_auth_required(request: Request, exc: ControlReauthenticationRequired):
+        # Explicit D1-only pre-write refusal. Generic409 can have a durable
+        # file-first restriction and must retain the original retry identity.
+        return rejection(428, "business_rejected", request.state.request_id)
     app.include_router(router(runtime))
     from .durable_views import router as views_router
-    app.include_router(views_router(query))
+    app.include_router(views_router(query, worker))
     return app
 
 
