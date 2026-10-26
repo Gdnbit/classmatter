@@ -132,6 +132,12 @@ class ConversationTransaction(BusinessTransaction):
         if type(command) not in (InitializeConversationControl, ClearConversation):
             return super().apply(binding, command, now)
         self.validate_conversation_control(binding, command, now)
+        if type(command) is ClearConversation:
+            from .target_import_store import validate_import_integrity
+            try:
+                validate_import_integrity(self._connection)
+            except Exception:
+                raise CommandRejected() from None
         legacy = self._legacy_result_rows(binding, command.thread_id) if type(command) is ClearConversation else ()
         if legacy:
             # Conservative bound includes the still-visible text plus new
@@ -213,6 +219,20 @@ class ConversationTransaction(BusinessTransaction):
                  "digest": checksum(row["body"]), "created": row["created_at"], "recorded": now})
 
     def conversation_history(self, binding, class_id, term_id, thread_id):
+        from .recovery_admission_store import AdmissionTransaction
+        if type(self) is not AdmissionTransaction and self._connection.execute(text("""SELECT
+            EXISTS(SELECT 1 FROM class_os.conversation_result_receipt
+                WHERE workspace_id=:workspace_id AND thread_id=:thread AND protocol='fixed-result')
+            OR EXISTS(SELECT 1 FROM class_os.conversation_query_source WHERE workspace_id=:workspace_id AND thread_id=:thread)
+            OR EXISTS(SELECT 1 FROM class_os.conversation_task_draft WHERE workspace_id=:workspace_id AND thread_id=:thread)
+            OR EXISTS(SELECT 1 FROM class_os.command_proposal WHERE workspace_id=:workspace_id
+                AND command_type='conversation.run.finish-result' AND state='committed' AND payload->>'thread_id'=:thread_text)
+            OR EXISTS(SELECT 1 FROM class_os.conversation_run r JOIN class_os.business_audit a
+                ON a.workspace_id=r.workspace_id AND a.resource_id=r.run_id
+                WHERE r.workspace_id=:workspace_id AND r.thread_id=:thread AND r.state='completed'
+                AND a.action='command.commit' AND a.outcome='allowed' AND a.purpose='manage-conversation')"""),
+                {**binding, "thread": thread_id, "thread_text": str(thread_id)}).scalar_one():
+            raise CommandRejected()  # An old body reader cannot strip typed evidence.
         try:
             _, head = self._anchor(binding)
             compared = self._store.restrictions.compare(head)

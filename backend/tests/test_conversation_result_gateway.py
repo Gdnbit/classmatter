@@ -126,3 +126,41 @@ def test_clear_then_remove_entire_result_rejects_history_and_export(control):
                  lambda: value.query.conversation_exit_summary(*value.auth)):
         with pytest.raises((CommandRejected, ValueError)):
             read()
+
+
+@pytest.mark.db
+@pytest.mark.parametrize("corrupt", ["none", "missing-metadata", "proposal-thread", "proposal-state", "proposal-command"])
+def test_old_plain_history_reader_cannot_strip_fixed_result_sources(control, corrupt):
+    from class_os.application.conversation_control import ConversationQueryGateway
+    from class_os.infrastructure.conversation_control import ConversationBusinessStore
+    value = captured(control, "read")
+    value.worker.finish_result(value.auth, value.ticket, value.sealed)
+    if corrupt != "none":
+        with control[4].transaction() as connection:
+            connection.execute(text("DELETE FROM class_os.conversation_result_receipt"))
+            connection.execute(text("DELETE FROM class_os.conversation_query_source"))
+            if corrupt == "proposal-thread":
+                connection.execute(text("UPDATE class_os.command_proposal SET payload=jsonb_set(payload,'{thread_id}',to_jsonb(CAST(:thread AS text))) WHERE command_type='conversation.run.finish-result'"), {"thread": str(uuid4())})
+            elif corrupt == "proposal-state":
+                connection.execute(text("UPDATE class_os.command_proposal SET state='draft' WHERE command_type='conversation.run.finish-result'"))
+            elif corrupt == "proposal-command":
+                connection.execute(text("UPDATE class_os.command_proposal SET command_type='conversation.run.finish',payload=jsonb_set(payload,'{command}',to_jsonb(CAST('conversation.run.finish' AS text))) WHERE command_type='conversation.run.finish-result'"))
+    old = ConversationQueryGateway(value.worker.identity, ConversationBusinessStore(value.store.database, control[3]), clock=lambda: control[7][0])
+    with pytest.raises(CommandRejected):
+        old.conversation_history(*value.auth, value.ids["class"], value.ids["term"], value.thread)
+
+
+@pytest.mark.db
+def test_corrupt_typed_metadata_clear_rejects_before_advancing_restrictions(control):
+    from class_os.domain.conversation_control import ClearConversation
+    value = captured(control, "read")
+    value.worker.finish_result(value.auth, value.ticket, value.sealed)
+    history = value.query.conversation_history(*value.auth, value.ids["class"], value.ids["term"], value.thread)
+    proposal = value.worker.preview(*value.auth, ClearConversation(value.thread, value.ids["class"], value.ids["term"], history.history.version))
+    nonce = value.worker.approve(*value.auth, proposal.proposal_id, proposal.payload_hash)
+    before = control[3].read()
+    with control[4].transaction() as connection:
+        connection.execute(text("DELETE FROM class_os.conversation_query_source"))
+    with pytest.raises(CommandRejected):
+        value.worker.commit(*value.auth, proposal.proposal_id, uuid4(), nonce)
+    assert control[3].read() == before

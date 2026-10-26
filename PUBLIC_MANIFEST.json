@@ -24,7 +24,7 @@
       "sha256": "346c84b97b79df90cca51e2198034d15053e459858daf0f3e1d55c9079471fd8"
     },
     "backend/tests/test_conversation_result_gateway.py": {
-      "sha256": "51df2fca205e867b8028baf017193838cbbc5e670542e7cbaa2c01c55bd07a53"
+      "sha256": "443d93091393c3f2a7b72387b42880bc828bcd0f88766b08e6f85365322b84b2"
     },
     "backend/tests/test_conversation_result_recovery.py": {
       "sha256": "80356b7d56499c2a1582139d24925cfee7990effd61fa8c4a9e93e14599e28c0"
@@ -198,7 +198,7 @@
       "sha256": "fab32e37a96a9d6018c3873dbbb56170bc489b0a9be972560d569da53ca01d36"
     },
     "backend/tests/test_conversation_exit_gateway.py": {
-      "sha256": "6e004bc044fac800c61caa6f0d08ebbd1c38608ce73f0bdf776f1a5e8d15890c"
+      "sha256": "5e0751112c68cc71a38241b3934f03b2e64336b534c31045801dcb47f1163524"
     },
     "backend/db/migrations/versions/0018_conversation_control.py": {
       "sha256": "50948beb1f10060ddf43d6fa9d954695b46d0347e758ccc79d701ae4ace344b4"
@@ -210,7 +210,7 @@
       "sha256": "8e3fbee1febb1c1046586499e0a9839102d539c23f4261784c0f6b883ef4def9"
     },
     "backend/src/class_os/infrastructure/conversation_control.py": {
-      "sha256": "77a48afe79f0907766098d4365139076fae293ce5af238e5d21ef994688dead3"
+      "sha256": "096bb52ae2746cd36900a4d4cf9bc356d8e792fc15bccec0de9f7e78c2841e8b"
     },
     "backend/tests/test_conversation_control.py": {
       "sha256": "dec09cd8d93dc78d259b05ebb48211b4f55a4e60abf20f38d665ebc75de38da2"
@@ -243,7 +243,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "050c13d874a8b31a8f244d305b6bccde1400735ec290770dbe08191826cfd7d2"
+      "sha256": "abc2ac1be9132113a7d8d1f0ac9313f7174c725192edc3882c7b795c204849e8"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
@@ -747,7 +747,7 @@
       "sha256": "51bfee0c564708f42efd96b6cb5ad707e720a6a84348317adfdab276d735d723"
     },
     "backend/README.md": {
-      "sha256": "cb1b025a88a5784d4c42a27f0f6db99ea45e5f3906d203e5bf9fa04c4debd25c"
+      "sha256": "9b21e2653340803a4c44d00c1721ed448fe25df18ec87920660c35edaf85e98c"
     },
     "backend/db/migrations/env.py": {
       "sha256": "b2393f310d1d8a05229c29757dbd885fb275ca6bf7e87c81fa84270863b6edec"
@@ -1324,7 +1324,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "43229cc5c7e3e495cfa35b432369d1099d8366fc08b772dd4f692978204d7f3d"
+      "sha256": "1d8720c2a65d5868f2443f4ade4c7b452d811967ef3f886cadffa7d07ddd853f"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

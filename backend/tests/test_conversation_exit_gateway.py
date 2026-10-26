@@ -184,10 +184,14 @@ def test_pending_clear_refuses_summary_and_old_download(world, monkeypatch):
 @pytest.mark.db
 def test_assistant_output_keeps_unverified_origin_without_new_fact(world):
     values = world[5]
-    with world[4].transaction() as connection:
-        connection.execute(text("""UPDATE class_os.conversation_run SET state='completed',version=3,generation=:g,
-            started_at=:at,lease_until=:at+interval '1 minute',ended_at=:at"""), {**values, "g": uuid4()})
-        message(connection, values, role="assistant", origin="assistant-unverified", body="合成未核实AI解释")
+    from class_os.application.conversation_worker import ConversationWorkerGateway
+    from class_os.infrastructure.recovery_admission_store import AdmissionStore
+    worker = ConversationWorkerGateway(world[0].identity, AdmissionStore(world[2].database, world[3]), clock=world[0].clock)
+    thread_id, key = uuid4(), uuid4()
+    worker.create_conversation(*world[6], values["class"], values["term"], thread_id, uuid4(), "synthetic audited assistant reply")
+    worker.enqueue(*world[6], values["class"], values["term"], thread_id, key, "synthetic user input", "chat")
+    ticket = worker.claim(world[6], values["class"], values["term"], thread_id, key)
+    worker.finish_run(world[6], ticket, "completed", "合成未核实AI解释")
     artifact = exported(world)
     assistant = [row for row in artifact.bundle["conversations"]["conversation_message"] if row["role"] == "assistant"]
     assert assistant[0]["origin"] == "assistant-unverified"
