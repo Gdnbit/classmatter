@@ -148,6 +148,9 @@ def test_old_plain_history_reader_cannot_strip_fixed_result_sources(control, cor
     old = ConversationQueryGateway(value.worker.identity, ConversationBusinessStore(value.store.database, control[3]), clock=lambda: control[7][0])
     with pytest.raises(CommandRejected):
         old.conversation_history(*value.auth, value.ids["class"], value.ids["term"], value.thread)
+    if corrupt != "none":
+        with pytest.raises((CommandRejected, ValueError)):
+            value.query.conversation_history(*value.auth, value.ids["class"], value.ids["term"], value.thread)
 
 
 @pytest.mark.db

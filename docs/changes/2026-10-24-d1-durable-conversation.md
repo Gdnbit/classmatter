@@ -396,6 +396,8 @@ D1-15最终已由PR #31合并为main62d97c0，实际树与验收head c58e35e一�
 
 ### D1-16 稳定候选与恢复/清除证据
 
+3483bb0之后的接线复核再次发现完整reader使用附表/原proposal存在性决定是否验原完成证据。独立自有PG实测两例均复现：删除全部附表并改proposal state为draft，或将command改为旧finish，仍返回正文且results为空（2项19.30秒是漏洞复现，不是安全通过）。修复为author-aware history无条件调用完整verified bundle；现有5种损坏测试也核完整reader拒绝。无新增Schema/权限/模型工具，旧未经审计completed seed同样拒绝。3483bb0的CI不能覆盖本次后续字节，须重新验收。
+
 原SDK已实际接入READ/task-DRAFT，仍由Pydantic AI管理loop/tools/limits；source和task仅由一次私有collector观察原QG/原Tool结果，不接BCG。draft.available、message和completed全部buffer，直到原BCG事务提交且当前QG确认exact可见结果才释放。原取消/超时/身份/generation/lease机制不变，chat兼容类名保留，不注册HTTP/UI，不执行record-note或自动采纳task。
 
 第二轮对抗审查又实测复现“clear后三附表整套删除但保留commit仍可导出”，没有将首次局部修复当最终通过。现fixed receipt的closed protocol区别`fixed-result`/`legacy-plain`，无摘要且restricted completed在v6拒绝；统一完整校验供history/export/summary/seal使用，实际native completion还核原SQL canonical proposal/receipt/audit。旧可见plain消息仅在人类BCG clear中先核原完成证据后补digest，`created_at`保持原completion，`recorded_at`是本次受控补记，不伪造旧import origin。已经清除且缺足够摘要的历史数据拒绝v6，旧v2—v5离线校验器不变，不能捏造修复。新增摘要先在SAVEPOINT做保守完整容量预检并回滚，确认后才推进不可逆限制marker；接近预算可提前拒绝，不提高上限。

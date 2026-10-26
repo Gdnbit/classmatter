@@ -24,7 +24,7 @@
       "sha256": "346c84b97b79df90cca51e2198034d15053e459858daf0f3e1d55c9079471fd8"
     },
     "backend/tests/test_conversation_result_gateway.py": {
-      "sha256": "443d93091393c3f2a7b72387b42880bc828bcd0f88766b08e6f85365322b84b2"
+      "sha256": "af431e535a20df668caf40aa3711e402f224a8add7fd80e1b0a756d920d073ff"
     },
     "backend/tests/test_conversation_result_recovery.py": {
       "sha256": "80356b7d56499c2a1582139d24925cfee7990effd61fa8c4a9e93e14599e28c0"
@@ -96,7 +96,7 @@
       "sha256": "75a199366f0272505158212c5c61445a6f36e65aec9791ab6e9ef209156de146"
     },
     "backend/src/class_os/infrastructure/recovery_admission_store.py": {
-      "sha256": "e6cf4f1378641a39e8dc503b286978b0d18109263acccc7b8c9a685ab9d36641"
+      "sha256": "d990371765652c9049ec6bc10c9d2983b5bcb294a0f6b86c03aeb0d63e2c9335"
     },
     "backend/src/class_os/infrastructure/recovery_commit_evidence.py": {
       "sha256": "cd9b10d8c017be738bbfe8ee3989dce5c659b40ca15894f421e47838af0798b2"
@@ -243,7 +243,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "abc2ac1be9132113a7d8d1f0ac9313f7174c725192edc3882c7b795c204849e8"
+      "sha256": "881d3da93cbcb1e03a4841649bc4560b2ba90be6d694473786fd2cf45dcc80da"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
@@ -747,7 +747,7 @@
       "sha256": "51bfee0c564708f42efd96b6cb5ad707e720a6a84348317adfdab276d735d723"
     },
     "backend/README.md": {
-      "sha256": "9b21e2653340803a4c44d00c1721ed448fe25df18ec87920660c35edaf85e98c"
+      "sha256": "cadbad9b94061cadd18bfdf7f52be066c78433befb4a4b24e2aaa44ca12eb5f2"
     },
     "backend/db/migrations/env.py": {
       "sha256": "b2393f310d1d8a05229c29757dbd885fb275ca6bf7e87c81fa84270863b6edec"
@@ -1324,7 +1324,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "1d8720c2a65d5868f2443f4ade4c7b452d811967ef3f886cadffa7d07ddd853f"
+      "sha256": "735d144c57aa7910922f78812c94b32f644a7d92ac433c937c3117427d19d44f"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

@@ -203,17 +203,15 @@ class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImpo
         from class_os.domain.conversation_result_integrity import validate_result_rows, message_key
         core, conversations, proof, recovery, budget = snapshot
         visible = {str(item.message_id) for item in history.messages if item.content.role == "assistant"}
-        typed = any(conversations[kind] for kind in ("conversation_query_source", "conversation_task_draft", "conversation_result_receipt"))
-        typed = typed or self._connection.execute(text("""SELECT EXISTS(SELECT 1 FROM class_os.command_proposal
-            WHERE workspace_id=:workspace_id AND command_type='conversation.run.finish-result' AND state='committed')"""), binding).scalar_one()
+        # Presence of sidecars or an intact proposal is not an authority flag:
+        # deleting both must never downgrade a completed typed outcome to text.
+        now = self._now_for_admission()
+        self.verified_result_bundle(binding, now, snapshot)
         results = []
-        if typed:
-            now = self._now_for_admission()
-            self.verified_result_bundle(binding, now, snapshot)
-            groups = validate_result_rows(conversations, str(binding["workspace_id"]), now.isoformat())
-            threads = {item["thread_id"]: item for item in conversations["conversation_thread"]}
-            for message in conversations["conversation_message"]:
-                if (message["message_id"] in visible and message_key(message) in groups
-                        and groups[message_key(message)]["receipt"]["protocol"] == "fixed-result"):
-                    results.append(HistoricalResult(UUID(message["message_id"]), result_value(threads[message["thread_id"]], message, groups[message_key(message)])))
+        groups = validate_result_rows(conversations, str(binding["workspace_id"]), now.isoformat())
+        threads = {item["thread_id"]: item for item in conversations["conversation_thread"]}
+        for message in conversations["conversation_message"]:
+            if (message["message_id"] in visible and message_key(message) in groups
+                    and groups[message_key(message)]["receipt"]["protocol"] == "fixed-result"):
+                results.append(HistoricalResult(UUID(message["message_id"]), result_value(threads[message["thread_id"]], message, groups[message_key(message)])))
         return AuthorAwareHistory(history, attribution, messages, tuple(results))
