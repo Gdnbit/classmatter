@@ -358,3 +358,56 @@ D1-14已由PR #30验收合并为main c0da0eb，实际树与head d128893一致。
 D1-15已创建独立PR #31，候选9cb044d干净Windows CI通过非DB546/Web55/desktop23及实际打包Electron启动/导航/单实例/退出。额外本机Web55/build和desktop23通过，但打包smoke启动遇缓存访问拒绝/CDP断开；当时已有Demo进程，固定userData及单实例锁可能冲突，未关闭用户进程或删除缓存，不把本机失败改称通过。原存储/控制/备份/退役实际PG回归91通过445.67秒。以上不覆盖随后补强字节或最终Ubuntu全量。
 
 最后启动前补强：已提交claim后若调度延迟超过lease或已有cancel_requested，原代码仍可能进入SDK。现SDK入口前重读当前QG run_id/state/version并复核lease；两项实际PG/FunctionModel负向均模型调用0，过期仍须原授权reconcile为interrupted，不自动重启。最后SDK7项通过51.69秒；需要新head重跑两平台CI，不能挪用旧head的绿灯。当前可见性与租约复核仍非跨数据库/供应商原子事务。
+
+D1-15最终已由PR #31合并为main62d97c0，实际树与验收head c58e35e一致。CI40202044230两平台成功：Windows非DB546/Web55/desktop23及真实打包smoke；Ubuntu非DB539+7跳过、真实PG/browser526+13跳过598.74秒。固定扫描/81验证器/74文档与契约/图通过；独立716项SHA最终核验、启动前两项真实PG18.43秒通过，无新增阻断。本单元不等于HTTP/UI、来源/草稿历史或整个Goal完成。
+
+## D1-16：历史来源与未提交任务草稿（文件级计划）
+
+目标：将原SDK的查询凭据和任务草稿与可见回复同事务保存、重开、清除和恢复。追溯D1-03/06/07/08/09，保留原消息纯文本和assistant-unverified语义；不把隐藏SDK上下文、可执行批准、任意JSON或新业务事实塞进消息列。不替换Harness、不自动采纳草稿，不启用用户实例/HTTP/UI。
+
+| 文件范围 | 实施与验收 |
+| --- | --- |
+| 新`domain/conversation_results.py`、纯规则测试 | 固定查询凭据DTO（最多两项，去重）、仅现有task草稿快照、受限ProducedResult及独立finish-result元数据/hash。复用原CreateTask，显式无due/student/source-record自动选择；原chat/read/draft对应约束，未知字段拒绝。草稿永远未提交，引用永远历史时点，不是当前事实 |
+| 显式0026迁移、schema/role清单及原兼容测试 | 两张固定附属表`conversation_query_source`/`conversation_task_draft`关联assistant message；定长UUID/hash、有限ordinal/title/visibility。source只SELECT/INSERT，draft仅清除title/visibility的有限UPDATE；无DELETE/DDL/Agent写权限。D1明确34表，默认R1仍0016/22，不自动升级用户实例 |
+| 原Worker Gateway/固定SQL、QG/clear及SDK adapter | 同一BCG事务写终态、纯文本、固定来源/草稿、元数据receipt/audit，正文和草稿标题不进proposal/audit。验证实际原查询审计、完整scope/时点和原claim；以hash绑定所有可见成果。QG仅在当前身份/限制允许时重开有限typed成果；clear同时清消息和草稿标题，失败保持外部限制。复用原SDK tools/loop；record-note仍不在本链新开范围 |
+| 新固定v6与结果来源演进验证；现出口/import/admission/checkpoint适配 | 两附属store必须进入当前typed出口、实际checkpoint/restore、单跳stage/retire/admit及来源指纹；旧v2—v5校验器保持原样，旧空附属数据不能破坏既存witness/hash。当前全量指纹/准入容量包含附属数据，不截断导出、不放宽预算。历史来源保留原实例/原Owner元数据，不成为当前身份或授权；恢复不自动执行草稿/运行 |
+| 新纯/真实PG/原SDK与回归测试 | read/draft/chat保存→重开/新SDK→有限历史；来源/草稿/原提交证据篡改、跨scope、取消/迟到/审计/SQL失败、clear后旧buffer、旧空数据升级、native与已准入目标、实际单跳移交和pg_dump/pg_restore；老R1/default/ACL/旧格式拒绝新增字段不变 |
+| README/本变更/台账/公开审计与manifest | 最终字节来源审查、真实SHA、固定files/history scan、docs/contracts、独立对抗审查及完整两平台CI；无正式Requirement/Eval/Task/Gate修改 |
+
+顺序：先固定领域/格式，再显式迁移/生命周期和恢复，再BCG/原SDK及故障验收；整个依赖单元闭环前不开放UI或合并。风险重点是旧证明兼容、引用伪造和清除残留。v6的私有旧格式投影只能复用旧核心校验，不作为新authority；实际完整附属集合/来源指纹/原receipt/audit必须独立验证并与受保护witness匹配。字段采用固定表，不提供任意扩展键。回滚保留全部存储/回执/限制，停用未激活profile或前滚，不删除表/图像/实例。教师无需维护引用或重复填草稿；真实净减负仍待用户研究。下一单元才接原UI/HTTP，随后工作小结；完整Goal不缩减。
+
+独立设计审查补充的前置不变量：旧format使用的共享registry也须冻结，v6另有固定结果registry；仅严格空附属集合可复用旧proof投影hash，非空不能删表假称旧proof。来源核实际QG原audit的完整scope/hash/as_of及本run窗口，导入后源audit不伪造成目标可信审计。两附表通过workspace/thread/turn/assistant-message复合关联，最多两source/一draft，且必须completed/mode一致；复合结果hash绑定正文与有序完整集合，禁止向旧completed消息后补附件、删一source、换序/换message。草稿保留不可变title_hash而非隐藏正文，clear仅擦title并restrict，可见性同父消息；恢复不执行草稿。stage前预算包括附表及新origins。后续实际PG须覆盖旧非空升级、旧空证明兼容、篡改/追加/回填和完整单跳及clone；此处只是设计审查，不是已实现证据。
+
+来源关联不能仅靠started<=as_of<=ended：固定合成钟或并发可使旧同scope审计同时间。计划在原SDK实际QG调用返回后增加一个仅server可见的有限read-collector参数/钩子，绑定私有claim及本次SDK run，收集原WorkSnapshot的已提交audit/hash/scope，不保留事实正文或raw SDK。BCG的finish-result必须核本轮实际收集集合与事件来源完全相等，再核原SQL审计；从任意历史audit构造DTO不能替代该关联。它只是一次调用的固定来源关联，不是新Agent loop/Memory框架，不接收业务Gateway，也不出现在模型Tool或HTTP输入中。完成后的结果分类必须查原FinishResult proposal/receipt/audit，不能只凭附表存在，防止全删除附件后假装legacy；真正旧消息没有这类原提交则不能后补。完整退出/恢复只携带固定历史证据，不重建该临时运行权限。
+
+### D1-16 初期基础（未完成、未启用）
+
+已落地独立v6结果registry、有限QuerySource/ProducedResult/FinishResult和值/关系校验；原旧format registry未改。纯规则含原run53通过0.18秒。0026目前只准备两附表、完整workspace/thread/turn/message/assistant复合FK、最多2来源/1草稿及列级ACL，当前应用profile仍明确0025/32并拒绝26；尚未切换或迁移用户实例。自有PG旧非空升级/ACL/FK/重复/ordinal6通过21.98秒；独立初期规则/DDL18通过20.46秒，无基础阻断。
+
+这些只证明syntax/DDL/关系准备；来源真实性、完整FinishResult证据及集合hash、受控clear、v6/既存proof兼容、单跳移交/预算、checkpoint、原SDK和UI均未完成，不得据此合并或当用户可用。新文件尚未登记公开清单，必须待完整单元内容/来源和最终字节审查后登记；不放宽default-deny，也不推送未验收工作。
+
+### D1-16 对抗审查后的固定回执补强（实施中）
+
+初期计划中的两张附表不足以在正文/标题清除后核验完整成果：原result_hash绑定已删除明文，无法重算；仅看剩余附件会漏掉整套删除。因此本单元明确补一张闭合的`conversation_result_receipt`，每个新typed assistant完成至多一行，只有完整父坐标、text_hash、result_hash、时间，无正文、动态JSON或执行权限。当前显式D1迁移0026为35表，默认R1仍0016/22；用户实例没有升级。此处更新的是未发布的新迁移，不重写已合并历史。
+
+新结果摘要绑定正文摘要、有序完整来源及固定task元数据/标题摘要；清除后保留摘要回执和不可变来源，擦除消息正文与草稿标题。查询和v6需重算完整元数据摘要并核原完成审计；native还核原SQL proposal/receipt/audit的exact canonical hash，不凭附表存在分类。回执与两附表一起进入v6固定registry、来源/准入容量、退出和实际checkpoint，不修改旧格式共享registry，也不放宽预算。
+
+独立审查复现了“删除两附表及全部audit后被当作legacy”的阻断，已移除无audit即legacy的退路，三种模式均补负向。后续指出restricted行提前跳过完整性，现通过只含摘要的固定回执补强，不保留被清除明文。新增33项纯结果/格式/capture测试通过2.34秒；此前BCG实际PG6项32.94秒及SDK旧故障7项48.72秒是补回执前证据，不冒充最后字节或整体验收。完整单跳、PG全量、独立最终审查与两平台CI仍待，HTTP/UI和工作小结未交付，Goal继续active。
+
+### D1-16 稳定候选与恢复/清除证据
+
+3483bb0之后的接线复核再次发现完整reader使用附表/原proposal存在性决定是否验原完成证据。独立自有PG实测两例均复现：删除全部附表并改proposal state为draft，或将command改为旧finish，仍返回正文且results为空（2项19.30秒是漏洞复现，不是安全通过）。修复为author-aware history无条件调用完整verified bundle；现有5种损坏测试也核完整reader拒绝。无新增Schema/权限/模型工具，旧未经审计completed seed同样拒绝。3483bb0的CI不能覆盖本次后续字节，须重新验收。
+
+原SDK已实际接入READ/task-DRAFT，仍由Pydantic AI管理loop/tools/limits；source和task仅由一次私有collector观察原QG/原Tool结果，不接BCG。draft.available、message和completed全部buffer，直到原BCG事务提交且当前QG确认exact可见结果才释放。原取消/超时/身份/generation/lease机制不变，chat兼容类名保留，不注册HTTP/UI，不执行record-note或自动采纳task。
+
+第二轮对抗审查又实测复现“clear后三附表整套删除但保留commit仍可导出”，没有将首次局部修复当最终通过。现fixed receipt的closed protocol区别`fixed-result`/`legacy-plain`，无摘要且restricted completed在v6拒绝；统一完整校验供history/export/summary/seal使用，实际native completion还核原SQL canonical proposal/receipt/audit。旧可见plain消息仅在人类BCG clear中先核原完成证据后补digest，`created_at`保持原completion，`recorded_at`是本次受控补记，不伪造旧import origin。已经清除且缺足够摘要的历史数据拒绝v6，旧v2—v5离线校验器不变，不能捏造修复。新增摘要先在SAVEPOINT做保守完整容量预检并回滚，确认后才推进不可逆限制marker；接近预算可提前拒绝，不提高上限。
+
+实际测试：原SDK/新成果故障组合26通过138.58秒；固定回执与旧空证明/实际单跳/角色组合11通过112.10秒；0025真实非空升级单项1通过8.95秒；classified clear纯/PG组合23通过45.66秒；摘要扩张预算拒绝1通过27.85秒，验证外部限制未改变、消息仍可读、摘要无部分保存。独立审查23通过42.73秒及native旧完成缺原audit拒绝1通过13.24秒，消除前述两项复现阻断；仍需最终内容/字节审查和完整两平台CI。
+
+失败与修复保留：全DB首轮111通过/3失败347.47秒，备份夹具直接插入无原提交audit的completed回复，不符合新完整性边界；改为原BCG实际enqueue/claim/finish，损坏/缺失/ACL/旧快照不激活断言保留，限制清除也走实际BCG和外部marker。随后备份17通过122.58秒，不把先前失败涂改成通过。协议开发中已运行的进程与后来DDL混用导致的独立长测失败也不冒充稳定字节成绩。当前稳定非DB578通过4跳过/570 DB未执行64.42秒，契约导出无漂移；全DB重跑中。最终PUBLIC_MANIFEST真实hash、固定files/history scan、docs/静态、独立最终复核与Windows/Ubuntu CI必须另行按结果收口，不改正式Gate或整体Goal状态。
+
+候选已由独立PR #32提交，尚未验收合并。稳定全DB第二轮133通过/3失败512.06秒，三项为`test_conversation_backup_restrictions`沿用原始夹具thread version1；真实BCG夹具已是version4。修正为实际版本并保留恢复后的version5；自洽坏checkpoint用例加强为正常publication先拒绝，再由自有测试构造真实pg_dump/重算inventory的坏packet，普通restore及当前限制check都必须拒绝，源数据和清理断言仍保留。该修正不修改业务代码或放宽测试，需定向重跑、内容/hash复核和新head完整CI，不能借旧head成绩合并。
+
+PR #32的652e238候选完整CI结果：Windows非DB582/Web55/desktop23及真实打包单实例/退出通过；Ubuntu非DB575+7跳过、PG/browser556通过/1失败/13跳过863.97秒。唯一失败是早期assistant导出夹具直接SQL完成且缺原audit；现改原BCG create/enqueue/claim/finish，单项1通过12.38秒，不放宽完整性。备份限制修正全文件17通过111.47秒；坏packet额外_open/exact archive/inventory断言后单项1通过14.92秒，防负向用例在格式层过早失败。
+
+后续接线复核发现旧plain native reader能剥除typed来源只读正文；独立PG进一步复现删除附属行并改proposal.thread_id后仍返回。现非exact author-aware事务在固定成果/原proposal或按workspace/run关联的原完成audit存在时拒绝，不依赖损坏proposal决定分类。这也有意收紧旧已审计FinishRun的plain读取，须改用既有完整reader，不宣称所有legacy行为不变。所有Clear在外部advance前核完整SQL evidence，避免坏metadata仅postcheck失败留下pending。新5种metadata/proposal损坏、clear前拒绝、旧已准入补摘要及原audit失败重试组合8通过62.24秒；独立旧反例现拒绝1通过11.36秒，未发现权限/写入口扩大。一次注入误用数据库不允许的expired状态被原CHECK提前拒绝，改为合法draft状态以真正覆盖应用负向；未改/绕过CHECK。以上新字节仍必须完整两平台CI，652e238的成绩不能替代。

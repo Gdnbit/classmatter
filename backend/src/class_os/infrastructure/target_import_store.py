@@ -8,12 +8,13 @@ from psycopg.types.json import Jsonb
 from class_os.application.roster import CommandRejected
 from class_os.application.target_import import AuthorizedSourceReader, target_operation_permitted
 from class_os.domain.target_import import (RecoveryCandidate, StageConversationImport, TargetFence,
-    ENTITY_KEYS, IMPORT_COLUMNS, provenance_rows)
+    IMPORT_COLUMNS)
+from class_os.domain.recovery_results import ENTITY_KEYS, provenance_rows, admission_capacity_projection
 from class_os.domain.exit_package import CORE_COLUMNS
-from class_os.domain.conversation_exit_v3 import CONVERSATION_COLUMNS
+from class_os.domain.conversation_exit_v6 import CONVERSATION_COLUMNS, CONVERSATION_KEYS, snapshot_hash
 from class_os.domain.conversation_exit import MAX_BYTES
 from class_os.domain.roster import Receipt
-from class_os.domain.conversation_exit_v5 import build_package
+from class_os.domain.conversation_exit_v6 import build_package
 from class_os.domain.recovery_admission import RECOVERY_COLUMNS, RECOVERY_KEYS
 from .conversation_exit import ConversationExitStore, ConversationExitTransaction
 from .conversation_restrictions import ClearMarker, RestrictionUnavailable
@@ -34,15 +35,22 @@ def validate_projection_budget(connection, projected):
 def validate_import_integrity(connection):
     """Snapshot relation/provenance checks only, never freshness or admission."""
     rows = connection.execute(text("SELECT workspace_id,restorer_id,imported_at FROM class_os.conversation_import LIMIT 2")).mappings().all()
-    if not rows:
+    native = not rows
+    if native:
         if any(connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os." + table + ")")).scalar_one()
                for table in ("conversation_provenance", "conversation_source_audit", "conversation_admission", "conversation_origin")):
             raise ValueError("Orphan import evidence")
-        return
+        typed = connection.execute(text("""SELECT EXISTS(SELECT 1 FROM class_os.conversation_result_receipt)
+            OR EXISTS(SELECT 1 FROM class_os.conversation_query_source)
+            OR EXISTS(SELECT 1 FROM class_os.conversation_task_draft)
+            OR EXISTS(SELECT 1 FROM class_os.conversation_run WHERE state='completed')
+            OR EXISTS(SELECT 1 FROM class_os.command_proposal WHERE command_type='conversation.run.finish-result' AND state='committed')""")).scalar_one()
+        if not typed:
+            return
+        rows = connection.execute(text("SELECT workspace_id,owner_id AS restorer_id,created_at AS imported_at FROM class_os.conversation_control LIMIT 2")).mappings().all()
     if len(rows) != 1:
         raise ValueError("Unsupported import scope")
     from class_os.domain.exit_package import PRIMARY_KEYS
-    from class_os.domain.conversation_exit import CONVERSATION_KEYS
     row = rows[0]
     binding, budget = {"workspace_id": row["workspace_id"]}, [0]
     reader = ConversationExitTransaction(connection, None)
@@ -56,8 +64,16 @@ def validate_import_integrity(connection):
                for r in conversations["conversation_thread"] if r["status"] == "cleared"]
     markers.sort(key=lambda r: (r["restricted_at"], r["thread_id"]))
     proof = {"authority_id": control["authority_id"], "epoch": control["epoch"], "source_head_hash": control["head_hash"], "markers": markers}
-    at = datetime.now(timezone.utc) if recovery["conversation_admission"] else row["imported_at"]
-    build_package(row["workspace_id"], row["restorer_id"], at, core, conversations, proof, [], recovery)
+    at = datetime.now(timezone.utc) if native or recovery["conversation_admission"] else row["imported_at"]
+    from class_os.domain.exit_package import AUDIT_COLUMNS
+    audit = reader._collection(binding, "business_audit", AUDIT_COLUMNS, ("occurred_at", "event_id"), budget)
+    from .conversation_worker import verify_native_result_commits
+    imported_turns = {(item["thread_id"], item["resource_id"]) for item in recovery["conversation_provenance"]
+                      if item["entity_kind"] == "conversation_turn"}
+    native_conversations = {**conversations, "conversation_run": [item for item in conversations["conversation_run"]
+        if (item["thread_id"], item["turn_id"]) not in imported_turns]}
+    verify_native_result_commits(connection, {**binding, "actor_id": row["restorer_id"]}, native_conversations)
+    build_package(row["workspace_id"], row["restorer_id"], at, core, conversations, proof, audit, recovery)
 
 
 def target_boundary(tx, binding, action, proposal_id):
@@ -129,7 +145,7 @@ def sql_value(key, value):
         return None
     if key.endswith("_id") or key in ("created_by", "updated_by", "recorded_by", "restorer_id"):
         return UUID(value) if type(value) is str else value
-    if key.endswith("_at") or key in ("valid_from", "valid_to", "lease_until", "queued_until"):
+    if key.endswith("_at") or key in ("valid_from", "valid_to", "lease_until", "queued_until", "as_of"):
         return datetime.fromisoformat(value) if type(value) is str else value
     if key in ("start_date", "end_date"):
         return date.fromisoformat(value) if type(value) is str else value
@@ -139,7 +155,6 @@ def sql_value(key, value):
 class TargetImportTransaction(ConversationExitTransaction):
     def committed_stage(self, binding, attempt_id):
         from class_os.domain.source_retirement import CommittedStage
-        from class_os.domain.conversation_exit_v4 import snapshot_hash
         try:
             if self._connection.execute(text("SELECT EXISTS(SELECT 1 FROM class_os.conversation_admission WHERE workspace_id=:workspace_id)"), binding).scalar_one():
                 raise CommandRejected()
@@ -160,11 +175,10 @@ class TargetImportTransaction(ConversationExitTransaction):
             core, conversations, proof, recovery, _ = self._snapshot(binding, batch["imported_at"])
             # A source must not permanently retire into a predictably oversized
             # target. This is only a private capacity simulation, not admission.
-            from class_os.domain.recovery_admission import admission_capacity_projection
             expanded = admission_capacity_projection(core, conversations, recovery)
             capacity_at = datetime.fromisoformat(expanded["conversation_admission"][0]["created_at"])
             build_package(binding["workspace_id"], binding["actor_id"], capacity_at,
-                          core, conversations, proof, [], expanded)
+                          core, conversations, proof, [], expanded, verify_receipts=False)
             validate_projection_budget(self._connection, (core, conversations, proof, expanded))
             packet = port._packet(self._store.restrictions._root(), fence)
             from class_os.domain.exit_package import checksum
@@ -210,7 +224,7 @@ class TargetImportTransaction(ConversationExitTransaction):
                 raise CommandRejected()
             projected = self._project(binding, bundle, source, fence, anchor, markers, now)
             # Expanded provenance/metadata must fit before publishing any fence.
-            build_package(binding["workspace_id"], binding["actor_id"], now, *projected[:3], [], projected[3])
+            build_package(binding["workspace_id"], binding["actor_id"], now, *projected[:3], [], projected[3], verify_receipts=False)
             validate_projection_budget(self._connection, projected)
             return fence, markers, projected
         except (ValueError, ImportUnavailable, RestrictionUnavailable):
@@ -237,7 +251,7 @@ class TargetImportTransaction(ConversationExitTransaction):
         for kind in ENTITY_KEYS:
             destination = core if kind in CORE_COLUMNS else conversations
             destination[kind] = []
-            for original in bundle["core" if kind in CORE_COLUMNS else "conversations"][kind]:
+            for original in bundle["core" if kind in CORE_COLUMNS else "conversations"].get(kind, []):
                 row = {**original, "workspace_id": str(binding["workspace_id"])}
                 for author in ("created_by", "updated_by", "recorded_by", "owner_id"):
                     if author in row:

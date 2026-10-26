@@ -16,6 +16,9 @@ from class_os.application.conversation_control import ConversationBusinessGatewa
 from class_os.domain.conversation_control import InitializeConversationControl
 from class_os.infrastructure.conversation_control import ConversationBusinessStore
 from class_os.infrastructure.conversation_restrictions import ProtectedConversationRestrictions
+from class_os.application.conversation_worker import ConversationWorkerGateway
+from class_os.infrastructure.recovery_admission_store import AdmissionStore
+from class_os.domain.conversation_control import ClearConversation
 
 
 @pytest.fixture
@@ -37,16 +40,20 @@ def conversation_runtime(backup_runtime, roster, database_urls):
                 e.class_id AS class,e.term_id AS term,e.student_id AS student,e.enrollment_id AS enrollment
                 FROM class_os.enrollment e JOIN class_os.owner_account o USING(workspace_id)""")).mappings().one()
             values = {**row, "at": roster[6][0], "thread": uuid4(), "turn": uuid4(), "run": uuid4(), "key": uuid4()}
-            thread(connection, values)
-            turn(connection, values)
-            queued(connection, values)
-            message(connection, values, body="合成checkpoint用户原文")
-            connection.execute(text("""UPDATE class_os.conversation_run SET state='running',version=2,
-                generation=:generation,started_at=:at,lease_until=:at+interval '1 minute'"""),
-                {**values, "generation": uuid4()})
-            connection.execute(text("""UPDATE class_os.conversation_run SET state='completed',version=3,
-                ended_at=:at+interval '1 second'"""), values)
-            message(connection, values, role="assistant", origin="assistant-unverified", body="合成checkpoint未核实草稿")
+        runtime = Database(database_urls["runtime"], profile="conversation-d1")
+        try:
+            worker = ConversationWorkerGateway(roster[4], AdmissionStore(runtime, controls), clock=lambda: roster[6][0])
+            worker.create_conversation(*roster[3], values["class"], values["term"], values["thread"], uuid4(), "synthetic checkpoint conversation", values["student"])
+            worker.enqueue(*roster[3], values["class"], values["term"], values["thread"], values["key"], "合成checkpoint用户原文", "chat")
+            ticket = worker.claim(roster[3], values["class"], values["term"], values["thread"], values["key"])
+            worker.finish_run(roster[3], ticket, "completed", "合成checkpoint未核实草稿")
+            values.update(turn=ticket.turn_id, run=ticket.run.run_id)
+        finally:
+            runtime.close()
+        backup_runtime.conversation_credentials = roster[3]
+        backup_runtime.conversation_identity = roster[4]
+        backup_runtime.conversation_clock = roster[6]
+        backup_runtime.conversation_restrictions = controls
         backup_runtime.conversation_values = values
         return backup_runtime
     finally:
@@ -78,7 +85,7 @@ def test_real_d1_snapshot_clone_verifies_all_tables_without_activation_or_source
     assert packet["kind"] == "classmatter.owned-conversation-backup.v1"
     assert packet["schema_profile"] == "conversation-d1" and packet["activation_allowed"] is False
     assert packet["head"] == schema_profile("conversation-d1")[0]
-    assert packet["inventory"] == before and len(before) == 32
+    assert packet["inventory"] == before and len(before) == 35
     assert all(before[table]["rows"] == count for table, count in
                (("conversation_thread", 1), ("conversation_turn", 1), ("conversation_message", 2), ("conversation_run", 1)))
     path = runtime.root / "backups" / (str(artifact) + ".dpapi")
@@ -87,7 +94,7 @@ def test_real_d1_snapshot_clone_verifies_all_tables_without_activation_or_source
     assert report == {"schema_version": "classmatter.conversation-backup-check.v1",
                       "snapshot_integrity_verified": True, "activation_allowed": False,
                       "source_preserved": True, "temporary_clone_removed": True, "portable": False,
-                      "complete_exit": False, "table_count": 32}
+                      "complete_exit": False, "table_count": 35}
     assert "合成checkpoint" not in json.dumps(report)
     assert inventory(runtime) == before and path.read_bytes() == sealed
     assert backup.catalog()["activation_allowed"] is False
@@ -139,6 +146,7 @@ def test_aggregate_inconsistency_blocks_snapshot_publication(conversation_runtim
             if fault == "missing-user":
                 connection.execute(text("DELETE FROM class_os.conversation_message WHERE role='user'"))
             elif fault == "missing-assistant":
+                connection.execute(text("DELETE FROM class_os.conversation_result_receipt"))
                 connection.execute(text("DELETE FROM class_os.conversation_message WHERE role='assistant'"))
             elif fault == "failed-with-assistant":
                 connection.execute(text("UPDATE class_os.conversation_run SET state='failed'"))
@@ -152,6 +160,7 @@ def test_aggregate_inconsistency_blocks_snapshot_publication(conversation_runtim
             else:
                 # Replace the terminal fixture with a valid running row while
                 # retaining no assistant answer. It must not live in archive.
+                connection.execute(text("DELETE FROM class_os.conversation_result_receipt"))
                 connection.execute(text("DELETE FROM class_os.conversation_message WHERE role='assistant'"))
                 connection.execute(text("UPDATE class_os.conversation_run SET state='running',ended_at=NULL"))
                 connection.execute(text("UPDATE class_os.conversation_thread SET status='archived'"))
@@ -172,10 +181,17 @@ def test_consistent_restriction_is_preserved_and_live_run_snapshot_is_never_resu
     old = backup.create()
     owner = runtime.database("migrator")
     try:
+        database = Database(owner.engine.url.set(username="class_os_runtime"), profile="conversation-d1")
+        try:
+            worker = ConversationWorkerGateway(runtime.conversation_identity, AdmissionStore(database, runtime.conversation_restrictions),
+                clock=lambda: runtime.conversation_clock[0])
+            values = runtime.conversation_values
+            proposal = worker.preview(*runtime.conversation_credentials, ClearConversation(values["thread"], values["class"], values["term"], 4))
+            nonce = worker.approve(*runtime.conversation_credentials, proposal.proposal_id, proposal.payload_hash)
+            worker.commit(*runtime.conversation_credentials, proposal.proposal_id, uuid4(), nonce)
+        finally:
+            database.close()
         with owner.transaction() as connection:
-            connection.execute(text("UPDATE class_os.conversation_message SET visibility='restricted',body=NULL"))
-            connection.execute(text("""UPDATE class_os.conversation_thread SET title='已清除的会话',status='cleared',
-                cleared_at=:at,updated_at=:at"""), runtime.conversation_values)
             validate_conversation_integrity(connection)
         cleared = inventory(runtime)
         # An old snapshot may still be structurally valid. It never acquires

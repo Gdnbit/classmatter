@@ -30,7 +30,7 @@ def setup(runtime, roster):
 def clear(runtime, roster, gateway):
     values = runtime.conversation_values
     roster[6][0] = values["at"] + timedelta(seconds=2)
-    command = ClearConversation(values["thread"], values["class"], values["term"], 1)
+    command = ClearConversation(values["thread"], values["class"], values["term"], 4)
     proposal = gateway.preview(*roster[3], command)
     nonce = gateway.approve(*roster[3], proposal.proposal_id, proposal.payload_hash)
     return proposal, nonce
@@ -230,23 +230,39 @@ def test_self_consistent_archive_with_current_head_but_old_visible_rows_is_rejec
         backup = SyntheticBackup(runtime, codec=fixture_codec, profile="conversation-d1")
         submit(gateway, roster, clear(runtime, roster, gateway))
         before = inventory(runtime)
+        good = backup.create()
+        packet, _ = backup._open(good)
         # Deliberately simulate a partial SQL rollback in a disposable source.
-        # Archive/inventory agree; the external marker and retained anchor do
-        # not agree with these old thread rows. No hash forgery is involved.
+        # Archive/inventory will agree with the invalid rows, but not with the
+        # retained external marker. Packet digests are recomputed only here.
         try:
             with owner.transaction() as connection:
                 connection.execute(text("""UPDATE class_os.conversation_thread SET status='active',title='合成旧标题',
                     version=1,cleared_at=NULL"""))
                 connection.execute(text("UPDATE class_os.conversation_message SET visibility='visible',body='合成旧正文'"))
-            bad = backup.create()
+            # Full result validation now rejects publication even before a
+            # current restriction observation. Retain an independently forged
+            # but self-consistent packet to test both restore checks as well.
+            with pytest.raises(BackupRejected):
+                backup.create()
+            import base64
+            import hashlib
+            from class_os.infrastructure.operator_backup import encoded
+            archive = backup._pg("pg_dump", owner.engine.url.database, "--format=custom", "--no-large-objects")
+            bad = uuid4()
+            packet.update(id=str(bad), archive=base64.b64encode(archive).decode("ascii"),
+                          archive_sha256=hashlib.sha256(archive).hexdigest(), inventory=inventory(runtime))
+            backup._publish(bad, fixture_codec(encoded(packet)))
+            opened, reopened = backup._open(bad)
+            assert reopened == archive and opened["inventory"] == packet["inventory"]
         finally:
             with owner.transaction() as connection:
                 connection.execute(text("""UPDATE class_os.conversation_thread SET status='cleared',title='已清除的会话',
-                    version=2,cleared_at=:at"""), {"at": roster[6][0]})
+                    version=5,cleared_at=:at"""), {"at": roster[6][0]})
                 connection.execute(text("UPDATE class_os.conversation_message SET visibility='restricted',body=NULL"))
         assert inventory(runtime) == before
-        # The unchanged structural verifier explicitly accepts this snapshot.
-        assert backup.check(bad)["snapshot_integrity_verified"] is True
+        with pytest.raises(BackupRejected):
+            backup.check(bad)
         with pytest.raises(BackupRejected):
             backup.check_current_restrictions(bad, port)
         assert inventory(runtime) == before

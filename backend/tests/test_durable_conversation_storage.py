@@ -69,7 +69,7 @@ def message(connection, values, *, body="合成原文", role="user", origin="use
 
 def test_profile_is_closed_without_database_or_model_discovery():
     assert schema_profile() == ("0016", REGISTERED_TABLES)
-    assert schema_profile("conversation-d1") == ("0025", REGISTERED_TABLES | D1_TABLES)
+    assert schema_profile("conversation-d1") == ("0026", REGISTERED_TABLES | D1_TABLES)
     for profile in (None, {}, "head", "d1", "r1 "):
         with pytest.raises(ValueError, match="schema profile"):
             schema_profile(profile)
@@ -83,7 +83,7 @@ def test_nonempty_r1_upgrade_is_explicit_idempotent_and_not_default_admitted(sto
     migrate(owner)
     with owner.transaction(read_only=True) as connection:
         assert validate_surface(connection, complete=True, profile="conversation-d1") == REGISTERED_TABLES | D1_TABLES
-        assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0025"
+        assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0026"
         assert connection.execute(text("SELECT count(*) FROM class_os.student WHERE student_id=:student"), values).scalar_one() == 1
         validate_role_guards(connection, profile="conversation-d1")
         with pytest.raises(RuntimeError, match="Unregistered"):
@@ -127,7 +127,7 @@ def test_nonempty_0022_conversation_upgrade_preserves_rows_and_acl(roster, datab
         with owner.transaction(read_only=True) as connection:
             after = {table: tuple(connection.execute(text("SELECT row_to_json(t)::text FROM class_os." + table + " t")).scalars()) for table in tables}
             assert before == after
-            assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0025"
+            assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0026"
             validate_role_guards(connection, profile="conversation-d1")
             assert connection.execute(text("SELECT count(*) FROM class_os.conversation_admission")).scalar_one() == 0
     finally:

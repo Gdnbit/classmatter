@@ -8,6 +8,7 @@ from class_os.application.roster import CommandRejected
 from class_os.domain.conversation_control import InitializeConversationControl, ClearConversation, ConversationHistory, HistoryMessage
 from class_os.domain.durable_conversation import VisibleMessage
 from class_os.domain.roster import Receipt
+from class_os.domain.exit_package import checksum
 from .conversation_restrictions import ClearMarker, RestrictionHead, RestrictionUnavailable, FILE_NAME
 from .roster import PostgresBusinessStore, BusinessTransaction
 
@@ -20,7 +21,7 @@ class ConversationBusinessStore(PostgresBusinessStore):
         self.restrictions = restrictions
 
     def _transaction(self, connection):
-        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0025":
+        if connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0026":
             raise RuntimeError("Explicit conversation control schema required")
         return self._conversation_transaction(connection)
 
@@ -131,6 +132,25 @@ class ConversationTransaction(BusinessTransaction):
         if type(command) not in (InitializeConversationControl, ClearConversation):
             return super().apply(binding, command, now)
         self.validate_conversation_control(binding, command, now)
+        if type(command) is ClearConversation:
+            from .target_import_store import validate_import_integrity
+            try:
+                validate_import_integrity(self._connection)
+            except Exception:
+                raise CommandRejected() from None
+        legacy = self._legacy_result_rows(binding, command.thread_id) if type(command) is ClearConversation else ()
+        if legacy:
+            # Conservative bound includes the still-visible text plus new
+            # digests. Never publish an irreversible marker before this check.
+            from .target_import_store import validate_import_integrity
+            trial = self._connection.begin_nested()
+            try:
+                self._write_legacy_result_receipts(binding, command.thread_id, legacy, now)
+                validate_import_integrity(self._connection)
+            except Exception:
+                raise CommandRejected() from None
+            finally:
+                trial.rollback()
         control = self._store.restrictions
         try:
             if type(command) is InitializeConversationControl:
@@ -152,6 +172,7 @@ class ConversationTransaction(BusinessTransaction):
                   "previous": previous.digest, "previous_epoch": previous.epoch}
         # The external restriction is already durable. Any failure below must
         # roll back SQL/audit/receipt, but MUST NOT roll back the external marker.
+        self._write_legacy_result_receipts(binding, command.thread_id, legacy, now)
         self._mutate(text("""UPDATE class_os.conversation_thread SET status='cleared',title='已清除的会话',
             version=version+1,updated_at=:at,cleared_at=:at
             WHERE workspace_id=:workspace_id AND owner_id=:actor_id AND thread_id=:thread AND version=:version"""), values)
@@ -159,6 +180,8 @@ class ConversationTransaction(BusinessTransaction):
             WHERE workspace_id=:workspace_id AND thread_id=:thread"""), values).scalar_one()
         self._mutate(text("""UPDATE class_os.conversation_message SET body=NULL,visibility='restricted'
             WHERE workspace_id=:workspace_id AND thread_id=:thread"""), values, expected=count)
+        drafts = self._connection.execute(text("SELECT count(*) FROM class_os.conversation_task_draft WHERE workspace_id=:workspace_id AND thread_id=:thread"), values).scalar_one()
+        self._mutate(text("UPDATE class_os.conversation_task_draft SET title=NULL,visibility='restricted' WHERE workspace_id=:workspace_id AND thread_id=:thread"), values, expected=drafts)
         active = self._connection.execute(text("""SELECT count(*) FROM class_os.conversation_run
             WHERE workspace_id=:workspace_id AND thread_id=:thread AND state IN ('queued','running','cancel_requested')"""), values).scalar_one()
         self._mutate(text("""UPDATE class_os.conversation_run SET version=version+1,ended_at=:at,
@@ -168,7 +191,48 @@ class ConversationTransaction(BusinessTransaction):
             WHERE workspace_id=:workspace_id AND owner_id=:actor_id AND epoch=:previous_epoch AND head_hash=:previous"""), values)
         return Receipt(uuid4(), command.thread_id, command.expected_version + 1)
 
+    def _legacy_result_rows(self, binding, thread_id):
+        rows = self._connection.execute(text("""SELECT m.turn_id,m.message_id,m.body,m.created_at
+            FROM class_os.conversation_message m JOIN class_os.conversation_run r USING(workspace_id,thread_id,turn_id)
+            WHERE m.workspace_id=:workspace_id AND m.thread_id=:thread AND m.role='assistant'
+            AND m.visibility='visible' AND r.state='completed' AND NOT EXISTS(
+                SELECT 1 FROM class_os.conversation_result_receipt h WHERE h.workspace_id=m.workspace_id AND h.message_id=m.message_id)
+            LIMIT 10001"""), {**binding, "thread": thread_id}).mappings().all()
+        if len(rows) > 10000:
+            raise CommandRejected()
+        if rows:
+            # Internal integrity-only projection, also usable during a file-first
+            # clear retry. It grants no read/activation or missing witness bypass.
+            from .target_import_store import validate_import_integrity
+            try:
+                validate_import_integrity(self._connection)
+            except Exception:
+                raise CommandRejected() from None
+        return rows
+
+    def _write_legacy_result_receipts(self, binding, thread_id, rows, now):
+        for row in rows:
+            self._mutate(text("""INSERT INTO class_os.conversation_result_receipt
+                (workspace_id,thread_id,turn_id,message_id,message_role,protocol,text_hash,result_hash,created_at,recorded_at)
+                VALUES(:workspace_id,:thread,:turn,:message,'assistant','legacy-plain',:digest,:digest,:created,:recorded)"""),
+                {**binding, "thread": thread_id, "turn": row["turn_id"], "message": row["message_id"],
+                 "digest": checksum(row["body"]), "created": row["created_at"], "recorded": now})
+
     def conversation_history(self, binding, class_id, term_id, thread_id):
+        from .recovery_admission_store import AdmissionTransaction
+        if type(self) is not AdmissionTransaction and self._connection.execute(text("""SELECT
+            EXISTS(SELECT 1 FROM class_os.conversation_result_receipt
+                WHERE workspace_id=:workspace_id AND thread_id=:thread AND protocol='fixed-result')
+            OR EXISTS(SELECT 1 FROM class_os.conversation_query_source WHERE workspace_id=:workspace_id AND thread_id=:thread)
+            OR EXISTS(SELECT 1 FROM class_os.conversation_task_draft WHERE workspace_id=:workspace_id AND thread_id=:thread)
+            OR EXISTS(SELECT 1 FROM class_os.command_proposal WHERE workspace_id=:workspace_id
+                AND command_type='conversation.run.finish-result' AND state='committed' AND payload->>'thread_id'=:thread_text)
+            OR EXISTS(SELECT 1 FROM class_os.conversation_run r JOIN class_os.business_audit a
+                ON a.workspace_id=r.workspace_id AND a.resource_id=r.run_id
+                WHERE r.workspace_id=:workspace_id AND r.thread_id=:thread AND r.state='completed'
+                AND a.action='command.commit' AND a.outcome='allowed' AND a.purpose='manage-conversation')"""),
+                {**binding, "thread": thread_id, "thread_text": str(thread_id)}).scalar_one():
+            raise CommandRejected()  # An old body reader cannot strip typed evidence.
         try:
             _, head = self._anchor(binding)
             compared = self._store.restrictions.compare(head)

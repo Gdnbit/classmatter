@@ -61,6 +61,11 @@ def native_candidate(bundle):
         raise ValueError("Invalid native candidate")
     if bundle.get("schema_version") == "classmatter.synthetic-exit.v3":
         validate_v3(bundle)
+    elif bundle.get("schema_version") == "classmatter.synthetic-exit.v6":
+        from .conversation_exit_v6 import validate_v6
+        validate_v6(bundle)
+        if any(bundle["recovery"].values()):
+            raise ValueError("Multi-hop import is not yet admitted")
     elif bundle.get("schema_version") == "classmatter.synthetic-exit.v5":
         from .conversation_exit_v5 import validate_v5
         validate_v5(bundle)

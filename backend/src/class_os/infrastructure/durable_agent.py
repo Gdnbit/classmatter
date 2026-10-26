@@ -1,7 +1,6 @@
-"""Opt-in chat orchestration; original Pydantic AI still owns every model loop.
+"""Opt-in durable orchestration; original Pydantic AI owns every model loop.
 
-Not registered in HTTP/UI. Read/draft history requires typed source/card storage
-before activation. No model receives this server-owned BCG handle.
+Not registered in HTTP/UI. No model receives this server-owned BCG handle.
 """
 from contextlib import aclosing, suppress
 from time import monotonic
@@ -12,6 +11,8 @@ from pydantic_ai.messages import ModelRequest, ModelResponse, UserPromptPart, Te
 from class_os.application.agent import AgentRequest, AgentRejected, Mode, RuntimeEvent
 from class_os.application.conversation_worker import ConversationWorkerGateway
 from class_os.application.conversation_interaction import ConversationInteractionQuery
+from class_os.application.result_capture import ResultCapture
+from class_os.domain.conversation_results import ProducedResult
 from .agent import PydanticAgentRuntime
 
 
@@ -23,13 +24,13 @@ class DurableChatRuntime:
             raise ValueError("Exact scoped D1 composition required")
         self.worker, self.query, self.runtime = worker, query, runtime
 
-    async def stream(self, credentials, class_id, term_id, thread_id, request_id, text):
+    async def stream(self, credentials, class_id, term_id, thread_id, request_id, text, mode="chat"):
         # Enqueue is human input, not model output or an Agent write tool.
-        await anyio.to_thread.run_sync(lambda: self.worker.enqueue(*credentials, class_id, term_id, thread_id, request_id, text, "chat"))
+        await anyio.to_thread.run_sync(lambda: self.worker.enqueue(*credentials, class_id, term_id, thread_id, request_id, text, mode))
         ticket = await anyio.to_thread.run_sync(lambda: self.worker.claim(credentials, class_id, term_id, thread_id, request_id))
         if ticket is None:
             return  # Caller reads QG status/history; never automatic redispatch.
-        conversation, settled, cursor = None, False, 0
+        conversation, capture, settled, cursor = None, None, False, 0
         started = monotonic()
 
         def event(kind, payload):
@@ -42,10 +43,9 @@ class DurableChatRuntime:
                 duration_ms=min(2147483647, int((monotonic() - started) * 1000))))
 
         try:
-            if ticket.intent.mode != "chat" or ticket.scope.student_id is not None:
-                raise AgentRejected()
+            capture = ResultCapture(ticket, credentials, self.query)
             history = await anyio.to_thread.run_sync(lambda: self.query.conversation_history(*credentials, class_id, term_id, thread_id))
-            conversation = await anyio.to_thread.run_sync(lambda: self.runtime.conversation(credentials))
+            conversation = await anyio.to_thread.run_sync(lambda: self.runtime.conversation(credentials, student_id=ticket.scope.student_id))
             if conversation.class_id != class_id or conversation.term_id != term_id:
                 raise AgentRejected()
             # Only bounded visible text, never SDK tool/approval/credential dumps.
@@ -54,29 +54,34 @@ class DurableChatRuntime:
             conversation.history = [ModelRequest(parts=[UserPromptPart(item.content.text)]) if item.content.role == "user"
                                     else ModelResponse(parts=[TextPart(item.content.text)]) for item in messages]
             pending, completed = [], False
-            request = AgentRequest(conversation.conversation_id, ticket.intent.text, Mode.CHAT)
+            request = AgentRequest(conversation.conversation_id, ticket.intent.text, Mode(ticket.intent.mode))
             current = await anyio.to_thread.run_sync(lambda: self.query.turn_status(*credentials, class_id, term_id, thread_id, request_id))
             if (current["run_id"] != ticket.run.run_id or current["state"] != "running"
                     or current["version"] != ticket.run.version or self.worker.clock() >= ticket.run.lease_until):
                 raise AgentRejected()
-            async with aclosing(self.runtime.stream(credentials, request)) as stream:
+            async with aclosing(self.runtime.stream(credentials, request, _capture=capture)) as stream:
                 async for item in stream:
-                    if item.type in ("message.delta", "run.completed"):
+                    if item.type in ("message.delta", "draft.available", "run.completed"):
                         pending.append(item)
                         completed = item.type == "run.completed" or completed
                     elif item.type == "run.failed":
                         break
-                    elif item.type == "draft.available":
-                        raise AgentRejected()  # No unversioned structured draft history.
                     else:
                         yield event(item.type, item.payload)
             answers = [item for item in pending if item.type == "message.delta"]
-            if not completed or len(answers) != 1 or answers[0].payload.get("source_refs"):
+            if not completed or len(answers) != 1:
                 await finish("unknown")
                 settled = True
                 yield event("run.failed", {"code": "agent_unavailable"})
                 return
-            await finish("completed", answers[0].payload["text"])
+            result = ProducedResult(answers[0].payload["text"], capture.sources, capture.draft)
+            drafts = [item.payload.get("draft") for item in pending if item.type == "draft.available"]
+            if (answers[0].payload.get("source_refs") != [source.tool_ref() for source in result.sources]
+                    or drafts != ([result.draft.canonical()] if result.draft is not None else [])):
+                raise AgentRejected()
+            sealed = capture.seal(answers[0].run_id, credentials, result)
+            await anyio.to_thread.run_sync(lambda: self.worker.finish_result(credentials, ticket, sealed,
+                duration_ms=min(2147483647, int((monotonic() - started) * 1000))))
             settled = True
             # Persistence + trusted audit committed before either answer/completion.
             for item in pending:
@@ -85,10 +90,15 @@ class DurableChatRuntime:
                            and message.content.role == "assistant" and message.content.text == answers[0].payload["text"]]
                 if current.history.status != "active" or len(visible) != 1:
                     raise AgentRejected()
+                if (result.sources or result.draft is not None) and not any(
+                        item.message_id == visible[0].message_id and item.result == result for item in current.results):
+                    raise AgentRejected()
                 yield event(item.type, item.payload)
         except Exception:
             yield event("run.failed", {"code": "persistence_or_run_unknown"})
         finally:
+            if capture is not None:
+                capture.close()
             if not settled:
                 # Local abort/provider uncertainty is not proof of zero provider cost.
                 # Expired identity/lease may deny this; authorized reconcile then fences it.

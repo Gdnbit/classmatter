@@ -8,12 +8,14 @@ from class_os.application.roster import CommandRejected
 from class_os.application.recovery_admission import (AuthorizedRetirementReader, AdmissionSummary, BODY_ACTIONS,
     COMMAND_ACTIONS, admission_operation_permitted, attributed_read_permitted)
 from class_os.domain.recovery_admission import (AdmitConversationTarget, AdmissionFence, ADMISSION_COLUMNS,
-    make_origins, origins_hash, source_audit_hash, decode_admission)
+    origins_hash, source_audit_hash, decode_admission)
+from class_os.domain.recovery_results import make_origins, ENTITY_KEYS
 from class_os.domain.exit_package import checksum
 from class_os.domain.roster import Receipt
 from class_os.domain.conversation_control import ConversationHistory
-from class_os.domain.conversation_exit_v5 import build_package
-from class_os.domain.target_import import IMPORT_COLUMNS, ENTITY_KEYS
+from class_os.domain.conversation_results import ProducedResult
+from class_os.domain.conversation_exit_v6 import build_package
+from class_os.domain.target_import import IMPORT_COLUMNS
 from .target_import_store import TargetImportTransaction, validate_projection_budget
 from .conversation_exit import ConversationExitStore, ConversationExitTransaction
 from .recovery_admission import ProtectedTargetAdmission, AdmissionUnavailable
@@ -75,10 +77,19 @@ class AdmissionStore(ConversationExitStore):
 
 
 @dataclass(frozen=True)
+class HistoricalResult:
+    message_id: UUID
+    result: ProducedResult
+    content_authority: str = "assistant-unverified"
+    draft_status: str = "uncommitted"
+
+
+@dataclass(frozen=True)
 class AuthorAwareHistory:
     history: ConversationHistory
     thread_attribution: dict
     message_attributions: tuple[dict, ...]
+    results: tuple[HistoricalResult, ...] = ()
 
 
 class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImportTransaction):
@@ -115,7 +126,7 @@ class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImpo
                     raise CommandRejected()
                 fence = prior
             projected = {**recovery, "conversation_admission": [fence.anchor(port.digest(fence))], "conversation_origin": rows}
-            build_package(binding["workspace_id"], binding["actor_id"], now, core, conversations, proof, [], projected)
+            build_package(binding["workspace_id"], binding["actor_id"], now, core, conversations, proof, [], projected, verify_receipts=False)
             validate_projection_budget(self._connection, (core, conversations, proof, projected))
             return fence, rows
         except (ValueError, AdmissionUnavailable):
@@ -125,7 +136,8 @@ class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImpo
         if type(command) is not AdmitConversationTarget:
             from class_os.domain.conversation_interaction import CreateConversation, RenameConversation, ArchiveConversation, EnqueueConversation
             from class_os.domain.conversation_worker import ClaimRun, FinishRun, CancelRun, ReconcileRun
-            result = (self.apply_worker(binding, command, now) if type(command) in (ClaimRun, FinishRun, CancelRun, ReconcileRun)
+            from class_os.domain.conversation_results import FinishResult
+            result = (self.apply_worker(binding, command, now) if type(command) in (ClaimRun, FinishRun, CancelRun, ReconcileRun, FinishResult)
                       else self.apply_interaction(binding, command, now) if type(command) in
                       (CreateConversation, RenameConversation, ArchiveConversation, EnqueueConversation)
                       else super().apply(binding, command, now))
@@ -187,4 +199,19 @@ class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImpo
         attribution = self._attribution(snapshot, binding["actor_id"], "conversation_thread", thread_id, history.version)
         messages = tuple({"message_id": str(row.message_id), "attribution": self._attribution(snapshot, binding["actor_id"],
             "conversation_message", row.message_id, 0, thread_id)} for row in history.messages)
-        return AuthorAwareHistory(history, attribution, messages)
+        from class_os.domain.conversation_exit_v6 import result_value
+        from class_os.domain.conversation_result_integrity import validate_result_rows, message_key
+        core, conversations, proof, recovery, budget = snapshot
+        visible = {str(item.message_id) for item in history.messages if item.content.role == "assistant"}
+        # Presence of sidecars or an intact proposal is not an authority flag:
+        # deleting both must never downgrade a completed typed outcome to text.
+        now = self._now_for_admission()
+        self.verified_result_bundle(binding, now, snapshot)
+        results = []
+        groups = validate_result_rows(conversations, str(binding["workspace_id"]), now.isoformat())
+        threads = {item["thread_id"]: item for item in conversations["conversation_thread"]}
+        for message in conversations["conversation_message"]:
+            if (message["message_id"] in visible and message_key(message) in groups
+                    and groups[message_key(message)]["receipt"]["protocol"] == "fixed-result"):
+                results.append(HistoricalResult(UUID(message["message_id"]), result_value(threads[message["thread_id"]], message, groups[message_key(message)])))
+        return AuthorAwareHistory(history, attribution, messages, tuple(results))
