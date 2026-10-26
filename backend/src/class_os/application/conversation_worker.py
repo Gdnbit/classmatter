@@ -4,6 +4,8 @@ from datetime import timedelta
 from uuid import uuid4
 
 from class_os.domain.conversation_worker import ClaimRun, FinishRun, CancelRun, ReconcileRun, ClaimedRun, decode_run
+from class_os.domain.conversation_results import FinishResult, decode_finish_result
+from .result_capture import CapturedResult
 from class_os.domain.durable_conversation import ConversationRun, TERMINAL_STATES
 from class_os.domain.exit_package import checksum
 from class_os.domain.roster import Proposal, CommandStatus
@@ -13,7 +15,7 @@ from .roster import CommandRejected, fingerprint
 from class_os.domain.risk import Risk
 
 
-WORKER_TYPES = (ClaimRun, FinishRun, CancelRun, ReconcileRun)
+WORKER_TYPES = (ClaimRun, FinishRun, CancelRun, ReconcileRun, FinishResult)
 _operation = ContextVar("classmatter_server_run_operation", default=None)
 
 
@@ -33,6 +35,8 @@ class ConversationWorkerGateway(ConversationInteractionGateway):
 
     @staticmethod
     def decode_command(payload):
+        if type(payload) is dict and payload.get("command") == FinishResult.command:
+            return decode_finish_result(payload)
         if type(payload) is dict and payload.get("command") in {value.command for value in WORKER_TYPES}:
             return decode_run(payload)
         return ConversationInteractionGateway.decode_command(payload)
@@ -106,6 +110,24 @@ class ConversationWorkerGateway(ConversationInteractionGateway):
             except ValueError:
                 raise CommandRejected() from None
             return self._perform(tx, binding, command, now, ticket=ticket, output=output)
+        return self._run(credentials, "command.commit", finish, class_id=scope.class_id, term_id=scope.term_id, resource_id=ticket.run.run_id)
+
+    def finish_result(self, credentials, ticket, captured, *, duration_ms=None, input_tokens=None, output_tokens=None):
+        if type(ticket) is not ClaimedRun or type(captured) is not CapturedResult:
+            raise CommandRejected()
+        scope, thread = ticket.scope, ticket.intent.thread_id
+        def finish(tx, binding, now):
+            result = captured.verify(self.store, self.identity, credentials, ticket)
+            if scope.workspace_id != binding["workspace_id"] or scope.owner_id != binding["actor_id"]:
+                raise CommandRejected()
+            row = tx.worker_row(binding, scope.class_id, scope.term_id, thread, now, run_id=ticket.run.run_id)
+            try:
+                result.validate_intent(ticket.intent)
+                command = FinishResult(thread, scope.class_id, scope.term_id, ticket.run.run_id, row["version"],
+                    ticket.run.generation, result.result_hash, duration_ms, input_tokens, output_tokens)
+            except ValueError:
+                raise CommandRejected() from None
+            return self._perform(tx, binding, command, now, ticket=ticket, output=result)
         return self._run(credentials, "command.commit", finish, class_id=scope.class_id, term_id=scope.term_id, resource_id=ticket.run.run_id)
 
     def cancel_run(self, credentials, class_id, term_id, thread_id, run_id, expected_version):

@@ -69,17 +69,40 @@ async def test_original_sdk_persist_before_release_replay_and_rebuild_history(co
 @pytest.mark.db
 async def test_finish_audit_failure_never_releases_model_answer(control, monkeypatch):
     value = setup(control)
-    original = value.worker.finish_run
     def broken(*args, **kwargs):
-        if args[2] == "completed":
-            raise RuntimeError("synthetic persistence outage")
-        return original(*args, **kwargs)
-    monkeypatch.setattr(value.worker, "finish_run", broken)
+        raise RuntimeError("synthetic persistence outage")
+    monkeypatch.setattr(value.worker, "finish_result", broken)
     key = uuid4()
     events = [event async for event in stream(value, key)]
     assert events[-1].type == "run.failed"
     assert not any(item.type in ("message.delta", "run.completed") for item in events)
     assert status(value, key)["state"] == "unknown"
+    assert not value.sdk.memory._items
+
+
+@pytest.mark.db
+@pytest.mark.parametrize("mode", ["read", "draft"])
+async def test_original_sdk_tool_result_persists_before_card_release_and_reopens(control, mode):
+    value = setup(control)
+    key = uuid4()
+    events = []
+    async for event in value.runtime.stream(value.auth, value.ids["class"], value.ids["term"], value.thread, key, "synthetic teacher work", mode):
+        if event.type in ("message.delta", "draft.available", "run.completed"):
+            assert status(value, key)["state"] == "completed"
+        events.append(event)
+    assert events[-1].type == "run.completed", value.sdk.last_failure_type
+    history = value.query.conversation_history(*value.auth, value.ids["class"], value.ids["term"], value.thread)
+    assert len(history.results) == 1 and history.results[0].content_authority == "assistant-unverified"
+    result = history.results[0].result
+    assert bool(result.sources) == (mode == "read") and (result.draft is not None) == (mode == "draft")
+    assert history.results[0].draft_status == "uncommitted"
+    from class_os.application.conversation_interaction import ConversationInteractionQuery
+    from class_os.infrastructure.recovery_admission_store import AdmissionStore
+    reopened = ConversationInteractionQuery(value.worker.identity, AdmissionStore(control[2].database, control[3]), clock=lambda: control[7][0])
+    assert reopened.conversation_history(*value.auth, value.ids["class"], value.ids["term"], value.thread).results == history.results
+    with control[4].transaction(read_only=True) as connection:
+        assert connection.execute(text("SELECT count(*) FROM class_os.manual_task")).scalar_one() == 0
+        assert connection.execute(text("SELECT count(*) FROM class_os.conversation_result_receipt")).scalar_one() == 1
     assert not value.sdk.memory._items
 
 
@@ -113,16 +136,15 @@ async def test_timeout_or_disconnect_stops_sdk_and_never_redispatches(control, a
 async def test_clear_after_finish_commit_before_release_drops_buffered_answer(control, monkeypatch):
     from class_os.domain.conversation_control import ClearConversation
     value = setup(control)
-    original = value.worker.finish_run
+    original = value.worker.finish_result
     def finish_then_clear(*args, **kwargs):
         result = original(*args, **kwargs)
-        if args[2] == "completed":
-            history = value.query.conversation_history(*value.auth, value.ids["class"], value.ids["term"], value.thread)
-            proposal = value.worker.preview(*value.auth, ClearConversation(value.thread, value.ids["class"], value.ids["term"], history.history.version))
-            nonce = value.worker.approve(*value.auth, proposal.proposal_id, proposal.payload_hash)
-            value.worker.commit(*value.auth, proposal.proposal_id, uuid4(), nonce)
+        history = value.query.conversation_history(*value.auth, value.ids["class"], value.ids["term"], value.thread)
+        proposal = value.worker.preview(*value.auth, ClearConversation(value.thread, value.ids["class"], value.ids["term"], history.history.version))
+        nonce = value.worker.approve(*value.auth, proposal.proposal_id, proposal.payload_hash)
+        value.worker.commit(*value.auth, proposal.proposal_id, uuid4(), nonce)
         return result
-    monkeypatch.setattr(value.worker, "finish_run", finish_then_clear)
+    monkeypatch.setattr(value.worker, "finish_result", finish_then_clear)
     events = [event async for event in stream(value, uuid4())]
     assert events[-1].type == "run.failed"
     assert not any(item.type in ("message.delta", "run.completed") for item in events)

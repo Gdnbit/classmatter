@@ -62,3 +62,22 @@ def validate_conversation_integrity(connection):
             WHERE t.status<>'active' AND r.state IN ('queued','running','cancel_requested'))""")).scalar_one()
     if broken is not False:
         raise ValueError("Inconsistent synthetic conversation snapshot")
+    result_broken = connection.execute(text("""SELECT
+        EXISTS(SELECT 1 FROM class_os.conversation_query_source s
+            JOIN class_os.conversation_message m USING(workspace_id,thread_id,turn_id,message_id)
+            JOIN class_os.conversation_turn t USING(workspace_id,thread_id,turn_id)
+            JOIN class_os.conversation_run r USING(workspace_id,thread_id,turn_id)
+            WHERE m.role<>'assistant' OR t.mode<>'read' OR r.state<>'completed'
+                OR s.created_at<>m.created_at OR s.created_at<>r.ended_at
+                OR s.as_of<r.started_at OR s.as_of>r.ended_at)
+        OR EXISTS(SELECT 1 FROM class_os.conversation_task_draft d
+            JOIN class_os.conversation_message m USING(workspace_id,thread_id,turn_id,message_id)
+            JOIN class_os.conversation_turn t USING(workspace_id,thread_id,turn_id)
+            JOIN class_os.conversation_run r USING(workspace_id,thread_id,turn_id)
+            JOIN class_os.conversation_thread c USING(workspace_id,thread_id)
+            WHERE m.role<>'assistant' OR t.mode<>'draft' OR t.draft_kind<>'task' OR c.student_id IS NOT NULL
+                OR r.state<>'completed' OR d.created_at<>m.created_at OR d.created_at<>r.ended_at OR d.visibility<>m.visibility)
+        OR EXISTS(SELECT 1 FROM class_os.conversation_query_source
+            GROUP BY workspace_id,thread_id,turn_id,message_id HAVING min(ordinal)<>1 OR max(ordinal)<>count(*))""")).scalar_one()
+    if result_broken is not False:
+        raise ValueError("Inconsistent fixed historical result relations")

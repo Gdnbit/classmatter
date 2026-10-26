@@ -22,7 +22,7 @@ from class_os.domain.activity import CreateRecord, CreateTask, ReviseRecord, Cha
 from class_os.domain.roster import ChangeStudentName
 from class_os.domain.conversation_control import ClearConversation
 from class_os.domain.conversation_exit import CreateConversationExit
-from class_os.domain.conversation_exit_v5 import validate_v5
+from class_os.domain.conversation_exit_v6 import validate_v6
 from class_os.domain.recovery_admission import AdmitConversationTarget
 from class_os.infrastructure.recovery_admission import ProtectedTargetAdmission, FILE_NAME
 from class_os.infrastructure.recovery_admission_store import AdmissionStore, AdmissionTransaction
@@ -40,7 +40,7 @@ from test_durable_conversation_storage import message
 from test_model_secrets import fixture_codec
 
 
-def ready(world, target, *, with_facts=False, assistant=False):
+def ready(world, target, *, with_facts=False, assistant=False, legacy_no_receipt=False):
     values = world[5]
     record, task = None, None
     if with_facts:
@@ -51,10 +51,22 @@ def ready(world, target, *, with_facts=False, assistant=False):
                           student_id=values["student"], source_record_id=record.record_id)
         control_commit(world, task)
     if assistant:
+        # Replace this fixture's raw, never-dispatched seed with an actual legacy
+        # BCG completion. v6 must not invent provenance for an unaudited reply.
         with world[4].transaction() as connection:
-            connection.execute(text("""UPDATE class_os.conversation_run SET state='completed',version=3,generation=:g,
-                started_at=created_at,lease_until=created_at+interval '1 minute',ended_at=created_at"""), {"g": uuid4()})
-            message(connection, values, role="assistant", origin="assistant-unverified", body="合成AI解释仍未核实")
+            for table in ("conversation_message", "conversation_run", "conversation_turn", "conversation_thread"):
+                assert connection.execute(text("DELETE FROM class_os." + table + " WHERE workspace_id=:workspace AND thread_id=:thread"), values).rowcount == 1
+        from class_os.application.conversation_worker import ConversationWorkerGateway
+        worker = ConversationWorkerGateway(world[0].identity, AdmissionStore(world[2].database, world[3]), clock=world[0].clock)
+        worker.create_conversation(*world[6], values["class"], values["term"], values["thread"], uuid4(), "synthetic legacy BCG conversation", values["student"])
+        key = uuid4()
+        worker.enqueue(*world[6], values["class"], values["term"], values["thread"], key, "synthetic legacy input", "chat")
+        ticket = worker.claim(world[6], values["class"], values["term"], values["thread"], key)
+        worker.finish_run(world[6], ticket, "completed", "合成AI解释仍未核实")
+        if legacy_no_receipt:
+            with world[4].transaction() as connection:
+                assert connection.execute(text("DELETE FROM class_os.conversation_result_receipt")).rowcount == 1
+            world[7][0] += timedelta(seconds=1)
     data = prepare(world, target, terminal=not assistant)
     imported = commit(data, approved(data))
     _, source, query, command, stage = retirement(world, data)
@@ -164,7 +176,7 @@ def test_real_admission_native_edits_attribution_clear_restart_checkpoint_and_v5
     task = activity["tasks"][0]
     assert task["attribution"]["created_by"] == str(ids["owner"])
     assert task["attribution"]["last_modified_by"] == str(value.data.owner) and task["version"] == 2
-    native(value, ClearConversation(ids["thread"], ids["class"], ids["term"], 1))
+    native(value, ClearConversation(ids["thread"], ids["class"], ids["term"], history.history.version))
     history = value.query.conversation_history(*credentials, ids["class"], ids["term"], ids["thread"])
     assert history.history.status == "cleared" and not history.history.messages
     restart_owned_cluster(value.data)
@@ -180,12 +192,12 @@ def test_real_admission_native_edits_attribution_clear_restart_checkpoint_and_v5
     backup = checkpoint(value)
     artifact = backup.create()
     checked = backup.check_current_restrictions(artifact, value.data.restrictions)
-    assert checked["activation_allowed"] is False and checked["table_count"] == 32
+    assert checked["activation_allowed"] is False and checked["table_count"] == 35
     summary = value.query.conversation_exit_summary(*credentials)
     export = CreateConversationExit(uuid4(), summary.snapshot_hash)
     native(value, export)
     bundle = value.query.conversation_exit_download(*credentials, export.export_id).bundle
-    assert validate_v5(bundle) and bundle["activation_allowed"] is False
+    assert validate_v6(bundle) and bundle["activation_allowed"] is False
     assert all(row["body"] is None for row in bundle["conversations"]["conversation_message"])
     assert not any("body" in row for row in bundle["recovery"]["conversation_origin"])
     with value.data.dbs["migrator"].transaction(read_only=True) as connection:

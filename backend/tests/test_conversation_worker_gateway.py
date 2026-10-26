@@ -13,7 +13,7 @@ from class_os.application.roster import CommandRejected
 from class_os.domain.conversation_worker import ClaimRun
 from class_os.infrastructure.recovery_admission_store import AdmissionTransaction
 from class_os.domain.conversation_exit import CreateConversationExit
-from class_os.domain.conversation_exit_v5 import validate_v5
+from class_os.domain.conversation_exit_v6 import validate_v6
 from test_conversation_interaction_gateway import prepared, enqueue
 from test_conversation_control import control, storage, roster, identity
 from test_recovery_admission_gateway import world, target, ready, approve, submit, checkpoint
@@ -176,7 +176,7 @@ def test_admitted_native_completion_clear_exit_and_real_checkpoint(world, target
     nonce = worker.approve(*data.credentials, proposal.proposal_id, proposal.payload_hash)
     worker.commit(*data.credentials, proposal.proposal_id, uuid4(), nonce)
     bundle = query.conversation_exit_download(*data.credentials, command.export_id).bundle
-    assert validate_v5(bundle) and bundle["activation_allowed"] is False
+    assert validate_v6(bundle) and bundle["activation_allowed"] is False
     backup = checkpoint(recovered)
     checked = backup.check_current_restrictions(backup.create(), data.restrictions)
     assert checked["snapshot_integrity_verified"] and not checked["activation_allowed"]

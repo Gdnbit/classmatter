@@ -22,7 +22,7 @@ from class_os.application.roster import BusinessGateway, CommandRejected
 from class_os.application.conversation_exit import ConversationExitBusinessGateway, ConversationExitQueryGateway
 from class_os.domain.conversation_control import InitializeConversationControl
 from class_os.domain.conversation_exit import CreateConversationExit
-from class_os.domain.conversation_exit_v5 import validate_v5
+from class_os.domain.conversation_exit_v6 import validate_v6
 from class_os.domain.exit_package import validate_package
 from class_os.infrastructure import conversation_exit as adapter
 from class_os.infrastructure.conversation_exit import ConversationExitStore
@@ -54,7 +54,7 @@ def world(control):
 
 def command(data):
     summary = data[1].conversation_exit_summary(*data[6])
-    assert len(summary.counts) == 18
+    assert len(summary.counts) == 21
     return CreateConversationExit(uuid4(), summary.snapshot_hash)
 
 
@@ -75,7 +75,7 @@ def test_real_bcg_qg_export_covers_conversation_and_not_identity_or_dispatch(wor
     result = world[0].commit(*world[6], proposal.proposal_id, key, nonce)
     assert world[0].commit(*world[6], proposal.proposal_id, key, nonce) == result
     artifact = world[1].conversation_exit_download(*world[6], value.export_id)
-    assert len(validate_v5(artifact.bundle)) == 18 and artifact.package_hash == artifact.bundle["package_checksum"]
+    assert len(validate_v6(artifact.bundle)) == 21 and artifact.package_hash == artifact.bundle["package_checksum"]
     text_bundle = json.dumps(artifact.bundle)
     for forbidden in ("session_digest", "nonce_digest", "password_hash", "sdk_session", "root_binding", "sealed"):
         assert forbidden not in text_bundle
@@ -103,7 +103,7 @@ def test_clear_revokes_old_artifact_download_new_export_contains_only_restrictio
     assert new.bundle["restriction_evidence"]["epoch"] == 1
     assert new.bundle["conversations"]["conversation_message"][0]["body"] is None
     assert "合成耐久导出原文" not in json.dumps(new.bundle, ensure_ascii=False)
-    assert validate_v5(new.bundle)
+    assert validate_v6(new.bundle)
 
 
 @pytest.mark.db
@@ -203,7 +203,7 @@ def test_offline_v2_profile_is_explicit_and_has_no_activation(tmp_path, world):
     verifier = Path(__file__).resolve().parents[1] / "verify_exit.py"
     def run(*args):
         return subprocess.run([sys.executable, str(verifier), str(path), *args], capture_output=True, text=True, timeout=10)
-    verified = run("--profile", "conversation-v5", "--compare-with", str(copy))
+    verified = run("--profile", "conversation-v6", "--compare-with", str(copy))
     assert verified.returncode == 0
     output = json.loads(verified.stdout)
     assert output["activation_allowed"] is False and output["comparison"]["same_source_snapshot"]
@@ -211,12 +211,12 @@ def test_offline_v2_profile_is_explicit_and_has_no_activation(tmp_path, world):
     assert run("--profile", "conversation-v2").returncode == 1
     assert run("--profile", "conversation-v3").returncode == 1
     assert run("--profile", "conversation-v4").returncode == 1
-    assert run("--profile", "conversation-v5", "--require-complete").returncode == 1
-    assert run("--profile", "conversation-v5", "--activate").returncode == 2
+    assert run("--profile", "conversation-v6", "--require-complete").returncode == 1
+    assert run("--profile", "conversation-v6", "--activate").returncode == 2
     copy.write_text(json.dumps(artifact.bundle, indent=2), encoding="utf-8")
-    assert run("--profile", "conversation-v5", "--compare-with", str(copy)).returncode == 2
+    assert run("--profile", "conversation-v6", "--compare-with", str(copy)).returncode == 2
     path.write_bytes(b'{"schema_version":1,"schema_version":2}')
-    assert run("--profile", "conversation-v5").returncode == 1
+    assert run("--profile", "conversation-v6").returncode == 1
 
 
 @pytest.mark.db

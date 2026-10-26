@@ -90,7 +90,10 @@ class PydanticAgentRuntime:
         self.query.context(*credentials)  # identity/scope audit; memory is not a fact store
         self.memory.forget(credentials, conversation_id)
 
-    async def stream(self, credentials, request):
+    async def stream(self, credentials, request, *, _capture=None):
+        from class_os.application.result_capture import ResultCapture
+        if _capture is not None and type(_capture) is not ResultCapture:
+            raise AgentRejected()
         conversation = self.prepare(credentials, request)
         conversation.active = True
         self.active += 1
@@ -122,6 +125,8 @@ class PydanticAgentRuntime:
             try:
                 await audit("started")
                 current_memory()
+                if _capture is not None:
+                    _capture.begin(run_id, credentials)
                 provider = self.provider_state(credentials) if self.provider_state else self.provider_label
                 if provider not in ("synthetic-function-model", "synthetic-api-protocol", "managed-model", "configured-api"):
                     raise AgentRejected()
@@ -139,6 +144,8 @@ class PydanticAgentRuntime:
                                 or projection.term_id != conversation.term_id or projection.student_id != conversation.student_id):
                             raise AgentRejected()
                         result = projection.tool_payload()
+                        if _capture is not None:
+                            _capture.observe_read(run_id, credentials, projection)
                         sources.extend(result["source_refs"])
                         emit("tool.completed", tool="attention_list")
                         return result
@@ -152,6 +159,8 @@ class PydanticAgentRuntime:
                         if draft is not None:
                             raise AgentRejected()
                         task = CreateTask("task.create", uuid4(), conversation.class_id, conversation.term_id, title)
+                        if _capture is not None:
+                            _capture.observe_draft(run_id, credentials, task)
                         draft = task.canonical()
                         emit("tool.completed", tool="task_draft")
                         return {"status": "uncommitted-draft", "title": task.title}
@@ -205,6 +214,8 @@ class PydanticAgentRuntime:
                     emit("draft.available", draft=draft)
                 output = ("本轮原文摘录草稿已准备；尚未核实、选择学生或时间，也未写入业务记录。请打开人工表单核对。"
                           if request.draft_kind is DraftKind.RECORD_NOTE else str(result.output))
+                if _capture is not None:
+                    _capture.completed(run_id, credentials, output)
                 emit("message.delta", text=output, source_refs=sources)
                 emit("run.completed")
                 conversation.history = result.all_messages()

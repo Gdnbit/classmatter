@@ -15,7 +15,7 @@ from class_os.domain.conversation_interaction import CreateConversation, RenameC
 from class_os.infrastructure.recovery_admission_store import AdmissionStore, AdmissionTransaction
 from class_os.infrastructure.conversation_control import ConversationBusinessStore
 from class_os.domain.conversation_exit import CreateConversationExit
-from class_os.domain.conversation_exit_v5 import validate_v5
+from class_os.domain.conversation_exit_v6 import validate_v6
 from test_conversation_control import control, storage, roster, identity, commit as control_commit
 from test_recovery_admission_gateway import world, target, ready, approve as approve_admission, submit as submit_admission, checkpoint
 
@@ -188,7 +188,7 @@ def test_pending_denial_then_admitted_human_input_exit_and_checkpoint(world, tar
     nonce = gateway.approve(*data.credentials, proposal.proposal_id, proposal.payload_hash)
     gateway.commit(*data.credentials, proposal.proposal_id, uuid4(), nonce)
     bundle = query.conversation_exit_download(*data.credentials, export.export_id).bundle
-    assert validate_v5(bundle) and bundle["activation_allowed"] is False
+    assert validate_v6(bundle) and bundle["activation_allowed"] is False
     assert len(bundle["conversations"]["conversation_run"]) == 2
     backup = checkpoint(recovered)
     artifact = backup.create()

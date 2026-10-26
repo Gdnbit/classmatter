@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-更新时间：2026-10-25。最新验收main为`c0da0eb`：[PR #30](https://github.com/Gdnbit/classmatter/pull/30)人工耐久输入已通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40179768035)，Windows非DB540/Web55/desktop23，Ubuntu非DB533+7跳过、实际PG/browser504+13跳过727.65秒，708个真实hash。此前D0/E1及D1前置由PR #13—29收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+更新时间：2026-10-26。最新验收main为`62d97c0`：[PR #31](https://github.com/Gdnbit/classmatter/pull/31)运行与普通对话已通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40202044230)，Windows非DB546/Web55/desktop23，Ubuntu非DB539+7跳过、实际PG/browser526+13跳过598.74秒，716个真实hash。此前D0/E1及D1前置由PR #13—30收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-14为0024/32表；本轮D1-15候选显式0025仍32表，默认R1仍0016/22，v5保留固定0023投影，不放宽旧验证器。D1-14已完成明确人工会话与输入排队，不能当模型执行。D1-15复用原SDK推进普通班级对话的单次claim、取消/租约/终态和回复保存；仍未开放HTTP/UI，完整来源/草稿历史、真实界面和工作小结继续必做。用户实例未迁移，跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。
+D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-15为0025/32表；本轮D1-16候选显式0026/35，新增固定摘要回执、查询来源和未提交task草稿，原SDK实际工具链与BCG/QG/清除/v6/恢复联动。默认R1仍0016/22，旧v2—v5及共享注册表冻结。真实界面、分页和工作小结继续必做，未开放HTTP/UI或迁移用户实例。跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。D1-16最终公开清单/独立复核/完整两平台CI未完成前不能称该单元验收。
 
 ## 状态与顺序
 
