@@ -149,6 +149,10 @@ class ConversationInteractionGateway(AdmissionGateway):
 
 
 class ConversationInteractionQuery(AdmissionQueryGateway):
+    def conversation_capabilities(self, token, client, csrf, workspace_id):
+        return self._run((token, client, csrf, workspace_id), "conversation.history",
+            lambda tx, binding, now: tx.interaction_capabilities(binding, now))
+
     def conversation_page(self, token, client, csrf, workspace_id, class_id, term_id, thread_id, *, before_ordinal=None, expected_version=None):
         def read(tx, binding, now):
             if any(type(value) is not UUID for value in (class_id, term_id, thread_id)):

@@ -1,5 +1,11 @@
 # ClassMatter public candidate audit
 
+## 2026-10-26 D1-18 in-progress source review, not UI acceptance
+
+First-party fixed history.v2 turn/run projection from the same verified snapshot, versioned closed author-aware Activity/Audit/capability DTOs and derived schemas, explicit owned-runtime profile binding, ModelSecrets constructor propagation and original Controller binding only. Synthetic tests contain no uploaded document/image, real identity, credential, external implementation or paid request. Accepted history.v1 and R1 schemas remain byte-unchanged; no new store/migration, SQL authority, dispatch capability, public exception or formal Gate is added. Request UUIDs/run metadata are identifiers, not authorization; generation/lease/hash are excluded, cleared turns are not returned, and every GET stays QG/read-audit only.
+
+Independent partial source review found no new blocker, but CLI/compose/readiness and original UI are still unimplemented and this unit is NOT accepted. Actual local test groups separately report19 HTTP/paging/view cases150.59s,4 final Controller/view cases18.40s and9 owned-profile/R1-runtime cases41.69s; overlapping groups are not summed as unique coverage. The fresh Windows D1 test starts/stops only its disposable cluster, verifies0026/35 across restart and zero Owner/control; it does not initialize or migrate a user instance. Whole-unit browser/Electron/fault tests, final manifests/scans, independent final review and full two-platform CI remain mandatory.
+
 ## 2026-10-26 D1 paged HTTP candidate
 
 CI-only follow-up source review: the final application bytes ff76b14 completed577 actual PG/browser tests with13 skips in1071.39 seconds, but the20-minute whole job was cancelled during completion; the earlier attempt also lost11m49s downloading fonts. Neither is recorded as a successful workflow. The same candidate now budgets30 bounded minutes and adds positive/negative budget validation. This changes no step, test selection, pinned dependency, action, matrix, permission, failure behavior, publication rule or formal Gate; no secret, external implementation or Provider request is introduced. Exact changed bytes require manifest refresh, independent review and complete final-head CI again.

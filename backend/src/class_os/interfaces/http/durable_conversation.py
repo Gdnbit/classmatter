@@ -165,6 +165,19 @@ class RunStatus(WireModel):
     ended_at: datetime | None
 
 
+class HistoricalTurnView(WireModel):
+    turn_id: UUID
+    ordinal: int = Field(strict=True, ge=1, le=10000)
+    client_request_id: UUID
+    mode: Literal["chat", "read", "draft"]
+    run: RunStatus
+
+
+class HistoryV2Response(HistoryResponse):
+    schema_version: Literal["classmatter.conversation-history.v2"] = "classmatter.conversation-history.v2"
+    turns: list[HistoricalTurnView] = Field(max_length=50)
+
+
 class ControlPayload(WireModel):
     command: Literal["conversation.clear", "conversation.archive"]
     thread_id: UUID
@@ -187,13 +200,25 @@ class ControlPreview(WireModel):
     payload: ControlPayload
 
 
-def create_durable_app(settings, *, worker, query, sdk, readiness=None):
+def create_durable_app(settings, *, worker, query, sdk, readiness=None, model_controller=None):
     # Exact scoped runtime validates Gateway/store/identity composition. This is
     # an opt-in trusted factory, not a request-controlled capability selector.
     from class_os.infrastructure.durable_agent import DurableChatRuntime
     runtime = DurableChatRuntime(worker, query, sdk)
-    app = create_app(settings, identity=worker.identity, business=worker, query=query, readiness=readiness)
+    if model_controller is not None:
+        from class_os.infrastructure.model_control import ModelController
+        if (type(model_controller) is not ModelController or model_controller.query is not query
+                or model_controller.runtime is not sdk or model_controller.secrets is None
+                or model_controller.secrets is not worker.store.model_secrets):
+            raise ValueError("Exact scoped model controller required")
+        sdk.model_context = model_controller.context
+        sdk.provider_label = "managed-model"
+        sdk.provider_state = model_controller.label
+    app = create_app(settings, identity=worker.identity, business=worker, query=query, readiness=readiness,
+                     model_controller=model_controller)
     app.include_router(router(runtime))
+    from .durable_views import router as views_router
+    app.include_router(views_router(query))
     return app
 
 
@@ -226,10 +251,13 @@ def router(runtime):
         return worker.rename_conversation(*credentials(request, workspace_id, write=True), class_id, term_id,
             thread_id, body.request_id, body.expected_version, body.title)
 
-    def history(auth, class_id, term_id, thread_id, *, before=None, version=None):
+    def history(auth, class_id, term_id, thread_id, *, before=None, version=None, resume=False):
         page = query.conversation_page(*auth, class_id, term_id, thread_id, before_ordinal=before, expected_version=version)
-        return {**asdict(page.value), "next_before": page.next_before,
-                "class_id": class_id, "term_id": term_id, "student_id": page.student_id}
+        result = {**asdict(page.value), "next_before": page.next_before,
+                  "class_id": class_id, "term_id": term_id, "student_id": page.student_id}
+        if resume:
+            result["turns"] = [asdict(turn) for turn in page.turns]
+        return result
 
     @routes.get("/conversations/{thread_id}", response_model=HistoryResponse)
     def read(workspace_id: UUID, class_id: UUID, term_id: UUID, thread_id: UUID, request: Request):
@@ -238,6 +266,14 @@ def router(runtime):
     @routes.get("/conversations/{thread_id}/pages/{version}/{before}", response_model=HistoryResponse)
     def read_page(workspace_id: UUID, class_id: UUID, term_id: UUID, thread_id: UUID, version: int, before: int, request: Request):
         return history(credentials(request, workspace_id), class_id, term_id, thread_id, before=before, version=version)
+
+    @routes.get("/conversations/{thread_id}/history", response_model=HistoryV2Response)
+    def resumable_history(workspace_id: UUID, class_id: UUID, term_id: UUID, thread_id: UUID, request: Request):
+        return history(credentials(request, workspace_id), class_id, term_id, thread_id, resume=True)
+
+    @routes.get("/conversations/{thread_id}/history/pages/{version}/{before}", response_model=HistoryV2Response)
+    def resumable_page(workspace_id: UUID, class_id: UUID, term_id: UUID, thread_id: UUID, version: int, before: int, request: Request):
+        return history(credentials(request, workspace_id), class_id, term_id, thread_id, before=before, version=version, resume=True)
 
     @routes.post("/conversations/{thread_id}/turns", response_model=CommandStatusResponse)
     def enqueue(workspace_id: UUID, class_id: UUID, term_id: UUID, thread_id: UUID, request: Request, body: SendBody):

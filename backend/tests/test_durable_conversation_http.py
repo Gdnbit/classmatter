@@ -1,7 +1,7 @@
 """Opt-in transport against actual ISB/QG/BCG/PG and original offline SDK."""
 import asyncio
 from datetime import timedelta
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import httpx
 import pytest
@@ -99,6 +99,13 @@ async def test_actual_http_persist_before_dispatch_and_rebuild_history(control, 
         assert (data["class_id"], data["term_id"], data["student_id"]) == (str(value.ids["class"]), str(value.ids["term"]), None)
         assert len(data["history"]["messages"]) == 2 and not data["history"]["truncated"]
         assert data["next_before"] is None and len(data["results"]) == 1
+        assert "turns" not in data  # Accepted v1 remains byte-compatible.
+        resumed = (await api.get(path + "/history")).json()
+        assert resumed["schema_version"] == "classmatter.conversation-history.v2"
+        assert len(resumed["turns"]) == 1
+        assert resumed["turns"][0]["client_request_id"] == body["request_id"]
+        assert resumed["turns"][0]["run"]["run_id"] == status["run_id"]
+        assert resumed["turns"][0]["run"]["state"] == "completed"
         result = data["results"][0]
         assert result["content_authority"] == "assistant-unverified" and result["draft_status"] == "uncommitted"
         assert bool(result["result"]["sources"]) == (mode == "read")
@@ -107,6 +114,41 @@ async def test_actual_http_persist_before_dispatch_and_rebuild_history(control, 
     with control[4].transaction(read_only=True) as connection:
         assert connection.execute(text("SELECT count(*) FROM class_os.business_audit WHERE action='agent.run.started'")).scalar_one() == 1
         assert connection.execute(text("SELECT count(*) FROM class_os.manual_task")).scalar_one() == 0
+
+
+@pytest.mark.db
+async def test_history_v2_restores_original_request_running_cancel_and_unknown_without_sdk(control):
+    calls = []
+    def respond(messages, info):
+        calls.append(True)
+        return ModelResponse(parts=[TextPart("synthetic should not be called")])
+    value = setup(control, respond=respond)
+    body = send(mode="read")
+    async with client(value) as api:
+        assert (await api.post(value.thread_path + "/turns", json=body, headers=value.headers)).status_code == 200
+    rebuilt = create_durable_app(Settings(), worker=value.worker, query=value.query,
+        sdk=PydanticAgentRuntime(value.query))
+    async with client(value, rebuilt) as api:
+        saved = (await api.get(value.thread_path + "/history")).json()
+        turn = saved["turns"][0]
+        assert turn["client_request_id"] == body["request_id"] and turn["run"]["state"] == "queued"
+        assert set(turn["run"]) == {"schema_version", "run_id", "state", "version", "created_at", "queued_until", "ended_at"}
+        status_path = value.thread_path + "/turns/" + turn["client_request_id"]
+        assert (await api.get(status_path)).json() == turn["run"]
+        ticket = value.worker.claim(value.auth, value.ids["class"], value.ids["term"], value.thread, UUID(body["request_id"]))
+        restored = (await api.get(value.thread_path + "/history")).json()["turns"][0]
+        assert restored["run"]["state"] == "running" and restored["run"]["version"] == 2
+        cancel = value.thread_path + "/runs/" + restored["run"]["run_id"] + "/cancel"
+        assert (await api.post(cancel, json={"expected_version": 1}, headers=value.headers)).status_code == 409
+        assert (await api.post(cancel, json={"expected_version": 2}, headers=value.headers)).status_code == 200
+        assert (await api.get(status_path)).json()["state"] == "cancel_requested"
+        value.worker.finish_run(value.auth, ticket, "unknown")
+        unknown = (await api.get(value.thread_path + "/history")).json()["turns"][0]
+        assert unknown["client_request_id"] == body["request_id"] and unknown["run"]["state"] == "unknown"
+        assert not calls
+    with control[4].transaction(read_only=True) as connection:
+        assert connection.execute(text("SELECT count(*) FROM class_os.conversation_run")).scalar_one() == 1
+        assert connection.execute(text("SELECT count(*) FROM class_os.business_audit WHERE action='agent.run.started'")).scalar_one() == 0
 
 
 @pytest.mark.db

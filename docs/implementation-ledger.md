@@ -1,8 +1,8 @@
 # 实现与验收台账
 
-更新时间：2026-10-26。最新验收main为`745f600`：[PR #32](https://github.com/Gdnbit/classmatter/pull/32)固定来源/草稿与生命周期单元通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40255153105)，Windows非DB582/Web55/desktop23，Ubuntu非DB575+7跳过、实际PG/browser563+13跳过999.35秒，728个真实hash。原SDK普通对话已由PR #31收口，此前D0/E1及D1前置由PR #13—30收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+更新时间：2026-10-26。最新验收main为`e62f050`：[PR #33](https://github.com/Gdnbit/classmatter/pull/33)完整分页/显式HTTP在最终f4f1c67通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40317840835)，Windows非DB583/Web55/desktop23，Ubuntu非DB576+7跳过、实际PG/browser577+13跳过921.90秒，验证器82及741个真实hash通过。此前两次CI取消不改称成功；固定来源/草稿与生命周期由PR #32收口，原SDK普通对话由PR #31收口，此前D0/E1及D1前置由PR #13—30收口。Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
 
-D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-16显式0026/35，固定摘要回执、查询来源和未提交task草稿与原SDK/BCG/QG/清除/v6/恢复联动，独立复现的历史读取降级绕过已修复；默认R1仍0016/22，旧v2—v5及共享注册表冻结。当前D1-17候选补完整分页与显式HTTP factory，不在默认R1/桌面注册，也不迁移用户实例；真实界面和工作小结继续必做。跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。
+D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-16显式0026/35，固定摘要回执、查询来源和未提交task草稿与原SDK/BCG/QG/清除/v6/恢复联动，独立复现的历史读取降级绕过已修复；默认R1仍0016/22，旧v2—v5及共享注册表冻结。D1-17已接受完整分页与显式HTTP factory，但不在默认R1/桌面注册，也不迁移用户实例。D1-18在独立分支进行原UI纵向接线，需补原请求/run恢复、作者感知Activity/Audit及显式独立runtime，尚未验收；工作小结继续必做。跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。
 
 ## 状态与顺序
 

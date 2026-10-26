@@ -1,5 +1,6 @@
 """Fixed admission SQL and body attribution behind existing QG/BCG/ISB."""
 from dataclasses import dataclass
+from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
@@ -66,10 +67,10 @@ def admission_boundary(tx, binding, action, proposal_id):
 
 
 class AdmissionStore(ConversationExitStore):
-    def __init__(self, database, restrictions, retirement=None):
+    def __init__(self, database, restrictions, retirement=None, *, model_secrets=None):
         if retirement is not None and type(retirement) is not AuthorizedRetirementReader:
             raise ValueError("Live authorized retirement reader required")
-        super().__init__(database, restrictions)
+        super().__init__(database, restrictions, model_secrets=model_secrets)
         self.retirement = retirement
 
     def _conversation_transaction(self, connection):
@@ -93,10 +94,30 @@ class AuthorAwareHistory:
 
 
 @dataclass(frozen=True)
+class HistoricalRun:
+    run_id: UUID
+    state: str
+    version: int
+    created_at: datetime
+    queued_until: datetime
+    ended_at: datetime | None
+
+
+@dataclass(frozen=True)
+class HistoricalTurn:
+    turn_id: UUID
+    ordinal: int
+    client_request_id: UUID
+    mode: str
+    run: HistoricalRun
+
+
+@dataclass(frozen=True)
 class HistoryPage:
     value: AuthorAwareHistory
     next_before: int | None
     student_id: UUID | None
+    turns: tuple[HistoricalTurn, ...]
 
 
 class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImportTransaction):
@@ -228,6 +249,19 @@ class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImpo
         selected = {row.turn_id for row in history.messages}
         ordinals = [row["ordinal"] for row in conversations["conversation_turn"]
                     if row["thread_id"] == str(thread_id) and UUID(row["turn_id"]) in selected]
+        # Resume metadata is projected from the SAME verified snapshot, never
+        # SDK memory. Request UUID is an identifier, not dispatch authority.
+        # Only selected visible whole turns are exposed; clear returns none.
+        runs = {row["turn_id"]: row for row in conversations["conversation_run"] if row["thread_id"] == str(thread_id)}
+        turns = []
+        for row in sorted(conversations["conversation_turn"], key=lambda item: item["ordinal"]):
+            if row["thread_id"] != str(thread_id) or UUID(row["turn_id"]) not in selected:
+                continue
+            run = runs[row["turn_id"]]  # Full snapshot already requires exactly one per turn.
+            turns.append(HistoricalTurn(UUID(row["turn_id"]), row["ordinal"], UUID(row["client_request_id"]), row["mode"],
+                HistoricalRun(UUID(run["run_id"]), run["state"], run["version"], datetime.fromisoformat(run["created_at"]),
+                    datetime.fromisoformat(run["queued_until"]), datetime.fromisoformat(run["ended_at"]) if run["ended_at"] else None)))
         return HistoryPage(AuthorAwareHistory(history, attribution, messages, tuple(results)),
                            min(ordinals) if history.truncated else None,
-                           UUID(threads[str(thread_id)]["student_id"]) if threads[str(thread_id)]["student_id"] is not None else None)
+                           UUID(threads[str(thread_id)]["student_id"]) if threads[str(thread_id)]["student_id"] is not None else None,
+                           tuple(turns))

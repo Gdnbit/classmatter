@@ -14,10 +14,10 @@ from .roster import PostgresBusinessStore, BusinessTransaction
 
 
 class ConversationBusinessStore(PostgresBusinessStore):
-    def __init__(self, database, restrictions):
+    def __init__(self, database, restrictions, *, model_secrets=None):
         if database.profile != "conversation-d1":
             raise ValueError("Explicit conversation profile required")
-        super().__init__(database)
+        super().__init__(database, model_secrets=model_secrets)
         self.restrictions = restrictions
 
     def _transaction(self, connection):
