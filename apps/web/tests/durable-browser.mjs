@@ -74,6 +74,19 @@ try {
   assert.equal(await page.getByLabel('会话名称').inputValue(),'合成未保存标题');
   await page.getByLabel('会话名称').fill('合成耐久浏览器验收');
   await page.getByLabel('输入消息').fill('合成未发送内容不得跨范围');
+  await context.setOffline(true);
+  await page.waitForFunction(()=>navigator.onLine===false);
+  assert.equal(await page.evaluate(()=>fetch('/health/live').then(()=>false,()=>true)),true);
+  await history.getByText('正在核对；上次快照不能用于提交',{exact:true}).waitFor();
+  assert.equal(await page.getByLabel('输入消息').inputValue(),'合成未发送内容不得跨范围');
+  assert.equal(await page.getByLabel('输入消息').isEnabled(),true);
+  assert.equal(await page.getByRole('button',{name:'发送消息',exact:true}).isDisabled(),true);
+  await context.setOffline(false);
+  await page.waitForFunction(()=>navigator.onLine===true);
+  await history.getByText('来自当前授权数据库',{exact:true}).waitFor();
+  await page.getByRole('button',{name:'发送消息',exact:true}).waitFor();
+  await page.waitForFunction(()=>!document.querySelector('[aria-label="发送消息"]')?.disabled);
+  assert.equal(await page.getByLabel('输入消息').inputValue(),'合成未发送内容不得跨范围');
   await page.evaluate(() => {
     history.pushState(null,'','/dashboard'); window.dispatchEvent(new PopStateEvent('popstate'));
   });

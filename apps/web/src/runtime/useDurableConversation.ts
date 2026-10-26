@@ -12,7 +12,8 @@ const stateText = (turn?: Turn) => turn ? ({ queued: "输入已保存，尚未�
 type Props = {
   enabled: boolean; session: Session | null; classroom: Classroom | null; threadId: string
   readable: boolean; canWrite: boolean
-  onSelect: (id: string) => void; onBusyChange: (value: boolean) => void; onError: (error: unknown) => void
+  onSelect: (id: string) => void; onBusyChange: (value: boolean) => void
+  onDraftChange: (value: boolean) => void; onError: (error: unknown) => void
 }
 export function useDurableConversation(props: Props) {
   const latest = useRef(props); latest.current = props
@@ -23,6 +24,7 @@ export function useDurableConversation(props: Props) {
   const [history, setHistory] = useState<History | null>(null), [listing, setListing] = useState<Listing | null>(null)
   const [text, setText] = useState(""), [mode, setMode] = useState<Mode>("read"), [student, setStudent] = useState("")
   const [status, setStatus] = useState(""), [working, setWorking] = useState(false), [fresh, setFresh] = useState(false)
+  const [inputReady, setInputReady] = useState(false)
   const [pending, setPending] = useState<{ preview: Preview; key: string; approval: string | null; attempted: boolean } | null>(null)
   const [title, setTitle] = useState("")
   const key = props.enabled && props.session && props.classroom
@@ -38,12 +40,13 @@ export function useDurableConversation(props: Props) {
     setStatus(error instanceof Error ? error.message : "未完成，请按原请求核对。")
     latest.current.onError(error)
   }
-  useEffect(() => { latest.current.onBusyChange(working || !!pending || !!text.trim()) }, [working, pending, text])
+  useEffect(() => { latest.current.onBusyChange(working || !!pending) }, [working, pending])
+  useEffect(() => { latest.current.onDraftChange(!!text.trim()) }, [text])
   useEffect(() => {
     const generation = ++epoch.current, connection = connectivity.current
     request.current?.abort(); stream.current?.abort(); running.current = null
     operation.current = null
-    setHistory(null); setListing(null); setPending(null); setWorking(false); setFresh(false); setStatus(""); setTitle("")
+    setHistory(null); setListing(null); setPending(null); setWorking(false); setFresh(false); setInputReady(false); setStatus(""); setTitle("")
     setText(""); setStudent("")
     if (!key) return
     const controller = new AbortController(); request.current = controller
@@ -51,10 +54,10 @@ export function useDurableConversation(props: Props) {
     Promise.all([client.list(controller.signal), selected ? client.history(selected, controller.signal) : Promise.resolve(null)])
       .then(([list, saved]) => {
         if (generation !== epoch.current || connection !== connectivity.current || !navigator.onLine || controller.signal.aborted) return
-        setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true)
+        setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true)
         if (saved) { setStudent(saved.student_id || ""); setStatus(stateText(saved.turns.at(-1))) }
       }).catch(error => { if (generation === epoch.current && !controller.signal.aborted) report(error) })
-    return () => { epoch.current++; controller.abort(); stream.current?.abort(); latest.current.onBusyChange(false) }
+    return () => { epoch.current++; controller.abort(); stream.current?.abort(); latest.current.onBusyChange(false); latest.current.onDraftChange(false) }
   }, [key])
 
   async function refresh(threadId = latest.current.threadId) {
@@ -64,7 +67,7 @@ export function useDurableConversation(props: Props) {
     try {
       const [list, saved] = await Promise.all([client.list(controller.signal), threadId ? client.history(threadId, controller.signal) : Promise.resolve(null)])
       if (generation !== epoch.current || connection !== connectivity.current || !navigator.onLine || controller.signal.aborted) return null
-      setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true)
+      setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true)
       if (saved) setStatus(stateText(saved.turns.at(-1)))
       return saved
     } catch (error) {
@@ -201,7 +204,7 @@ export function useDurableConversation(props: Props) {
       setPending(null); await refresh()
     })
   }
-  return { history, listing, text, setText, mode, setMode, student, setStudent, title, setTitle, status, working, fresh, pending,
+  return { history, listing, text, setText, mode, setMode, student, setStudent, title, setTitle, status, working, fresh, inputReady, pending,
     blocked: working || !!pending, active: active(history?.turns.at(-1)), isStreaming: !!stream.current,
     send: () => send(), startSaved: (turn: Turn) => send(turn), stop,
     refresh: () => operate(async () => { await refresh() }),

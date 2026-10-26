@@ -8,6 +8,10 @@ D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入
 
 ## 状态与顺序
 
+D1-18已创建[独立PR #34](https://github.com/Gdnbit/classmatter/pull/34)，8939ffa准确head的独立复核及本机原生/CLI7通过71.21秒、control回归43通过180.54秒；该head Windows CI成功（591非DB/Web61/desktop23），Ubuntu仍进行中，不计整单元接受。随后针对“未发送文字阻碍联网自动读取”分离导航草稿保护和操作忙碌，scope首次就绪后离线输入可编辑，发送权限/fresh限制不变；新代码需要本机重验及最新head两平台CI。工作小结尚未实现，Owner/Provider外部条件及正式Gate没有改变。
+
+后续修正本机7个真实socket/PG/browser场景通过162.98秒；新增真实浏览器离线（health请求确认失败）→保留可编辑文字/禁止发送→联网自动恢复，两种recent主链通过98.67秒。Web61/tsc/build及独立源码复核通过。正在将最新字节同步同一PR并重新执行完整CI，不以先前Windows成功替代本head验收。
+
 状态分开记录：`implemented-synthetic`（已有合成工程实现）、`demo-only`（样例/内存交互）、`partial`、`pending-validation`、`deferred`。代码存在不等于正式 `implemented-green`。107项需求、147项Eval、94项原子任务不因本表变化。
 
 1. W0：建立当前实现/证据/剩余项台账。

@@ -68,7 +68,7 @@ export function DurableComposer({ state: s, students, canWrite }: { state: Durab
   const unavailableStudent = !fixed && !!s.student && !students.some(item => item.student_id === s.student && item.status === "active")
   const allowed = canWrite && s.fresh && !s.blocked && !s.active && !unavailableStudent && (!fixed || s.history?.history.status === "active")
   return <form className="r1-composer" onSubmit={event => { event.preventDefault(); void s.send() }}>
-    <textarea aria-label="输入消息" placeholder="输入、查询或整理班级工作……" maxLength={2000} value={s.text} disabled={s.blocked || !s.fresh || !canWrite}
+    <textarea aria-label="输入消息" placeholder="输入、查询或整理班级工作……" maxLength={2000} value={s.text} disabled={s.blocked || !s.inputReady}
       onChange={event => s.setText(event.target.value)} onKeyDown={event => {
         if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (allowed) void s.send() }
       }} />

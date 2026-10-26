@@ -107,6 +107,7 @@ export default function R1App() {
   const [runtimeProfile, setRuntimeProfile] = useState<"loading" | "failed" | "r1" | "conversation-d1">("loading")
   const [profileRetry, setProfileRetry] = useState(0)
   const [durableBusy, setDurableBusy] = useState(false)
+  const [durableDraft, setDurableDraft] = useState(false)
   const [exitBusy, setExitBusy] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState("")
@@ -149,7 +150,7 @@ export default function R1App() {
   const termLoad = useRef(0)
   const loading = useRef(0)
   const connectivity = useRef(0)
-  const navigationBlocked = busy || durableBusy || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
+  const navigationBlocked = busy || durableBusy || durableDraft || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
   const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
@@ -786,7 +787,7 @@ export default function R1App() {
     readable: queryFresh && !refreshing,
     canWrite: editable && !busy && !form && !pending && !modelUncertain,
     onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
-    onBusyChange: setDurableBusy, onError: fail,
+    onBusyChange: setDurableBusy, onDraftChange: setDurableDraft, onError: fail,
   })
 
   if (checking)

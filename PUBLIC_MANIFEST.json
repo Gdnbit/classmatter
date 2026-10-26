@@ -12,7 +12,7 @@
       "sha256": "45ae29598a3413ef1b56c33997429bcafdf989806b57289733c15b34ddf38998"
     },
     "apps/web/src/runtime/DurableConversation.tsx": {
-      "sha256": "100ec96553f2e319e682f08556bbc83ce590a5f84fbc44eadd24f7490c04b6ce"
+      "sha256": "a5398f1a5771052f28c1d39d8001b292abb538ffd5a1d4fa24322f975633cb44"
     },
     "apps/web/src/runtime/DurableExit.tsx": {
       "sha256": "a44b8151e895c379b6189916233dca77567f2ff36a14fc44cb27de3bd199b5a1"
@@ -27,10 +27,10 @@
       "sha256": "5715136459bf31b85621ff88b1111aa9ea4930a276330405dc1917c38560983f"
     },
     "apps/web/src/runtime/useDurableConversation.ts": {
-      "sha256": "ed4769cc3b45ba1f8f7e65f1463652457b89f9a24556cf28c4c6862b6637ca35"
+      "sha256": "85583069b18e68160ae69b226fad543e7dd4816db2e9962166a1ab83624584dc"
     },
     "apps/web/tests/durable-browser.mjs": {
-      "sha256": "998f5e283ea2d2ec273277bb7b9d308562db64880fbb02d226e00f40fe360a36"
+      "sha256": "e2fc34aacb637d0ad470c9a359a5b63d969853eeec29eb6adc759f4e5c2e333d"
     },
     "apps/web/tests/durable-conversation.mjs": {
       "sha256": "b6b5f01f06a445cdc75ff99905fd1daddd87d21a4640492b19944624e474d00b"
@@ -354,7 +354,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "1ffa62751d99cf27fee5017ba1c2c1a8a4c5825f0a94705888ed9db8441a929c"
+      "sha256": "0e608a8caafa174d625827b374b383020f181f363a9a9f1c2466579684a41b4b"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "b351c5e3af70e8d978ab412d7579e45469335a00bc298a8feb12a07e7449a8f4"
@@ -462,7 +462,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "0a76d2a9cef371555f57bbe1bc3d552a2dbb50a94109e911529ec2ff98f89483"
+      "sha256": "d9b2f2fb448b54bed31cddf4d173561f06cbcddd2e5587e37a49ca3d326f27e2"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -696,7 +696,7 @@
       "sha256": "fe5baeec654888996fa3a94a03251bea227325fa54dc53a4e351ecd72d8d4d9b"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "e0971b98a3070d7df860da51dc4d0609692551ae15fe0c6bf5aeae77e3f63307"
+      "sha256": "5518fa12d5a469c63487f632ff6c251f24b9766890133dc8cd57e98efb788600"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "8f005293650b914c64f9649c7c70efe41080d6a310c275aff9fdf4707588160b"
@@ -1435,7 +1435,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "7f8efa0a79aa4e5a25e93365793be2f100ead8192b71c8a54ff07626616d919a"
+      "sha256": "2b2779be3ccc76ea830356233f56deb1670fe820ba6ab0bf362f6147e0ad11fc"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"
