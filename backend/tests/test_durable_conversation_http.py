@@ -96,6 +96,7 @@ async def test_actual_http_persist_before_dispatch_and_rebuild_history(control, 
         history = await api.get(path)
         assert history.status_code == 200, history.text
         data = history.json()
+        assert (data["class_id"], data["term_id"], data["student_id"]) == (str(value.ids["class"]), str(value.ids["term"]), None)
         assert len(data["history"]["messages"]) == 2 and not data["history"]["truncated"]
         assert data["next_before"] is None and len(data["results"]) == 1
         result = data["results"][0]
@@ -115,6 +116,8 @@ async def test_http_default_absence_scope_json_and_csrf_boundaries(control):
     async with client(value, default) as api:
         assert (await api.get(value.base + "/conversations")).status_code == 404
     async with client(value) as api:
+        scoped = await api.get(value.thread_path)
+        assert scoped.status_code == 200 and scoped.json()["student_id"] == str(value.ids["student"])
         assert (await api.post(value.thread_path + "/turns", json=send())).status_code == 403
         for wrong in (value.base.replace(str(value.auth[3]), str(uuid4())),
                       value.base.replace(str(value.ids["class"]), str(uuid4())),

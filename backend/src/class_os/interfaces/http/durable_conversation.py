@@ -118,6 +118,9 @@ class ResultView(WireModel):
 
 class HistoryResponse(WireModel):
     schema_version: Literal["classmatter.conversation-history.v1"] = "classmatter.conversation-history.v1"
+    class_id: UUID
+    term_id: UUID
+    student_id: UUID | None
     history: HistoryView
     thread_attribution: Attribution
     message_attributions: list[MessageAttribution] = Field(max_length=100)
@@ -225,7 +228,8 @@ def router(runtime):
 
     def history(auth, class_id, term_id, thread_id, *, before=None, version=None):
         page = query.conversation_page(*auth, class_id, term_id, thread_id, before_ordinal=before, expected_version=version)
-        return {**asdict(page.value), "next_before": page.next_before}
+        return {**asdict(page.value), "next_before": page.next_before,
+                "class_id": class_id, "term_id": term_id, "student_id": page.student_id}
 
     @routes.get("/conversations/{thread_id}", response_model=HistoryResponse)
     def read(workspace_id: UUID, class_id: UUID, term_id: UUID, thread_id: UUID, request: Request):

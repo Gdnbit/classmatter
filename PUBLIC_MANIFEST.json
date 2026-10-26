@@ -3,13 +3,13 @@
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
     "backend/src/class_os/interfaces/http/durable_conversation.py": {
-      "sha256": "f9aa3c74b046a64d1dcea34291e198b07e6dc66afed88c3e3f7f3dcc3f78d80c"
+      "sha256": "1c5f7e02dcde9f212a68b28303d022071a9b2ad7cdd56470257bb932c0dabdf1"
     },
     "backend/tests/test_conversation_pagination.py": {
-      "sha256": "36a03063f6dd5c799e3d97e876dc31b643cf7b93ee60bf18dae2f3d83046ac9f"
+      "sha256": "3da3c27969fd4966a6b1da87cd70c930d5968ceff476624a8ef0130a1e12439a"
     },
     "backend/tests/test_durable_conversation_http.py": {
-      "sha256": "a1a5818395e77ea0c431e2cbacc1d2c293ba8a45299fe1a3a451acd47af2e28f"
+      "sha256": "901826ddf4a99ccdf0b97dc08c5453090f9bf5157a415ed9e571f5a2e5c313dc"
     },
     "contracts/http/conversation-d1-control-status.v1.schema.json": {
       "sha256": "93f486b2db58812e60df35f2caab85708d3915b41c657871a9c1b467bce3e179"
@@ -21,7 +21,7 @@
       "sha256": "4c9549168f2a4e1e02b873360f67782d0c7ccd130333c012f575e41a7d8960af"
     },
     "contracts/http/conversation-d1-history.v1.schema.json": {
-      "sha256": "f32042315f26968c798e74197db94d83c25a98be84d192d7602a02ceb73dec2c"
+      "sha256": "06864826ccc2e3e4c7d638de0e281e1ea695eb6feb00e063fd4d4887a731860d"
     },
     "contracts/http/conversation-d1-list.v1.schema.json": {
       "sha256": "c484d89d514d6ecfad6f53666adb472dcd7f01b8d9c233e942d443f3ef8fa056"
@@ -135,7 +135,7 @@
       "sha256": "75a199366f0272505158212c5c61445a6f36e65aec9791ab6e9ef209156de146"
     },
     "backend/src/class_os/infrastructure/recovery_admission_store.py": {
-      "sha256": "62f4b5c7e4313355526be40df3f072a84b7dafb0736521f64e0f4f300640887e"
+      "sha256": "9c34a812539b55bee190020f9d8feed170b3ec5ed194f5d3d4755168e9f23752"
     },
     "backend/src/class_os/infrastructure/recovery_commit_evidence.py": {
       "sha256": "cd9b10d8c017be738bbfe8ee3989dce5c659b40ca15894f421e47838af0798b2"
@@ -282,7 +282,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "b9e3519801a8f5ead8d813cf41078ce0ecf28f8fdb7ced890e4c6a57475ba255"
+      "sha256": "ed61e3f4e1c122309af68bda34569b7f6f151ecc826b1e2967351f28910c3faa"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "4419dceda864e2bdd0a4e9ccc41e33ad09cc91c6036a0e088afc61206bcda7c4"
@@ -1363,7 +1363,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "4e3400cf1e2251bccfa9e02d181b62d4393b6055b81e69c1cfd796a46485e655"
+      "sha256": "8b1e10ce8125713e61e03c54372033bdec13e0f764e317674e3b1868d4dbfb38"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

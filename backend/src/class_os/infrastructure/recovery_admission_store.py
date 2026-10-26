@@ -96,6 +96,7 @@ class AuthorAwareHistory:
 class HistoryPage:
     value: AuthorAwareHistory
     next_before: int | None
+    student_id: UUID | None
 
 
 class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImportTransaction):
@@ -228,4 +229,5 @@ class AdmissionTransaction(WorkerTransaction, InteractionTransaction, TargetImpo
         ordinals = [row["ordinal"] for row in conversations["conversation_turn"]
                     if row["thread_id"] == str(thread_id) and UUID(row["turn_id"]) in selected]
         return HistoryPage(AuthorAwareHistory(history, attribution, messages, tuple(results)),
-                           min(ordinals) if history.truncated else None)
+                           min(ordinals) if history.truncated else None,
+                           UUID(threads[str(thread_id)]["student_id"]) if threads[str(thread_id)]["student_id"] is not None else None)

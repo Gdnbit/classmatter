@@ -22,6 +22,8 @@ D1-16已由PR #32在最终head06d1fb5的完整CI40255153105及独立审查后合
 
 上述增强组合44通过301.23秒，覆盖新分页/HTTP及原SDK/interaction回归；日志留忽略目录`test-results/d1-http-final-gateways.xml`。全非DB579通过/4宿主跳过/590 DB未执行59.24秒，原契约无漂移；独立741项真实SHA/13个新增首方文件与schema复核、固定scan4已审查0未解决、验证器81/文档74和正式图通过。列表摘要对已知SQL datetime从hasattr收紧为显式类型的末次等价修改另需最终分页/CI核验，不拿运行中加载的旧函数当最后字节证据。PR最终完整Windows/Ubuntu CI通过前仍是候选，不启用用户实例或提升正式Gate。
 
+PR #33初始提交b3c09ef；最终datetime分页另2通过84.58秒，提交后scan与741 SHA复核通过。原界面接线核对发现会话深链/刷新不能依赖列表第一页来获知student scope；候选历史wire现明确class/term及从已核完整snapshot派生的student_id，初始/旧页均返回同一绑定。新增HTTP断言覆盖class-scoped null和student-scoped UUID，错误scope仍拒绝。没有新增表、授权或默认启用；新head必须再跑相关测试和完整CI，不能借b3c09ef成绩合并。
+
 | 开发需求 | 必须证明 | 最小实施/验收单元 |
 | --- | --- | --- |
 | D1-01 | 会话列表、新建、改名、归档和打开来自当前授权数据库，刷新/进程重启后身份及内容稳定 | typed会话/消息模型、QG/BCG、真实Web/PG |

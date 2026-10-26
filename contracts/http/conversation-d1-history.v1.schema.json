@@ -405,6 +405,28 @@
       "title": "Schema Version",
       "type": "string"
     },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "student_id": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Student Id"
+    },
     "history": {
       "$ref": "#/$defs/HistoryView"
     },
@@ -443,6 +465,9 @@
     }
   },
   "required": [
+    "class_id",
+    "term_id",
+    "student_id",
     "history",
     "thread_attribution",
     "message_attributions",

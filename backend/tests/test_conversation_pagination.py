@@ -41,6 +41,7 @@ async def test_whole_turn_pages_keep_older_sources_and_reject_changed_version(co
     async with client(value) as api:
         wire = await api.get(path + f"/pages/{first.value.history.version}/{first.next_before}")
         assert wire.status_code == 200, wire.text
+        assert wire.json()["student_id"] is None and wire.json()["class_id"] == str(value.ids["class"])
         assert len(wire.json()["history"]["messages"]) == 3 and len(wire.json()["results"]) == 1
         assert wire.json()["results"][0]["result"]["sources"][0]["receipt_id"] == str(value.result.sources[0].receipt_id)
     old_version = first.value.history.version
