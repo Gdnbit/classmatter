@@ -369,7 +369,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "555104e920eea7970ce6b0c052ee85618e352938c17a77bedb23d539c4c93b48"
+      "sha256": "06ec1e667e50c61972111e3673af74db9d51414daef788843c7306e5c5ef7950"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "b351c5e3af70e8d978ab412d7579e45469335a00bc298a8feb12a07e7449a8f4"
@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "92ecd7fa17efc7a5c5bbe617165cb2fe99cb258aa9d8c8abf01886e28f40a67a"
+      "sha256": "aeca137443a239205b13ee2dbfd4a718172179fc1b7324799c40830fcc83aae4"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -1450,7 +1450,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "3b1e31978e0b44dc43024fef52967ca486585205f821687d2d3e311c2bd16aa4"
+      "sha256": "c5b474ba592cecb50def7f1c1254b9b9086b7e39dded1cc6417394e8bed87fa7"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

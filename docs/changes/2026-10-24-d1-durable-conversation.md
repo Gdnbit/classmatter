@@ -1,8 +1,12 @@
 # D1：耐久会话实施变更
 
-日期：2026-10-24。状态：用户已确认合成开发方向；实施中，未验收。继承[数据库演进设计](../design/database-live-data-design.md)的D1，而非另建产品或替换Harness。冻结[R1](../specs/class-os-v1/release-1-manifest.md)、107/147/94定义与正式Gate不变；本文件的D1-*是后续开发追溯，不表示正式准入。只用合成数据，无Agent业务写工具、真实数据、自动付费或隐式迁移。
+日期：2026-10-24；功能验收更新：2026-10-27。状态：D1-01—09合成工程及小结最小闭环已验收，正式发布/真实数据/真实Provider质量仍未准入。继承[数据库演进设计](../design/database-live-data-design.md)的D1，而非另建产品或替换Harness。冻结[R1](../specs/class-os-v1/release-1-manifest.md)、107/147/94定义与正式Gate不变；本文件的D1-*是后续开发追溯，不表示正式准入。只用合成数据，无Agent业务写工具、真实数据、自动付费或隐式迁移。
 
 ## 目标和验收
+
+最终功能收口：[PR #34](https://github.com/Gdnbit/classmatter/pull/34)原UI/runtime在精确`b72519f`双平台CI40362349240通过后合并`acda66c`；[PR #35](https://github.com/Gdnbit/classmatter/pull/35)小结及原浏览器时序修正，在精确`eceea46`的[完整CI40431820411](https://github.com/Gdnbit/classmatter/actions/runs/40431820411)通过后合并`0b45355`，合并树一致。Windows非DB591/Web65/desktop23/实际打包；Ubuntu实际PG/browser590通过+16跳过1164.66秒。当前逐项证据及边界见[实现台账](../implementation-ledger.md)首节。以下保留的候选“实施中/待验收”属于历史，不代表当前功能缺失，也不将历史失败改写为通过。
+
+小结只复用授权QG事实/观察/任务，规则整理→编辑→人工复制，无新store/API/模型调用或业务写权限；不是耐久Artifact或当前服务器原子快照。会话新store进入固定v6和受控恢复，但session/批准/密钥不迁移，checkpoint完整性不是激活授权；只证明实际同机单跳路径。Owner本人设置、真实Provider费用/质量、教师研究及完整跨机多跳等继续待验证。文档收口不改变Requirement/Eval/Task/Gate语义或状态，不扩大默认R1或自动迁移用户实例。
 
 D1-16已由PR #32在最终head06d1fb5的完整CI40255153105及独立审查后合并main745f600：Windows非DB582/Web55/desktop23，Ubuntu非DB575+7跳过、实际PG/browser563+13跳过999.35秒。最终Windows两个实际PG组共112个不同用例通过（507.87/320.60秒），728项真实SHA、固定扫描和正式图通过；旧本机全量568通过/1跳过/1旧夹具失败明确保留，未改称全绿。此处只收口服务端成果/生命周期单元，不是界面或整个Goal完成。
 

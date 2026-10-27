@@ -1,6 +1,29 @@
 # 实现与验收台账
 
-## 2026-10-27 当前收口与下一单元
+## 2026-10-27 当前已验收功能与剩余边界
+
+最新功能基线为`0b45355`：[PR #35](https://github.com/Gdnbit/classmatter/pull/35)已通过独立审查及[完整CI40431820411](https://github.com/Gdnbit/classmatter/actions/runs/40431820411)后合并，树与最终`eceea46`一致。Windows非DB591通过37.66秒、Web65、desktop23及实际打包无pageErrors/externalRequests；Ubuntu非DB584通过+7宿主跳过37.40秒、Web65、实际PG/browser590通过+16宿主跳过1164.66秒；两平台验证器82、docs74及固定扫描通过。770项真实SHA与default-deny/原例外不变；早期CI40429582795的1项失败保持失败，不用新成功改写历史。
+
+D1耐久会话和可编辑班级工作小结合成工程已交付；这不是正式R1发布、真实数据或真实Provider质量准入。PR #18—34完成显式存储、生命周期、受控恢复及原界面接线，PR #35补齐小结最小闭环。下表为本轮工程证据索引，不新增正式Eval或修改107需求/147Eval/94任务/green0。
+
+| 本轮验收要求 | 当前实现与可复验证据 | 不能外推的结论 |
+| --- | --- | --- |
+| D1-01/09：真实历史、原界面、刷新与重启 | `test_durable_web.py`、`test_durable_desktop.py`及真实`durable-browser.mjs`/`durable-integration.cjs`；原来源、同URL重开、实际Electron/API/PG重启及未发送导航保护 | Demo/默认R1不自动成为D1；Owner本人尚未设置 |
+| D1-02/03：先保存、最多运行一次、来源可追溯 | `test_durable_conversation_http.py`、`test_conversation_worker_gateway.py`及原SDK测试；真实并发、同键不同输入拒绝、QG核对后显示、有限历史/来源与未提交task草稿 | 不保证供应商内部零重复计费；无Agent业务writer |
+| D1-04/05：故障与scope边界 | 原HTTP/worker/浏览器取消、lease、unknown、迟到、保存/claim/audit失败；ISB/QG/BCG、固定复合scope/ACL与原键核对 | 取消不是撤销已完成外部调用；历史UUID/引用不是批准 |
+| D1-06/07/08：新store、出口与受控恢复 | 显式0026/35、固定v6及结果来源/摘要；真实checkpoint/pg_restore、clear限制、同机单跳源冻结/退役/目标准入及作者保真；原R1仍0016/22 | 35表checkpoint不等于全部可移植导出；session/批准/密钥不迁移为授权；不是任意跨机、多跳或active run续跑 |
+| 引用已有事实和任务的小结 | `work-summary.ts`/`WorkSummary.tsx`；`test_work_summary_web.py`真实QG→整理→编辑→本人复制、拒绝回退、离线/来源变化失效及丢弃 | 临时草稿，不是耐久Artifact、周/月报告、实时原子事实核验或自动发送 |
+| 交付/公开/并发保护 | 独立PR/审查、真实manifest、固定文件及历史扫描、完整双平台CI；原工作区17+/3−不动，Logo原件按登记保留在忽略目录 | 图片没有公开GitHub备份；原工作区未提交内容不随本单元擅自发布 |
+
+最终功能修正后本机8个实际PG/socket/browser场景通过176.60秒，覆盖两种recent边界、五类运行故障与小结；验证器82通过18.333秒、docs74、固定gitleaks8.30.1文件/历史各4项已审查0未解决。生产字节与此前`76e4fcd`相同，该候选实际Windows桌面重启1通过69.44秒、备份/限制/已准入完成→clear→v6→checkpoint35通过215.89秒，分别记录而不冒充新head全量或累计unique覆盖。最终远端全量才覆盖`eceea46`的导航等待修正；原精确断言与场景未删除。
+
+外部待验证：Owner本人交互设置、真实Provider配置/价格/费用授权与人工质量、真实教师净减负研究。Future/独立范围：D2工作专题、D3可靠推送、长期画像/Skill、完整跨机多跳/学校协作、原生保存对话框人工体验。没有把这些塞进R1或冒称已验收。教师现有数据自动复用；小结仅增加整理/可选编辑/本人核对复制，没有额外长期维护字段。用户实例未自动初始化身份、迁移或激活。
+
+文档收口在独立`codex/d1-goal-closeout`进行，仅更正现有状态与公开哈希；其审查/检查/完整CI及合并结果见对应PR。功能代码验收不代替该交付检查，整个Goal仅在最终同步核验后由Goal状态记录确认。回滚小结表现可revert PR #35；耐久存储只能停用显式入口或兼容前滚，保留数据/回执/限制，不执行DDL降级或删除证明。
+
+## D1-18/19 历史实施与失败修复记录
+
+以下为按时间保留的候选快照；其中“尚未/待CI/实施中”均描述当时状态，不覆盖上方最终功能验收。
 
 D1-18已由[PR #34](https://github.com/Gdnbit/classmatter/pull/34)合并为`acda66c`，合并树与最终`b72519f`一致。[CI40362349240](https://github.com/Gdnbit/classmatter/actions/runs/40362349240)精确对应该head：Windows非DB591/Web61/desktop23；Ubuntu非DB584+7宿主跳过、实际PG/browser589通过+16宿主跳过953.78秒。独立最终审查确认765项真实SHA、边界与原工作树17+/3−未变。最终本机原生/CLI7通过71.10秒、真实浏览器主链2通过98.67秒分别证明Windows专有链与实际离线，不用Linux跳过冒充。下方候选/待CI段落保留为历史，不能覆盖此收口。
 
