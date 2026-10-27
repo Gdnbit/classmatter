@@ -3,6 +3,9 @@ import type { WorkFilter } from "./work-projection.ts"
 export type RuntimePage = "conversation" | "dashboard" | "students" | "work" | "settings" | "unavailable"
 export type StudentTab = "overview" | "timeline" | "tasks" | "records" | "unavailable"
 export type RuntimeRoute = {
+  conversationId: string
+  conversationClassId: string
+  conversationTermId: string
   page: RuntimePage
   studentId: string
   taskId: string
@@ -12,6 +15,7 @@ export type RuntimeRoute = {
 }
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export const runtimeRoute = (page: RuntimePage = "conversation"): RuntimeRoute => ({
+  conversationId: "", conversationClassId: "", conversationTermId: "",
   page, studentId: "", taskId: "", workFilter: "all", studentView: "list", studentTab: "overview",
 })
 
@@ -29,6 +33,12 @@ export function parseRuntimeRoute(path: string): RuntimeRoute {
     "/settings/user": "settings", "/unavailable": "unavailable",
   }
   if (simple[url.pathname]) return runtimeRoute(simple[url.pathname])
+  const conversation = url.pathname.match(/^\/conversations\/([^/]+)\/([^/]+)\/([^/]+)$/)
+  if (conversation) {
+    if (url.search || url.hash || !conversation.slice(1).every(value => uuid.test(value))) return unavailable()
+    return { ...runtimeRoute(), conversationClassId: conversation[1].toLowerCase(),
+      conversationTermId: conversation[2].toLowerCase(), conversationId: conversation[3].toLowerCase() }
+  }
   if (url.pathname === "/students") {
     const view = url.searchParams.get("view") || "list"
     if (view !== "list" && view !== "table") return unavailable()
@@ -53,6 +63,10 @@ export function parseRuntimeRoute(path: string): RuntimeRoute {
 }
 
 export function runtimePath(route: RuntimeRoute): string {
+  if (route.page === "conversation" && route.conversationId) {
+    return [route.conversationClassId, route.conversationTermId, route.conversationId].every(value => uuid.test(value))
+      ? `/conversations/${route.conversationClassId}/${route.conversationTermId}/${route.conversationId}` : "/unavailable"
+  }
   if (route.page === "students") {
     if (route.studentId) {
       const query = new URLSearchParams()

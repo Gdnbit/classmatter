@@ -9,6 +9,7 @@ apps/web/src/runtime/identity-validators.cjs text eol=lf
 apps/web/src/runtime/model-configuration-validator.cjs text eol=lf
 apps/web/src/runtime/agent-conversation-validators.cjs text eol=lf
 apps/web/src/runtime/command-receipts-validators.cjs text eol=lf
+apps/web/src/runtime/durable-conversation-validators.cjs text eol=lf
 # New release inventories are deterministic LF, not a legacy-source conversion.
 PUBLIC*.json text eol=lf
 SECRET_SCAN_REVIEW.json text eol=lf

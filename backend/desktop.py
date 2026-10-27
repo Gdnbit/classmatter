@@ -13,6 +13,7 @@ def main():
     parser = argparse.ArgumentParser(description="ClassMatter synthetic desktop service")
     parser.add_argument("--ui-root", required=True, type=Path)
     parser.add_argument("--runtime-root", type=Path)
+    parser.add_argument("--profile", choices=("r1", "conversation-d1"), default="r1")
     parser.add_argument("--parent-pipe", action="store_true")
     args = parser.parse_args()
     key = os.environ.pop("CLASSMATTER_DESKTOP_PROCESS_KEY", "")
@@ -26,8 +27,12 @@ def main():
     from class_os.interfaces.http.desktop_host import install_desktop_proof
     import uvicorn
     settings = Settings.from_env(os.environ)
-    runtime = LocalRuntime(args.runtime_root) if args.runtime_root is not None else LocalRuntime()
-    app = compose(settings, runtime)
+    runtime = LocalRuntime(args.runtime_root, profile=args.profile)
+    if args.profile == "conversation-d1":
+        from class_os.infrastructure.durable_local_runtime import compose as compose_d1
+        app = compose_d1(settings, runtime)
+    else:
+        app = compose(settings, runtime)
     install_desktop_proof(app, key)
     mount_web(app, args.ui_root)
     server = uvicorn.Server(uvicorn.Config(app, host=settings.bind_host, port=settings.port, proxy_headers=False, access_log=False, log_level="critical"))

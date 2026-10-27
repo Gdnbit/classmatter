@@ -1,12 +1,13 @@
 """Runtime composition and Windows protected-secret smoke, no real records."""
 import os
+import json
 from pathlib import Path
 import secrets
 
 import httpx
 import pytest
 
-from class_os.infrastructure.local_runtime import LocalRuntime, ROOT, compose, protect
+from class_os.infrastructure.local_runtime import LocalRuntime, ROOT, D1_ROOT, PROFILES, compose, protect
 from class_os.infrastructure.persistence.database import Database, migrate
 from class_os.interfaces.http.settings import Settings
 from contextlib import contextmanager
@@ -24,6 +25,65 @@ from test_identity import setup, CLIENT
 
 def test_runtime_root_is_ignored_repository_local_not_parent():
     assert ROOT == Path(__file__).resolve().parents[2] / ".local-runtime/synthetic-v1"
+    assert LocalRuntime().root == ROOT.resolve() and LocalRuntime().profile == "r1"
+    assert LocalRuntime(profile="conversation-d1").root == D1_ROOT.resolve()
+    for wrong in ("", "latest", "head", "production"):
+        with pytest.raises(ValueError):
+            LocalRuntime(profile=wrong)
+    for root, profile in ((ROOT, "conversation-d1"), (D1_ROOT, "r1")):
+        with pytest.raises(ValueError):
+            LocalRuntime(root, profile=profile)
+
+
+@pytest.mark.parametrize("profile", ["r1", "conversation-d1"])
+def test_runtime_descriptor_never_reinterprets_another_profile(tmp_path, profile):
+    runtime = LocalRuntime(tmp_path, profile=profile)
+    marker, database, _ = PROFILES[profile]
+    descriptor = {"profile": marker, "database": database, "pg_bin": "synthetic-bin", "port": 5555}
+    runtime.manifest.write_text(json.dumps(descriptor), encoding="utf-8")
+    assert runtime.configuration() == descriptor
+    other = "r1" if profile != "r1" else "conversation-d1"
+    with pytest.raises(RuntimeError):
+        LocalRuntime(tmp_path, profile=other).configuration()
+    for invalid in ({**descriptor, "profile": PROFILES[other][0]},
+                    {**descriptor, "database": PROFILES[other][1]},
+                    {**descriptor, "schema": "head"}, {**descriptor, "port": True}):
+        runtime.manifest.write_text(json.dumps(invalid), encoding="utf-8")
+        with pytest.raises(RuntimeError):
+            runtime.configuration()
+    if profile == "conversation-d1":
+        with pytest.raises(ValueError):
+            compose(Settings(), runtime)
+
+
+@pytest.mark.db
+@pytest.mark.skipif(os.name != "nt", reason="Windows owned D1 SCRAM/DPAPI runtime")
+def test_fresh_explicit_d1_owned_profile_restart_does_not_initialize_owner_or_control(tmp_path, request):
+    from sqlalchemy import text
+    from class_os.infrastructure.persistence.schema_inventory import validate_surface
+    runtime = LocalRuntime(tmp_path / "isolated-conversation-d1", profile="conversation-d1")
+    runtime.initialize(request.config.getoption("--pg-root"))
+    running = False
+    try:
+        for _ in range(2):
+            runtime.start(); running = True
+            database = runtime.database("migrator")
+            try:
+                assert database.profile == "conversation-d1"
+                with database.transaction(read_only=True) as connection:
+                    assert connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() == "0026"
+                    assert len(validate_surface(connection, complete=True, profile="conversation-d1")) == 35
+                    assert connection.execute(text("SELECT count(*) FROM class_os.owner_account")).scalar_one() == 0
+                    assert connection.execute(text("SELECT count(*) FROM class_os.conversation_control")).scalar_one() == 0
+            finally:
+                database.close()
+            runtime.stop(); running = False
+        with pytest.raises(RuntimeError):
+            LocalRuntime(runtime.root).configuration()
+        assert not (runtime.root / "conversation-restrictions.dpapi").exists()
+    finally:
+        if running:
+            runtime.stop()
 
 
 @pytest.mark.skipif(os.name != "nt", reason="Windows DPAPI profile")

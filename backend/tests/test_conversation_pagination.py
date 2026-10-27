@@ -24,9 +24,15 @@ async def test_whole_turn_pages_keep_older_sources_and_reject_changed_version(co
     first = value.query.conversation_page(*args)
     assert first.next_before == 3 and first.value.history.truncated
     assert len(first.value.history.messages) == 50 and not first.value.results
+    assert len(first.turns) == 50 and all(row.run.state == "cancelled" for row in first.turns)
     second = value.query.conversation_page(*args, before_ordinal=first.next_before, expected_version=first.value.history.version)
     assert second.next_before is None and not second.value.history.truncated
     assert len(second.value.history.messages) == 3 and len(second.value.results) == 1
+    assert len(second.turns) == 2 and second.turns[0].run.state == "completed"
+    assert {row.turn_id for row in first.turns} == {row.turn_id for row in first.value.history.messages}
+    assert {row.turn_id for row in second.turns} == {row.turn_id for row in second.value.history.messages}
+    assert len({row.client_request_id for row in first.turns + second.turns}) == 52
+    assert len({row.run.run_id for row in first.turns + second.turns}) == 52
     assert second.value.results[0].result == value.result
     one = {row.turn_id for row in first.value.history.messages}
     two = {row.turn_id for row in second.value.history.messages}
@@ -44,6 +50,9 @@ async def test_whole_turn_pages_keep_older_sources_and_reject_changed_version(co
         assert wire.json()["student_id"] is None and wire.json()["class_id"] == str(value.ids["class"])
         assert len(wire.json()["history"]["messages"]) == 3 and len(wire.json()["results"]) == 1
         assert wire.json()["results"][0]["result"]["sources"][0]["receipt_id"] == str(value.result.sources[0].receipt_id)
+        resumed = await api.get(path + f"/history/pages/{first.value.history.version}/{first.next_before}")
+        assert resumed.status_code == 200, resumed.text
+        assert [row["turn_id"] for row in resumed.json()["turns"]] == [str(row.turn_id) for row in second.turns]
     old_version = first.value.history.version
     for before, version in ((True, old_version), (0, old_version), (10001, old_version),
                             (3, True), (3, old_version - 1), (None, old_version), (3, None)):
@@ -61,6 +70,11 @@ async def test_whole_turn_pages_keep_older_sources_and_reject_changed_version(co
         value.query.conversation_page(*args, before_ordinal=3, expected_version=current.value.history.version)
     cleared = value.query.conversation_page(*args)
     assert cleared.next_before is None and not cleared.value.history.messages and not cleared.value.results
+    assert not cleared.turns
+    async with client(value) as api:
+        hidden = await api.get(path + "/history")
+        assert hidden.status_code == 200 and not hidden.json()["turns"]
+        assert (await api.get(path + f"/history/pages/{old_version}/{first.next_before}")).status_code == 409
 
 
 @pytest.mark.db

@@ -24,6 +24,16 @@ class ConversationListing:
 
 
 class InteractionTransaction:
+    def interaction_capabilities(self, binding, now):
+        # Fixed authenticated discovery, never a UI-selected authority/profile.
+        self._proof(binding)
+        owner, snapshot = self._attribution_snapshot(binding["workspace_id"], now)
+        if owner != binding["actor_id"]:
+            raise CommandRejected()
+        self.verified_result_bundle(binding, now, snapshot)
+        return {"profile": "conversation-d1", "data_mode": "synthetic-only",
+                "history_protocol": "classmatter.conversation-history.v2"}
+
     def interaction_context(self, binding, class_id, term_id, *, active=True):
         from .target_import import ProtectedTargetImport, ImportUnavailable
         from .recovery_admission import ProtectedTargetAdmission, AdmissionUnavailable

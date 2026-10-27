@@ -14,9 +14,12 @@ from class_os.interfaces.http.agent import ScopedConversationBody, ScopedConvers
 from class_os.interfaces.http.agent import RecordNoteTurnBody, RecordNoteCandidateResponse
 from class_os.application.agent_tool_contracts import catalog
 from class_os.interfaces.http.durable_conversation import (ListingResponse as DurableListing, HistoryResponse as DurableHistory,
+    HistoryV2Response as DurableHistoryV2,
     CreateBody as DurableCreate, RenameBody as DurableRename, SendBody as DurableSend, VersionBody as DurableVersion,
     EmptyBody as DurableEmpty, RunStatus as DurableRun, ControlPreview as DurablePreview, ControlStatus as DurableControlStatus)
 from class_os.interfaces.operator.support import SupportReport
+from class_os.interfaces.http.durable_views import (ActivityResponse as DurableActivity, AuditResponse as DurableAudit,
+    CapabilitiesResponse as DurableCapabilities, ExitSummary as DurableExitSummary, ExitPreview as DurableExitPreview)
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
 from class_os.interfaces.http.roster import (ApprovalBody, ClassBody, CommitBody, ContextResponse,
@@ -50,6 +53,10 @@ def main():
                         ("model-test-body.v1", ModelTestBody), ("model-enable-body.v1", ModelEnableBody),
                         ("synthetic-core-exit.v1", ExitPackageResponse), ("agent-query-source.v1", QueryReceiptReference),
                         ("conversation-d1-list.v1", DurableListing), ("conversation-d1-history.v1", DurableHistory),
+                        ("conversation-d1-history.v2", DurableHistoryV2),
+                        ("activity-d1.v1", DurableActivity), ("business-audit-d1.v1", DurableAudit),
+                        ("runtime-capabilities-d1.v1", DurableCapabilities),
+                        ("conversation-d1-exit-summary.v1", DurableExitSummary), ("conversation-d1-exit-preview.v1", DurableExitPreview),
                         ("conversation-d1-create.v1", DurableCreate), ("conversation-d1-rename.v1", DurableRename),
                         ("conversation-d1-send.v1", DurableSend), ("conversation-d1-version.v1", DurableVersion),
                         ("conversation-d1-empty.v1", DurableEmpty), ("conversation-d1-run.v1", DurableRun),

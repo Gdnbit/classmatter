@@ -21,6 +21,11 @@ from .persistence.role_guards import validate_role_guards
 
 
 ROOT = Path(__file__).resolve().parents[4] / ".local-runtime" / "synthetic-v1"
+D1_ROOT = ROOT.parent / "synthetic-conversation-d1"
+PROFILES = {
+    "r1": ("class-os-owned-synthetic-v1", "class_os_synthetic_local", ROOT),
+    "conversation-d1": ("classmatter-owned-synthetic-conversation-d1", "class_os_synthetic_conversation_local", D1_ROOT),
+}
 ROLES = ("root", "migrator", "identity", "runtime")
 
 
@@ -51,17 +56,22 @@ def protect(value, *, decrypt=False):
 
 
 class LocalRuntime:
-    def __init__(self, root=ROOT):
-        self.root = Path(root).resolve()
+    def __init__(self, root=None, *, profile="r1"):
+        if profile not in PROFILES:
+            raise ValueError("Unknown owned synthetic profile")
+        self.profile = profile
+        self.root = Path(root if root is not None else PROFILES[profile][2]).resolve()
+        if any(self.root == entry[2].resolve() and name != profile for name, entry in PROFILES.items()):
+            raise ValueError("Another profile's default runtime root is reserved")
         self.cluster = self.root / "cluster"
         self.manifest = self.root / "runtime.json"
 
     def configuration(self):
         data = json.loads(self.manifest.read_text(encoding="utf-8"))
         if (set(data) != {"profile", "pg_bin", "port", "database"}
-                or data["profile"] != "class-os-owned-synthetic-v1"
+                or data["profile"] != PROFILES[self.profile][0]
                 or type(data["port"]) is not int or not 1024 <= data["port"] <= 65535
-                or data["database"] != "class_os_synthetic_local"):
+                or data["database"] != PROFILES[self.profile][1]):
             raise RuntimeError("Unknown local runtime")
         return data
 
@@ -102,8 +112,8 @@ class LocalRuntime:
         subprocess.run(["icacls", str(self.root), "/inheritance:r", "/grant:r", owner + ":(OI)(CI)F"],
                        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                        creationflags=subprocess.CREATE_NO_WINDOW)
-        config = {"profile": "class-os-owned-synthetic-v1", "pg_bin": str(binaries),
-                  "port": port, "database": "class_os_synthetic_local"}
+        config = {"profile": PROFILES[self.profile][0], "pg_bin": str(binaries),
+                  "port": port, "database": PROFILES[self.profile][1]}
         self.manifest.write_text(json.dumps(config, indent=2), encoding="utf-8")
         for role in ROLES:
             (self.root / (role + ".dpapi")).write_bytes(protect(secrets.token_urlsafe(48).encode("ascii")))
@@ -124,9 +134,10 @@ class LocalRuntime:
                 for role in ROLES[1:]:
                     connection.execute(sql.SQL("CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD {}")
                                        .format(sql.Identifier("class_os_" + role), sql.Literal(self.password(role))))
-                connection.execute("CREATE DATABASE class_os_synthetic_local OWNER class_os_migrator")
-                connection.execute("REVOKE CONNECT ON DATABASE class_os_synthetic_local FROM PUBLIC")
-                connection.execute("GRANT CONNECT ON DATABASE class_os_synthetic_local TO class_os_migrator,class_os_identity,class_os_runtime")
+                target = sql.Identifier(config["database"])
+                connection.execute(sql.SQL("CREATE DATABASE {} OWNER class_os_migrator").format(target))
+                connection.execute(sql.SQL("REVOKE CONNECT ON DATABASE {} FROM PUBLIC").format(target))
+                connection.execute(sql.SQL("GRANT CONNECT ON DATABASE {} TO class_os_migrator,class_os_identity,class_os_runtime").format(target))
             self.upgrade()
         finally:
             self.stop()
@@ -153,7 +164,7 @@ class LocalRuntime:
         config = self.configuration()
         url = URL.create("postgresql+psycopg", username="class_os_" + role,
                          password=self.password(role), host="127.0.0.1", port=config["port"], database=config["database"])
-        return Database(url, migration=role == "migrator", identity=role == "identity")
+        return Database(url, migration=role == "migrator", identity=role == "identity", profile=self.profile)
 
     def upgrade(self):
         database = self.database("migrator")
@@ -165,6 +176,8 @@ class LocalRuntime:
 
 def compose(settings, runtime):
     """Composition owns adapters; never expose administrator/migrator to app."""
+    if getattr(runtime, "profile", "r1") != "r1":
+        raise ValueError("D1 requires explicit durable composition")
     from pwdlib import PasswordHash
     from class_os.application.identity import IdentityBoundary
     from class_os.application.roster import BusinessGateway, QueryGateway

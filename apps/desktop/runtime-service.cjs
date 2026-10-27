@@ -95,19 +95,23 @@ class OwnedService {
   }
 }
 
-function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot) {
+function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, profile = 'r1', servicePort = profile === 'conversation-d1' ? 8001 : 8000) {
+  if (!['r1', 'conversation-d1'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
+  if (!Number.isInteger(servicePort) || servicePort < 1024 || servicePort > 65535 || (profile === 'r1' && servicePort !== 8000)) throw new Error('Invalid owned service port');
   if (process.platform !== 'win32' || !path.isAbsolute(repositoryRoot) || !path.isAbsolute(uiRoot)) throw new Error('Unsupported desktop runtime');
   const root = fs.realpathSync(repositoryRoot), ui = fs.realpathSync(uiRoot);
-  const runtime = runtimeRoot || path.join(root, '.local-runtime/synthetic-v1');
+  const runtime = runtimeRoot || path.join(root, profile === 'r1' ? '.local-runtime/synthetic-v1' : '.local-runtime/synthetic-conversation-d1');
   if (!path.isAbsolute(runtime)) throw new Error('Invalid operator runtime root');
   const executable = path.join(root, 'backend/.venv/Scripts/python.exe');
   const entry = path.join(root, 'backend/desktop.py');
   const marker = JSON.parse(fs.readFileSync(path.join(ui, 'desktop-runtime.json'), 'utf8'));
-  if (!fs.existsSync(executable) || !fs.existsSync(entry) || marker.mode !== 'synthetic-runtime' || !fs.existsSync(path.join(ui,'index.html'))) throw new Error('Build the synthetic desktop runtime and sync backend dependencies first');
-  return new OwnedService({ origin: 'http://127.0.0.1:8000', onUnexpectedExit, spawnService: key => {
-    const env = { ...process.env, CLASS_OS_MODE: 'synthetic-development', CLASS_OS_HOST: '127.0.0.1', CLASS_OS_PORT: '8000', CLASS_OS_MODEL_PROVIDER: 'fake', CLASSMATTER_DESKTOP_PROCESS_KEY: key };
+  if (!fs.existsSync(executable) || !fs.existsSync(entry) || marker.mode !== (profile === 'r1' ? 'synthetic-runtime' : 'synthetic-conversation-d1') || !fs.existsSync(path.join(ui,'index.html'))) throw new Error('Build the synthetic desktop runtime and sync backend dependencies first');
+  return new OwnedService({ origin: `http://127.0.0.1:${servicePort}`, onUnexpectedExit, spawnService: key => {
+    const env = { ...process.env, CLASS_OS_MODE: 'synthetic-development', CLASS_OS_HOST: '127.0.0.1', CLASS_OS_PORT: String(servicePort), CLASS_OS_MODEL_PROVIDER: 'fake', CLASSMATTER_DESKTOP_PROCESS_KEY: key };
     delete env.PYTHONPATH; delete env.PYTHONHOME;
-    return spawn(executable, ['-I', entry, '--ui-root', ui, '--runtime-root', runtime, '--parent-pipe'], { cwd: path.dirname(entry), env, shell: false, windowsHide: true, stdio: ['pipe', 'ignore', 'ignore'] });
+    const args = ['-I', entry, '--ui-root', ui, '--runtime-root', runtime, '--parent-pipe'];
+    if (profile !== 'r1') args.push('--profile', profile);
+    return spawn(executable, args, { cwd: path.dirname(entry), env, shell: false, windowsHide: true, stdio: ['pipe', 'ignore', 'ignore'] });
   }});
 }
 

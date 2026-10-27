@@ -44,6 +44,7 @@ def mount_web(app, directory: Path):
     # Exact shell routes only. No catch-all that could turn API/asset errors
     # into HTML success, and no path is joined to a filesystem location.
     for path in ("/", "/dashboard", "/students", "/students/{student_id}", "/work",
+                 "/conversations/{class_id:uuid}/{term_id:uuid}/{thread_id:uuid}",
                  "/settings", "/settings/user", "/unavailable", "/data",
                  "/data/spreadsheets/{file_id}", "/data/documents/{file_id}",
                  "/spaces/{space_id}", "/automation", "/knowledge", "/reports"):

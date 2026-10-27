@@ -1,10 +1,16 @@
 # 实现与验收台账
 
-更新时间：2026-10-26。最新验收main为`745f600`：[PR #32](https://github.com/Gdnbit/classmatter/pull/32)固定来源/草稿与生命周期单元通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40255153105)，Windows非DB582/Web55/desktop23，Ubuntu非DB575+7跳过、实际PG/browser563+13跳过999.35秒，728个真实hash。原SDK普通对话已由PR #31收口，此前D0/E1及D1前置由PR #13—30收口；Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+2026-10-27候选进展（不是main接受状态）：D1-18原UI/typed client/显式CLI与独立桌面profile、作者感知投影、v6退出已实际接线，默认R1不变。本机实际Electron/API/PG重启测试1通过54.67秒，后续HTTP/runtime/native组23通过168.11秒。当前完整browser主链2通过96.45秒：两种recent边界过期→原ISB重验、真实导出回复丢失→原键GET、真实限制文件发布后409→保键/同键收口、离线迟到、focus合并、标题不覆盖、草稿范围导航、读/草稿/刷新/清除与v6下载拒绝。取消/超时/保存失败/claim失败/审计失败、同帧双提交及刷新不重跑5通过68.01秒。非DB584+4主机跳过52.36秒，CLI端口/交互组5通过1.42秒（有交集，不累计unique）；Web61/tsc/build、desktop23、docs74及正式图通过。独立审查复现的409误判已用D1专用写前428分类修复；当前765路径public/license guard和固定files/history扫描4已审查0未解决通过。最终control回归、验证器及完整CI尚待收口，不宣称已同步main或整个Goal完成。主工作区并发R1App保持17+/3−。两张Logo原件在本地`assets/brand/originals/`按登记哈希留档，Git仍只含文字登记。
 
-D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-16显式0026/35，固定摘要回执、查询来源和未提交task草稿与原SDK/BCG/QG/清除/v6/恢复联动，独立复现的历史读取降级绕过已修复；默认R1仍0016/22，旧v2—v5及共享注册表冻结。当前D1-17候选补完整分页与显式HTTP factory，不在默认R1/桌面注册，也不迁移用户实例；真实界面和工作小结继续必做。跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。
+更新时间：2026-10-26。最新验收main为`e62f050`：[PR #33](https://github.com/Gdnbit/classmatter/pull/33)完整分页/显式HTTP在最终f4f1c67通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40317840835)，Windows非DB583/Web55/desktop23，Ubuntu非DB576+7跳过、实际PG/browser577+13跳过921.90秒，验证器82及741个真实hash通过。此前两次CI取消不改称成功；固定来源/草稿与生命周期由PR #32收口，原SDK普通对话由PR #31收口，此前D0/E1及D1前置由PR #13—30收口。Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
+
+D1-13c/13d/13e已交付隔离typed import、实际源退役、人工目标准入、可修改来源、作者感知QG、清空及重启/恢复校验。已接受D1-16显式0026/35，固定摘要回执、查询来源和未提交task草稿与原SDK/BCG/QG/清除/v6/恢复联动，独立复现的历史读取降级绕过已修复；默认R1仍0016/22，旧v2—v5及共享注册表冻结。D1-17已接受完整分页与显式HTTP factory，但不在默认R1/桌面注册，也不迁移用户实例。D1-18在独立分支进行原UI纵向接线，需补原请求/run恢复、作者感知Activity/Audit及显式独立runtime，尚未验收；工作小结继续必做。跨机完整准入/多跳未证明，Owner本人设置及真实Provider条件仍外部待验证；正式107/147/94和Gate不变。
 
 ## 状态与顺序
+
+D1-18已创建[独立PR #34](https://github.com/Gdnbit/classmatter/pull/34)，8939ffa准确head的独立复核及本机原生/CLI7通过71.21秒、control回归43通过180.54秒；该head Windows CI成功（591非DB/Web61/desktop23），Ubuntu仍进行中，不计整单元接受。随后针对“未发送文字阻碍联网自动读取”分离导航草稿保护和操作忙碌，scope首次就绪后离线输入可编辑，发送权限/fresh限制不变；新代码需要本机重验及最新head两平台CI。工作小结尚未实现，Owner/Provider外部条件及正式Gate没有改变。
+
+后续修正本机7个真实socket/PG/browser场景通过162.98秒；新增真实浏览器离线（health请求确认失败）→保留可编辑文字/禁止发送→联网自动恢复，两种recent主链通过98.67秒。Web61/tsc/build及独立源码复核通过。正在将最新字节同步同一PR并重新执行完整CI，不以先前Windows成功替代本head验收。
 
 状态分开记录：`implemented-synthetic`（已有合成工程实现）、`demo-only`（样例/内存交互）、`partial`、`pending-validation`、`deferred`。代码存在不等于正式 `implemented-green`。107项需求、147项Eval、94项原子任务不因本表变化。
 

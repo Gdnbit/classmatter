@@ -13,12 +13,21 @@ from class_os.interfaces.http.settings import Settings
 
 def main():
     parser = argparse.ArgumentParser(description="ClassMatter owned synthetic Windows runtime; no real data")
-    parser.add_argument("command", choices=("init", "start", "stop", "migrate", "serve", "bootstrap", "doctor", "support", "backup", "backup-list", "backup-check"))
+    parser.add_argument("command", choices=("init", "start", "stop", "migrate", "serve", "bootstrap", "initialize-control", "doctor", "support", "backup", "backup-list", "backup-check"))
+    parser.add_argument("--profile", choices=("r1", "conversation-d1"), default="r1",
+                        help="Explicit isolated runtime; never upgrades the other profile")
     parser.add_argument("--pg-root")
     parser.add_argument("--backup-id", type=UUID, help="Owned checkpoint UUID; no arbitrary file paths")
     parser.add_argument("--model-api-base-url", action="append", default=[],
                         help="Explicit trusted endpoint for synthetic model testing; does not enable a model or load keys")
     args = parser.parse_args()
+    if args.command == "initialize-control":
+        if args.profile != "conversation-d1":
+            parser.error("initialize-control requires explicit conversation-d1 profile")
+        if not sys.stdin.isatty() or not sys.stdout.isatty():
+            raise RuntimeError("Control initialization requires the owner's interactive terminal")
+    if args.profile != "r1" and args.command in ("doctor", "support"):
+        parser.error("doctor/support inspect the configured service, not a selected database profile")
     if (args.command == "backup-check") != (args.backup_id is not None):
         parser.error("backup-check requires --backup-id; other commands do not accept it")
     if args.model_api_base_url and args.command != "serve":
@@ -38,7 +47,7 @@ def main():
     # Read-only doctor/support/help must not import the database/model runtime.
     # Keep their startup bounded independently of optional SDK import costs.
     from class_os.infrastructure.local_runtime import LocalRuntime, compose
-    runtime = LocalRuntime()
+    runtime = LocalRuntime(profile=args.profile)
     if args.command == "init":
         if not args.pg_root:
             parser.error("init requires --pg-root")
@@ -51,24 +60,67 @@ def main():
         runtime.upgrade()
     elif args.command in ("backup", "backup-list", "backup-check"):
         from class_os.infrastructure.operator_backup import SyntheticBackup
-        backup = SyntheticBackup(runtime)
+        backup = SyntheticBackup(runtime, profile=args.profile)
         if args.command == "backup":
-            print(json.dumps({"schema_version": "class-os.synthetic-backup-created.v1",
-                              "backup_id": str(backup.create()), "portable": False, "complete_exit": False}))
+            created = {"schema_version": "class-os.synthetic-backup-created.v1",
+                       "backup_id": str(backup.create()), "portable": False, "complete_exit": False}
+            if args.profile != "r1":
+                created.update(schema_version="classmatter.conversation-backup-created.v1", activation_allowed=False)
+            print(json.dumps(created))
         elif args.command == "backup-list":
             print(json.dumps(backup.catalog()))
         else:
-            print(json.dumps(backup.check(args.backup_id)))
+            if args.profile == "r1":
+                print(json.dumps(backup.check(args.backup_id)))
+            else:
+                from class_os.infrastructure.durable_local_runtime import open_services
+                services = open_services(runtime)
+                try:
+                    services.readiness()
+                    print(json.dumps(backup.check_current_restrictions(args.backup_id, services.restrictions)))
+                finally:
+                    services.close()
         return 0
     elif args.command == "serve":
         import uvicorn
-        settings = Settings.from_env(os.environ)
+        settings = Settings.from_env({"CLASS_OS_PORT": "8001", **os.environ} if args.profile == "conversation-d1" else os.environ)
         from dataclasses import replace
         settings = replace(settings, model_api_bases=tuple(args.model_api_base_url))
-        app = compose(settings, runtime)
+        if args.profile == "conversation-d1":
+            from class_os.infrastructure.durable_local_runtime import compose as compose_d1
+            app = compose_d1(settings, runtime)
+        else:
+            app = compose(settings, runtime)
         from class_os.interfaces.http.web import mount_web
         mount_web(app, Path(__file__).resolve().parents[1] / "apps/web/dist")
         uvicorn.run(app, host=settings.bind_host, port=settings.port, reload=False, proxy_headers=False, access_log=False)
+    elif args.command == "initialize-control":
+        import secrets
+        from uuid import uuid4
+        from class_os.domain.conversation_control import InitializeConversationControl
+        from class_os.infrastructure.durable_local_runtime import open_services
+        services = open_services(runtime)
+        try:
+            client = secrets.token_urlsafe(32)
+            login = services.identity.login(getpass.getpass("Current Owner password: "), client)
+            try:
+                auth = (login.token, client, login.csrf, login.subject.workspace_id)
+                proposal = services.worker.preview(*auth, InitializeConversationControl(uuid4()))
+                print("Initialize this new D1 instance's protected conversation control (Risk X).")
+                print(json.dumps({"proposal_id": str(proposal.proposal_id), "payload_hash": proposal.payload_hash,
+                                  "command": proposal.command.canonical()}, ensure_ascii=False))
+                if input("Type INITIALIZE D1 to approve, otherwise cancel: ") != "INITIALIZE D1":
+                    print("Cancelled; no authority initialized.")
+                    return 0
+                approval = services.worker.approve(*auth, proposal.proposal_id, proposal.payload_hash)
+                receipt = services.worker.commit(*auth, proposal.proposal_id, uuid4(), approval)
+                services.readiness()
+            finally:
+                services.identity.logout(login.token, client, login.csrf)
+            print(json.dumps({"schema_version": "classmatter.conversation-control-initialized.v1",
+                              "receipt_id": str(receipt.receipt_id)}))
+        finally:
+            services.close()
     elif args.command == "bootstrap":
         # Trusted local console only, never a public bootstrap/arming route.
         if not sys.stdin.isatty() or not sys.stdout.isatty():

@@ -4,7 +4,7 @@ Layered modular monolith, synthetic-only. Python 3.13, uv 0.11.7, PostgreSQL 18.
 
 ## Local entry point
 
-### Opt-in D1 transport candidate (not enabled by the commands below)
+### Opt-in D1 runtime candidate (explicit profile only)
 
 `interfaces/http/durable_conversation.py:create_durable_app` is a trusted synthetic composition using the existing exact worker/QG/store/ISB and original Pydantic AI runtime. Default `create_app`, `local.py` and desktop R1 composition do not install it or migrate an instance. It assumes an already human-initialized D1 control; it cannot mint a missing authority or make Owner setup complete. Current explicit D1 remains0026/35, no new schema/store/tool in this transport slice.
 
@@ -12,7 +12,11 @@ Closed paths below `/api/workspaces/{workspace}/conversation-d1/classes/{class}/
 
 List pages carry a full fixed-metadata snapshot hash and offsets in multiples of50. History pages carry current thread version and `before` ordinal; each returns at most50 complete turns/100 visible messages, with only those messages' authors, sources and uncommitted drafts. A changed snapshot/version refuses the old cursor. Every page rechecks ISB/scope/protected restrictions and original completion evidence; cursors are not capabilities. New DTO/schema snapshots are separate `conversation-d1-*.v1`, not changes to R1 contracts. Historical query receipts are not current facts, chat is not a formal record, and draft snapshots do not execute. Clear/archive previews still use original BCG approval/commit/status routes and their existing risk/recent-authentication rules; no Agent receives these handles.
 
-The real UI/desktop binding, explicit operator runtime profile/entry, startup history restore, UI cancellation/navigation fences, authenticated D1 exit controls and sourced editable work-summary remain required follow-up work. ASGI/PG/FunctionModel tests are not a real network/browser/desktop acceptance, paid Provider quality, cross-host recovery or formal release admission.
+The in-progress D1-18 branch now binds the original UI, closed history.v2 request/run reconstruction, explicit owned runtime and authenticated v6 evidence exit. Actual browser/socket and Windows Electron/API/PG restart tests are separate from ASGI tests; partial passing groups are not whole-unit acceptance. Sourced editable work-summary, remaining fault-matrix cases, final source review and two-platform CI are still required. No paid Provider quality, user Owner setup, cross-host recovery or formal release admission is implied.
+
+For a **new, separately authorized** synthetic D1 root only, the operator may use `local.py --profile conversation-d1 init --pg-root '<PG18 directory>'`, then `start`, personal interactive `bootstrap`, personal interactive `initialize-control`, and `serve` with the same profile prefix. Default R1 commands below remain unchanged. D1 uses its own fixed database/root descriptor and port8001, never upgrades or attaches the existing R1 instance. `initialize-control` authenticates the Owner in the trusted terminal, shows the original Risk.X preview/hash, and requires typing `INITIALIZE D1` before original approval/commit. Missing Owner/control/evidence refuses startup; do not delete witnesses or reinitialize to repair failure. Agent does not enter passwords or recovery codes.
+
+`local.py --profile conversation-d1 backup`, `backup-list` and `backup-check --backup-id '<checkpoint UUID>'` select the existing versioned D1 checkpoint path; check verifies current protected restrictions and still returns activation false. The UI exit is a v6 evidence package for **all classes/terms in the authorized workspace**, not a database backup or automatic import. Fixed summary/preview/download routes remain QG/BCG; clear invalidates older downloads. No new Agent export/write tool, arbitrary schema or SQL entry is installed.
 
 Build `apps/web` first. From this directory:
 

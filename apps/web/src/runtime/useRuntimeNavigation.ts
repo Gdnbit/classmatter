@@ -61,6 +61,8 @@ export function useRuntimeNavigation(blocked: boolean) {
   return {
     route, deferred,
     setPage: (page: RuntimeRoute["page"]) => change({ page }),
+    setConversation: (classId: string, termId: string, conversationId: string) =>
+      change({ page: "conversation", conversationClassId: classId, conversationTermId: termId, conversationId }),
     setSelectedStudent: (studentId: string) => change({ studentId, taskId: "", studentTab: "overview" }),
     setTaskId: (taskId: string) => change({ taskId }),
     setWorkFilter: (workFilter: RuntimeRoute["workFilter"]) => change({ workFilter }),
@@ -68,6 +70,7 @@ export function useRuntimeNavigation(blocked: boolean) {
     setStudentTab: (studentTab: RuntimeRoute["studentTab"]) => change({ studentTab }),
     reset: () => apply(runtimeRoute(), "replace"),
     clearTask,
-    clearSelection: () => apply({ ...current.current, studentId: "", taskId: "", workFilter: "all", studentTab: "overview" }, "replace"),
+    clearSelection: () => apply({ ...current.current, studentId: "", taskId: "", workFilter: "all", studentTab: "overview",
+      conversationId: "", conversationClassId: "", conversationTermId: "" }, "replace"),
   }
 }

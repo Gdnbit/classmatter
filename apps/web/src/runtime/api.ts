@@ -1,4 +1,5 @@
 // Cookie credentials stay HttpOnly. No business data/token localStorage cache.
+import type { Attribution } from "./durable-conversation"
 export type Session = {
   schema_version: "class-os.identity.v1"
   csrf_token: string
@@ -32,6 +33,7 @@ export type Student = {
   status: "active" | "inactive"
 }
 export type RecordItem = {
+  attribution?: Attribution
   record_id: string
   student_id: string
   version: number
@@ -46,6 +48,7 @@ export type RecordItem = {
   revision_reason: string
 }
 export type TaskItem = {
+  attribution?: Attribution
   task_id: string
   title: string
   student_id: string | null
@@ -154,7 +157,7 @@ export async function request<T>(
 }
 
 export type AuditPage = {
-  schema_version: "class-os.business-audit.v1"
+  schema_version: "class-os.business-audit.v1" | "classmatter.business-audit.v1"
   as_of: string
   truncated: boolean
   partial_history: true

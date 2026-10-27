@@ -1,0 +1,33 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.runtime-capabilities.v1",
+      "default": "classmatter.runtime-capabilities.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "profile": {
+      "const": "conversation-d1",
+      "title": "Profile",
+      "type": "string"
+    },
+    "data_mode": {
+      "const": "synthetic-only",
+      "title": "Data Mode",
+      "type": "string"
+    },
+    "history_protocol": {
+      "const": "classmatter.conversation-history.v2",
+      "title": "History Protocol",
+      "type": "string"
+    }
+  },
+  "required": [
+    "profile",
+    "data_mode",
+    "history_protocol"
+  ],
+  "title": "CapabilitiesResponse",
+  "type": "object"
+}

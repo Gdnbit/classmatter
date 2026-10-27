@@ -6,9 +6,42 @@
 
 D1-16已由PR #32在最终head06d1fb5的完整CI40255153105及独立审查后合并main745f600：Windows非DB582/Web55/desktop23，Ubuntu非DB575+7跳过、实际PG/browser563+13跳过999.35秒。最终Windows两个实际PG组共112个不同用例通过（507.87/320.60秒），728项真实SHA、固定扫描和正式图通过；旧本机全量568通过/1跳过/1旧夹具失败明确保留，未改称全绿。此处只收口服务端成果/生命周期单元，不是界面或整个Goal完成。
 
-## D1-17 文件级实施计划（745f600基线，未验收）
+## D1-17 文件级实施与验收（已合并；历史记录见下）
+
+收口：最终head f4f1c67的CI40317840835两平台成功，经独立复核后PR #33合并main e62f050，合并树与验收head一致。Ubuntu验证器82/非DB576+7跳过31.93秒/Web55/实际PG-browser577+13跳过921.90秒；Windows验证器82/非DB58349.11秒/Web55/desktop23及实际Electron打包无页面错误和外部请求。741 SHA、public/license guard、固定扫描4已审查0未解决通过，原并发R1App17+/3−保持。前述两次取消原样保留；此处仅收口transport，不称UI、Owner、Provider或Goal完成。
+
+## D1-18 原界面耐久会话纵向接线计划（e62f050基线，实施中）
+
+2026-10-27实施记录：原CLI/desktop显式D1、固定composition/readiness、history.v2 typed client、原R1App拆出耐久controller/展示和受控退出组件已接线。默认R1/旧wire不改，D1无临时数据回退，流文本不作为保存结果。独立审查发现离线迟到fresh、旧stop中止新stream、未发送输入跨scope及focus放大审计；已用连接代次、捕获controller/target、范围清空/导航阻止、原createQueryRefresh修复，并加同帧operation锁。未完成scope加载前输入禁用，避免老师刚输入就被初始化清空。预览批准失败未发commit时可取消；任何commit409/500/断线均保留原预览/同键，不将查询not_committed当撤销证明。认证规则、Gateway和数据库权限不放宽。
+
+独立审查实际复现file-after：首次clear commit也可先写限制文件再返回409，故已撤销“首次409必然零写入”的候选判断。唯一新增区分是D1应用的`ControlReauthenticationRequired`：沿原Gateway在验证阶段记录recent拒绝原因，仍写原拒绝审计并保持原CommandRejected继承，退出原事务后显式D1 HTTP映射428/原business_rejected闭合错误体；不改变默认R1 factory。只有首次业务commit收到该写前428且没有先前送达未知，UI才可取消返回设置重验。普通409、文件证据和原重试语义不改，不额外授权或自行修复文件。新增实际browser时序测试覆盖approve/commit边界过期、真实已提交响应丢失的原键GET、真实_publish后失败的409保键和同键收口；不以TypeScript判断代替原限制状态。
+
+最终主链候选本机结果：上述两种recent场景及真实file-after/回复丢失完整browser2通过96.45秒，另取消/超时/保存/claim/审计失败及同帧双提交、刷新不重跑browser5通过68.01秒；HTTP/owned runtime/actualElectron组23通过168.11秒。新CLI默认端口保持R1为8000，D1为8001，显式环境端口仍可选择，5项CLI/交互用例通过1.42秒。当前765公开路径default-deny/license及固定扫描4已审查0未解决通过；新原生保存对话框人工操作、完整control回归及CI尚待验收。各组可能有交集，历史失败及早期版本成绩保留，不累计为虚构unique总数。回滚保持前述禁DDL降级/禁删除限制策略，只停用显式D1入口或兼容前滚。
+
+准确候选8939ffa已推送独立PR #34，control/HTTP/views43通过180.54秒、验证器82通过15.714秒、最终同head原生/CLI7通过71.21秒，独立最终字节复核765真实hash/无例外变化/原工作区17+/3−。CI40359566743的Windows已成功：非DB591通过52.67秒、Web61、desktop23、实际打包pageErrors/externalRequests为空；Ubuntu在真实PG全量中，不能把该轮称全绿或合并。后续复查另将未发送文字的导航保护与操作忙碌分开，避免阻碍重连后的自动只读刷新；输入scope首次就绪后允许离线编辑，但发送仍需fresh/当前权限，跨范围导航仍被阻止。新真实browser覆盖保留未发送文字→离线禁止发送但可编辑→重连自动恢复→原文字和范围不变；这四个前端/测试文件及本说明/台账需再次真实hash和完整CI，前head Windows成功不替代新head验收。
+
+后续修正本机复验：全部7个实际socket/PG/browser场景通过162.98秒；随后将新增断网用例从事件dispatch提升为Playwright真实离线，确认navigator离线且真实health请求失败，再恢复网络自动重验且文字不变，两种recent主链2通过98.67秒。迟到响应fence仍专门通过延迟真实响应及事件验证，两种测试证据不混称。Web61/tsc/build及独立源码审查通过，无写权限、store、依赖或Gate变更。最新head仍必须完整两平台CI，前head未完成的Ubuntu作业不能当作验收证据。
+
+独立Electron/API/PG实际重启测试第一次因脚本未选择新学生而找不到“记录事实”失败72.68秒；修正测试选择后1通过54.67秒。浏览器故障测试早期暴露scope就绪前可输入及测试延迟器拦多份响应悬挂，修复后原读/草稿/刷新/清除、迟到离线、focus合并、标题不覆盖、未发送导航隔离和views组6通过54.50秒。早前PG启动失败根因未确定，未改称端口冲突。Web61/tsc/build、desktop23通过；约649KB bundle警告保留，未关检查。新的两种recent过期与真实v6下载场景、完整故障矩阵及最终两平台CI仍需收口；上述不同版本局部证据不合并为最终验收。
+
+目标是一次真实读取/任务草稿在原界面保存、重启恢复正文和原来源、人工清除后不可复现，不新增Agent框架或让教师重录事实。追溯D1-01—09；正式Requirement/Eval/Task/Gate及R1定义不改。独立分支`codex/d1-desktop-conversation`，本单元完整验收后才合并，不以局部后端成绩冒充界面交付。
+
+| 文件/范围 | 具体实施与依赖 |
+| --- | --- |
+| `infrastructure/local_runtime.py`、新固定D1 composition、`backend/local.py`、`backend/desktop.py`及对应runtime/desktop测试 | 闭合profile/root/descriptor/database绑定，默认R1原样，新D1只能显式选择。Owner/bootstrap仍本人交互，control由原RiskX预览/批准/提交明确初始化；缺失或损坏不自动修复authority。新自有fixture验证35表、PG重启和既有D1 checkpoint，绝不迁移已创建用户实例。 |
+| `recovery_admission_store.py`、HTTP耐久DTO及原派生contract | 同一个已核验snapshot补有界轮次request UUID、ordinal、mode与当前run有限状态；刷新才能核对原请求/取消，而不是重新发送。只显示本页完整可见轮次，clear为空；不返回request hash/generation/lease/执行凭据，不新增store。 |
+| 原D1 Store构造、`durable_conversation.py`及固定D1 author-aware HTTP contracts | 沿现有构造显式传ModelSecrets并复用原ModelController，重启offline；固定Activity/timeline保留attribution，固定D1 audit包含conversation.history等已知动作，不放宽旧R1或过滤记录伪装成功。D1能力发现经原ISB/QG，不以客户端开关授予能力。 |
+| `apps/web/src/runtime/`耐久typed client、受控派生validators、固定会话controller/展示，以及`R1App.tsx`、navigation/原样式 | 复用原布局/底部输入、已有generation/scope/退出/未知提交保护。列表、深链、分页、保存输入→单次显式events→QG重读、状态核对/取消/归档/清除。历史AI/草稿与原来源明确标注；采纳任务仍走原人类业务表单，不执行历史草稿。默认R1临时对话和Demo不混用。 |
+| Web/后端真实socket/browser、Windows自有PG/桌面和原回归测试 | 从历史恢复原request/run而零Provider启动；同键/回执丢失不重复运行；运行取消、过期版本、超时/断线/保存/审计失败不假成功；scope/撤权/切班/旧cursor拒绝；重启恢复同正文/来源、清除防复活。合成FunctionModel不是付费供应商质量或本人Owner准入。 |
+| README、实现台账、本变更、公开审计/manifest | 只登记已证据化状态；每个新增公开文件来源审核和真实SHA，默认拒绝/历史scan/docs、独立对抗审查及完整两平台CI。工作小结仍是后续必做，不因本单元删去。 |
+
+顺序：修复刷新所需wire与作者契约 → 显式受控composition/操作入口 → 原UI绑定 → 实际重启和故障矩阵 → 独立review/修复/最终CI。独立接线审查已确认原Worker→Interaction继承支持原生初始化，无需放宽AdmissionGateway；当前ModelSecrets未贯通、旧Activity/Audit闭合DTO不能承载D1、历史缺request/run都是实际代码缺口。风险为自动重跑/消费费用、错误scope、丢失源作者、清除与取消假成功、误开旧R1迁移；用显式POST、当前QG重验、闭合wire、状态区分和独立profile处理。回滚停用D1入口或兼容前滚，保留原数据/限制/回执；禁止DDL降级/删除新表、解除限制或自动Provider重跑。
 
 CI预算修正计划及证据：最终应用head ff76b14的CI40311789213第一次Ubuntu字体依赖下载用11分49秒，未完成全套；只重试原Ubuntu作业后，实际PG/browser已跑完577通过/13跳过/583非DB未执行1071.39秒，但作业结束阶段仍被取消，不能标绿或合并。日志显示准备阶段11:23—11:25、PG阶段11:25:~—11:43:53，符合20分钟整作业预算耗尽；第二次依赖下载已恢复正常，故不继续无信息重试。最小修改范围为`.github/workflows/synthetic-ci.yml`显式30分钟有界预算、`scripts/tests/test_ci_workflow.py`正负预算验证、本说明/公开审计和真实manifest SHA。全部原步骤、命令、矩阵、版本锁、失败可见性、读权限和安全审查不改，不拆掉慢测试或伪造正式Gate。风险是异常作业最多额外消耗10分钟CI时间；仍有30分钟硬上限，无Provider费用或凭据。重新运行验证器、public_guard/历史scan、独立diff审查及最终head完整两平台CI后才能验收；未验收前回滚只撤销该预算修正，保留已完成测试的原始失败状态。
+
+当前D1-18仅后端接线部分已编码：history.v2保留已接受v1，当前可见整轮带原请求/run有限元数据；固定D1 Activity/Audit保留作者及新动作，能力发现仍QG；ModelSecrets和原Controller精确绑定、默认offline；独立LocalRuntime profile不互认旧descriptor/root/database。实际HTTP/分页/视图19通过150.59秒，最后Controller/视图4通过18.40秒，自有profile及原runtime9通过41.69秒（含实际全新Windows PG重启/35表/零Owner与control，不操作用户实例）。各组有重叠，不相加伪造覆盖数；独立部分源码审查无新增阻断。CLI/compose/readiness/原UI及浏览器、桌面和整个故障矩阵仍待完成，不将本checkpoint作为单元验收或默认激活。全单元完成后再独立PR和最终CI。
+
+## D1-17 历史计划与候选阶段证据（保留，不等于D1-18验收）
 
 目标：向后续原界面提供真实、受控、可恢复的会话HTTP链和完整分页，不以Demo/临时SDK memory冒充数据库。追溯D1-01—09，正式R1/Requirement/Eval/Task/Gate不改。教师不用重复录入已有消息、引用或草稿；真实净负担仍需研究。
 

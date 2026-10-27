@@ -1,0 +1,34 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.conversation-exit-summary.v1",
+      "default": "classmatter.conversation-exit-summary.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "snapshot_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Snapshot Hash",
+      "type": "string"
+    },
+    "restriction_epoch": {
+      "maximum": 2147483647,
+      "minimum": 0,
+      "title": "Restriction Epoch",
+      "type": "integer"
+    },
+    "activation_allowed": {
+      "const": false,
+      "default": false,
+      "title": "Activation Allowed",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "snapshot_hash",
+    "restriction_epoch"
+  ],
+  "title": "ExitSummary",
+  "type": "object"
+}

@@ -53,6 +53,16 @@ Electron 的安装脚本由 `pnpm-workspace.yaml` 精确允许；若机器全局
 
 ## 合成持久化开发入口（W2-01，非发行版）
 
+### D1 独立入口候选（2026-10-27，整单元验收仍在进行）
+
+只有显式 `pnpm build:runtime:d1`、`pnpm check:runtime:d1`、`pnpm open:runtime:d1` 选择新D1根和数据库；旧命令仍R1，`pnpm start`仍离线Demo。D1默认端口8001、独立用户配置目录与session partition，不停止或接管占用8000的服务。先由操作者按后端README在全新授权根完成D1初始化、本人Owner设置、原Risk.X control初始化并启动PG。不得迁移已有R1、复制DPAPI或手改运行描述以绕过检查。
+
+`runtime-source.json` v2闭合绑定源码根、D1根、固定profile及服务端口；无效描述在单实例握手前拒绝，不能激活旧窗口。仍使用原进程HMAC/同源限制、sandbox、4种菜单IPC，关闭只停止本次API，不停止PG或自动重放运行。开发测试可在自有临时root/隔离端口验证真实Electron/API/PG进程重启，不因此授权真实数据或用户凭据。
+
+原UI现在候选接入列表/深链/来源/草稿/状态/取消/归档/清除；答案只从已保存QG历史读取，流仅展示进度，刷新不调用模型。设置中D1导出使用受控v6证据包，全工作区范围、本人批准、同键收据、当前限制重验；原生保存位置由用户选择，固定JSON路径/MIME/大小限制不变，不支持任意下载。原生保存对话框人工操作仍待验证。附件、语音、长期记忆与工作小结未因这次接线变成已完成。
+
+`backend/tests/test_durable_desktop.py`已在一次性Windows自有fixture验证原UI建班/学生/事实/任务、模型查询来源、刷新、正常退出、PG进程重启、新Electron恢复同回执、草稿未执行、清除和强退API清理，以及旧checkpoint拒绝/新checkpoint验证。最终源码仍需重跑和完整CI；不冒充整个Goal或正式Gate。
+
 2026-10-24：D0真实页面/恢复已在[PR #16](https://github.com/Gdnbit/classmatter/pull/16)验收；这不等于本README上方离线Demo自动变成真实实例。`pnpm start`仍打开离线Demo；真实持久化入口为以下命令，依赖本机Windows/Python/PG，不是免安装发行包：
 
 ```powershell
