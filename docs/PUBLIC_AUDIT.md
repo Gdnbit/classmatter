@@ -1,5 +1,11 @@
 # ClassMatter public candidate audit
 
+## 2026-10-27 accepted D1 functionality and documentation closeout
+
+PR35 merged as0b45355 after exact eceea46 passed complete CI40431820411 on Windows/Ubuntu and independent final API/source review. Windows nonDB591/Web65/desktop23/actual packaged checks; Ubuntu actual PG/browser590 passed16 host skips1164.66s. Prior Linux failure remains failed evidence.770 reviewed paths/hashes, default-deny and exceptions unchanged; fixed8.30.1 files/history4 reviewed0 unresolved. Separate local Windows restart and35-case recovery evidence do not turn Linux skips into native support or authorize arbitrary restore.
+
+This follow-up changes only existing implementation ledger, D1 change status, this audit and corresponding real manifest hashes. Evidence indexes refer to first-party code and owned synthetic tests; no private transcripts, raw artifacts, images, new source/dependency, permission, schema, formal Gate or CI-policy change. Candidate/history paragraphs below are chronological records, not current feature rejection. Final engineering synchronization remains conditional on this documentation PR's own review/checks/full CI and merge; formal release, personal Owner, real Provider costs/quality, teacher study and Future work are not promoted. Logo originals stay local ignored assets, not a public image backup. No business/runtime code changed; reverting this documentation follow-up does not delete data or relax restrictions.
+
 ## 2026-10-27 D1-18 accepted; D1-19 editable summary source review
 
 PR #34 merged as acda66c with the tested b72519f tree. Exact-head CI40362349240 passed Windows and Ubuntu and independent final review; earlier pending paragraphs below are historical evidence, not current rejection or whole-Goal acceptance.
