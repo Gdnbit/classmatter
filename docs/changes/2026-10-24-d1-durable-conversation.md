@@ -10,7 +10,7 @@ D1-16已由PR #32在最终head06d1fb5的完整CI40255153105及独立审查后合
 
 收口：最终head f4f1c67的CI40317840835两平台成功，经独立复核后PR #33合并main e62f050，合并树与验收head一致。Ubuntu验证器82/非DB576+7跳过31.93秒/Web55/实际PG-browser577+13跳过921.90秒；Windows验证器82/非DB58349.11秒/Web55/desktop23及实际Electron打包无页面错误和外部请求。741 SHA、public/license guard、固定扫描4已审查0未解决通过，原并发R1App17+/3−保持。前述两次取消原样保留；此处仅收口transport，不称UI、Owner、Provider或Goal完成。
 
-## D1-18 原界面耐久会话纵向接线计划（e62f050基线，实施中）
+## D1-18 原界面耐久会话纵向接线计划（e62f050基线，已由PR #34验收合并）
 
 2026-10-27实施记录：原CLI/desktop显式D1、固定composition/readiness、history.v2 typed client、原R1App拆出耐久controller/展示和受控退出组件已接线。默认R1/旧wire不改，D1无临时数据回退，流文本不作为保存结果。独立审查发现离线迟到fresh、旧stop中止新stream、未发送输入跨scope及focus放大审计；已用连接代次、捕获controller/target、范围清空/导航阻止、原createQueryRefresh修复，并加同帧operation锁。未完成scope加载前输入禁用，避免老师刚输入就被初始化清空。预览批准失败未发commit时可取消；任何commit409/500/断线均保留原预览/同键，不将查询not_committed当撤销证明。认证规则、Gateway和数据库权限不放宽。
 

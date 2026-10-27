@@ -52,6 +52,7 @@ import { useDurableConversation } from "./useDurableConversation"
 import { DurableHistory, DurableComposer } from "./DurableConversation"
 import { AttributionLabel } from "./AttributionLabel"
 import { DurableExit } from "./DurableExit"
+import { WorkSummary } from "./WorkSummary"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -109,6 +110,7 @@ export default function R1App() {
   const [durableBusy, setDurableBusy] = useState(false)
   const [durableDraft, setDurableDraft] = useState(false)
   const [exitBusy, setExitBusy] = useState(false)
+  const [summaryDraft, setSummaryDraft] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState("")
   const [classes, setClasses] = useState<Classroom[]>([])
@@ -150,7 +152,8 @@ export default function R1App() {
   const termLoad = useRef(0)
   const loading = useRef(0)
   const connectivity = useRef(0)
-  const navigationBlocked = busy || durableBusy || durableDraft || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
+  const interactionBlocked = busy || durableBusy || durableDraft || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
+  const navigationBlocked = summaryDraft || interactionBlocked
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
   const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
@@ -970,7 +973,7 @@ export default function R1App() {
           </span>
           <button
             aria-label="刷新数据"
-            disabled={navigationBlocked}
+            disabled={interactionBlocked}
             onClick={() => void action(() => reload())}
           >
             <RefreshCw size={16} />
@@ -1106,6 +1109,9 @@ export default function R1App() {
                   <span>已确认事实 / 观察</span>
                 </button>
               </div>
+              {runtimeProfile === "conversation-d1" && classroom && activity && <WorkSummary
+                key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`}
+                classroom={classroom} activity={activity} students={students} fresh={queryFresh && !refreshing} onDraftChange={setSummaryDraft} />}
               <h2>任务</h2>
               {taskCards(openTasks)}
               <h2>最近事实</h2>
