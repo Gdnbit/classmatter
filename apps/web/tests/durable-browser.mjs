@@ -20,6 +20,9 @@ try {
   await page.getByLabel('输入消息').fill('合成耐久浏览器查询');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   await history.getByText('会话输出已保存 · 无业务写入', { exact: true }).waitFor();
+  // Saved history can render before the existing protected navigation and
+  // class reread finish. Observe the real URL transition, not a React tick.
+  await page.waitForURL(/\/conversations\/[a-f0-9-]{36}\/[a-f0-9-]{36}\/[a-f0-9-]{36}$/, { timeout: 5000 });
   assert.match(new URL(page.url()).pathname, /^\/conversations\/[a-f0-9-]{36}\/[a-f0-9-]{36}\/[a-f0-9-]{36}$/);
   await history.getByText('合成耐久浏览器查询', { exact: true }).waitFor();
   await history.getByText(/当时的查询来源/).click();

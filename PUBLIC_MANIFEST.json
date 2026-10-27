@@ -45,7 +45,7 @@
       "sha256": "85583069b18e68160ae69b226fad543e7dd4816db2e9962166a1ab83624584dc"
     },
     "apps/web/tests/durable-browser.mjs": {
-      "sha256": "e2fc34aacb637d0ad470c9a359a5b63d969853eeec29eb6adc759f4e5c2e333d"
+      "sha256": "523f7cbc5b43a56127ec76379572166795db9fe5c2437b8fb4ded20217f453fb"
     },
     "apps/web/tests/durable-conversation.mjs": {
       "sha256": "b6b5f01f06a445cdc75ff99905fd1daddd87d21a4640492b19944624e474d00b"
@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "f046a7febd6bcd536fc106f909a5158924ce6be6e634b98477516f7b83a71a49"
+      "sha256": "92ecd7fa17efc7a5c5bbe617165cb2fe99cb258aa9d8c8abf01886e28f40a67a"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -1450,7 +1450,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "899e8d50cc626a5339d36d06d3d93fe37623594a6a443722447a5cd7dda8f9f9"
+      "sha256": "3b1e31978e0b44dc43024fef52967ca486585205f821687d2d3e311c2bd16aa4"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"
