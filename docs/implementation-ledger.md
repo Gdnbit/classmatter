@@ -1,5 +1,17 @@
 # 实现与验收台账
 
+## 2026-10-27 当前收口与下一单元
+
+D1-18已由[PR #34](https://github.com/Gdnbit/classmatter/pull/34)合并为`acda66c`，合并树与最终`b72519f`一致。[CI40362349240](https://github.com/Gdnbit/classmatter/actions/runs/40362349240)精确对应该head：Windows非DB591/Web61/desktop23；Ubuntu非DB584+7宿主跳过、实际PG/browser589通过+16宿主跳过953.78秒。独立最终审查确认765项真实SHA、边界与原工作树17+/3−未变。最终本机原生/CLI7通过71.10秒、真实浏览器主链2通过98.67秒分别证明Windows专有链与实际离线，不用Linux跳过冒充。下方候选/待CI段落保留为历史，不能覆盖此收口。
+
+D1-19正在独立`codex/d1-work-summary`分支实施：仅D1总览，用现有授权Activity/名册整理可编辑班级工作小结，分列事实/观察、任务状态和版本引用，保留作者元数据；临时编辑与人工复制，不新增表、API、存储、模型费用、下载权限或Agent writer。最多100项/64000来源字符，超过拒绝而非静默截断；不是指定周/月统计。完整来源集合/内容/身份改变或离线使旧稿不能作为当前查询一致草稿复制，原文仍可人工核对；离页/刷新不耐久保存，界面提示、导航保护和beforeunload告知这一限制。教师额外操作为整理、可选编辑、人工核对后复制；真实净减负仍是研究假设。
+
+本机最终真实PG/socket/browser1通过19.14秒：生成→编辑→实际剪贴板→权限拒绝回退→实际断网/联网→独立原BCG新增任务→刷新使旧稿失效→丢弃/重整→beforeunload确认刷新丢弃。页面业务写入0，只有独立客户端新增1项任务；未调用模型/产生export。Web65/类型/构建、desktop23、后端非DB587通过+4主机跳过、606 DB未执行56.55秒；docs74/契约/正式图通过。原始XML与截图在忽略目录，未公开。独立审查发现遗漏最近修改者后已补齐；真实测试发现草稿误禁手动刷新后修复，Windows clipboard换行差异和任务按钮带截止子文本的断言也已按实际行为修正。前述失败不当作通过。最终公开扫描/验证器及完整两平台CI仍待，不将浏览器clipboard当Electron权限验证，不把临时文书当耐久Artifact。
+
+D1-19候选`76e4fcd`已推送[PR #35](https://github.com/Gdnbit/classmatter/pull/35)。CI40429582795的Windows通过（验证器82/非DB591/Web65/desktop23及实际打包），Ubuntu589通过、16跳过、1失败857.44秒；唯一失败为原耐久浏览器在保存回复呈现后立即同步断言URL，彼时原受保护导航/班级重读仍在进行、地址仍为`/`。现只增加5秒有界等待实际深链接完成，原精确正则、真实业务/来源/重启/取消断言不删除；不改生产实现或放宽CI。另在该候选上实际Windows恢复35通过215.89秒、桌面重启1通过69.44秒；不把旧head或失败CI当新字节验收。需定向重跑、独立审查、真实SHA和固定扫描后，以新head重新完成双平台CI。
+
+文件级范围：`work-summary.ts`纯投影、`WorkSummary.tsx`临时编辑、原`R1App.tsx`D1总览接线、纯单测与实际QG/PG/socket/browser测试、现有README/本台账/变更单/公开审计/真实manifest。按模型→组件→主入口→真实闭环→审查→静态/完整双平台CI顺序推进。复用原T-RWEB/T-RDOM查询表现及D1-03/06工程追溯，不调整正式Requirement/Eval/Task/Gate。R1仍0016/22、D1仍0026/35；Owner/真实Provider费用与人工质量、完整跨机/多跳/native保存对话框仍未验证。回滚本UI PR即可，不删除或降级业务库/限制证明。当前还不能将D1-19或整个Goal标完成。
+
 2026-10-27候选进展（不是main接受状态）：D1-18原UI/typed client/显式CLI与独立桌面profile、作者感知投影、v6退出已实际接线，默认R1不变。本机实际Electron/API/PG重启测试1通过54.67秒，后续HTTP/runtime/native组23通过168.11秒。当前完整browser主链2通过96.45秒：两种recent边界过期→原ISB重验、真实导出回复丢失→原键GET、真实限制文件发布后409→保键/同键收口、离线迟到、focus合并、标题不覆盖、草稿范围导航、读/草稿/刷新/清除与v6下载拒绝。取消/超时/保存失败/claim失败/审计失败、同帧双提交及刷新不重跑5通过68.01秒。非DB584+4主机跳过52.36秒，CLI端口/交互组5通过1.42秒（有交集，不累计unique）；Web61/tsc/build、desktop23、docs74及正式图通过。独立审查复现的409误判已用D1专用写前428分类修复；当前765路径public/license guard和固定files/history扫描4已审查0未解决通过。最终control回归、验证器及完整CI尚待收口，不宣称已同步main或整个Goal完成。主工作区并发R1App保持17+/3−。两张Logo原件在本地`assets/brand/originals/`按登记哈希留档，Git仍只含文字登记。
 
 更新时间：2026-10-26。最新验收main为`e62f050`：[PR #33](https://github.com/Gdnbit/classmatter/pull/33)完整分页/显式HTTP在最终f4f1c67通过[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/40317840835)，Windows非DB583/Web55/desktop23，Ubuntu非DB576+7跳过、实际PG/browser577+13跳过921.90秒，验证器82及741个真实hash通过。此前两次CI取消不改称成功；固定来源/草稿与生命周期由PR #32收口，原SDK普通对话由PR #31收口，此前D0/E1及D1前置由PR #13—30收口。Logo登记PR #21只公开文字，原图本地忽略，未换应用图标。
