@@ -1784,6 +1784,39 @@
     "spikes/language/typescript/server.test.mjs": {
       "sha256": "13b04bb8dbcdaa5fbefc65ebad8ce98665c5f3d6262dcaca3d8fc011ecb0c15a"
     },
+    "spikes/seating-planner/PRODUCT.md": {
+      "sha256": "d2fdfa3bd754909c50f371d8a4b719e60cc1c4c85faacbefb91a47da21f11ce4"
+    },
+    "spikes/seating-planner/README.md": {
+      "sha256": "daee0b8a31c1b09deb0add1ab470b70759b4ed5136e0c1672ab76835a63da332"
+    },
+    "spikes/seating-planner/solver.mjs": {
+      "sha256": "59b1440a4f7b61d91dabda2468dd0ea433bf81d862ff422b3806b9050f524ca1"
+    },
+    "spikes/seating-planner/solver.test.mjs": {
+      "sha256": "cfd4877b8ff065b69ecd2d7cbbf4eba05ecb46c1c844b4a70b5dcfb8769a2a1b"
+    },
+    "spikes/seating-planner/app.mjs": {
+      "sha256": "38102a7a1bf39354412d50155910a861e714d8244238e1690487b78a4b11ce50"
+    },
+    "spikes/seating-planner/index.html": {
+      "sha256": "8573dc547fe72248c074bb32064ba8cfbcc388dfbbfcce9294668c6fe83018e2"
+    },
+    "spikes/seating-planner/style.css": {
+      "sha256": "5d54c2bb0bde77c3f25d2119912264ead3c7d6b2bb208b33ff47b13f532d37e7"
+    },
+    "spikes/seating-planner/browser.test.mjs": {
+      "sha256": "1c9a0471d64ddbe0ba5f13696893d1bb800d5cda1d2635c335ef2a8127c99d68"
+    },
+    "spikes/seating-planner/serve.py": {
+      "sha256": "dbc605ca621346da1cf11f6c822351f6c36ee0da036358d8202d4bb2d4b2459a"
+    },
+    "spikes/seating-planner/run.ps1": {
+      "sha256": "85a37bf445b3b1d208651a02e0fe35bd1997cf21c9d7111c6e1c2c957c1abea8"
+    },
+    ".github/workflows/seating-planner-spike.yml": {
+      "sha256": "43e2e6a291f8f43be7d4bfa054c0f7c78ce08a3d38e713e89941da8d404a93de"
+    },
     "spikes/self-host/.env.example": {
       "sha256": "8849d837f96593851aff647be94bb574cbbb2db14aecb3ca3302d20ec1cc4f84"
     },
