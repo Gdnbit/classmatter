@@ -2,7 +2,7 @@
 
 `verify.ps1` is the existing engineering entry point. Use PowerShell 7, Python 3.13 and `pip install -r scripts/requirements-verify.txt`; Node/pnpm follow Web metadata. Backend/spikes use their own frozen uv lockfiles. Do not run all independent spike tests from a single bare pytest environment.
 
-`self`, `eval-meta`, `gate-graph`, `task-graph`, `development`, `fixtures`, `docs`, `backend`, `web`, `db`, `language-spike`, `agent-spike`, `self-host-spike`, `signature-spike` can run independently. `all` runs engineering suites, not formal `security` target admission. The formal security runner is deliberately target-unavailable until a trusted adapter is bound; do not make it green with a fake target.
+`self`, `eval-meta`, `gate-graph`, `task-graph`, `development`, `fixtures`, `docs`, `backend`, `web`, `db`, `language-spike`, `agent-spike`, `self-host-spike`, `signature-spike`, `knowledge-spike` can run independently. `all` runs engineering suites, not formal `security` target admission. The formal security runner is deliberately target-unavailable until a trusted adapter is bound; do not make it green with a fake target.
 
 `db` uses a new owned disposable PostgreSQL cluster, not a shared DSN. Pass `-PostgresRoot` explicitly on a new machine. Linux CI executes its applicable subset; Windows DPAPI/Edge and local lifecycle tests need the supported host. A workflow file is not evidence of a successful remote run.
 
