@@ -1814,6 +1814,24 @@
     "spikes/self-host/uv.lock": {
       "sha256": "f189fdd666e0931917a4eb76e94a29ab7f05f6212a35b711ff96859aeef6c7e8"
     },
+    "spikes/capture-prototype/capture.py": {
+      "sha256": "e7d5811e72450352740b2be2698be0256b74cd5c6114a1e57b06030bf74909ed"
+    },
+    "spikes/capture-prototype/cli.py": {
+      "sha256": "921f92723b33d7e262261416f391c2087066bc3f772a70990e4e69e7ec4f1faa"
+    },
+    "spikes/capture-prototype/test_capture.py": {
+      "sha256": "034498d9ee980ec8759feae6406751c3f61814bf93e9c9aa65d7a2c49a1025c0"
+    },
+    "spikes/capture-prototype/README.md": {
+      "sha256": "0316ab18b4c0dfc30b4d8a2ccd86b7b10bb5ec68b33a727599c8e32e51a8125f"
+    },
+    "spikes/capture-prototype/run.ps1": {
+      "sha256": "816228cfce6b0e694a396c571895594a29fe29722de485aca3ac637846506f95"
+    },
+    ".github/workflows/capture-prototype-spike.yml": {
+      "sha256": "a61212585521e7fe553caa5731f461662ac637daa5fbf6145d08b63b99161bf2"
+    },
     "spikes/signature-envelope/README.md": {
       "sha256": "20d240ec186c7362b3826efd6755119e6841b29f8898472931e50a37aa3d2f9d"
     },
