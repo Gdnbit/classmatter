@@ -1748,6 +1748,24 @@
     "spikes/agent-read-draft/uv.lock": {
       "sha256": "75d36b32093eadea7353e0659df26d1a270c299da10d68bbe003e3e604eddd0e"
     },
+    "spikes/import-workbench/importer.py": {
+      "sha256": "25bcf67d2d7c34cf559c2b1f29d61d8df6134e7856e006b86cc56f8674903f6e"
+    },
+    "spikes/import-workbench/cli.py": {
+      "sha256": "7a8799e07ddf8c8b265956d3cc7c8660c65c06c5a7d19c4b82018504aebff4f5"
+    },
+    "spikes/import-workbench/test_importer.py": {
+      "sha256": "d31bfd5ea60780ed8c8383afe4317fd6dcf9ea2589c52e02de3fe1842975a57f"
+    },
+    "spikes/import-workbench/README.md": {
+      "sha256": "8f8e2acaf2b211944cca9eaddeec8dadd4b159348fea11d7db207a3adc97d6b4"
+    },
+    "spikes/import-workbench/run.ps1": {
+      "sha256": "816228cfce6b0e694a396c571895594a29fe29722de485aca3ac637846506f95"
+    },
+    ".github/workflows/import-workbench-spike.yml": {
+      "sha256": "15c337ff1278d1a09d29a7bc1100958cf8b96afe960b798be0261046862185b7"
+    },
     "spikes/language/README.md": {
       "sha256": "d2c2fcbc4d61e109167e78ef91ba53ca51803603e038e1ad66bd2d0ab39b664c"
     },
