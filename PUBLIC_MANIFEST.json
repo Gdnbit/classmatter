@@ -1661,6 +1661,24 @@
     "scripts/verify_synthetic_development.py": {
       "sha256": "e50fa297869f74feef698e2f17097bb5558846a6c9ef508fe58927ca239810b4"
     },
+    "spikes/grade-analytics/analytics.py": {
+      "sha256": "88b5c2f67d27dd6f74e716d0898e8db0e350cccc96b8ec8755455e20003927c4"
+    },
+    "spikes/grade-analytics/cli.py": {
+      "sha256": "8390338d9e470f77829a4cfe972337a6464c7766119ea1ee81c37b216e744f3d"
+    },
+    "spikes/grade-analytics/test_analytics.py": {
+      "sha256": "e3c964ceb07ff42f412f906f933fd43190b2a5dea667d96e0fc61d53898f3dc5"
+    },
+    "spikes/grade-analytics/README.md": {
+      "sha256": "479800912b1c24692eca4076dac9d1e63d4227c588acc529c69bbe8d254c59b5"
+    },
+    "spikes/grade-analytics/run.ps1": {
+      "sha256": "816228cfce6b0e694a396c571895594a29fe29722de485aca3ac637846506f95"
+    },
+    ".github/workflows/grade-analytics-spike.yml": {
+      "sha256": "bfb8c51710346498eca4ce3353a1c3e7e3ccfad0d2083eb5124766166257dbf9"
+    },
     "spikes/agent-read-draft/README.md": {
       "sha256": "bbff93e90b42c3eee8ebcaf949ff6be41cb1fba27e6f0c6cbc1d66b4e30811e7"
     },
