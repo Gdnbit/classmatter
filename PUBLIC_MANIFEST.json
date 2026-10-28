@@ -2,6 +2,24 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    ".github/workflows/work-runtime-spike.yml": {
+      "sha256": "21ba05e100ccf6bbe46219a2bd0b4318e7d504bfc9a05c6a48f495b9a71f4725"
+    },
+    "spikes/work-runtime/README.md": {
+      "sha256": "c421edb62a15070cff86ff68bde138c22da82a53b8218a936cf4deb016c63d3e"
+    },
+    "spikes/work-runtime/runtime.py": {
+      "sha256": "68a10ce60804893d1acdce5d5c087f0d55a76f314a700956ee0586d35bccabb1"
+    },
+    "spikes/work-runtime/demo.py": {
+      "sha256": "9aea7a29b710c591c0e67e490de339c979e8de6c26c0dde31f6958fda7d38726"
+    },
+    "spikes/work-runtime/test_runtime.py": {
+      "sha256": "b78871fa8d328530c13a327e17b37028a0e1a53df5098ba4df906e37081e3052"
+    },
+    "spikes/work-runtime/run.ps1": {
+      "sha256": "a996013b8a63f3b82d73162df2f5ba14725d1d756bbcb9a90dc73f55928572ca"
+    },
     "apps/web/src/runtime/WorkSummary.tsx": {
       "sha256": "3b896d0b60dc19194ef45838812ca37e03ea24866ff54217feade6f21b68567d"
     },
