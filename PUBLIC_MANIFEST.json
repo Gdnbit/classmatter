@@ -2597,7 +2597,7 @@
       "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"
     },
     "spikes/knowledge-retrieval/README.md": {
-      "sha256": "101e5c0d82a6ada797c556ff0be6182323723407df677c65c4f5ef9fa8e7b00a"
+      "sha256": "a16bd30402440eef4a0f846bd01a6bca17e5190f15a413db1deebcbedb212fc2"
     },
     "spikes/knowledge-retrieval/retrieval.py": {
       "sha256": "6dfa962ea1d2e1ac50535cb95c46d99c7e8019f33985de5cbfe34807cf98b982"
@@ -2607,6 +2607,9 @@
     },
     "spikes/knowledge-retrieval/test_retrieval.py": {
       "sha256": "2efcaf7d256cf394fcedcc5276320854518e7137fd4e693e8a98368ce2986329"
+    },
+    ".github/workflows/knowledge-retrieval-spike.yml": {
+      "sha256": "98eaf814b7812bd0958651986578ecbb02b9b9b4ded4afcfb857e9a0f6ba749c"
     }
   }
 }

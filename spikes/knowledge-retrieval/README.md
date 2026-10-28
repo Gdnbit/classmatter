@@ -72,6 +72,13 @@ requirement/eval/task hashes or security review exceptions are changed.
 The existing verification entry point adds `knowledge-spike`, also included in
 `all`; the existing read-only Windows/Ubuntu CI runs this suite as an extra step.
 No previous check, job permission, trigger, timeout or failure rule is changed.
+An additional scoped `knowledge-retrieval-spike.yml` workflow runs this same
+standard-library suite on Fork branch pushes and applicable PRs. It reuses the
+existing pinned actions, Python3.13.12, read-only contents permission and both
+Windows/Ubuntu hosts. It does not replace full upstream CI or bypass the
+maintainer's Fork-workflow approval. This follow-up contains only first-party
+workflow/usage text and its actual public hashes; original exception metadata
+and all product implementation bytes remain unchanged.
 
 Rollback removes this isolated directory and its reviewed publication entries;
 there is no user data or schema migration to undo. Maintainer acceptance and
