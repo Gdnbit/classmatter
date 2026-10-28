@@ -67,6 +67,8 @@ jobs:
           }
       - name: Verifier negative and portability tests
         run: python -m unittest discover -s scripts/tests -p 'test_*.py' -v
+      - name: Synthetic knowledge retrieval experiment
+        run: pwsh -NoProfile -File ./scripts/verify.ps1 -Suite knowledge-spike
       - name: Locked backend contracts and non-database tests
         run: pwsh -NoProfile -File ./scripts/verify.ps1 -Suite backend
       - name: Locked Web install

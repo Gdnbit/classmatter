@@ -600,7 +600,7 @@
       "sha256": "ced429c03e274aaf0d431cf63c461fa4e24aa426323179b3e96ba992cce42391"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "67f80679dafa71d191c095db7c29f4fdd30cb91f75977d9392f651b79a2abad2"
+      "sha256": "73029357de30e01c538bd70ba5c813c4eaf21862e8dc36efe20faed06b30139a"
     },
     ".gitignore": {
       "sha256": "c34bf3956a066550e5680221b82b4bfd8aaef7363305a1c5949b729a2d02b588"
@@ -1450,7 +1450,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "c5b474ba592cecb50def7f1c1254b9b9086b7e39dded1cc6417394e8bed87fa7"
+      "sha256": "4ba1aab9e7deec0b30abf588470dd64aae4655b87cd454537719cedd9962e184"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"
@@ -1585,7 +1585,7 @@
       "sha256": "c5ccebbfa6d96a72c5bb748070d21630150f5d6940dc53207b338943a4f6becc"
     },
     "scripts/README.md": {
-      "sha256": "fbaa93c829a504751ce88fbc07cf396e435920979b900237daeb3b5c8fe6328e"
+      "sha256": "88f5c50c0da401659778a2adafbe49c34584b3974b1949f9ae2243b4cf507aec"
     },
     "scripts/generate_synthetic_fixtures.py": {
       "sha256": "c8ad345bd8258d575186bd3b49348e6a96207623f086dc6f0a7e37895e7b8fbc"
@@ -1653,7 +1653,7 @@
       ]
     },
     "scripts/verify.ps1": {
-      "sha256": "cb438ac75c73f002474cd7463e16f8971b794700a606c72047cb60a6613dc4c8"
+      "sha256": "7d1f9fbf29e453eea2150d9a6c5752965c383610f31d025507fcef0ab4cc882e"
     },
     "scripts/verify_manifests.py": {
       "sha256": "f0a45c302b6c55e32d6b1aaab2c935015b0e35ca6fb38e19d4beb37c193633f2"
@@ -2595,6 +2595,21 @@
     },
     "docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md": {
       "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"
+    },
+    "spikes/knowledge-retrieval/README.md": {
+      "sha256": "a16bd30402440eef4a0f846bd01a6bca17e5190f15a413db1deebcbedb212fc2"
+    },
+    "spikes/knowledge-retrieval/retrieval.py": {
+      "sha256": "6dfa962ea1d2e1ac50535cb95c46d99c7e8019f33985de5cbfe34807cf98b982"
+    },
+    "spikes/knowledge-retrieval/demo.py": {
+      "sha256": "7ee0831f7e6bb57deb0a8f2de5907f5d79de76ea19ccaf861ade1d5171c2f97e"
+    },
+    "spikes/knowledge-retrieval/test_retrieval.py": {
+      "sha256": "2efcaf7d256cf394fcedcc5276320854518e7137fd4e693e8a98368ce2986329"
+    },
+    ".github/workflows/knowledge-retrieval-spike.yml": {
+      "sha256": "98eaf814b7812bd0958651986578ecbb02b9b9b4ded4afcfb857e9a0f6ba749c"
     }
   }
 }

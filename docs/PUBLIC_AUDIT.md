@@ -1,5 +1,26 @@
 # ClassMatter public candidate audit
 
+## 2026-10-28 isolated knowledge retrieval contributor experiment
+
+Contributor task05 was TODO/unassigned on the proposed task board. Reviewed
+first-party implementation, fixed synthetic demo, lifecycle/isolation tests and
+usage documentation under `spikes/knowledge-retrieval/`. No imported source,
+private document, real identity, credential, image, model response or paid call
+is included. Scope/owner/purpose are fake fixture identifiers, not production
+authorization. Retrieval releases only exact currently valid source lines;
+replacement, withdrawal and expiry invalidate cached evidence on revalidation.
+No semantic-answer, concurrent-release or production authorization claim is made.
+
+The verification entry point adds an isolated standard-library suite and the
+existing read-only cross-host CI invokes it as an additional check. No prior
+check, trigger, job permission, timeout, security baseline, exception, formal
+Gate, migration, API, dependency or release setting changes. Source documentation
+explicitly records the absent QG/BCG integration and single-process/time limits.
+Only these reviewed paths and this audit receive real manifest hash updates;
+default-deny behavior and all existing exception metadata remain unchanged.
+Pinned scans and local checks must be recorded using their actual results;
+remote CI and maintainer merge are separate from this source-content review.
+
 ## 2026-10-27 accepted D1 functionality and documentation closeout
 
 PR35 merged as0b45355 after exact eceea46 passed complete CI40431820411 on Windows/Ubuntu and independent final API/source review. Windows nonDB591/Web65/desktop23/actual packaged checks; Ubuntu actual PG/browser590 passed16 host skips1164.66s. Prior Linux failure remains failed evidence.770 reviewed paths/hashes, default-deny and exceptions unchanged; fixed8.30.1 files/history4 reviewed0 unresolved. Separate local Windows restart and35-case recovery evidence do not turn Linux skips into native support or authorize arbitrary restore.

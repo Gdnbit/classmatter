@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('all', 'self', 'eval-meta', 'gate-graph', 'task-graph', 'development', 'backend', 'db', 'fixtures', 'security', 'language-spike', 'agent-spike', 'self-host-spike', 'signature-spike', 'docs', 'web', 'desktop')]
+    [ValidateSet('all', 'self', 'eval-meta', 'gate-graph', 'task-graph', 'development', 'backend', 'db', 'fixtures', 'security', 'language-spike', 'agent-spike', 'self-host-spike', 'signature-spike', 'knowledge-spike', 'docs', 'web', 'desktop')]
     [string]$Suite = 'all',
     [string]$PostgresRoot = ''
 )
@@ -98,6 +98,12 @@ if ($Suite -in @('all', 'agent-spike')) {
 if ($Suite -in @('all', 'self-host-spike')) {
     Invoke-Checked -Label 'Self-host recovery harness and Compose contract tests' -Command {
         & (Join-Path $repoRoot 'spikes/self-host/run.ps1')
+    }
+}
+
+if ($Suite -in @('all', 'knowledge-spike')) {
+    Invoke-Checked -Label 'Synthetic knowledge retrieval and source invalidation experiment' -Command {
+        python -m unittest discover -s (Join-Path $repoRoot 'spikes/knowledge-retrieval') -p 'test_*.py' -v
     }
 }
 
