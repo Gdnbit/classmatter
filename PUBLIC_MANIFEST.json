@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "aeca137443a239205b13ee2dbfd4a718172179fc1b7324799c40830fcc83aae4"
+      "sha256": "2a59c323cdbdf2a64977873d3619a5848bbf71ed566d286c7c994929e4f19fec"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -1450,10 +1450,10 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "c5b474ba592cecb50def7f1c1254b9b9086b7e39dded1cc6417394e8bed87fa7"
+      "sha256": "4f08a2ed0b4317070c37ae573b337788098eb2e564d935c10531ed51444a8e87"
     },
     "docs/README.md": {
-      "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"
+      "sha256": "c26c2acfdb0a8b9906c7c9872a4d24f17f6368c89393e6844c71b5ffc3c7f9f9"
     },
     "docs/changes/2026-10-08-synthetic-development-admission.md": {
       "sha256": "d67c0a71f21431a90f84301ceae2ce790f8a0aeb120052840b0b6032731a9f40"
@@ -2595,6 +2595,39 @@
     },
     "docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md": {
       "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"
+    },
+    "integrations/wechat/__init__.py": {
+      "sha256": "6a866090170bed384722ad694ba4ece2ffa2704736d06c49cd9c34eb77e9b4df"
+    },
+    "integrations/wechat/model.py": {
+      "sha256": "7f3e7d491977d12dd3869fbe5248d502e4cce7f913bd93ded1fe3a75fe28315d"
+    },
+    "integrations/wechat/providers.py": {
+      "sha256": "beaac414e29a38404de936e3f85dcdd80f1118ffbea9bcbaf3bf1641ee3664dc"
+    },
+    "integrations/wechat/runtime.py": {
+      "sha256": "dbfdd152298861b86e4e088ad0e8572197492598d9060e318bf06a74888f20dd"
+    },
+    "integrations/wechat/cli.py": {
+      "sha256": "124d09796957df11a8bf2fcb65b35108333c3d004a15e1947e1576cd5b1407f9"
+    },
+    "integrations/wechat/workbench.py": {
+      "sha256": "d3771aceecd2a2500f132c5e77b79b18aad5c1de465a37c1e8ef74c077fc78ed"
+    },
+    "integrations/wechat/requirements-pyweixin.txt": {
+      "sha256": "3e2d8f4be92de0b34409e73234a6a3026abed851623510f24bb25fc938158a22"
+    },
+    "integrations/wechat/requirements-replica.txt": {
+      "sha256": "6dfe598ba4faeda4563060d2a5fef7d8eef56671382a8fe5691cdb2a26b1af8d"
+    },
+    "integrations/wechat/requirements-wxautox4.txt": {
+      "sha256": "786d63b9d64c1eb6b9d41b798e3cdc2031f12880cb8b5800c68c3c546ed39f95"
+    },
+    "integrations/wechat/README.md": {
+      "sha256": "f2a6434e20c0651c1fe87322d0abbea035ecfec955cce6df4be70c47b3383e2c"
+    },
+    "scripts/tests/test_wechat_connectors.py": {
+      "sha256": "f013c626df31b66694126e069b05d965d8741531b8271b457e098571e30a160a"
     }
   }
 }

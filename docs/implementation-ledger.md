@@ -1,5 +1,13 @@
 # 实现与验收台账
 
+## 2026-11-01 微信连接器独立工程候选（未完成实机与产品接线验收）
+
+承接已验收 main 后建立独立分支，不修改冻结 R1 或 D1 存储。用户新增“多方案、历史补读”由[连接器工作台](../integrations/wechat/README.md)承载 WX-01—07 工程验收：UseChat 视觉、pyweixin UIA、replica 本地库和 wxautox4 商用 UIA 适配；独立环境/进程、原生开发工作台、候选来源、分页断点与来源变化拒绝、预览绑定、发送前耐久占位和跨连接器禁止不确定重试。四项不是四种独立技术路线；wechatbot-new 不重复引入 Agent/Memory。
+
+默认合成，未读取账号、安装/激活 SDK、调用真实模型或发送消息。候选 JSON 不等于正式 Capture/Domain Fact，独立工作台不等于 R1 页面已启用微信。真实 SDK/客户端、身份与同名会话、模型费用、历史可达范围和真实净减负仍待验收；后续正式 Capture 需经现有 ISB/QG/BCG、生命周期和退出设计。无新 Schema、HTTP、IPC 或 Agent 权限，107 需求/147 Eval/94 任务/正式 Gate 状态不变。合成测试、Windows 原生 smoke、静态审查及准确公开清单证据以本分支最终运行记录为准，不据代码存在标实机完成。回滚为独立提交 revert，保留待核对发送回执，不删除数据伪造可重试。
+
+本地代码候选 `9a9c887`：新增连接器33项、Windows原生合成工作台 smoke通过；提交后根验证器115项通过16.456秒，后端587通过/4宿主跳过/606数据库项未运行，75份Markdown及全部原静态套件通过。固定8.30.1扫描 files/history各4个既有已审查发现、0未解决；公开清单新增11个原创建议文件并复算3个文档真实哈希，无例外扩张。首轮未提交状态下checkout测试克隆旧HEAD而失败，保留原失败日志，未修改测试；提交后的完整重跑已消除该条件。日志仅在忽略目录 test-results/wechat-*。自审修复了SDK账号自动回退、未知来源空读、绕过父进程发送占位和重复dispatch路径；不冒充独立审计或真实客户端验收。远端CI及产品Capture接线另行核验。
+
 ## 2026-10-27 当前已验收功能与剩余边界
 
 最新功能基线为`0b45355`：[PR #35](https://github.com/Gdnbit/classmatter/pull/35)已通过独立审查及[完整CI40431820411](https://github.com/Gdnbit/classmatter/actions/runs/40431820411)后合并，树与最终`eceea46`一致。Windows非DB591通过37.66秒、Web65、desktop23及实际打包无pageErrors/externalRequests；Ubuntu非DB584通过+7宿主跳过37.40秒、Web65、实际PG/browser590通过+16宿主跳过1164.66秒；两平台验证器82、docs74及固定扫描通过。770项真实SHA与default-deny/原例外不变；早期CI40429582795的1项失败保持失败，不用新成功改写历史。

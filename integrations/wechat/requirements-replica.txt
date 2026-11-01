@@ -1,0 +1,2 @@
+# Optional isolated environment only. Never add to the production backend lock.
+wechatauto-replica==1.2.9

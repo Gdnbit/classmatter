@@ -1,5 +1,11 @@
 # ClassMatter public candidate audit
 
+## 2026-11-01 personal WeChat connector engineering candidate
+
+Original isolated adapters, bounded candidate/checkpoint files, explicit single-send receipts, a separate native development workbench and synthetic contract tests. Public upstream API signatures and revision/release identifiers were inspected; no upstream implementation, executable, package cache, third-party SKILL instructions, personal account data, chat export, screenshot, token or model response is copied into the public tree. Optional dependency specifications are not installed/vendor bundles or a transitive lock. pyweixin LGPL version metadata remains unresolved; wxautox4 activation/commercial permission is not supplied. No account-ban probability or live compatibility is claimed.
+
+The connector candidate root is ignored and separate from business stores. No R1 web/native bridge, production DB/schema, QG/BCG/ISB authority, Agent business write, release definition, formal Eval/Gate or existing CI checks change. Local candidates are not encrypted or included in business backup/exit; the subsequent Capture lifecycle and verified identity binding remain required before production ingestion. Actual SHA-256 manifest review and pinned files/history scanning are required for this exact branch; real-device/provider acceptance and full remote CI must not be inferred from synthetic checks. Historical entries below retain their original evidence and dates.
+
 ## 2026-10-27 accepted D1 functionality and documentation closeout
 
 PR35 merged as0b45355 after exact eceea46 passed complete CI40431820411 on Windows/Ubuntu and independent final API/source review. Windows nonDB591/Web65/desktop23/actual packaged checks; Ubuntu actual PG/browser590 passed16 host skips1164.66s. Prior Linux failure remains failed evidence.770 reviewed paths/hashes, default-deny and exceptions unchanged; fixed8.30.1 files/history4 reviewed0 unresolved. Separate local Windows restart and35-case recovery evidence do not turn Linux skips into native support or authorize arbitrary restore.
