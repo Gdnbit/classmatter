@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "2a59c323cdbdf2a64977873d3619a5848bbf71ed566d286c7c994929e4f19fec"
+      "sha256": "27cfaf92ad42ee721d8fac5a3b49736ec6ef929429b3ce5473d62dbee080493d"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -1450,7 +1450,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "4f08a2ed0b4317070c37ae573b337788098eb2e564d935c10531ed51444a8e87"
+      "sha256": "8ffc8a155dba60f5a25d15c6059151e847dbac9c046a63ec37aea79ff1a66575"
     },
     "docs/README.md": {
       "sha256": "c26c2acfdb0a8b9906c7c9872a4d24f17f6368c89393e6844c71b5ffc3c7f9f9"
@@ -2612,7 +2612,7 @@
       "sha256": "124d09796957df11a8bf2fcb65b35108333c3d004a15e1947e1576cd5b1407f9"
     },
     "integrations/wechat/workbench.py": {
-      "sha256": "d3771aceecd2a2500f132c5e77b79b18aad5c1de465a37c1e8ef74c077fc78ed"
+      "sha256": "52b71db8271420968b9da63417113df67f59d9004acb0c3af46cb7a36bca8c1a"
     },
     "integrations/wechat/requirements-pyweixin.txt": {
       "sha256": "3e2d8f4be92de0b34409e73234a6a3026abed851623510f24bb25fc938158a22"
@@ -2624,10 +2624,19 @@
       "sha256": "786d63b9d64c1eb6b9d41b798e3cdc2031f12880cb8b5800c68c3c546ed39f95"
     },
     "integrations/wechat/README.md": {
-      "sha256": "f2a6434e20c0651c1fe87322d0abbea035ecfec955cce6df4be70c47b3383e2c"
+      "sha256": "47092dcfe0b4ff6cffdf7ba6ae32e347f0a0a52d615e46afa07de6f2fee1d663"
     },
     "scripts/tests/test_wechat_connectors.py": {
       "sha256": "f013c626df31b66694126e069b05d965d8741531b8271b457e098571e30a160a"
+    },
+    "integrations/wechat/provider_profile.py": {
+      "sha256": "1b6e873842b15d05dad96699779a611bdf06d05a2147115f39ba37517bbdd523"
+    },
+    "integrations/wechat/vision_eval.py": {
+      "sha256": "7c1a5ab64681399b7c50e1d3191c7d89ca544b39a004b8763170d9f7a48d5371"
+    },
+    "scripts/tests/test_wechat_vision_eval.py": {
+      "sha256": "d510a81b2ee2256a01f9d2d49a0d0b4ca815c27409baaf1a723005f5f7b094ff"
     }
   }
 }

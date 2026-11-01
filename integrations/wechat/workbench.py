@@ -5,6 +5,8 @@ from dataclasses import asdict
 import json
 from pathlib import Path
 import queue
+import os
+import subprocess
 import sys
 import tempfile
 import threading
@@ -51,6 +53,10 @@ class Workbench:
         ttk.Checkbutton(frame, text="使用本人已登录的真实微信（不会自动安装依赖）", variable=self.live).pack(anchor="w", pady=4)
         ttk.Checkbutton(frame, text="允许本次 UseChat 向已配置视觉模型发送截图并产生模型费用", variable=self.model).pack(anchor="w")
         ttk.Checkbutton(frame, text="重新扫描：保留旧候选存档，从最新消息开始（来源变化后使用）", variable=self.restart).pack(anchor="w")
+        provider_actions = ttk.Frame(frame)
+        provider_actions.pack(fill="x", pady=4)
+        ttk.Button(provider_actions, text="配置智谱 Key / 免费型号", command=self.provider_config).pack(side="left")
+        ttk.Button(provider_actions, text="免费视觉自测（合成图）", command=self.provider_eval).pack(side="left", padx=8)
         self.status = tk.StringVar(value="合成模式待命；连接器未接入正式 R1 数据和 Agent 工具。")
         ttk.Label(frame, textvariable=self.status, wraplength=980).pack(anchor="w", pady=8)
         actions = ttk.Frame(frame)
@@ -94,6 +100,44 @@ class Workbench:
         self.output.delete("1.0", "end")
         self.output.insert("end", text)
         self.output.configure(state="disabled")
+
+    def provider_config(self):
+        if self.busy:
+            return
+        python = ROOT / "backend" / ".venv" / "Scripts" / "pythonw.exe"
+        if os.name != "nt" or not python.is_file():
+            self.status.set("本机加密配置入口需要已安装的 Windows 后端 Python 环境。")
+            return
+        subprocess.Popen([str(python), "-m", "integrations.wechat.provider_profile"], cwd=ROOT,
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self.status.set("已打开独立的密钥配置窗口；密钥不进入工作台输出或命令参数。")
+
+    def provider_eval(self):
+        if self.busy:
+            return
+        python = ROOT / "backend" / ".venv" / "Scripts" / "python.exe"
+        fixtures = ROOT / ".local-runtime" / "vision-fixtures"
+        if not python.is_file() or not (fixtures / "manifest.json").is_file():
+            self.status.set("需先准备后端环境和合成图；参见连接器 README 的免费视觉自测步骤。")
+            return
+        if not messagebox.askokcancel("免费视觉自测", "将调用本机配置的官方免费型号，发送8张程序生成的合成图。\n不读取微信、不发送真实资料；遇到服务不可用会熔断。是否继续？", parent=self.window):
+            return
+        report_path = ROOT / "test-results" / ("vision-workbench-" + uuid.uuid4().hex + ".json")
+        def operation():
+            process = subprocess.run([str(python), "-m", "integrations.wechat.vision_eval", "run",
+                                      "--live", "--local-profile", "--fixtures", str(fixtures),
+                                      "--output", str(report_path)], cwd=ROOT, stdin=subprocess.DEVNULL,
+                                     stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=360,
+                                     creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0)
+            if process.returncode not in (0, 2) or not report_path.is_file():
+                raise ConnectorError("provider_eval_failed_check_local_profile")
+            value = read_json(report_path)
+            if value.get("kind") != "classmatter.synthetic-vision-evidence.v1" or "summary" not in value:
+                raise ConnectorError("provider_eval_incomplete")
+            return json.dumps({"summary": value["summary"], "requests": value["requests"],
+                               "formal_gate": False, "real_wechat_tested": False,
+                               "report": str(report_path)}, ensure_ascii=False, indent=2)
+        self.run(operation)
 
     def list_chats(self):
         if self.busy:

@@ -111,7 +111,42 @@ Live acceptance remains pending for every preset: exact client/SDK/environment, 
 
 Rollback reverts this independent branch's code/docs; no schema or user instance has been migrated. Keep local candidate/receipt files for reconciliation until the operator explicitly disposes of them. Do not delete an uncertain outbound receipt to make a retry possible.
 
-## Upstream evidence and source ownership
+## Free vision diagnostics and local operator configuration
+
+The follow-up adds a reproducible eight-scene synthetic vision harness, not a formal release Eval or live WeChat test. Scenarios cover digits, Chinese notice fields, speakers, absent exact date/time, repeated messages, correction history, a table and an instruction embedded in image data. Exact value types, repeated entries and missing information must remain intact. This is a small engineering sample, not a production accuracy estimate.
+
+The separate workbench now has operator buttons for a masked Key/free-model configuration window and a synthetic visual self-test. Configuration reuses current-user Windows DPAPI in the existing backend environment and the previously supplied local encrypted profile. It does not enable the formal business model configuration, perform ISB/BCG operations or make a network request when saved. No key is passed in command arguments, printed in output or committed; no automatic startup calls.
+
+Only the inspected official free models glm-4v-flash, glm-4.1v-thinking-flash and glm-4.6v-flash are allowlisted. No paid fallback or endpoint redirection is implemented. CLI requests are serial, have a 35-second request timeout and no SDK retry; one transport/auth/quota failure opens that model's circuit for the remaining cases. Output/schema/quality failures remain failures and do not suppress other cases. Every attempted scene records latency, token counts, finish reason and normalized/strict-output status, without raw response or reasoning content. The final CLI transport uses JSON-object response mode, temperature 0.1 and a 2048-token output ceiling. These settings are recorded and must match for regression comparison; a provider accepting a request does not prove it enforces JSON on every response.
+
+The parser accepts a complete JSON object or a single complete Markdown JSON fence. Only glm-4.1v-thinking-flash additionally accepts the observed complete think/answer/box envelope sequence. Reasoning is discarded, not searched for business facts or persisted. Prose around JSON, duplicate keys, multiple answers, incomplete tags, nonfinite numbers, truncated output and unexpected tool calls are rejected. These are model diagnostic utilities, not modifications to UseChat's upstream model parser; real UseChat + model + Helper interoperability still needs its own acceptance.
+
+Generate the known synthetic images using existing local Pillow tooling and a Chinese font; neither Pillow nor binaries are added to the backend dependency lock:
+
+```powershell
+python -m integrations.wechat.vision_eval generate --font FONT_FILE
+```
+
+Replace FONT_FILE with an installed Chinese TrueType font. Then run using the protected operator profile in the backend environment:
+
+```powershell
+backend/.venv/Scripts/python.exe -m integrations.wechat.provider_profile
+backend/.venv/Scripts/python.exe -m integrations.wechat.vision_eval run --live --local-profile
+```
+
+The second command is explicit external processing of synthetic images. Without --live it refuses to call a model. Without --local-profile, the runner requires ZHIPU_API_KEY in its process environment and checks all three allowlisted models. No machine credentials are read during offline unittest discovery.
+
+Scene v1 initially omitted the word meaning “before” from the notice deadline expectation, although the image contained it and 4.1V correctly retained it. The failed v1 evidence is preserved locally. Scene v2 explicitly requires the original modifier and corrects that expectation; this is a test-definition correction, not evidence of model improvement. Case/prompt/expected-value digests and image digests are included in reports. The compare command refuses mismatched cases/images, missing scene rows and entirely skipped comparisons:
+
+```powershell
+python -m integrations.wechat.vision_eval compare --before BEFORE_REPORT --after AFTER_REPORT
+```
+
+Local profile, generated PNGs, request artifacts and reports stay outside publication. The synthetic profile selection may change between free models for development; this is not formal Provider/Gate acceptance. No real chats, stored business facts, automatic scheduling or external message submission are tested by this harness.
+
+Upstream free-model sources, checked 2026-11-01: [GLM-4.1V-Thinking-Flash](https://docs.bigmodel.cn/cn/guide/models/free/glm-4.1v-thinking-flash), [GLM-4V-Flash](https://docs.bigmodel.cn/cn/guide/models/free/glm-4v-flash), [GLM-4.6V-Flash](https://docs.bigmodel.cn/cn/guide/models/free/glm-4.6v-flash), [provider error codes](https://docs.bigmodel.cn/cn/faq/api-code). Other provider keys are not available in this unit; no ModelScope/Gemini availability is fabricated.
+
+## Upstream adapter evidence and source ownership
 
 Adapters are original ClassMatter code using public call signatures; no upstream implementations, binaries, credentials, real chat exports or external SKILL instructions are copied or installed.
 
