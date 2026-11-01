@@ -8,6 +8,8 @@
 
 本机开发配置已将原4.6V切到免费4.1V，Key未改变；只影响独立实验配置，不启用正式Provider或修改业务模型配置。生成图和逐次原始诊断/报告在忽略目录 .local-runtime/vision-fixtures 与 test-results/free-vision-*，不随Git公开。48项连接器/评测离线测试与两种Windows原生窗口smoke通过；完整根验证器、准确公开哈希、安全扫描与本分支CI仍以最终提交证据为准。正式107需求/147 Eval/94任务/Gate不变；真实微信、正式Capture生命周期、更多独立免费供应商、真实用户净减负仍待验收。
 
+代码候选d17fd1a本地最终验证：根验证器130项通过17.481秒，Windows实际DPAPI临时合成密钥往返通过，工作台和遮蔽Key配置两种原生smoke通过；7个既有静态套件、75份Markdown/引用/编码、784项准确公开SHA通过，固定Gitleaks8.30.1 files/history各4个既有已审查发现、0未解决。与main比较 backend/contracts/.ai/apps/web/apps/desktop 无变化。远端完整CI以独立PR的实际运行结果为准，不将本机测试或小样本Provider调用标成正式发布通过。
+
 ## 2026-11-01 微信连接器独立工程候选（未完成实机与产品接线验收）
 
 承接已验收 main 后建立独立分支，不修改冻结 R1 或 D1 存储。用户新增“多方案、历史补读”由[连接器工作台](../integrations/wechat/README.md)承载 WX-01—07 工程验收：UseChat 视觉、pyweixin UIA、replica 本地库和 wxautox4 商用 UIA 适配；独立环境/进程、原生开发工作台、候选来源、分页断点与来源变化拒绝、预览绑定、发送前耐久占位和跨连接器禁止不确定重试。四项不是四种独立技术路线；wechatbot-new 不重复引入 Agent/Memory。
