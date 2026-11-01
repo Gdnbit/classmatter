@@ -1,0 +1,2 @@
+# Optional paid/activated SDK, not redistributed or activated by ClassMatter.
+wxautox4==41.2.2

@@ -1,0 +1,3 @@
+# GitHub fixes postdate PyPI 1.9.8. Pin inspected source, not moving main.
+# Upstream LGPL version metadata is inconsistent; do not bundle before review.
+pywechat127 @ git+https://github.com/Hello-Mr-Crab/pywechat.git@203e9b8e70a9da4e29c82761851f0d440680ebe8#subdirectory=src
