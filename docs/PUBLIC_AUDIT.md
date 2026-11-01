@@ -1,5 +1,11 @@
 # ClassMatter public candidate audit
 
+## 2026-11-02 free vision diagnostics and protected operator profile candidate
+
+Original synthetic scene definitions, conservative JSON/provider-envelope parsing, free-model-only request wrapper, bounded report/compare utilities, masked native configuration and offline tests. No upstream code, real chat, screenshots, provider key, raw model response or reasoning is published. Optional local Pillow generates synthetic PNGs only under ignored runtime directories; existing backend SDK and DPAPI are reused without dependency-lock or production code changes. Aggregate synthetic outcome metadata is first-party evidence, not formal Eval/Gate approval or a representative quality claim. Failed runs and the explicit v1-to-v2 deadline-expectation correction remain identified; parameter/case/image mismatches cannot be relabelled as regression improvement.
+
+The user explicitly authorized continuing with the existing free API and deferring other keys until morning. No paid model fallback, real WeChat operation, external message send, formal Provider activation, Owner provisioning, R1/schema/HTTP/native-IPC privilege or business write was added. The protected profile remains outside Git in the current Windows user directory; source code contains no account identifier or decrypted credential. Workbench self-test requires explicit confirmation and synthetic fixtures. Exact manifest review, pinned secret scanning and existing CI are retained; real connector/model interoperability and production Capture remain pending.
+
 ## 2026-11-01 personal WeChat connector engineering candidate
 
 Original isolated adapters, bounded candidate/checkpoint files, explicit single-send receipts, a separate native development workbench and synthetic contract tests. Public upstream API signatures and revision/release identifiers were inspected; no upstream implementation, executable, package cache, third-party SKILL instructions, personal account data, chat export, screenshot, token or model response is copied into the public tree. Optional dependency specifications are not installed/vendor bundles or a transitive lock. pyweixin LGPL version metadata remains unresolved; wxautox4 activation/commercial permission is not supplied. No account-ban probability or live compatibility is claimed.
