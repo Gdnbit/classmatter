@@ -1,12 +1,28 @@
 # 实现与验收台账
 
+当前状态以页首最新日期的证据及下方能力表为准；后续保留的逐阶段日期段落记录当时的失败、修复和待办，不应将旧的“尚未接线”覆盖后续已经验收的D1工程结果。Demo、显式R1、显式D1是不同运行入口，不能混称持久化或生产能力。
+
+## 2026-11-02 W3 合成 Provider Eval 与 W4 复验（工程候选，真实质量仍阻塞）
+
+复用校正：补查未合并PR10的9072bd3后，恢复其原有evaluate_provider.py/provider_evaluation.py/test_provider_evaluation.py，不用新夹具执行器覆盖同名成熟工作。原12场景×3、真实临时PG/QG/BCG/ISB、来源审计/摘要、计量/36行报告/回归比较及原价格/个人Owner/费用/供应商cap准入保留；只有操作员入口补已验证本机代理及相应前置拒绝测试。新增轻量入口改名diagnose_provider.py/provider_diagnostics.py/test_provider_diagnostics.py，明确是前置通道诊断、不是原业务评测或准入替代。首次未充分核查旧PR而采用同名文件的问题已在合并前纠正，旧PR及工作区未改写，也未自动合并旧Draft。复用原43项与新增诊断23项组合66通过88.97秒，包含原13项真实PG测试/36次合成业务循环；补操作员代理测试后的定向非DB54通过15.96秒，最终全后端非DB663通过/4宿主跳过/620 DB未执行63.81秒。默认原操作员入口仍blocked/paid_requests0。原live业务评测未执行，个人Owner和原价格/费用准入不能由诊断Key代替。Google父PR45完整Windows/Ubuntu CI41455041695已成功；当前新head仍须完整CI，旧957201b的CI不能代表复用后的新字节。
+
+承接[独立原生Provider PR #45](https://github.com/Gdnbit/classmatter/pull/45)；增加前置诊断并复用原业务评测，不新增产品功能、HTTP、Schema、Agent工具权限或生产模型设置。诊断核对当前来源、旧对话不替代新查询、工具选择、未提交任务/原文草稿、无日期不推断及基本写入/权限拒绝。复用for_mode/Tool契约、WorkSnapshot及原领域校验；夹具回调不是生产QG，不伪造真实审计/授权通过；显式拒绝提示不是开放式红队成绩。
+
+默认离线/网络需显式选择，固定已核对免费型号Google3.1-Flash-Lite或国内GLM-4.7-Flash，无付费/跨Provider自动兜底。每例最多2请求/1工具/3000观察Token，512输出/请求，全组最多24请求、串行间隔4秒；费用/网络/配额不明时熔断，使用量标unknown，后续跳过。严格JSON/类型、真实调用及草稿参数摘要共同评分；场景/契约/配置/限额指纹和完整案例矩阵约束回归比较。30秒单请求/60秒案例仅用于工程发现，应用原10秒预算不变，超出另计且CLI不报验收通过。日志不含原始回答/推理/Key，结果仅忽略目录。
+
+离线校准12/12只证明执行器；针对性测试已覆盖故障熔断、超时/取消清理、契约漂移先拒绝、草稿参数与答案不一致、重复JSON键/错误类型、比较不可比或缺失行、显式免费确认及错误CLI不回显秘密。真实Google本轮依次503、504、较长发现预算仍503；智谱直连超时、显式本机代理429。每组首例失败、其余11例跳过，不声称真实12/12或稳定API；保留早先隔离工具闭环/8图7项准确但不混用作本轮通过。停止继续请求，等待服务/额度/密钥条件变化后显式复测。
+
+W4独立使用原有临时PG/实际浏览器回归：test_conversation_backup_restrictions、test_conversation_exit_v6、test_work_summary_web共39项通过116.64秒。源用户实例未初始化/迁移，Owner/控制初始化仍需本人；备份不等于任意跨机可恢复，合成工程不等于真实试点。D1工作小结已按main PR35交付，这次是重验，不重复开发或包装为新功能。正式107/147/94与Gate不变，Future画像/Skill/排班/责任自动判断/真实微信仍不吸收进R1。
+
+本地最终全后端非DB632通过、4宿主跳过、607 DB未在该命令执行62.99秒；Eval定向23通过12.36秒；两份新CLI离线报告完整比较12行、无回归。7个静态套件/74份Markdown/契约、783份准确公开SHA及固定扫描通过（4项既有已审查、0未解决）；提交后仓库验证器与本分支两平台CI仍以最终PR证据为准，PR不等于已合并。回滚本独立Eval提交即移除执行器，不涉及数据或生产配置；保留历史失败/报告，不能删除证据凑全绿。下一步是服务恢复后的12例真实质量及应用10秒预算验证、Owner本人配置后原UI启停演示和真实教师小结净减负研究；没有代表性用户证据不得升级validated requirement。
+
 ## 2026-11-02 Google 原生 Provider 与受控代理（工程候选）
 
 从当前 main 的已验收 D1 基线建立独立分支，不依赖尚未合并的微信/视觉 PR。已确认兼容 API 文本成功不能证明工具闭环：原适配链在第二轮被 Google 拒绝 missing thought_signature；同版 Pydantic AI 原生 Google Provider 已在隔离合成只读工具闭环通过。固定免费轻量候选可调用，但 latest 别名仍超时/503，不自动换型或转付费。此前8图原生SDK样本7/8准确、1项更正历史错误，保留失败；不据此宣称生产准确率。
 
 本单元将原生适配纳入既有 model_provider，复用原 CHAT 配置字段和精确官方端点许可，补操作员显式本机代理参数；原配置/BCG预览批准提交、合成连接测试/短期proof、手动启停、QG授权及原3个封闭工具不变。默认不联网，不从诊断Key配置/环境加载模型或代理；不开放新HTTP、IPC、Schema、业务写入或权限。Google SDK自动续生成如越过Agent预算，在实际发出下一请求前拒绝。新增依赖使用锁定的官方SDK和现有Pydantic AI Google extra，未替换Harness。
 
-教师价值是减少“Key可用却无法完成工具回合”的配置排障；正常使用不增加维护动作，只有操作员首次显式设置通道。当前验证：22项新增离线测试及1项原生Provider/原BCG/QG/审计真实临时PG集成通过；最终全后端非DB609通过、4宿主跳过、607 DB未在该命令执行49.97秒；既有模型控制/密钥/Agent/API协议31项真实临时PG回归通过85.08秒。实际新增适配器经本机代理完成真实合成只读工具闭环，2请求/161 Token/14.639秒；这超过原应用10秒外层预算，不能外推为原UI稳定通过。Google单请求要求至少10秒deadline，已修正原生适配层；不放宽原应用外层预算或掩盖慢调用。7个静态套件、74份Markdown/引用/UTF8、准确公开哈希及固定8.30.1文件/历史扫描通过（4项既有已审查、0未解决）；本分支最终Windows/Ubuntu CI仍待完成，不能提前记整体验收通过。
+教师价值是减少“Key可用却无法完成工具回合”的配置排障；正常使用不增加维护动作，只有操作员首次显式设置通道。当前验证：22项新增离线测试及1项原生Provider/原BCG/QG/审计真实临时PG集成通过；最终全后端非DB609通过、4宿主跳过、607 DB未在该命令执行49.97秒；既有模型控制/密钥/Agent/API协议31项真实临时PG回归通过85.08秒。实际新增适配器经本机代理完成真实合成只读工具闭环，2请求/161 Token/14.639秒；这超过原应用10秒外层预算，不能外推为原UI稳定通过。Google单请求要求至少10秒deadline，已修正原生适配层；不放宽原应用外层预算或掩盖慢调用。7个静态套件、74份Markdown/引用/UTF8、准确公开哈希及固定8.30.1文件/历史扫描通过（4项既有已审查、0未解决）。后续248c6a0完整CI41455041695成功：Windows非DB613通过，Ubuntu非DB606通过7跳过、PG/browser591通过16宿主跳过1302.54秒；PR45未合并，不改变正式准入或真实模型质量结论。
 
 沿用T-RAGT-001—004、T-RPLT-007—009/015—018及现有E-AGT模型/工具/越权/取消边界，不改107需求/147 Eval/94任务/正式Gate语义或状态。Owner本人设置、正式启用、真实微信客户端、模型质量剩余失败、教师净减负研究和Future模块单列；未完成所有长期规划。回滚revert独立单元，无迁移/数据重写，不删除凭据或历史证据。
 
@@ -75,7 +91,7 @@ W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR 
 | 能力 | 状态 | 实现落点 | 追溯与剩余验收 |
 | --- | --- | --- | --- |
 | 桌面窗口/原生顶栏/菜单/沙箱 | implemented-synthetic | `apps/desktop/` | DESKTOP-DEMO及W2-01 runtime工程验收；非新增正式R1任务；安装器/签名/更新未完成 |
-| 对话、历史、标题、搜索、输入草稿 | demo-only | `store/ConversationStore.tsx`、`shell/AppShell.tsx` | A05/A06/A11；当前内存会话，非持久工作历史 |
+| 对话、历史、标题、搜索、输入草稿 | Demo内存；D1 implemented-synthetic | `store/ConversationStore.tsx`、`runtime/DurableConversation.tsx`、`runtime/useDurableConversation.ts`、D1 conversation QG/BCG | A05/A06/A11与D1-18/PR34—36；D1已有耐久会话/标题/分页历史和重启读取，Demo仍内存；不将Demo搜索或未发送输入当作持久业务事实 |
 | 首页三类注意力/个人任务 | partial / W2-03 implemented-synthetic | `store/DemoWorkStore.tsx`；`runtime/R1App.tsx`、`runtime/work-projection.ts`、backend activity | T-RDOM-009/010/013、T-RWEB-004；E-TSK-001/E-EVT-004；真实全班注意力/任务筛选已接，通知责任候选仍未实现 |
 | 学生列表、详情、搜索、空态 | partial / W2-02 implemented-synthetic | `shell/AppShell.tsx`；`runtime/R1App.tsx`、`runtime/student-directory.ts`、backend roster | T-RDOM-002—005/011、T-RWEB-002；E-ROS-001—004/E-ID-001—004；真实姓名/UUID搜索、详情、关联跟进已接；非整个冻结shell迁移 |
 | 登录/会话/恢复码 | implemented-synthetic | backend identity、runtime identity | T-RPLT-013/014/018/019、T-RWEB-001；E-AUTH-009—018；新开发桌面已接既有R1登录；owner凭据不由Agent设置 |
@@ -84,13 +100,13 @@ W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR 
 | 班级/学期建立、切换、归档 | implemented-synthetic | backend roster、runtime term metadata | T-RWEB-006、T-RDOM-011；E-CLS-001；桌面接入需保留范围/版本与只读历史 |
 | Agent loop/查询/任务及原文草稿 | implemented-synthetic | backend infrastructure agent、application agent_tool_contracts | T-RAGT-001—004；E-AGT-001/002/009—014；仅3个封闭查询/草稿工具，非通用本地执行 |
 | 模型配置/测试/启停 | partial | runtime ModelConfiguration、backend model_control/provider/secrets | 现有模型契约/合成协议测试；Demo设置不连网；真实provider质量pending-validation |
-| Conversation Memory | partial | backend agent_memory、D1 conversation stores | R1临时内存15分钟/10轮/32会话；D1后端已验证耐久可见历史/来源/草稿及受控出口恢复，HTTP/原UI仍候选/待接；无长期画像/持久偏好 |
+| Conversation Memory | partial；D1耐久历史implemented-synthetic | backend agent_memory、D1 conversation stores、DurableConversation UI | R1临时内存15分钟/10轮/32会话；D1耐久可见历史/来源/草稿、HTTP/原UI及受控出口恢复已按PR34—36验收；无长期画像/持久偏好，历史不是正式事实源 |
 | SSE状态与取消 | partial | backend HTTP agent、runtime R1App | 有事件与取消，答案完成后整段发出；逐token/replay/checkpoint未实现 |
 | 核心退出包/同机checkpoint | partial | backend exit_package、operator_backup、local.py | T-REXP-001—003、T-ROPS-003/006；核心验证≠完整退出，lifecycle仍不完整 |
-| 生命周期/跨机恢复/退役 | partial | schema inventory及退出/备份边界 | T-RLIFE-001—005、T-ROPS-001—007；权利/限制/删除/保留/admission账本、重放与退役证明待实现 |
+| 生命周期/跨机恢复/退役 | partial；D1受控恢复implemented-synthetic | schema inventory、D1 restriction/control/provenance及退出/备份边界 | T-RLIFE-001—005、T-ROPS-001—007与D1-01—19；D1已有受控clear/限制证据/来源/退出与目标恢复合成验证，不等于全部权利治理、任意跨机恢复或正式退役证明 |
 | 学校通知/责任候选/接手闭环 | demo-only / discovery | shell ResponsibilityCandidate | R-PROD-001、LR-WRK/LR-COL；不自动判责，真实服务未实现，另行release决策 |
 | 导入/成绩/生产排座/分组/值日/宿舍 | deferred | shell样例；完整v1任务定义 | T-IMP/T-GRD/T-SEA/T-ORG/T-DOR；明确非R1，座位交换Demo不是solver交付 |
-| 报告/沟通/Office产物/外部MCP | deferred | shell样例；完整v1任务定义 | T-REP/T-EXP-002/T-MCP；无真实发送/生成服务 |
+| 报告/沟通/Office产物/外部MCP | D1小结implemented-synthetic；其余deferred | runtime WorkSummary、D1 QG来源；shell未来样例 | D1-19/PR35已有引用事实/任务的可编辑小结、复制/放弃及失效保护；通用Office/图片生成、真实外发及外部MCP未实现，不扩大T-REP/T-EXP-002/T-MCP/R1 |
 | Capture/ASR/RAG/Workflow/Extension/多角色 | deferred | 长期SDD、spikes | LR-*、T-EVO-001—008；各自需验证和新release，不开放万能IPC/JSON/DDL |
 | 教师净减负/正式候选/真实试点 | pending-validation | R1 pilot profile与gate definitions | T-RREL-001—003；E-VALUE-001；没有代表性教师实证，不用合成测试代替 |
 
