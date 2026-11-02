@@ -20,6 +20,29 @@ SDK clients use explicit credentials, verified TLS, no redirects and no automati
 
 Offline signature, transport and real disposable-PG controller tests are in `tests/test_google_provider.py`. Synthetic live results are engineering evidence only, not teacher validation, real-data admission or formal Gate acceptance. Revert this unit and its dependency/notice updates to roll back code; retain local encrypted secrets under operator control. There is no schema migration or data downgrade.
 
+### Fixed synthetic Provider evaluation
+
+`provider_eval.py` runs twelve closed Chinese/English scenarios for fresh work counts/source receipts, tool selection, unsaved task/original-quote candidates, missing information and basic write/authority refusals. It reuses the original tool definitions and owning domain validators. Its callbacks return fixed synthetic fixtures, **not a Query Gateway**, real database, authorization evaluator or business write. The separately tested original runtime/controller remains the product boundary. The refusal prompts are explicit smoke checks, not an open-ended jailbreak or teacher-quality benchmark.
+
+```powershell
+uv run --frozen python provider_eval.py offline
+uv run --frozen python provider_eval.py live --confirm-free-tier --local-key --proxy http://127.0.0.1:7890
+uv run --frozen python provider_eval.py live --provider zhipu --confirm-free-tier --local-key
+uv run --frozen python provider_eval.py compare --before '<ignored baseline JSON>' --after '<ignored later JSON>'
+```
+
+Offline FunctionModel answers are constructed from expectations to calibrate the runner; they never prove live model quality. Live mode requires explicit free-tier confirmation and separately selects one fixed inspected free candidate: Google `gemini-3.1-flash-lite` or domestic BigModel `glm-4.7-flash`. There is no automatic fallback, alias, paid upgrade, built-in search or external tool. The optional explicit loopback proxy affects only the chosen client. Without `--local-key`, only `CLASSMATTER_EVAL_GOOGLE_KEY` or `CLASSMATTER_EVAL_ZHIPU_KEY` for that selection is read. No argument accepts the key value. With the flag, only the existing selected-provider DPAPI diagnostic profile is read; no profile is modified or activated in the application. A missing/revoked key is a blocker, not permission to use another account.
+
+Every scenario allows at most two SDK requests, one fixture-tool call and 3,000 observed tokens; output is capped at512 tokens/request, with no SDK error retries. The full batch admits at most24 SDK requests, sends serially with a four-second live interval, and opens its circuit on the first uncertain transport/quota/SDK failure. Semantic/JSON failures stay failures and do not trigger retries. Native SDK automatic-continuation dispatch is separately rejected. Token limits are observed run guards, not billing guarantees; a failed/timeout response can have unknown usage and is never interpreted as free. Free-tier availability depends on the account; the command neither inspects nor enables billing.
+
+Engineering discovery uses an explicit30-second request/60-second scenario budget to observe complete answers. This does **not** change the application's original10-second outer budget: reports separately count latency exceedances, and the CLI fails acceptance if any occur even when JSON/tool checks pass. Compare rejects changed scenarios, contracts, model/settings/limits, offline-vs-live, missing/duplicate/unknown case rows and all-skipped evidence. It reports pass regressions, not a statistically powered quality claim or a comparison of incompatible provider settings.
+
+Each run gets a new ignored `test-results/provider-*.json`; completed rows are retained if interrupted and pending evidence cannot be compared as a completed baseline. Reports contain aggregate usage/timing, safe model identifiers and numeric error codes, never raw answers, reasoning, signatures, headers, keys or real data. Fixed-case and tool-contract fingerprints bind the report; no expectation is changed to hide a failure. These are engineering diagnostics, not formal Eval/Gate status updates.
+
+Current2026-11-02 live attempts remain blocked: Google first-case503, then504, and503 with the separate discovery budget; BigModel direct transport timeout and explicit local-proxy429. Each run failed one case and skipped eleven; zero live quality passes may be inferred. Earlier isolated tool-loop and vision successes do not replace this baseline. Stop requests until service/quota/key conditions change. Existing backup/exit/summary regression independently passed39 cases; Provider availability does not block those workflows.
+
+Official candidate references checked2026-11-02: [Gemini pricing](https://ai.google.dev/gemini-api/docs/pricing), [BigModel free GLM-4.7-Flash and Function Calling](https://docs.bigmodel.cn/cn/guide/models/free/glm-4.7-flash), [BigModel explicit thinking control](https://docs.bigmodel.cn/cn/guide/capabilities/thinking-mode). BigModel thinking is explicitly disabled for this simple text/tool diagnostic; generic OpenAI support is not evidence of preserved interleaved reasoning when enabled.
+
 ### Opt-in D1 runtime candidate (explicit profile only)
 
 `interfaces/http/durable_conversation.py:create_durable_app` is a trusted synthetic composition using the existing exact worker/QG/store/ISB and original Pydantic AI runtime. Default `create_app`, `local.py` and desktop R1 composition do not install it or migrate an instance. It assumes an already human-initialized D1 control; it cannot mint a missing authority or make Owner setup complete. Current explicit D1 remains0026/35, no new schema/store/tool in this transport slice.
