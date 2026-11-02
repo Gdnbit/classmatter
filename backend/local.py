@@ -20,6 +20,7 @@ def main():
     parser.add_argument("--backup-id", type=UUID, help="Owned checkpoint UUID; no arbitrary file paths")
     parser.add_argument("--model-api-base-url", action="append", default=[],
                         help="Explicit trusted endpoint for synthetic model testing; does not enable a model or load keys")
+    parser.add_argument("--model-api-proxy", help="Explicit http://127.0.0.1:PORT proxy for model calls only")
     args = parser.parse_args()
     if args.command == "initialize-control":
         if args.profile != "conversation-d1":
@@ -30,7 +31,7 @@ def main():
         parser.error("doctor/support inspect the configured service, not a selected database profile")
     if (args.command == "backup-check") != (args.backup_id is not None):
         parser.error("backup-check requires --backup-id; other commands do not accept it")
-    if args.model_api_base_url and args.command != "serve":
+    if (args.model_api_base_url or args.model_api_proxy is not None) and args.command != "serve":
         parser.error("model API endpoints are only accepted for serve")
     if args.command == "support" and args.pg_root:
         parser.error("support does not accept runtime paths")
@@ -85,7 +86,7 @@ def main():
         import uvicorn
         settings = Settings.from_env({"CLASS_OS_PORT": "8001", **os.environ} if args.profile == "conversation-d1" else os.environ)
         from dataclasses import replace
-        settings = replace(settings, model_api_bases=tuple(args.model_api_base_url))
+        settings = replace(settings, model_api_bases=tuple(args.model_api_base_url), model_api_proxy=args.model_api_proxy)
         if args.profile == "conversation-d1":
             from class_os.infrastructure.durable_local_runtime import compose as compose_d1
             app = compose_d1(settings, runtime)

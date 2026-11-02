@@ -1,5 +1,11 @@
 # ClassMatter public candidate audit
 
+## 2026-11-02 native Google adapter candidate
+
+Original scoped adapter, canonical loopback-only operator transport configuration and synthetic protocol/controller tests. Native SDK signature preservation replaces the incompatible generic wire representation for the exact explicitly admitted Google endpoint; no signature forging, new Agent write authority, database/HTTP schema or default network activation. No credential, user screenshot, runtime profile, raw response/reasoning/signature or local diagnostic report is published. Aggregate synthetic counts are first-party engineering evidence only. Pydantic AI remains2.53.0; the frozen Google extra adds eight dependencies without upgrading existing versions. Newly installed official package metadata/license texts are collected with exact bytes and source-relative paths; the backend inventory lock digest is refreshed, existing notices remain attributed. Manifest additions must be individually reviewed and hashed; default-deny and pinned scans remain unchanged. Final tests/CI and any reviewed public legal-author lines are recorded with the final candidate, not presumed accepted here.
+
+The two new pyasn1/pyasn1-modules license files retain the upstream author's public copyright-email line verbatim from their installed official wheel notices. Only that exact line fingerprint in those two files receives the existing email-pattern review mechanism; no wildcard or runtime/private-identity exception is added. Earlier identical legal attributions remain unchanged. This is source-notice retention, not permission to publish user contact details.
+
 ## 2026-10-27 accepted D1 functionality and documentation closeout
 
 PR35 merged as0b45355 after exact eceea46 passed complete CI40431820411 on Windows/Ubuntu and independent final API/source review. Windows nonDB591/Web65/desktop23/actual packaged checks; Ubuntu actual PG/browser590 passed16 host skips1164.66s. Prior Linux failure remains failed evidence.770 reviewed paths/hashes, default-deny and exceptions unchanged; fixed8.30.1 files/history4 reviewed0 unresolved. Separate local Windows restart and35-case recovery evidence do not turn Linux skips into native support or authorize arbitrary restore.

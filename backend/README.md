@@ -4,6 +4,22 @@ Layered modular monolith, synthetic-only. Python 3.13, uv 0.11.7, PostgreSQL 18.
 
 ## Local entry point
 
+### Explicit Gemini native adapter and model-only proxy
+
+The existing `chat-completions` configuration with exact base URL `https://generativelanguage.googleapis.com/v1beta/openai/` selects Pydantic AI's native Google adapter internally. This preserves Google's tool thought signatures across turns; generic OpenAI text compatibility is insufficient for this protocol. No HTTP DTO, business schema, tool or model-selection fallback is added. Other configured endpoints retain the existing OpenAI adapters. The selected model is not automatically replaced; the tested free candidate is `gemini-3.1-flash-lite`. Availability and free quota are account-specific, not guaranteed by an alias or this configuration.
+
+For an already initialized owned synthetic runtime, the trusted operator can opt in while serving:
+
+```powershell
+uv run --frozen python local.py serve --model-api-base-url https://generativelanguage.googleapis.com/v1beta/openai/ --model-api-proxy http://127.0.0.1:7890
+```
+
+Use the existing `--profile conversation-d1` prefix for a separately initialized D1 instance. The proxy argument is optional, accepts only canonical `http://127.0.0.1:PORT`, and affects model transport only. It does not start a proxy, enable billing, load a Key, configure or enable a Provider, admit an endpoint, initialize an Owner or change Windows/network settings. No proxy is inherited from ambient environment variables. Continue through the existing authenticated UI configuration, server preview/approval/commit, explicit synthetic connection test and enable controls. The separate connector diagnostic Key is never imported automatically. Desktop managed-child startup does not acquire this operator-only flag automatically.
+
+SDK clients use explicit credentials, verified TLS, no redirects and no automatic error retries, and close on failure/cancellation. Native automatic generation continuation is rejected before its extra network dispatch because those calls would bypass Agent request accounting. Existing per-run limits, controller proofs/version checks, ISB/QG/BCG and default offline behavior remain in force. A timeout/cancel does not prove supplier cancellation or zero cost. The pinned Pydantic AI v2 Google provider still supports the existing `httpx` client with a v3 deprecation warning; upgrading the SDK major requires an explicit transport migration, not suppressing checks.
+
+Offline signature, transport and real disposable-PG controller tests are in `tests/test_google_provider.py`. Synthetic live results are engineering evidence only, not teacher validation, real-data admission or formal Gate acceptance. Revert this unit and its dependency/notice updates to roll back code; retain local encrypted secrets under operator control. There is no schema migration or data downgrade.
+
 ### Opt-in D1 runtime candidate (explicit profile only)
 
 `interfaces/http/durable_conversation.py:create_durable_app` is a trusted synthetic composition using the existing exact worker/QG/store/ISB and original Pydantic AI runtime. Default `create_app`, `local.py` and desktop R1 composition do not install it or migrate an instance. It assumes an already human-initialized D1 control; it cannot mint a missing authority or make Owner setup complete. Current explicit D1 remains0026/35, no new schema/store/tool in this transport slice.

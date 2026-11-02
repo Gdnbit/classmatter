@@ -1,6 +1,7 @@
 """Explicit non-durable provider activation. SDK owns all model/tool loops."""
 import asyncio
 from contextlib import asynccontextmanager, suppress
+from functools import partial
 from datetime import datetime, timedelta, timezone
 
 import anyio
@@ -14,9 +15,12 @@ from .agent import fake_model
 
 class ModelController:
     def __init__(self, query, secrets, runtime, *, allowed_bases=(), client_factory=configured_client,
-                 clock=lambda: datetime.now(timezone.utc)):
+                 clock=lambda: datetime.now(timezone.utc), proxy=None):
         self.query, self.secrets, self.runtime = query, secrets, runtime
-        self.allowed_bases, self.client_factory, self.clock = tuple(allowed_bases), client_factory, clock
+        from class_os.domain.model_configuration import validate_model_proxy
+        validate_model_proxy(proxy)
+        self.allowed_bases, self.client_factory, self.clock = tuple(allowed_bases), (
+            partial(client_factory, proxy=proxy) if proxy is not None else client_factory), clock
         self._proofs, self._enabled, self._attempts = {}, {}, {}
         self._testing = False
 
