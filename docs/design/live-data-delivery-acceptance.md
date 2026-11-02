@@ -1,5 +1,7 @@
 # 真实数据闭环：执行目标与验收台账
 
+现状校准（2026-11-02）：本页保留D0目标的原始范围和逐阶段证据；下文“D1—D3未实施”等表述是D0关闭时的历史状态。D1耐久会话/原UI/受控恢复/可编辑小结已随后按PR18—36独立交付，D2/D3没有由此自动实现。当前Provider候选、真实服务阻塞及W4复验见[最新实现台账](../implementation-ledger.md)，不重开已完成D0或将D1偷偷并入冻结R1。
+
 日期：2026-10-23；最近复核2026-10-24。状态：D0/U0—U3工程验收完成，已合并公开main `d9400c1`。[PR #16最终验收](https://github.com/Gdnbit/classmatter/pull/16)与[两平台CI40004215292](https://github.com/Gdnbit/classmatter/actions/runs/40004215292)成功，逐项LD证据见该PR验收评论。仅合成工程证据，不是正式R1/Gate或真实数据准入；D1—D3未实施。起点：公开main `3d8d750`及[数据库设计提案](database-live-data-design.md)。
 
 本台账细化D0工程验收，不替代canonical SDD、正式Eval或Gate。用户本轮明确要求持续推进并在验收后同步GitHub；公开审查、精确清单和两平台CI仍须执行。没有自动合并旧Draft、使用付费Provider或真实数据的授权。
