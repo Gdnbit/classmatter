@@ -20,15 +20,24 @@ SDK clients use explicit credentials, verified TLS, no redirects and no automati
 
 Offline signature, transport and real disposable-PG controller tests are in `tests/test_google_provider.py`. Synthetic live results are engineering evidence only, not teacher validation, real-data admission or formal Gate acceptance. Revert this unit and its dependency/notice updates to roll back code; retain local encrypted secrets under operator control. There is no schema migration or data downgrade.
 
-### Fixed synthetic Provider evaluation
+### Existing business Provider evaluation and connection diagnostics
 
-`provider_eval.py` runs twelve closed Chinese/English scenarios for fresh work counts/source receipts, tool selection, unsaved task/original-quote candidates, missing information and basic write/authority refusals. It reuses the original tool definitions and owning domain validators. Its callbacks return fixed synthetic fixtures, **not a Query Gateway**, real database, authorization evaluator or business write. The separately tested original runtime/controller remains the product boundary. The refusal prompts are explicit smoke checks, not an open-ended jailbreak or teacher-quality benchmark.
+The existing first-party [PR10](https://github.com/Gdnbit/classmatter/pull/10) implementation is reused at its original `evaluate_provider.py`, `infrastructure/provider_evaluation.py` and `tests/test_provider_evaluation.py` paths, from9072bd3. Its12 cases run three times through the original Pydantic AI/QG/BCG/ISB using disposable PostgreSQL; metering, source-audit/hash checks, missing-usage handling, full36-row/environment/settings validation and20-percent regression alerts are retained. The operator still requires an existing UI-saved protected configuration, personal Owner authentication, current verified prices, explicit cost/supplier-cap admission and the original conservativeCNY10 reservation. The only operator integration change is an optional validated `--model-api-proxy`. No credential, price, signature, consent or test outcome is fabricated to satisfy those conditions; a free connection diagnostic is not an admitted business baseline.
 
 ```powershell
-uv run --frozen python provider_eval.py offline
-uv run --frozen python provider_eval.py live --confirm-free-tier --local-key --proxy http://127.0.0.1:7890
-uv run --frozen python provider_eval.py live --provider zhipu --confirm-free-tier --local-key
-uv run --frozen python provider_eval.py compare --before '<ignored baseline JSON>' --after '<ignored later JSON>'
+uv run --frozen python evaluate_provider.py
+uv run --frozen pytest tests/test_provider_evaluation.py --pg-root '<owned PostgreSQL18 binaries>' -q
+```
+
+The first command intentionally reports blocked before credentials/network without all explicit conditions. The second executes the original offline-boundary/calibration suite, not live quality. The operator's admitted live report may retain synthetic answer excerpts for human review only in ignored local storage; none are public evidence. It neither initializes/migrates the source instance nor copies teacher facts into a test. The original price/cost admission is not weakened to fit free diagnostic credentials.
+
+`diagnose_provider.py` is the smaller prerequisite connection probe, not a replacement benchmark. Its twelve closed Chinese/English checks cover work counts/source fields, tool selection, unsaved task/original-quote candidates, missing information and basic write/authority refusals. It checks the original tool definitions and domain validators, but its callbacks return fixed synthetic fixtures, **not a Query Gateway**, real database, authorization evaluator or business write. The refusal prompts are explicit smoke checks, not an open-ended jailbreak or teacher-quality benchmark. Separate schemas/paths prevent these results from replacing the original36-row report.
+
+```powershell
+uv run --frozen python diagnose_provider.py offline
+uv run --frozen python diagnose_provider.py live --confirm-free-tier --local-key --proxy http://127.0.0.1:7890
+uv run --frozen python diagnose_provider.py live --provider zhipu --confirm-free-tier --local-key
+uv run --frozen python diagnose_provider.py compare --before '<ignored baseline JSON>' --after '<ignored later JSON>'
 ```
 
 Offline FunctionModel answers are constructed from expectations to calibrate the runner; they never prove live model quality. Live mode requires explicit free-tier confirmation and separately selects one fixed inspected free candidate: Google `gemini-3.1-flash-lite` or domestic BigModel `glm-4.7-flash`. There is no automatic fallback, alias, paid upgrade, built-in search or external tool. The optional explicit loopback proxy affects only the chosen client. Without `--local-key`, only `CLASSMATTER_EVAL_GOOGLE_KEY` or `CLASSMATTER_EVAL_ZHIPU_KEY` for that selection is read. No argument accepts the key value. With the flag, only the existing selected-provider DPAPI diagnostic profile is read; no profile is modified or activated in the application. A missing/revoked key is a blocker, not permission to use another account.

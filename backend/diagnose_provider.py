@@ -1,4 +1,4 @@
-"""Explicit synthetic engineering diagnostics; no HTTP activation or real data."""
+"""Connection preflight only; evaluate_provider.py owns the admitted QG baseline."""
 import argparse
 import asyncio
 from contextlib import asynccontextmanager
@@ -14,7 +14,7 @@ sys.path.insert(0, str(ROOT / 'backend/src'))
 from pydantic import SecretStr
 from class_os.domain.model_configuration import ModelConfiguration, Protocol, validate_model_proxy
 from class_os.infrastructure.model_provider import GOOGLE_COMPAT_BASE, configured_client, model_for_configuration
-from class_os.infrastructure.provider_evaluation import evaluate, compare
+from class_os.infrastructure.provider_diagnostics import evaluate, compare
 
 
 class DiagnosticParser(argparse.ArgumentParser):
