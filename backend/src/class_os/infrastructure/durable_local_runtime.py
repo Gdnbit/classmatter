@@ -123,7 +123,7 @@ def compose(settings, runtime):
         services.readiness()  # Never auto-initialize a missing/failed witness.
         sdk = PydanticAgentRuntime(services.query)
         controller = ModelController(services.query, services.worker.store.model_secrets, sdk,
-                                     allowed_bases=settings.model_api_bases)
+                                     allowed_bases=settings.model_api_bases, proxy=settings.model_api_proxy)
         app = create_durable_app(settings, worker=services.worker, query=services.query,
             sdk=sdk, readiness=services.readiness, model_controller=controller)
     except Exception:

@@ -10,6 +10,7 @@ class Settings:
     model_provider: str = "fake"
     port: int = 8000
     model_api_bases: tuple[str, ...] = ()
+    model_api_proxy: str | None = None
 
     def __post_init__(self):
         if (self.mode != "synthetic-development" or self.bind_host != "127.0.0.1"
@@ -18,7 +19,8 @@ class Settings:
             raise ValueError("Invalid backend settings")
         if type(self.model_api_bases) is not tuple or len(self.model_api_bases) > 4:
             raise ValueError("Invalid model API allowlist")
-        from class_os.domain.model_configuration import ModelConfiguration, Protocol
+        from class_os.domain.model_configuration import ModelConfiguration, Protocol, validate_model_proxy
+        validate_model_proxy(self.model_api_proxy)
         for url in self.model_api_bases:
             ModelConfiguration(Protocol.CHAT, "configuration-check", url)
 

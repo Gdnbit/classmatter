@@ -631,7 +631,7 @@
       "status": "INSTALLED_WINDOWS_METADATA_INSPECTED"
     },
     "backend": {
-      "lock_sha256": "b0d1977c0b54e83f7d5e7948ebc1e616080f7c5b2884882fa254b777ba509f7f",
+      "lock_sha256": "2616e89a903c6afba911eda27a303ba2c4b9244e21e3151b1cfccf1bb58ad189",
       "packages": [
         {
           "license_expression": "MIT",
@@ -1333,6 +1333,112 @@
             }
           ],
           "version": "4.1.1"
+        },
+        {
+          "license_expression": "Apache-2.0 OR BSD-3-Clause",
+          "name": "cryptography",
+          "notices": [
+            {
+              "path": "licenses/python/cryptography-50.0.2/0.txt",
+              "sha256": "3e0c7c091a948b82533ba98fd7cbb40432d6f1a9acbf85f5922d2f99a93ae6bb",
+              "upstream_relative_path": "licenses/LICENSE"
+            },
+            {
+              "path": "licenses/python/cryptography-50.0.2/1.txt",
+              "sha256": "aac73b3148f6d1d7111dbca32099f68d26c644c6813ae1e4f05f6579aa2663fe",
+              "upstream_relative_path": "licenses/LICENSE.APACHE"
+            },
+            {
+              "path": "licenses/python/cryptography-50.0.2/2.txt",
+              "sha256": "602c4c7482de6479dd2e9793cda275e5e63d773dacd1eca689232ab7008fb4fb",
+              "upstream_relative_path": "licenses/LICENSE.BSD"
+            }
+          ],
+          "version": "50.0.2"
+        },
+        {
+          "license_expression": "Apache License, Version 2.0",
+          "name": "distro",
+          "notices": [
+            {
+              "path": "licenses/python/distro-1.9.0/0.txt",
+              "sha256": "cb5e8e7e5f4a3988e1063c142c60dc2df75605f4c46515e776e3aca6df976e14",
+              "upstream_relative_path": "LICENSE"
+            }
+          ],
+          "version": "1.9.0"
+        },
+        {
+          "license_expression": "Apache 2.0",
+          "name": "google-auth",
+          "notices": [
+            {
+              "path": "licenses/python/google-auth-2.62.0/0.txt",
+              "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "2.62.0"
+        },
+        {
+          "license_expression": "Apache-2.0",
+          "name": "google-genai",
+          "notices": [
+            {
+              "path": "licenses/python/google-genai-2.34.0/0.txt",
+              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "2.34.0"
+        },
+        {
+          "license_expression": "BSD-2-Clause",
+          "name": "pyasn1",
+          "notices": [
+            {
+              "path": "licenses/python/pyasn1-0.6.5/0.txt",
+              "sha256": "2aad5fc00f705c4a1addb83eed10a6a75d286a3779f0cf8519d87e62bc4735fd",
+              "upstream_relative_path": "licenses/LICENSE.rst"
+            }
+          ],
+          "version": "0.6.5"
+        },
+        {
+          "license_expression": "BSD",
+          "name": "pyasn1-modules",
+          "notices": [
+            {
+              "path": "licenses/python/pyasn1-modules-0.4.2/0.txt",
+              "sha256": "2aad5fc00f705c4a1addb83eed10a6a75d286a3779f0cf8519d87e62bc4735fd",
+              "upstream_relative_path": "licenses/LICENSE.txt"
+            }
+          ],
+          "version": "0.4.2"
+        },
+        {
+          "license_expression": "Apache 2.0",
+          "name": "tenacity",
+          "notices": [
+            {
+              "path": "licenses/python/tenacity-9.1.4/0.txt",
+              "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "9.1.4"
+        },
+        {
+          "license_expression": "BSD-3-Clause",
+          "name": "websockets",
+          "notices": [
+            {
+              "path": "licenses/python/websockets-17.4/0.txt",
+              "sha256": "0f44514998aca209d3482d10204a8adf2aa4296ff157a36a5c0922f2280632d3",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "17.4"
         }
       ],
       "status": "INSTALLED_WINDOWS_METADATA_INSPECTED"

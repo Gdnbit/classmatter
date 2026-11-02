@@ -222,7 +222,8 @@ def compose(settings, runtime):
 
     query = QueryGateway(identity, store)
     agent = PydanticAgentRuntime(query)
-    controller = ModelController(query, vault, agent, allowed_bases=settings.model_api_bases) if vault else None
+    controller = ModelController(query, vault, agent, allowed_bases=settings.model_api_bases,
+                                 proxy=settings.model_api_proxy) if vault else None
     if controller:
         agent.model_context = controller.context
         agent.provider_label = "managed-model"

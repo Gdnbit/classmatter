@@ -15,6 +15,16 @@ class ConfigurationRejected(Exception):
         super().__init__("Invalid model configuration")
 
 
+def validate_model_proxy(value: str | None) -> str | None:
+    """Operator-selected loopback transport, never an environment or model URL."""
+    if value is None:
+        return None
+    match = re.fullmatch(r"http://127\.0\.0\.1:([1-9][0-9]{0,4})", value) if type(value) is str else None
+    if match is None or not 1 <= int(match.group(1)) <= 65535:
+        raise ConfigurationRejected()
+    return value
+
+
 @dataclass(frozen=True)
 class ModelConfiguration:
     protocol: Protocol
