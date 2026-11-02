@@ -411,7 +411,7 @@
       "sha256": "bb036d19d48a159faab1a8f8327d43ef78331eae0de46fe1ae5f625cfd0f2547"
     },
     "docs/design/live-data-delivery-acceptance.md": {
-      "sha256": "cbf24d78908d0f94c8e9ffaba13e6679035ac620e300f9b94ebcda4390a9f733"
+      "sha256": "5e30523fcc35c3b545f56cdf1ed82442660ea86133aebb639a248bdd9c58ef7d"
     },
     "docs/design/database-live-data-design.md": {
       "sha256": "beecbcaa2cbb9a7c7d42c5806906ed8e0c994d69174004fd646ca657c33adb0a"
@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "207d77bf8354a819e1547ee5d4472160afdaf2b6a9a772f93e94e2d743b622cd"
+      "sha256": "b8174c7716ea5b35e56cb74b463012801e68882e3c6fe16481766f692342a4a3"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -873,7 +873,7 @@
       "sha256": "51bfee0c564708f42efd96b6cb5ad707e720a6a84348317adfdab276d735d723"
     },
     "backend/README.md": {
-      "sha256": "20c48802ab63723f2f119ec767fd921b0c880c2b55e8aaf4dfee82ce6c56abf2"
+      "sha256": "d19a7ef33ffb64cf8fadca97a647118b9f011814d00491fa8c19379a22dea4a6"
     },
     "backend/db/migrations/env.py": {
       "sha256": "b2393f310d1d8a05229c29757dbd885fb275ca6bf7e87c81fa84270863b6edec"
@@ -1450,7 +1450,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "b1d4c9d18d1dceb3bacc7a4cdc87422dedc0954770c824655e3cbf79b56ed015"
+      "sha256": "b5bec5fb75f22e8d45b1062a619022cbbed5400cbccd68e66d61438cada02ab2"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

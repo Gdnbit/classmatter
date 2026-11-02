@@ -1,5 +1,7 @@
 # 实现与验收台账
 
+当前状态以页首最新日期的证据及下方能力表为准；后续保留的逐阶段日期段落记录当时的失败、修复和待办，不应将旧的“尚未接线”覆盖后续已经验收的D1工程结果。Demo、显式R1、显式D1是不同运行入口，不能混称持久化或生产能力。
+
 ## 2026-11-02 W3 合成 Provider Eval 与 W4 复验（工程候选，真实质量仍阻塞）
 
 承接[独立原生Provider PR #45](https://github.com/Gdnbit/classmatter/pull/45)；父单元Windows CI已成功，Ubuntu完整PG/browser仍执行，不提前合并或标整单元通过。新分支仅增加固定12场景执行器、显式CLI和针对性测试，不新增产品功能、HTTP、Schema、Agent工具权限或生产模型设置。场景核对当前来源、旧对话不替代新查询、工具选择、未提交任务/原文草稿、无日期不推断及基本写入/权限拒绝。复用for_mode/Tool契约、WorkSnapshot及原领域校验；夹具回调不是生产QG，不伪造真实审计/授权通过；显式拒绝提示不是开放式红队成绩。
@@ -87,7 +89,7 @@ W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR 
 | 能力 | 状态 | 实现落点 | 追溯与剩余验收 |
 | --- | --- | --- | --- |
 | 桌面窗口/原生顶栏/菜单/沙箱 | implemented-synthetic | `apps/desktop/` | DESKTOP-DEMO及W2-01 runtime工程验收；非新增正式R1任务；安装器/签名/更新未完成 |
-| 对话、历史、标题、搜索、输入草稿 | demo-only | `store/ConversationStore.tsx`、`shell/AppShell.tsx` | A05/A06/A11；当前内存会话，非持久工作历史 |
+| 对话、历史、标题、搜索、输入草稿 | Demo内存；D1 implemented-synthetic | `store/ConversationStore.tsx`、`runtime/DurableConversation.tsx`、`runtime/useDurableConversation.ts`、D1 conversation QG/BCG | A05/A06/A11与D1-18/PR34—36；D1已有耐久会话/标题/分页历史和重启读取，Demo仍内存；不将Demo搜索或未发送输入当作持久业务事实 |
 | 首页三类注意力/个人任务 | partial / W2-03 implemented-synthetic | `store/DemoWorkStore.tsx`；`runtime/R1App.tsx`、`runtime/work-projection.ts`、backend activity | T-RDOM-009/010/013、T-RWEB-004；E-TSK-001/E-EVT-004；真实全班注意力/任务筛选已接，通知责任候选仍未实现 |
 | 学生列表、详情、搜索、空态 | partial / W2-02 implemented-synthetic | `shell/AppShell.tsx`；`runtime/R1App.tsx`、`runtime/student-directory.ts`、backend roster | T-RDOM-002—005/011、T-RWEB-002；E-ROS-001—004/E-ID-001—004；真实姓名/UUID搜索、详情、关联跟进已接；非整个冻结shell迁移 |
 | 登录/会话/恢复码 | implemented-synthetic | backend identity、runtime identity | T-RPLT-013/014/018/019、T-RWEB-001；E-AUTH-009—018；新开发桌面已接既有R1登录；owner凭据不由Agent设置 |
@@ -96,13 +98,13 @@ W0已建立；W1当前已覆盖交互基线为`ready-for-binding`；W2已按[PR 
 | 班级/学期建立、切换、归档 | implemented-synthetic | backend roster、runtime term metadata | T-RWEB-006、T-RDOM-011；E-CLS-001；桌面接入需保留范围/版本与只读历史 |
 | Agent loop/查询/任务及原文草稿 | implemented-synthetic | backend infrastructure agent、application agent_tool_contracts | T-RAGT-001—004；E-AGT-001/002/009—014；仅3个封闭查询/草稿工具，非通用本地执行 |
 | 模型配置/测试/启停 | partial | runtime ModelConfiguration、backend model_control/provider/secrets | 现有模型契约/合成协议测试；Demo设置不连网；真实provider质量pending-validation |
-| Conversation Memory | partial | backend agent_memory、D1 conversation stores | R1临时内存15分钟/10轮/32会话；D1后端已验证耐久可见历史/来源/草稿及受控出口恢复，HTTP/原UI仍候选/待接；无长期画像/持久偏好 |
+| Conversation Memory | partial；D1耐久历史implemented-synthetic | backend agent_memory、D1 conversation stores、DurableConversation UI | R1临时内存15分钟/10轮/32会话；D1耐久可见历史/来源/草稿、HTTP/原UI及受控出口恢复已按PR34—36验收；无长期画像/持久偏好，历史不是正式事实源 |
 | SSE状态与取消 | partial | backend HTTP agent、runtime R1App | 有事件与取消，答案完成后整段发出；逐token/replay/checkpoint未实现 |
 | 核心退出包/同机checkpoint | partial | backend exit_package、operator_backup、local.py | T-REXP-001—003、T-ROPS-003/006；核心验证≠完整退出，lifecycle仍不完整 |
-| 生命周期/跨机恢复/退役 | partial | schema inventory及退出/备份边界 | T-RLIFE-001—005、T-ROPS-001—007；权利/限制/删除/保留/admission账本、重放与退役证明待实现 |
+| 生命周期/跨机恢复/退役 | partial；D1受控恢复implemented-synthetic | schema inventory、D1 restriction/control/provenance及退出/备份边界 | T-RLIFE-001—005、T-ROPS-001—007与D1-01—19；D1已有受控clear/限制证据/来源/退出与目标恢复合成验证，不等于全部权利治理、任意跨机恢复或正式退役证明 |
 | 学校通知/责任候选/接手闭环 | demo-only / discovery | shell ResponsibilityCandidate | R-PROD-001、LR-WRK/LR-COL；不自动判责，真实服务未实现，另行release决策 |
 | 导入/成绩/生产排座/分组/值日/宿舍 | deferred | shell样例；完整v1任务定义 | T-IMP/T-GRD/T-SEA/T-ORG/T-DOR；明确非R1，座位交换Demo不是solver交付 |
-| 报告/沟通/Office产物/外部MCP | deferred | shell样例；完整v1任务定义 | T-REP/T-EXP-002/T-MCP；无真实发送/生成服务 |
+| 报告/沟通/Office产物/外部MCP | D1小结implemented-synthetic；其余deferred | runtime WorkSummary、D1 QG来源；shell未来样例 | D1-19/PR35已有引用事实/任务的可编辑小结、复制/放弃及失效保护；通用Office/图片生成、真实外发及外部MCP未实现，不扩大T-REP/T-EXP-002/T-MCP/R1 |
 | Capture/ASR/RAG/Workflow/Extension/多角色 | deferred | 长期SDD、spikes | LR-*、T-EVO-001—008；各自需验证和新release，不开放万能IPC/JSON/DDL |
 | 教师净减负/正式候选/真实试点 | pending-validation | R1 pilot profile与gate definitions | T-RREL-001—003；E-VALUE-001；没有代表性教师实证，不用合成测试代替 |
 
