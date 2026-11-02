@@ -48,7 +48,7 @@ else {
       if(!window || contents!==window.webContents || !exitDownload(origin,item.getURL(),item.getMimeType(),item.getTotalBytes())){event.preventDefault();return;}
       // Only the existing authorized JSON receipt route; native Save dialog
       // leaves the destination to the user. Never set an arbitrary save path.
-      item.setSaveDialogOptions({title:'保存已批准的合成证据退出包',defaultPath:d1?'ClassMatter-synthetic-conversation-v6.json':'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});
+      item.setSaveDialogOptions({title:d1?'保存已批准的合成证据退出包':'保存已批准的合成核心退出包',defaultPath:d1?'ClassMatter-synthetic-conversation-v6.json':'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});
     });
     window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · 合成持久化开发',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
     window.webContents.setWindowOpenHandler(()=>({action:'deny'}));

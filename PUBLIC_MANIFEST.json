@@ -438,7 +438,7 @@
       "sha256": "b3d0d3e15885c04854979dcbc303f55823bd49b7c2cd618a908c97754ec201ab"
     },
     "apps/desktop/runtime-main.cjs": {
-      "sha256": "3786ce4c3bebee44d6a2d4bf6b30cb5396bea99eda6d36bab4f313016bbd0a78"
+      "sha256": "3d9b602de5a067612187a470aef1b6ff8a8d7605196d687ee09f69f63b2258de"
     },
     "apps/desktop/runtime-policy.cjs": {
       "sha256": "d6e88c0ef7ef16b47fa54331c7099e192f53688eab5d047614e4a83ba890e664"
@@ -525,7 +525,7 @@
       "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
     },
     "apps/desktop/README.md": {
-      "sha256": "d920d1776afad15e2b0697c1cb03b753de2ea7aea5666b692ad9495bd48bd715"
+      "sha256": "93d938c0f1cd42be0cfac736c62a86e297b9890d851d04da57adf5e03b2e7ebb"
     },
     "apps/desktop/scripts/build.cjs": {
       "sha256": "586d17fa8f21ce2eda947c78a55d2139f4c979fd6110a9f0336d585fb777b7fc"
