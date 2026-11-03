@@ -12,7 +12,18 @@ test('supported R1 paths round-trip exact identity/view/filter without domain ob
     const route = parseRuntimeRoute(path)
     assert.equal(runtimePath(route), path)
     assert.deepEqual(parseRuntimeRoute(runtimePath(route)), route)
-    assert.deepEqual(Object.keys(route).sort(), ['conversationClassId', 'conversationId', 'conversationTermId', 'page', 'studentId', 'studentTab', 'studentView', 'taskId', 'workFilter'])
+    assert.deepEqual(Object.keys(route).sort(), ['conversationClassId', 'conversationId', 'conversationTermId', 'documentId', 'page', 'studentId', 'studentTab', 'studentView', 'taskId', 'workFilter'])
+  }
+})
+
+test('document routes preserve only validated identity and reject mock IDs or secret hints', () => {
+  for (const path of ['/data', '/data/documents/new', `/data/documents/${id}`]) {
+    assert.equal(runtimePath(parseRuntimeRoute(path)), path)
+    assert.equal(parseRuntimeRoute(path).page, 'documents')
+  }
+  for (const path of ['/data/documents/parents-001', '/data/documents/unknown', `/data/documents/${id}?text=secret`,
+    `/data/documents/${id}#approval`, '/data?body=secret', '/data/documents/new/commit']) {
+    assert.equal(parseRuntimeRoute(path).page, 'unavailable')
   }
 })
 

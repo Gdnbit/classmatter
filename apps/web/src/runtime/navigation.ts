@@ -1,6 +1,6 @@
 import type { WorkFilter } from "./work-projection.ts"
 
-export type RuntimePage = "conversation" | "dashboard" | "students" | "work" | "settings" | "unavailable"
+export type RuntimePage = "conversation" | "dashboard" | "students" | "work" | "documents" | "settings" | "unavailable"
 export type StudentTab = "overview" | "timeline" | "tasks" | "records" | "unavailable"
 export type RuntimeRoute = {
   conversationId: string
@@ -9,6 +9,7 @@ export type RuntimeRoute = {
   page: RuntimePage
   studentId: string
   taskId: string
+  documentId: string
   workFilter: WorkFilter
   studentView: "list" | "table"
   studentTab: StudentTab
@@ -16,7 +17,7 @@ export type RuntimeRoute = {
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export const runtimeRoute = (page: RuntimePage = "conversation"): RuntimeRoute => ({
   conversationId: "", conversationClassId: "", conversationTermId: "",
-  page, studentId: "", taskId: "", workFilter: "all", studentView: "list", studentTab: "overview",
+  page, studentId: "", taskId: "", documentId: "", workFilter: "all", studentView: "list", studentTab: "overview",
 })
 
 // Presentation hints only. Entity IDs must still resolve in authorized QG data.
@@ -33,6 +34,12 @@ export function parseRuntimeRoute(path: string): RuntimeRoute {
     "/settings/user": "settings", "/unavailable": "unavailable",
   }
   if (simple[url.pathname]) return runtimeRoute(simple[url.pathname])
+  if (url.pathname === "/data" && !url.search && !url.hash) return runtimeRoute("documents")
+  const document = url.pathname.match(/^\/data\/documents\/([^/]+)$/)
+  if (document) {
+    if (url.search || url.hash || (document[1] !== "new" && !uuid.test(document[1]))) return unavailable()
+    return { ...runtimeRoute("documents"), documentId: document[1].toLowerCase() }
+  }
   const conversation = url.pathname.match(/^\/conversations\/([^/]+)\/([^/]+)\/([^/]+)$/)
   if (conversation) {
     if (url.search || url.hash || !conversation.slice(1).every(value => uuid.test(value))) return unavailable()
@@ -63,6 +70,8 @@ export function parseRuntimeRoute(path: string): RuntimeRoute {
 }
 
 export function runtimePath(route: RuntimeRoute): string {
+  if (route.page === "documents") return !route.documentId ? "/data"
+    : route.documentId === "new" || uuid.test(route.documentId) ? `/data/documents/${route.documentId}` : "/unavailable"
   if (route.page === "conversation" && route.conversationId) {
     return [route.conversationClassId, route.conversationTermId, route.conversationId].every(value => uuid.test(value))
       ? `/conversations/${route.conversationClassId}/${route.conversationTermId}/${route.conversationId}` : "/unavailable"
