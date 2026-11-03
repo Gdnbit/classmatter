@@ -6,14 +6,23 @@ const key = process.env.CLASSMATTER_DESKTOP_PROCESS_KEY;
 if (mode === 'exit') process.exit(2);
 const server = http.createServer((request, response) => {
   response.setHeader('Content-Type','application/json');
+  function send(value) {
+    if ((mode === 'slow-proof' && request.url === '/health/desktop') || (mode === 'slow-ready' && request.url === '/health/ready')) {
+      // Every byte arrives before the old inactivity timeout. The complete
+      // valid response nevertheless arrives after the total startup budget.
+      const interval = setInterval(() => response.write(' '), 40);
+      const timer = setTimeout(() => { clearInterval(interval); response.end(value); }, 2600);
+      response.once('close', () => { clearInterval(interval); clearTimeout(timer); });
+    } else response.end(value);
+  }
   if (mode === 'oversize') { response.end('x'.repeat(4096)); return; }
   if (request.url === '/health/desktop') {
     const challenge = request.headers['x-classmatter-challenge'];
     const proof = createHmac('sha256',Buffer.from(mode === 'wrong' ? 'ff'.repeat(32) : key,'hex')).update('classmatter.desktop.v1:'+challenge).digest('hex');
-    response.end(JSON.stringify({schema_version:'classmatter.desktop-proof.v1',mode:'synthetic-only',challenge,proof}));
+    send(JSON.stringify({schema_version:'classmatter.desktop-proof.v1',mode:'synthetic-only',challenge,proof}));
   } else {
     response.statusCode = mode === 'not-ready' ? 503 : 200;
-    response.end(JSON.stringify({schema_version:'class-os.health.v1',service:'class-os-api',mode:'synthetic-development',status:'ready',components:{database:'connected',identity:'connected',business_gateways:'connected'}}));
+    send(JSON.stringify({schema_version:'class-os.health.v1',service:'class-os-api',mode:'synthetic-development',status:'ready',components:{database:'connected',identity:'connected',business_gateways:'connected'}}));
   }
 });
 server.listen(Number(port),'127.0.0.1');
