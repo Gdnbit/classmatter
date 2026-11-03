@@ -111,6 +111,7 @@ export default function R1App() {
   const [durableDraft, setDurableDraft] = useState(false)
   const [exitBusy, setExitBusy] = useState(false)
   const [summaryDraft, setSummaryDraft] = useState(false)
+  const [confirmLogout, setConfirmLogout] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState("")
   const [classes, setClasses] = useState<Classroom[]>([])
@@ -152,7 +153,7 @@ export default function R1App() {
   const termLoad = useRef(0)
   const loading = useRef(0)
   const connectivity = useRef(0)
-  const interactionBlocked = busy || durableBusy || durableDraft || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
+  const interactionBlocked = busy || confirmLogout || durableBusy || durableDraft || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
   const navigationBlocked = summaryDraft || interactionBlocked
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
@@ -215,6 +216,7 @@ export default function R1App() {
   const fail = useCallback((reason: unknown) => {
     setError(reason instanceof Error ? reason.message : "操作失败")
     if ((reason instanceof ApiError && reason.status === 401) || reason instanceof IdentityOutcomeUnknown) {
+      setConfirmLogout(false)
       loading.current++
       runningAgent.current?.abort()
       setSession(null)
@@ -275,6 +277,7 @@ export default function R1App() {
   const reload = useCallback(
     async (chosen?: Classroom | null) => {
       if (!session || runtimeProfile === "loading" || runtimeProfile === "failed") return
+      foregroundRefresh.current?.discardPending()
       const generation = ++loading.current
       const connectionGeneration = connectivity.current
       setRefreshing(true)
@@ -330,6 +333,7 @@ export default function R1App() {
         // A revoked old-session query cannot clear the new authenticated
         // session or its one-time kit after identity rotation.
         if (generation === loading.current && alive.current) {
+          foregroundRefresh.current?.discardPending()
           if (reason instanceof ApiError && reason.status === 401) throw reason
           throw new Error("读取当前班级数据未完成；屏幕可能保留上次快照，请重新读取后再变更。已有可信提交回执仍表示已保存，不要重复新建。")
         }
@@ -347,7 +351,7 @@ export default function R1App() {
   const refreshContext = useRef({ reload, fail, session, blocked: true })
   refreshContext.current = {
     reload, fail, session,
-    blocked: busy || durableBusy || exitBusy || runtimeProfile === "loading" || runtimeProfile === "failed" || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage
+    blocked: busy || confirmLogout || durableBusy || exitBusy || runtimeProfile === "loading" || runtimeProfile === "failed" || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage
       || page === "settings" || !!runningAgent.current,
   }
   const foregroundRefresh = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
@@ -423,6 +427,22 @@ export default function R1App() {
     } finally {
       setBusy(false)
     }
+  }
+  function logoutCurrentSession() {
+    if (!session) return
+    setConfirmLogout(false)
+    void action(async () => {
+      await logoutIdentity(session.csrf_token)
+      loading.current++
+      navigation.reset(); setRecord(null)
+      setSession(null); setStudents([]); setActivity(null); setClasses([]); setClassroom(null)
+      setIdentifiers([]); setReplacingIdentifier(null); setDuplicates([]); setMessages([])
+      setPending(null); setForm(null); setIssuedCodes(null); setExportId(""); setMessage("")
+    })
+  }
+  function requestLogout() {
+    if (summaryDraft || durableDraft || message.trim()) setConfirmLogout(true)
+    else logoutCurrentSession()
   }
   async function preview(command: Command) {
     if (!session) return
@@ -938,27 +958,7 @@ export default function R1App() {
         <button
           className="r1-logout"
           disabled={busy}
-          onClick={() =>
-            void action(async () => {
-              await logoutIdentity(session.csrf_token)
-              loading.current++
-              setSession(null)
-              navigation.reset()
-              setRecord(null)
-              setStudents([])
-              setActivity(null)
-              setClasses([])
-              setClassroom(null)
-              setIdentifiers([])
-              setReplacingIdentifier(null)
-              setDuplicates([])
-              setMessages([])
-              setPending(null)
-              setForm(null)
-              setIssuedCodes(null)
-              setExportId("")
-            })
-          }
+          onClick={requestLogout}
         >
           <LogOut size={16} />
           退出登录
@@ -1502,13 +1502,7 @@ export default function R1App() {
                 })}>生成合成核心退出包</button>
                 {exportId && <p><a href={`${workspace(session)}/exit/${exportId}/download`} download>下载已批准的核心包（30分钟内）</a></p>}
               </section>}
-              <button disabled={busy} onClick={() => void action(async () => {
-                await logoutIdentity(session.csrf_token)
-                loading.current++
-                navigation.reset(); setRecord(null)
-                setSession(null); setStudents([]); setActivity(null); setClasses([]); setClassroom(null)
-                setIdentifiers([]); setReplacingIdentifier(null); setDuplicates([]); setMessages([]); setPending(null); setForm(null); setIssuedCodes(null); setExportId("")
-              })}>注销当前会话</button>
+              <button disabled={busy} onClick={requestLogout}>注销当前会话</button>
             </>
           )}
         </div>
@@ -1562,6 +1556,12 @@ export default function R1App() {
           </form>
         )}
       </main>
+      {confirmLogout && <R1Dialog titleId="r1-logout-title" onDismiss={() => setConfirmLogout(false)}>
+        <h2 id="r1-logout-title">退出并丢弃未保存草稿？</h2>
+        <p>本页有未保存的小结或未发送的文字。退出登录将丢弃这些本地草稿；已保存的聊天记录和业务数据不会删除。</p>
+        <button autoFocus onClick={() => setConfirmLogout(false)}>继续编辑</button>
+        <button className="r1-primary" onClick={logoutCurrentSession}>丢弃草稿并退出</button>
+      </R1Dialog>}
       {auditPage && <R1Dialog titleId="r1-audit-title" returnFocusTo={auditOpener.current} onDismiss={() => setAuditPage(null)}>
         <h2 id="r1-audit-title">班级业务审计 · 只读摘要</h2>
         <p>当前 owner / 班级 / 学期范围的最近100条登记。较早未登记范围的操作不在此视图，不代表没有发生。</p>

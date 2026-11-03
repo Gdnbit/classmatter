@@ -846,10 +846,28 @@ try {
   await page.getByText('查看回执与摘要', { exact: true }).first().click();
   assert.equal(await page.getByRole('dialog').evaluate(element => element.scrollWidth > element.clientWidth), false);
   await page.getByRole('button', { name: '关闭审计摘要', exact: true }).click();
+  // R1 unsent text survives the second logout entry's cancellation too.
+  const logoutPosts=[];
+  page.on('request', request=>{
+    if(request.method()==='POST' && new URL(request.url()).pathname==='/api/identity/logout')logoutPosts.push(request.url());
+  });
+  await page.getByRole('button', { name: '对话', exact: true }).click();
+  await page.getByLabel('输入消息', { exact: true }).fill('合成R1未发送文字');
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('button', { name: '注销当前会话', exact: true }).click();
+  const logoutDialog=page.getByRole('dialog',{name:'退出并丢弃未保存草稿？',exact:true});
+  await logoutDialog.waitFor();
+  await logoutDialog.getByRole('button',{name:'继续编辑',exact:true}).click();
+  assert.equal(logoutPosts.length,0);
+  await page.getByRole('button', { name: '对话', exact: true }).click();
+  assert.equal(await page.getByLabel('输入消息', { exact: true }).inputValue(),'合成R1未发送文字');
+  await page.getByLabel('输入消息', { exact: true }).fill('');
+  await page.getByRole('button', { name: '设置', exact: true }).click();
   // The owned backend revokes this session, then loses the mutation response.
   // Client reconciles only the original logout receipt; no second POST.
   await page.getByRole('button', { name: '注销当前会话', exact: true }).click();
   await page.getByRole('button', { name: '登录', exact: true }).waitFor();
+  assert.equal(logoutPosts.length,1);
   assert.equal(await page.getByText('身份操作结果暂时无法确认', { exact: false }).count(), 0);
   assert.deepEqual(faults, []);
   assert.deepEqual(externalRequests, [], 'UI must not connect to the candidate provider');

@@ -37,6 +37,10 @@ export function createQueryRefresh(options: {
     if (timer !== null) options.cancel(timer)
     timer = null
   }
+  function discardPending() {
+    requested = false
+    clear()
+  }
   function resume() {
     if (disposed || !requested || running || !options.available() || !options.idle()) {
       clear()
@@ -52,7 +56,10 @@ export function createQueryRefresh(options: {
       lastStart = options.now()
       void (async () => {
         try { await options.read() }
-        catch (reason) { if (!disposed) options.fail(reason) }
+        catch (reason) {
+          discardPending()
+          if (!disposed) options.fail(reason)
+        }
         finally {
           running = false
           // A failed read is not automatically retried. Only a new event can
@@ -63,6 +70,9 @@ export function createQueryRefresh(options: {
     }, Math.max(250, lastStart + 5000 - options.now()))
   }
   return {
+    // An explicit QG read covers older events too. A failed read also drops
+    // events queued before/during it; only a subsequent event may retry.
+    discardPending,
     request() { if (!disposed) { requested = true; resume() } },
     offline() {
       if (disposed) return
