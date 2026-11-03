@@ -1,15 +1,10 @@
 """Bounded read-only loopback health diagnostics; never repairs or mutates."""
+import asyncio
 import json
-from urllib.error import HTTPError, URLError
-from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
+import httpx
 
 from class_os.interfaces.http.contracts import LiveResponse, ReadyResponse
 from class_os.interfaces.http.settings import Settings
-
-
-class NoRedirect(HTTPRedirectHandler):
-    def redirect_request(self, request, fp, code, message, headers, url):
-        return None
 
 
 def unique_object(pairs):
@@ -21,20 +16,30 @@ def unique_object(pairs):
     return result
 
 
-def diagnose(settings):
-    if type(settings) is not Settings:
-        raise ValueError("Explicit synthetic Settings required")
-    opener = build_opener(ProxyHandler({}), NoRedirect())
+async def _exchange(port, name):
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + 2
+    # One fresh client per probe: a health Set-Cookie cannot authorize the next
+    # probe. No proxy/certificate environment, redirects, retry or body decoding.
+    async with asyncio.timeout_at(deadline):
+        async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=2) as client:
+            async with client.stream('GET', f'http://127.0.0.1:{port}/health/{name}',
+                                     headers={'Accept': 'application/json', 'Accept-Encoding': 'identity'}) as response:
+                raw = bytearray()
+                async for chunk in response.aiter_raw(chunk_size=8193):
+                    raw.extend(chunk)
+                    if len(raw) > 8192:
+                        break
+                if loop.time() >= deadline:
+                    raise TimeoutError()
+                return response.status_code, bytes(raw)
+
+
+async def _diagnose(settings):
     checks = {}
     for name, model in (("live", LiveResponse), ("ready", ReadyResponse)):
         try:
-            try:
-                response = opener.open(Request(f"http://127.0.0.1:{settings.port}/health/{name}", headers={"Accept": "application/json"}), timeout=2)
-            except HTTPError as error:
-                response = error
-            with response:
-                status = response.code
-                raw = response.read(8193)
+            status, raw = await _exchange(settings.port, name)
             if len(raw) > 8192 or status not in (200, 503):
                 checks[name] = "invalid_response"
                 continue
@@ -52,7 +57,7 @@ def diagnose(settings):
                 checks[name] = "not_ready"
             else:
                 checks[name] = "invalid_response"
-        except (URLError, OSError, TimeoutError):
+        except (httpx.TransportError, OSError, TimeoutError):
             checks[name] = "unavailable"
         except (ValueError, TypeError, RecursionError):
             checks[name] = "invalid_response"
@@ -61,3 +66,14 @@ def diagnose(settings):
             "checks": checks, "ready": ready, "complete_operator_check": False,
             "next_step": "none" if ready else "start-local-api" if checks["live"] == "unavailable" else
             "check-owned-database-and-explicit-migration" if checks["ready"] == "not_ready" else "check-local-service-contract"}
+
+
+def diagnose(settings):
+    if type(settings) is not Settings:
+        raise ValueError("Explicit synthetic Settings required")
+    # Synchronous operator-only API; never run inside an HTTP request/Agent loop.
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(_diagnose(settings))
+    raise ValueError("Local diagnostics require a synchronous operator context")

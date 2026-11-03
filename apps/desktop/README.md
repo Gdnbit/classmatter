@@ -104,7 +104,7 @@ pnpm check:runtime
 pnpm open:runtime
 ```
 
-`check:runtime`只读检查，JSON仅输出固定步骤码及布尔结果，不读取/输出密码或恢复码，不启动服务、不写文件。退出0只表示文件前置条件齐备，**不表示PG已启动、Owner已建立或服务ready**；退出2表示需处理`next_steps`。`open:runtime`先构建当前源码再执行同一检查，随后复用原自有API进程握手/readiness；无失败回退Demo、自动安装、建库、迁移、设置Owner或旧请求重放。
+`check:runtime`只读检查，JSON仅输出固定步骤码及布尔结果，不读取/输出密码或恢复码，不启动服务、不写文件。退出0只表示文件前置条件齐备，**不表示PG已启动、Owner已建立或服务ready**；退出2表示需处理`next_steps`。两种profile都要求实际运行入口及其四个模块（runtime-service、runtime-policy、model-network、preload）齐备，缺失时返回`build`待办，并在加载Electron前拒绝；存在文件不等于已验证全部依赖或内容完整性。`open:runtime`先构建当前源码再执行同一检查，随后复用原自有API进程握手/readiness；无失败回退Demo、自动安装、建库、迁移、设置Owner或旧请求重放。
 
 | next_steps | 本机操作者动作 |
 | --- | --- |

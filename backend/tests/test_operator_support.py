@@ -75,6 +75,19 @@ def test_actual_cli_support_has_only_two_health_reads_no_cookie_proxy_redirect_o
     assert list(tmp_path.iterdir()) == []
 
 
+def test_actual_support_cli_times_out_slow_headers_without_filling_health_or_leaking_data(tmp_path):
+    with health_server(slow='headers', live_cookie=True) as (settings, requests):
+        result = subprocess.run([sys.executable, str(Path(__file__).resolve().parents[1] / 'local.py'), 'support'],
+            cwd=tmp_path, env=dict(os.environ, CLASS_OS_PORT=str(settings.port)), capture_output=True,
+            text=True, encoding='utf-8', timeout=10, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    assert result.returncode == 1 and result.stderr == ''
+    report = SupportReport.model_validate_json(result.stdout)
+    assert report.health.checks.live == 'ok' and report.health.checks.ready == 'unavailable'
+    assert not report.health.ready and not report.complete_support_bundle
+    assert requests == [('/health/live', None), ('/health/ready', None)]
+    assert 'must-not-forward' not in result.stdout and list(tmp_path.iterdir()) == []
+
+
 def test_support_cli_never_instantiates_owned_runtime(monkeypatch, capsys):
     spec = importlib.util.spec_from_file_location("support_local_cli", Path(__file__).resolve().parents[1] / "local.py")
     cli = importlib.util.module_from_spec(spec)

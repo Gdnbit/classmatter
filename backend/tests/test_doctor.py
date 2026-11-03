@@ -1,11 +1,14 @@
 from contextlib import contextmanager
+import asyncio
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
+import gzip
 import os
 from pathlib import Path
 import subprocess
 import sys
 from threading import Thread
+from time import monotonic, sleep
 
 import pytest
 
@@ -18,7 +21,7 @@ READY = {**LIVE, "status": "ready", "components": {"database": "connected", "ide
 
 
 @contextmanager
-def health_server(status=200, body=None, *, redirect=False, live_body=None):
+def health_server(status=200, body=None, *, redirect=False, live_body=None, slow=None, live_cookie=False, encoding=None):
     requests = []
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -27,11 +30,30 @@ def health_server(status=200, body=None, *, redirect=False, live_body=None):
                 code, raw = 200, live_body if live_body is not None else json.dumps(LIVE).encode()
             else:
                 code, raw = status, body if body is not None else json.dumps(READY).encode()
+            if slow == 'headers' and self.path == '/health/ready':
+                try:
+                    self.wfile.write(b'HTTP/1.0 200 OK\r\nX-Slow: ')
+                    for _ in range(70):
+                        self.wfile.write(b'x'); sleep(.05)
+                    self.wfile.write(b'\r\n\r\n' + raw)
+                except (BrokenPipeError, ConnectionResetError):
+                    pass
+                return
             self.send_response(code)
+            if encoding and self.path == '/health/ready':
+                self.send_header('Content-Encoding', encoding)
+            if live_cookie and self.path == '/health/live':
+                self.send_header('Set-Cookie', 'synthetic-health-cookie=must-not-forward; Path=/')
             if redirect and self.path == "/health/ready":
                 self.send_header("Location", f"http://127.0.0.1:{self.server.server_port}/must-not-follow")
             self.end_headers()
-            self.wfile.write(raw)
+            try:
+                if slow == 'body' and self.path == '/health/ready':
+                    for _ in range(70):
+                        self.wfile.write(b' '); sleep(.05)
+                self.wfile.write(raw)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
         def log_message(self, *args):
             pass
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
@@ -51,6 +73,40 @@ def test_doctor_real_tcp_ready_and_no_cookie_or_business_request():
         result = diagnose(settings)
     assert result["ready"] is True and result["complete_operator_check"] is False
     assert requests == [("/health/live", None), ("/health/ready", None)]
+
+
+@pytest.mark.parametrize('slow', ['headers', 'body'])
+def test_slow_valid_health_exchange_cannot_extend_absolute_diagnostic_deadline(slow):
+    with health_server(slow=slow) as (settings, requests):
+        started = monotonic()
+        result = diagnose(settings)
+        elapsed = monotonic() - started
+    assert result['checks'] == {'live': 'ok', 'ready': 'unavailable'}
+    assert not result['ready'] and elapsed < 3.0
+    assert requests == [('/health/live', None), ('/health/ready', None)]
+
+
+def test_health_cookie_and_environment_proxy_are_never_forwarded(monkeypatch):
+    for name in ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'http_proxy', 'https_proxy', 'all_proxy']:
+        monkeypatch.setenv(name, 'http://127.0.0.1:1')
+    monkeypatch.setenv('NO_PROXY', ''); monkeypatch.setenv('no_proxy', '')
+    with health_server(live_cookie=True) as (settings, requests):
+        result = diagnose(settings)
+    assert result['ready']
+    assert requests == [('/health/live', None), ('/health/ready', None)]
+
+
+def test_health_transport_does_not_expand_compressed_response_into_valid_evidence():
+    with health_server(body=gzip.compress(json.dumps(READY).encode()), encoding='gzip') as (settings, _):
+        result = diagnose(settings)
+    assert result['checks']['ready'] == 'invalid_response' and not result['ready']
+
+
+def test_operator_is_not_an_async_http_or_agent_loop_entry():
+    async def active_loop():
+        with pytest.raises(ValueError, match='synchronous operator context'):
+            diagnose(Settings())
+    asyncio.run(active_loop())
 
 
 def test_doctor_old_health_only_503_is_not_ready():
@@ -109,6 +165,7 @@ def test_actual_operator_cli_json_and_exit_status_without_runtime_configuration(
 def test_operator_module_does_not_import_database_or_model_runtime():
     probe = (
         "import runpy,sys; runpy.run_path('local.py', run_name='operator_import_probe'); "
+        "import class_os.interfaces.operator.doctor; import class_os.interfaces.operator.support; "
         "assert 'class_os.infrastructure.local_runtime' not in sys.modules; "
         "assert 'pydantic_ai' not in sys.modules; assert 'openai' not in sys.modules"
     )

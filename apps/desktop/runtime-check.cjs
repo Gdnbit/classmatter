@@ -24,7 +24,8 @@ function prerequisites(repositoryRoot, platform = process.platform, profile = 'r
     windows: platform === 'win32',
     backend: regular(path.join(root, 'backend/.venv/Scripts/python.exe')) && regular(path.join(root, 'backend/desktop.py')),
     electron: regular(path.join(desktop, 'node_modules/electron/index.js')),
-    build: marker?.mode === (d1?'synthetic-conversation-d1':'synthetic-runtime') && regular(path.join(stage, 'ui/index.html')) && regular(path.join(stage, 'main.cjs')),
+    build: marker?.mode === (d1?'synthetic-conversation-d1':'synthetic-runtime') && regular(path.join(stage, 'ui/index.html'))
+      && ['main.cjs','runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs'].every(name=>regular(path.join(stage,name))),
     source: !!source && source.schema_version === (d1?2:1) && Object.keys(source).sort().join(',') === (d1?'profile,repositoryRoot,runtimeRoot,schema_version,servicePort':'repositoryRoot,runtimeRoot,schema_version')
       && (!d1 || (source.profile==='conversation-d1' && source.servicePort===8001))
       && typeof source.repositoryRoot === 'string' && path.isAbsolute(source.repositoryRoot) && path.resolve(source.repositoryRoot) === root

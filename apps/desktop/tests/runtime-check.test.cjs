@@ -6,24 +6,30 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { prerequisites } = require('../runtime-check.cjs');
 
-function fixture(t) {
+function fixture(t, profile = 'r1') {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'classmatter-prerequisites-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true })); // Only this test's fresh owned directory.
-  const stage = path.join(root, 'apps/desktop/.build/runtime');
-  const runtime = path.join(root, '.local-runtime/synthetic-v1');
+  const d1=profile==='conversation-d1';
+  const stageName=d1?'apps/desktop/.build/runtime-d1':'apps/desktop/.build/runtime';
+  const runtimeName=d1?'.local-runtime/synthetic-conversation-d1':'.local-runtime/synthetic-v1';
+  const stage = path.join(root, stageName);
+  const runtime = path.join(root, runtimeName);
   const put = (name, value = '') => {
     const file = path.join(root, name);
     fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, value);
   };
-  const source = { schema_version: 1, repositoryRoot: root, runtimeRoot: runtime };
-  const config = { profile: 'class-os-owned-synthetic-v1', database: 'class_os_synthetic_local', port: 15432, pg_bin: path.join(root, 'pg') };
+  const source = d1?{ schema_version: 2, repositoryRoot: root, runtimeRoot: runtime, profile, servicePort:8001 }
+    :{ schema_version: 1, repositoryRoot: root, runtimeRoot: runtime };
+  const config = { profile: d1?'classmatter-owned-synthetic-conversation-d1':'class-os-owned-synthetic-v1',
+    database: d1?'class_os_synthetic_conversation_local':'class_os_synthetic_local', port: 15432, pg_bin: path.join(root, 'pg') };
   function ready() {
     for (const file of ['backend/.venv/Scripts/python.exe', 'backend/desktop.py', 'apps/desktop/node_modules/electron/index.js',
-      'apps/desktop/.build/runtime/main.cjs', 'apps/desktop/.build/runtime/ui/index.html', 'pg/postgres.exe', 'pg/pg_ctl.exe']) put(file);
-    put('apps/desktop/.build/runtime/runtime-source.json', JSON.stringify(source));
-    put('apps/desktop/.build/runtime/ui/desktop-runtime.json', JSON.stringify({ mode: 'synthetic-runtime' }));
-    put('.local-runtime/synthetic-v1/runtime.json', JSON.stringify(config));
-    for (const role of ['root', 'migrator', 'identity', 'runtime']) put(`.local-runtime/synthetic-v1/${role}.dpapi`, 'synthetic-not-a-credential');
+      stageName+'/main.cjs', stageName+'/ui/index.html', 'pg/postgres.exe', 'pg/pg_ctl.exe',
+      ...['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs'].map(name=>stageName+'/'+name)]) put(file);
+    put(stageName+'/runtime-source.json', JSON.stringify(source));
+    put(stageName+'/ui/desktop-runtime.json', JSON.stringify({ mode: d1?'synthetic-conversation-d1':'synthetic-runtime' }));
+    put(runtimeName+'/runtime.json', JSON.stringify(config));
+    for (const role of ['root', 'migrator', 'identity', 'runtime']) put(runtimeName+`/${role}.dpapi`, 'synthetic-not-a-credential');
   }
   return { root, stage, runtime, put, source, config, ready };
 }
@@ -34,6 +40,29 @@ test('empty checkout reports fixed missing steps without modifying or leaking pa
   assert.deepEqual(result.next_steps, ['backend', 'electron', 'build', 'source', 'database_configuration', 'protected_credentials']);
   assert.deepEqual(fs.readdirSync(f.root), before);
   assert(!JSON.stringify(result).includes(f.root));
+});
+
+for(const profile of ['r1','conversation-d1']) test(`missing ${profile} staged dependency rejects before loading Electron`,t=>{
+  const f=fixture(t,profile);f.ready();
+  f.put('apps/desktop/scripts/runtime-launch.cjs',fs.readFileSync(path.join(__dirname,'../scripts/runtime-launch.cjs')));
+  f.put('apps/desktop/runtime-check.cjs',fs.readFileSync(path.join(__dirname,'../runtime-check.cjs')));
+  f.put('apps/desktop/model-network.cjs',fs.readFileSync(path.join(__dirname,'../model-network.cjs')));
+  for(const name of ['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs']) {
+    f.ready();f.put('apps/desktop/node_modules/electron/index.js','throw new Error("should-not-load-electron")');
+    const missing=path.join(f.stage,name);fs.unlinkSync(missing);
+    const report=prerequisites(f.root,'win32',profile);
+    assert.equal(report.prerequisites_present,false,name);
+    assert.equal(report.checks.build,false,name);
+    assert.deepEqual(report.next_steps,['build']);
+    const args=[path.join(f.root,'apps/desktop/scripts/runtime-launch.cjs'),...(profile==='r1'?[]:['--profile',profile])];
+    const result=spawnSync(process.execPath,args,{encoding:'utf8',windowsHide:true,timeout:5000});
+    // Launcher checks the actual host platform too; on Linux it must still
+    // refuse before loading Electron, rather than bypassing the Windows gate.
+    assert.equal(result.status,2,result.stderr);
+    assert(!result.stderr.includes('should-not-load-electron'));
+    assert(!result.stderr.includes(f.root));
+    assert.equal(JSON.parse(result.stderr.split(/\r?\n/)[0]).checks.build,false);
+  }
 });
 test('prerequisites never mean service readiness or verified Owner', t => {
   const f = fixture(t); f.ready();
