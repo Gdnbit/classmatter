@@ -1,4 +1,4 @@
-// Development-only synthetic runtime host. Offline Demo remains unchanged.
+// Single workbench host; offline fixtures are explicit developer-only entries.
 const {app,BrowserWindow,Menu,session,ipcMain,dialog}=require('electron');
 const fs=require('node:fs');
 const path=require('node:path');
@@ -20,10 +20,16 @@ try {
   if(!d1 && (source.schema_version!==1 || keys!=='repositoryRoot,runtimeRoot,schema_version'))sourceInvalid=true;
 } catch {sourceInvalid=true;}
 app.setName(d1?'ClassMatter Synthetic D1':'ClassMatter Synthetic Runtime');
-app.setPath('userData',path.join(app.getPath('appData'),d1?'ClassMatter-Synthetic-D1':'ClassMatter-Synthetic-Runtime'));
+// Separate native locks/cache for each owned runtime; disposable acceptance
+// instances must not attach to or close the user's already-open workbench.
+const instanceKey=!sourceInvalid&&typeof source.repositoryRoot==='string'&&typeof source.runtimeRoot==='string'
+  ? require('node:crypto').createHash('sha256').update(path.resolve(source.repositoryRoot)+'\n'+path.resolve(source.runtimeRoot)).digest('hex').slice(0,16):'invalid';
+app.setPath('userData',path.join(app.getPath('appData'),(d1?'ClassMatter-Synthetic-D1-':'ClassMatter-Synthetic-Runtime-')+instanceKey));
 app.setAppUserModelId(d1?'org.classmatter.synthetic-d1':'org.classmatter.synthetic-runtime');
 app.enableSandbox();
-let window,service,quitting=false,origin;
+const development=app.commandLine.hasSwitch('classmatter-development-no-password');
+if(development&&!d1)sourceInvalid=true;
+let window,service,quitting=false,origin,setupWindow;
 if(sourceInvalid) app.whenReady().then(()=>{
   dialog.showErrorBox('运行环境尚未准备好','运行描述无效；未连接或接管其他实例。原数据未更改。');
   app.exit(1);
@@ -40,6 +46,11 @@ else {
   app.whenReady().then(async()=>{
     if(app.isPackaged) throw new Error('This runtime entry is development-only; binary distribution is not approved.');
     if(sourceInvalid) throw new Error('Invalid runtime source');
+    let developerCookies;
+    if(development){
+      const pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true);
+      try{developerCookies=(await pipe.request({operation:'development_access'})).cookies;}finally{pipe.stop();}
+    }else if(d1)setupWindow=await require('./setup-window.cjs').prepareWorkspace({BrowserWindow,ipcMain,session},source);
     service=desktopService(source.repositoryRoot,path.join(__dirname,'ui'),()=>{
       if(window) window.close();
       // No automatic replay or reattachment after a service crash.
@@ -47,6 +58,14 @@ else {
     },source.runtimeRoot,d1?'conversation-d1':'r1',d1?source.servicePort:8000,modelNetwork);
     origin=await service.start();
     const isolated=session.fromPartition(d1?'classmatter-synthetic-d1':'classmatter-synthetic-runtime');
+    if(developerCookies){
+      if(Object.keys(developerCookies).sort().join(',')!=='client,csrf,session')throw new Error('Invalid local identity');
+      for(const [name,value] of Object.entries(developerCookies)){
+        if(typeof value!=='string'||!/^[A-Za-z0-9_-]{32,128}$/.test(value))throw new Error('Invalid local identity');
+        await isolated.cookies.set({url:origin+'/api',name:'class_os_'+name,value,httpOnly:true,sameSite:'strict',path:'/api',secure:false});
+      }
+      developerCookies=null;
+    }
     isolated.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
     isolated.setPermissionCheckHandler(()=>false);
     isolated.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!allowed(origin,details.url)}));
@@ -57,14 +76,14 @@ else {
       // leaves the destination to the user. Never set an arbitrary save path.
       item.setSaveDialogOptions({title:d1?'保存已批准的合成证据退出包':'保存已批准的合成核心退出包',defaultPath:d1?'ClassMatter-synthetic-conversation-v6.json':'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});
     });
-    window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · 合成持久化开发',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
+    window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · ClassMatter',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
     window.webContents.setWindowOpenHandler(()=>({action:'deny'}));
     window.webContents.on('will-navigate',(event,url)=>{if(!allowed(origin,url))event.preventDefault();});
     window.webContents.on('will-redirect',(event,url)=>{if(!allowed(origin,url))event.preventDefault();});
     window.webContents.on('will-attach-webview',event=>event.preventDefault());
     window.on('page-title-updated',event=>event.preventDefault());
     const menu=Menu.buildFromTemplate([
-      {label:'文件',submenu:[{label:'关于运行模式',click:()=>dialog.showMessageBox(window,{type:'info',message:'合成持久化开发模式',detail:'复用现有R1业务页面和后端；不是完整冻结UX迁移或正式发行。仅合成数据。关闭时停止本次API进程，不初始化/迁移/停止数据库。仅允许已批准的JSON退出包下载并由你选择保存位置。'+(modelNetwork.bases.length?'本次允许手动配置模型端点；仍需登录、保存配置、连接测试和明确启用，默认离线。系统命令工具未开放。':'真实模型和系统工具未启用。')})},{role:'quit',label:'退出'}]},
+      {label:'文件',submenu:[{label:'关于班事有谱',click:()=>dialog.showMessageBox(window,{type:'info',message:'班事有谱 · ClassMatter',detail:'数据保存在本机。当前仅使用合成数据，尚未开放真实师生数据。修改先预览、再确认；未接通的功能会明确提示。退出应用不会删除数据库。'+(modelNetwork.bases.length?'模型需要在设置中配置、测试并明确启用；默认离线。':'当前模型离线。')})},{role:'quit',label:'退出'}]},
       {label:'编辑',submenu:[{role:'undo',label:'撤销'},{role:'redo',label:'重做'},{role:'cut',label:'剪切'},{role:'copy',label:'复制'},{role:'paste',label:'粘贴'},{role:'selectAll',label:'全选'}]},
       {label:'视图',submenu:[{role:'reload',label:'重新加载'},{role:'resetZoom',label:'实际大小'},{role:'zoomIn',label:'放大'},{role:'zoomOut',label:'缩小'},{role:'togglefullscreen',label:'全屏'}]},
       {label:'帮助',submenu:[{label:'运行范围',click:()=>menu.items[0].submenu.items[0].click()}]},
@@ -78,6 +97,7 @@ else {
     window.once('ready-to-show',()=>window.show());
     window.on('closed',()=>{window=null;});
     await window.loadURL(origin+'/');
+    if(setupWindow&&!setupWindow.isDestroyed())setupWindow.close();
   }).catch(async()=>{
     if(service) await service.stop().catch(()=>{});
     // Static error only; never raw process output, local paths, keys or database details.

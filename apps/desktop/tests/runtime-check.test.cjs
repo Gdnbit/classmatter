@@ -23,9 +23,10 @@ function fixture(t, profile = 'r1') {
   const config = { profile: d1?'classmatter-owned-synthetic-conversation-d1':'class-os-owned-synthetic-v1',
     database: d1?'class_os_synthetic_conversation_local':'class_os_synthetic_local', port: 15432, pg_bin: path.join(root, 'pg') };
   function ready() {
-    for (const file of ['backend/.venv/Scripts/python.exe', 'backend/desktop.py', 'apps/desktop/node_modules/electron/index.js',
+    for (const file of ['backend/.venv/Scripts/python.exe', 'backend/desktop.py', ...(d1?['backend/desktop_setup.py']:[]), 'apps/desktop/node_modules/electron/index.js',
       stageName+'/main.cjs', stageName+'/ui/index.html', 'pg/postgres.exe', 'pg/pg_ctl.exe',
-      ...['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs'].map(name=>stageName+'/'+name)]) put(file);
+      ...['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs',
+        ...(d1?['setup-service.cjs','setup-window.cjs','setup-preload.cjs','setup.html','setup.css','setup-ui.js']:[])].map(name=>stageName+'/'+name)]) put(file);
     put(stageName+'/runtime-source.json', JSON.stringify(source));
     put(stageName+'/ui/desktop-runtime.json', JSON.stringify({ mode: d1?'synthetic-conversation-d1':'synthetic-runtime' }));
     put(runtimeName+'/runtime.json', JSON.stringify(config));
@@ -47,7 +48,8 @@ for(const profile of ['r1','conversation-d1']) test(`missing ${profile} staged d
   f.put('apps/desktop/scripts/runtime-launch.cjs',fs.readFileSync(path.join(__dirname,'../scripts/runtime-launch.cjs')));
   f.put('apps/desktop/runtime-check.cjs',fs.readFileSync(path.join(__dirname,'../runtime-check.cjs')));
   f.put('apps/desktop/model-network.cjs',fs.readFileSync(path.join(__dirname,'../model-network.cjs')));
-  for(const name of ['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs']) {
+  for(const name of ['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs',
+    ...(profile==='conversation-d1'?['setup-service.cjs','setup-window.cjs','setup-preload.cjs','setup.html','setup.css','setup-ui.js']:[])]) {
     f.ready();f.put('apps/desktop/node_modules/electron/index.js','throw new Error("should-not-load-electron")');
     const missing=path.join(f.stage,name);fs.unlinkSync(missing);
     const report=prerequisites(f.root,'win32',profile);

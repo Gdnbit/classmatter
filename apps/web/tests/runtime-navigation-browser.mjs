@@ -178,7 +178,7 @@ try {
   await page.getByRole('heading', { name: '此学生视图尚未接入', exact: true }).waitFor()
   assert.equal(await page.getByText('合成导航数据库事实', { exact: true }).count(), 0)
   await page.goto(base + '/data/spreadsheets/score-001')
-  await page.getByRole('heading', { name: '此页面尚未接入真实工作台', exact: true }).waitFor()
+  await page.getByRole('heading', { name: '此功能尚未接通', exact: true }).waitFor()
   await page.goto(base + `/students/${idA}?tab=records`); await waitEditable()
   await page.evaluate(other => history.replaceState({ studentId: other, draft: 'synthetic-untrusted-history', authority: 'owner' }, '', location.href), idB)
   await page.reload(); await waitEditable()

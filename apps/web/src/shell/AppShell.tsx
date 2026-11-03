@@ -5,6 +5,8 @@ import TopBar from "@/shell/TopBar/TopBar"
 import Sidebar from "@/shell/Sidebar/Sidebar"
 
 import MobileNav from "@/shell/MobileNav"
+import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
+import { AttentionColumns } from "@/shell/AttentionColumns"
 
 import Inspector from "@/shell/Inspector/Inspector"
 
@@ -423,17 +425,28 @@ function AppShell() {
   }
 
   return (
-    <div className="app-shell">
-      <Sidebar workspace={workspace} setWorkspace={setWorkspace} />
-      <div className="shell-main">
-        <TopBar
+    <WorkbenchFrame
+      sidebar={<Sidebar workspace={workspace} setWorkspace={setWorkspace} />}
+      header={<TopBar
           workspace={workspace}
           transaction={transaction}
           inspectorOpen={inspectorOpen}
           onInspector={() => setInspectorOpen(!inspectorOpen)}
-        />
-        <div className="body-grid" data-inspector={inspectorOpen}>
-          <main className="workspace">
+        />}
+      inspector={inspectorOpen ? <Inspector
+        activeStudent={activeStudentWithSeat}
+        transaction={transaction}
+        onSelect={selectStudent}
+        onDiscard={() => setTransaction("discarded")}
+        onCommit={commit}
+        onConfirmCommit={confirmCommit}
+        onCancelConfirm={() => setTransaction("preview-ready")}
+        onUnknown={() => setTransaction("outcome-unknown")}
+        onCheck={() => setTransaction("preview-ready")}
+      /> : null}
+      mobileNav={<MobileNav workspace={workspace} setWorkspace={setWorkspace}
+        moreOpen={mobileMoreOpen} setMoreOpen={setMobileMoreOpen} />}
+    >
             {workspace === "conversation" ? (
               <Conversation
                 key={activeConversationId}
@@ -477,29 +490,7 @@ function AppShell() {
                 onDiscuss={(student: Student) => { setWorkspace("conversation"); setInput(`关于${student.name}（学号${student.id}）：`); setInspectorOpen(true) }}
               />
             )}
-          </main>
-          {inspectorOpen && (
-            <Inspector
-              activeStudent={activeStudentWithSeat}
-              transaction={transaction}
-              onSelect={selectStudent}
-              onDiscard={() => setTransaction("discarded")}
-              onCommit={commit}
-              onConfirmCommit={confirmCommit}
-              onCancelConfirm={() => setTransaction("preview-ready")}
-              onUnknown={() => setTransaction("outcome-unknown")}
-              onCheck={() => setTransaction("preview-ready")}
-            />
-          )}
-        </div>
-      </div>
-      <MobileNav
-        workspace={workspace}
-        setWorkspace={setWorkspace}
-        moreOpen={mobileMoreOpen}
-        setMoreOpen={setMobileMoreOpen}
-      />
-    </div>
+    </WorkbenchFrame>
   )
 }
 
@@ -586,14 +577,11 @@ function Conversation({
 function Ambient({ compact = false }: { compact?: boolean }) {
   const { tasks } = useDemoWork()
   const open = useDemoTaskDetails()
-  return <div className={compact ? "ambient compact" : "ambient"}>
-    {([["需要我处理", "mine"], ["可能遗漏", "possible"], ["等待别人", "waiting"]] as const).map(([label, state]) => (
-      <section key={state}><h3>{label}</h3>
+  const column = (state: "mine" | "possible" | "waiting") => <>
         {tasks.filter(t => t.state === state).map(task => <button key={task.id} onClick={() => open(task)}>{task.title} · {task.due}<ChevronRight size={14}/></button>)}
         {!tasks.some(t => t.state === state) && <p className="demo-capability-note">暂无此类演示事项</p>}
-      </section>
-    ))}
-  </div>
+      </>
+  return <AttentionColumns compact={compact}>{[column("mine"), column("possible"), column("waiting")]}</AttentionColumns>
 }
 
 function ResponsibilityCandidate({ state, feedback, onAction }: any) {

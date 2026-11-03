@@ -53,6 +53,10 @@ import { DurableHistory, DurableComposer } from "./DurableConversation"
 import { AttributionLabel } from "./AttributionLabel"
 import { DurableExit } from "./DurableExit"
 import { WorkSummary } from "./WorkSummary"
+import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
+import { SidebarFrame } from "@/shell/Sidebar/SidebarFrame"
+import { AttentionColumns } from "@/shell/AttentionColumns"
+import "./connected-workbench.css"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -825,7 +829,7 @@ export default function R1App() {
         onProbeSession={value => { setError(""); setNotice("登录状态已只读核对；没有重新执行前次身份操作，也不据此判定它已经完成。"); setSession(value) }} />
     )
   if (runtimeProfile === "loading" || runtimeProfile === "failed") return <div className="r1-auth"><section>
-    <p role="status">{runtimeProfile === "loading" ? "正在核对真实数据入口…" : "数据入口核对失败；未回退演示或旧会话。"}</p>
+    <p role="status">{runtimeProfile === "loading" ? "正在连接本机数据…" : "数据连接失败；没有加载替代数据。"}</p>
     {error && <p role="alert">{error}</p>}
     {runtimeProfile === "failed" && <button onClick={() => setProfileRetry(value => value + 1)}>重新核对数据入口</button>}
   </section></div>
@@ -862,16 +866,17 @@ export default function R1App() {
       <p className="r1-muted">暂无事项</p>
     )
   return (
-    <div className="r1-shell">
-      <aside className="r1-sidebar">
-        <h2>
-          ClassMatter <small>合成开发 · 数据库模式</small>
-        </h2>
+    <div className="r1-shell connected-runtime">
+      <WorkbenchFrame workspaceClassName="r1-main" sidebar={
+      <SidebarFrame footer={<button className="user-area" aria-label="退出登录" disabled={busy} onClick={requestLogout}>
+        <span className="avatar">班</span><span>本机工作台<small>退出登录</small></span><LogOut size={16} />
+      </button>}>
+        <div className="scope"><strong>班事有谱 · ClassMatter</strong><span>{classroom ? `${classroom.name} · ${classroom.term_name}` : "尚未建立班级与学期"}</span></div>
         <button
-          className="r1-new"
+          className="new-chat"
           disabled={busy || durableBusy || !!runningAgent.current || (runtimeProfile === "conversation-d1" && !!durable.text.trim())}
           onClick={() => void action(async () => {
-            if (runtimeProfile === "conversation-d1") { navigation.setConversation("", "", ""); return }
+            if (runtimeProfile === "conversation-d1") { navigation.setConversation("", "", ""); setPage("conversation"); return }
             const generation = loading.current
             if (conversationId) {
               try { await request(`${workspace(session)}/agent/conversations/${conversationId}/forget`, {}, session.csrf_token) }
@@ -893,7 +898,7 @@ export default function R1App() {
           <Plus size={17} />
           新对话
         </button>
-        <nav>
+        <nav className="workspace-nav" aria-label="主要工作组件">
           {([
             ["conversation", "对话", MessageSquare],
             ["dashboard", "总览", LayoutDashboard],
@@ -950,23 +955,21 @@ export default function R1App() {
             <button disabled={busy || refreshing || !queryFresh} onClick={() => open("class")}>建立班级与学期</button>
           )}
         </section>
-        <div className="r1-future">
-          <small>后续版本</small>
-          <p>通知与责任候选 · 文件与语音 · 知识库 · 自动化</p>
-          <span>尚未启用，不作假成功演示</span>
-        </div>
-        <button
-          className="r1-logout"
-          disabled={busy}
-          onClick={requestLogout}
-        >
-          <LogOut size={16} />
-          退出登录
-        </button>
-      </aside>
-      <main className="r1-main">
-        <header className="r1-topbar">
-          <strong>{classroom?.name || "班事有谱"}</strong>
+        <section className="chat-history" aria-label="聊天列表">
+          <p className="side-kicker">聊天</p>
+          {runtimeProfile === "conversation-d1" && durable.listing?.data.map(item => <button
+            className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`}
+            key={item.thread_id} disabled={durable.blocked || !!durable.text.trim()}
+            onClick={() => { durable.select(item.thread_id); setPage("conversation") }}>
+            {item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}
+          </button>)}
+          {!durable.listing?.data.length && <p className="sidebar-empty">尚无已保存对话</p>}
+          {durable.listing?.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多会话</button>}
+        </section>
+      </SidebarFrame>
+      } header={
+        <header className="topbar r1-topbar">
+          <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "settings" ? "设置" : "班事有谱"}</strong>
           <span role={refreshing ? "status" : undefined}>
             {refreshing ? "正在读取当前班级与学期…" : classroom?.term_name || "先建立班级与学期"}
             {classroom?.status === "archived" && " · 历史只读"}
@@ -979,6 +982,7 @@ export default function R1App() {
             <RefreshCw size={16} />
           </button>
         </header>
+      }>
         {error && !form && !pending && (
           <div className="r1-error" role="alert">
             {error}
@@ -1012,7 +1016,7 @@ export default function R1App() {
           if (followingConversation.current) setNewReply(false)
         }}>
           {page === "unavailable" && <section className="r1-card">
-            <h1>此页面尚未接入真实工作台</h1>
+            <h1>此功能尚未接通</h1>
             <p>文件、成绩、排座、专题、知识库和自动化等原型能力不属于当前 R1 数据链路。这里不会加载演示数据或声称已保存。</p>
             <button onClick={() => setPage("conversation")}>返回对话</button>
             <button onClick={() => { setSelectedStudent(""); setPage("students") }}>查看已接入的学生</button>
@@ -1027,13 +1031,9 @@ export default function R1App() {
                   ? "已发送文字和完成结果由数据库保存。历史 AI 内容不是正式事实；不会因刷新而重新调用模型。"
                   : "对话仅为临时上下文，刷新或重启不保证恢复；已确认的事实与任务另由数据库保存。"}</p>
               </div>
-              <div className="r1-attention">
-                <section>
-                  <h3>需要我处理</h3>
-                  {taskCards(attention.needsAction)}
-                </section>
-                <section>
-                  <h3>可能遗漏</h3>
+              <AttentionColumns className="r1-attention">{[
+                taskCards(attention.needsAction),
+                <>
                   <p className="r1-muted">
                     R1 暂无通知责任候选。系统不依据 AI 推断自动判责。
                   </p>
@@ -1042,12 +1042,9 @@ export default function R1App() {
                       {duplicates.length} 组标识重复候选待核对
                     </button>
                   )}
-                </section>
-                <section>
-                  <h3>等待别人</h3>
-                  {taskCards(attention.waiting)}
-                </section>
-              </div>
+                </>,
+                taskCards(attention.waiting),
+              ]}</AttentionColumns>
               <div className="r1-quick">
                 <button
                   disabled={!classroom || !editable || !students.length}
@@ -1555,7 +1552,7 @@ export default function R1App() {
             </div>
           </form>
         )}
-      </main>
+      </WorkbenchFrame>
       {confirmLogout && <R1Dialog titleId="r1-logout-title" onDismiss={() => setConfirmLogout(false)}>
         <h2 id="r1-logout-title">退出并丢弃未保存草稿？</h2>
         <p>本页有未保存的小结或未发送的文字。退出登录将丢弃这些本地草稿；已保存的聊天记录和业务数据不会删除。</p>
@@ -1957,7 +1954,7 @@ function Login({
   return (
     <main className="r1-auth">
       <section>
-        <small>CLASSMATTER · 本地合成工作台</small>
+        <small>班事有谱 · CLASSMATTER</small>
         <h1>{mode === "login" ? "回到你的班级工作" : "恢复 owner 访问"}</h1>
         {error && (
           <p role="alert" className="r1-error">
@@ -2024,13 +2021,12 @@ function Login({
         <details>
           <summary>首次使用</summary>
           <p>
-            先由本机 owner 在终端运行{" "}
-            <code>uv run python local.py bootstrap</code>{" "}
-            设置密码并保存恢复码。网页不能自行获得初始化权限。
+            首次打开桌面应用时，按应用内引导设置本机密码、保存恢复码并确认初始化。
+            浏览器页面只提供登录，不提供身份初始化权限；已有实例请使用原密码。
           </p>
         </details>
         <p className="r1-muted">
-          仅合成开发数据。服务失败不会回退为 mock 数据。
+          数据保存在本机。当前仅使用合成数据，尚未开放真实师生数据。
         </p>
       </section>
     </main>

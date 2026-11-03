@@ -42,6 +42,9 @@ async function main(){
     await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
     await page.getByRole('button',{name:'登录',exact:true}).click();
     await page.getByText('已发送文字和完成结果由数据库保存。',{exact:false}).waitFor();
+    assert.equal(await page.locator('.app-shell > .sidebar .new-chat').count(),1);
+    assert.equal(await page.locator('.shell-main > .body-grid > .workspace').count(),1);
+    assert.equal(await page.locator('.r1-sidebar').count(),0);
     const history=page.getByRole('region',{name:'已保存的对话'});
     if(phase==='create'){
       await page.getByRole('button',{name:'建立班级与学期',exact:true}).click();
@@ -70,6 +73,12 @@ async function main(){
       await page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).find(item=>item.textContent.trim()==='保存名称')?.disabled);
       const receipts=await history.getByText(/^查询回执：/).allTextContents();assert.equal(receipts.length,1);
       const savedPath=new URL(page.url()).pathname;
+      const geometry=await page.locator('.r1-composer').evaluate(element=>{
+        const rect=element.getBoundingClientRect();return {top:rect.top,bottom:rect.bottom,height:innerHeight};
+      });
+      assert(geometry.top>44 && geometry.bottom<=geometry.height && geometry.bottom>=geometry.height-60,'Composer stays near the window bottom inside the original shell');
+      const evidence=path.join(desktop,'.build/evidence');fs.mkdirSync(evidence,{recursive:true});
+      await page.screenshot({path:path.join(evidence,'unified-connected-workbench.png')});
       await page.reload();
       await history.getByText('合成D1桌面持久查询',{exact:true}).waitFor();
       assert.deepEqual(await history.getByText(/^查询回执：/).allTextContents(),receipts);

@@ -24,6 +24,7 @@ import { useSessionStore } from "@/store/SessionStore"
 import type { Workspace } from "@/shell/types"
 
 import MorePopover from "./MorePopover"
+import { SidebarFrame } from "./SidebarFrame"
 import { useUiFeedback } from "@/store/UiFeedbackStore"
 import { persistentWorkspaces } from "@/data/workspaces"
 const navItems: { label: string; target: Workspace; icon: typeof Grid2X2 }[] = [
@@ -85,8 +86,18 @@ export default function Sidebar({
     return () => window.removeEventListener("keydown", key)
   }, [])
   return (
-    <aside className="sidebar">
-      <div className="sidebar-scroll">
+    <SidebarFrame footer={
+      <button className="user-area" onClick={() => setWorkspace("settings")}>
+        <span className="avatar">班</span>
+        <span>班主任<small>合成演示学校</small></span>
+        <MoreHorizontal size={17} />
+      </button>
+    } overlay={moreOpen && (
+      <MorePopover trigger={triggerRef.current} pinned={pinned}
+        onEnter={cancelClose} onLeave={scheduleClose}
+        onClose={() => { setPinned(false); setMoreOpen(false) }}
+        onSelect={setWorkspace} extras={extras} />
+    )}>
         <button
           className="scope"
           onClick={() =>
@@ -225,28 +236,6 @@ export default function Sidebar({
             <p className="sidebar-empty">没有找到相关对话</p>
           )}
         </section>
-      </div>
-      <button className="user-area" onClick={() => setWorkspace("settings")}>
-        <span className="avatar">班</span>
-        <span>
-          班主任<small>合成演示学校</small>
-        </span>
-        <MoreHorizontal size={17} />
-      </button>
-      {moreOpen && (
-        <MorePopover
-          trigger={triggerRef.current}
-          pinned={pinned}
-          onEnter={cancelClose}
-          onLeave={scheduleClose}
-          onClose={() => {
-            setPinned(false)
-            setMoreOpen(false)
-          }}
-          onSelect={setWorkspace}
-          extras={extras}
-        />
-      )}
-    </aside>
+    </SidebarFrame>
   )
 }

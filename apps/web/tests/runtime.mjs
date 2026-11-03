@@ -530,6 +530,11 @@ try {
   try {
     await page.getByRole('button', { name: '总览', exact: true }).click();
     await page.getByRole('button', { name: '对话', exact: true }).click();
+    // Navigation renders asynchronously in the shared shell. Establish the
+    // retained conversation before taking the cancellation baseline, rather
+    // than counting the outgoing dashboard's absent message elements.
+    await page.getByRole('heading', { name: '今天想处理什么？', exact: true }).waitFor();
+    await expectLatestSourceInViewport();
     const answersBeforeStop = await page.locator('.r1-messages article.assistant').count();
     await page.getByLabel('输入消息').fill('合成取消后迟到结果不得采纳');
     await page.getByRole('button', { name: '发送消息', exact: true }).click();
