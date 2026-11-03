@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.workbench-capabilities.v1",
+      "default": "classmatter.workbench-capabilities.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "profile": {
+      "const": "workbench-d2",
+      "title": "Profile",
+      "type": "string"
+    },
+    "data_mode": {
+      "const": "synthetic-only",
+      "title": "Data Mode",
+      "type": "string"
+    },
+    "history_protocol": {
+      "const": "classmatter.conversation-history.v2",
+      "title": "History Protocol",
+      "type": "string"
+    },
+    "document_protocol": {
+      "const": "classmatter.document.v1",
+      "title": "Document Protocol",
+      "type": "string"
+    },
+    "complete_exit": {
+      "const": false,
+      "title": "Complete Exit",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "profile",
+    "data_mode",
+    "history_protocol",
+    "document_protocol",
+    "complete_exit"
+  ],
+  "title": "WorkbenchCapabilities",
+  "type": "object"
+}

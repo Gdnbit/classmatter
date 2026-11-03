@@ -2,6 +2,24 @@
 
 当前状态以页首最新日期的证据及下方能力表为准；后续日期段落是当时的工程结果。离线夹具与连接数据库的工程配置必须区分，但不应成为用户需要选择的两套工作台。后端及隔离R1/D1通过不代表原型整体接线或生产准入完成。
 
+## 2026-11-04 文档与原领域同服务装配（候选，尚未启用本机UI）
+
+承接HTTP提交970916f / PR57。新增Workbench gateways/store/typed factory，复用原BCG事务与Pydantic AI，不创建第二工作台、身份或数据库。文档、原学生/任务及对话共享同一Owner/class/term和原receipt/audit；D2仅原生未转移/导入/退役实例可用，旧文件先落地fence也拒绝。capabilities显式D2及complete_exit=false，旧D1 capabilities不在D2注册；原API和durable视图的审计v2包含全部文档动作，其他旧wire schema不修改。默认desktop/local配置仍是D1，用户实例未迁移或重启。
+
+首次集成4项为3失败/1通过：W1任务测试误调用批准、FastAPI当前路由包装不直接暴露path，两处按实际API修正；真正的领域兼容性问题是旧对话校验器拒绝新增document.read审计。新增闭集审计组合，三个文档只读动作全量校验后分区，共用BCG命令审计不移除，原D1校验器和native结果commit校验保留；未知动作/重复/越权字段仍拒绝。基础4通过19.43秒；加入旧fence与前置文档规则/存储回归后36通过84.89秒。
+
+完整离线SDK端到端进一步捕获两个严格类型准入点：ResultCapture和typed历史阅读器原来只接受原D1类型。分别只新增完整证据校验的显式D2类型，未改为宽泛isinstance或任意注册；后续补未登记子类拒绝断言。修复后原Pydantic AI查询工具→来源与回答入库→SSE完成→新SDK/应用重建→对话及同库文档重读通过，专项连同原ResultCapture测试4通过17.31秒。临时诊断仅记录异常类型/代码位置，定位后已移除trace和方法替换，最终不带诊断的回归另列；不保留凭据/提示词/数据体或改变失败关闭。
+
+最终不带诊断回归：文档组合/新审计/旧durable HTTP/旧SDK/旧control组合71通过265.91秒；补充旧类型不得伪装D2、未登记typed reader子类拒绝后的新旧SDK与ResultCapture专项7通过43.71秒。全非DB727通过、4宿主跳过、653 DB另验，115.71秒；8项已有Google适配器弃用告警保留，不静默换SDK或修改锁。原R1/D1类型仍按原协议工作，D2只能显式固定装配；同库HTTP审计包含document.read且capabilities不谎报D1。其余静态、原生回归、公开扫描和独立双平台CI按本单元最终日志补记。
+
+原D1实际Electron/PostgreSQL重启回归1通过89.31秒；根82自测25.75秒、7静态套件/75份Markdown及contract漂移检查通过。仅新增workbench capabilities/审计v2两份schema，原R1/D1 wire snapshot不变；18个文件内容/来源逐项审核并登记真实SHA-256。固定8.30.1文件及全历史扫描4既有已审查、0未解决，不增加豁免。无真实Provider调用、外部师生数据或费用；当前用户窗口/数据库未停止、迁移或覆盖。
+
+价值验证是同一数据世界真实持久化和恢复读取的工程证据，不是教师减负已验证；老师无需为组合服务维护新字段。原编辑器、免密码D2运行装配、同实例安全升级及完整退出尚未完成，成绩/座位仍待实现。正式R1需求/Eval/Task/Gate和真实数据权限不变，仍追溯D2-DOC后续合成开发。源码/两份新增schema/测试为本轮自编或固定导出，无私有访谈或真实人员资料；公开哈希、固定扫描与独立CI均需当前单元验收，不借用父分支。
+
+已验收存储PR56精确headf41af69的完整Windows/Ubuntu CI41674890829成功，按expected head合入main：42f4396b8672f3aa86bfa16636e627e8650d2866。HTTP/客户端PR57已改基main，CI41677285285仍待完成。没有将当前未提交的组合代码混入已通过的PR56，未覆盖其他工作树/私有库。
+
+后续精确head970916f的完整Windows/Ubuntu CI41677285285也成功；只读fetch确认main仍是42f4396且与其存储head源树相同，没有并发源码变更。PR57已按expected head合入main：d2e382b677257c9a9b2f769f363a4347f756abac。当前组合单元保持独立提交/PR及自己的完整CI，不借用前两项检查；默认启动仍未切到D2，后续必须接同实例升级、免密码宿主与原文档编辑器，不建立空的第二数据世界。
+
 ## 2026-11-04 文档 HTTP/typed client 子单元（原页面未装配）
 
 承接存储提交f41af69 / PR56，新增显式文档HTTP adapter及固定客户端。新增路由仍只转交原BCG preview/approve/reject/commit/receipt；没有新写引擎或Agent写工具。默认R1/D1 composition不启用文档模块，缺失或身份/store不一致的装配拒绝。11份固定schema由Python导出，原schema不变；前端复用既有Ajv严格构建时生成，未知字段、非工作草稿权威或范围/版本不匹配均不采纳。

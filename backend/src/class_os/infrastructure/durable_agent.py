@@ -18,7 +18,13 @@ from .agent import PydanticAgentRuntime
 
 class DurableChatRuntime:
     def __init__(self, worker, query, runtime):
-        if (type(worker) is not ConversationWorkerGateway or type(query) is not ConversationInteractionQuery
+        from class_os.application.workbench import WorkbenchBusinessGateway, WorkbenchQueryGateway
+        from .workbench import WorkbenchStore
+        legacy = (type(worker) is ConversationWorkerGateway and type(query) is ConversationInteractionQuery
+                  and getattr(getattr(worker.store, 'database', None), 'profile', None) != 'workbench-d2')
+        workbench = (type(worker) is WorkbenchBusinessGateway and type(query) is WorkbenchQueryGateway
+                     and type(worker.store) is WorkbenchStore and worker.store.database.profile == 'workbench-d2')
+        if (not (legacy or workbench)
                 or type(runtime) is not PydanticAgentRuntime or runtime.query is not query
                 or worker.store is not query.store or worker.identity is not query.identity):
             raise ValueError("Exact scoped D1 composition required")

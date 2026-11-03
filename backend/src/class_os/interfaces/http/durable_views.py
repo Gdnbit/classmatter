@@ -84,10 +84,16 @@ class ExitPreview(WireModel):
     payload: ExitPayload
 
 
-def router(query, worker):
+def router(query, worker, *, workbench=False):
     from class_os.application.conversation_interaction import ConversationInteractionQuery
-    if type(query) is not ConversationInteractionQuery:
+    from class_os.application.workbench import WorkbenchQueryGateway, WorkbenchBusinessGateway
+    if (type(workbench) is not bool or (not workbench and type(query) is not ConversationInteractionQuery)
+            or (workbench and (type(query) is not WorkbenchQueryGateway or type(worker) is not WorkbenchBusinessGateway))):
         raise ValueError("Exact attributed D1 query required")
+    audit_model = AuditResponse
+    if workbench:
+        from .workbench import WorkbenchAuditResponse
+        audit_model = WorkbenchAuditResponse
     routes = APIRouter(prefix="/api/workspaces/{workspace_id}/conversation-d1")
 
     @routes.get("/exit/summary", response_model=ExitSummary)
@@ -112,9 +118,10 @@ def router(query, worker):
         return JSONResponse(artifact.bundle, headers={"content-disposition":
             f'attachment; filename="classmatter-synthetic-conversation-{export_id}.json"'})
 
-    @routes.get("/capabilities", response_model=CapabilitiesResponse)
     def capabilities(workspace_id: UUID, request: Request):
         return query.conversation_capabilities(*credentials(request, workspace_id))
+    if not workbench:
+        routes.get('/capabilities', response_model=CapabilitiesResponse)(capabilities)
 
     @routes.get("/classes/{class_id}/terms/{term_id}/activity", response_model=ActivityResponse)
     def activity(workspace_id: UUID, class_id: UUID, term_id: UUID, request: Request):
@@ -124,7 +131,7 @@ def router(query, worker):
     def timeline(workspace_id: UUID, class_id: UUID, term_id: UUID, student_id: UUID, request: Request):
         return {"data": query.projection(*credentials(request, workspace_id), class_id, term_id, student_id=student_id)}
 
-    @routes.get("/classes/{class_id}/terms/{term_id}/audit", response_model=AuditResponse)
+    @routes.get("/classes/{class_id}/terms/{term_id}/audit", response_model=audit_model)
     def audit(workspace_id: UUID, class_id: UUID, term_id: UUID, request: Request):
         return query.audit_log(*credentials(request, workspace_id), class_id, term_id)
 
