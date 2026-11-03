@@ -19,7 +19,7 @@
     "check:runtime:d1": "node runtime-check.cjs --profile conversation-d1",
     "open:runtime:d1": "node scripts/runtime-build.cjs --profile conversation-d1 && node scripts/runtime-launch.cjs --profile conversation-d1",
     "package": "node scripts/package.cjs",
-    "test": "node --test tests/policy.test.cjs tests/runtime-service.test.cjs tests/runtime-check.test.cjs",
+    "test": "node --test tests/policy.test.cjs tests/runtime-service.test.cjs tests/runtime-check.test.cjs tests/model-network.test.cjs",
     "test:desktop": "node tests/smoke.cjs"
   },
   "devDependencies": {
