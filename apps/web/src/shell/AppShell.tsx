@@ -7,6 +7,7 @@ import Sidebar from "@/shell/Sidebar/Sidebar"
 import MobileNav from "@/shell/MobileNav"
 import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
 import { AttentionColumns } from "@/shell/AttentionColumns"
+import { StudentPageTitle, StudentViewSwitcher, StudentRosterTable, StudentProfileHeader } from "@/shell/StudentPresentation"
 
 import Inspector from "@/shell/Inspector/Inspector"
 
@@ -2155,24 +2156,11 @@ function StudentDetailWorkspace({ studentId, activeTab, onBack, onDiscuss }: any
   }
   return (
     <div className="surface student-detail-page">
-      <button className="back-link" onClick={onBack}>
-        <ChevronLeft size={16} /> 返回学生列表
-      </button>
-      <header className="student-profile-head">
-        <span className="profile-avatar">{student.name[0]}</span>
-        <div>
-          <p className="eyebrow">学生详情 · 合成样例，非真实人物事实</p>
-          <h1>{student.name}</h1>
-          <p>{student.id} · 合成演示班 · 在读</p>
-        </div>
-        <button
-          className="primary"
-          onClick={() => onDiscuss(student)}
-        >
-          添加记录
-        </button>
-        <button className="object-discuss" onClick={() => onDiscuss(student)}>围绕此学生对话</button>
-      </header>
+      <StudentProfileHeader name={student.name} identity={`${student.id} · 合成演示班 · 在读`}
+        description="合成样例，非真实人物事实" onBack={onBack} actions={<>
+          <button className="primary" onClick={() => onDiscuss(student)}>添加记录</button>
+          <button className="object-discuss" onClick={() => onDiscuss(student)}>围绕此学生对话</button>
+        </>} />
       <div className="view-switcher" role="tablist" aria-label="学生详情栏目">
         {tabs.map(([label, id]) => (
           <button
@@ -2234,32 +2222,10 @@ function StudentWorkspace({
 }: any) {
   const [view, setView] = useState("清单")
   const [query, setQuery] = useState("")
-  const views = ["清单", "表格", "座位", "宿舍", "小队", "画布"]
   return (
     <div className="surface student-surface">
-      <div className="surface-title">
-        <span className="surface-icon">
-          <Users size={22} />
-        </span>
-        <div>
-          <p className="eyebrow">共享实体 · 多视图</p>
-          <h1>{title}</h1>
-          <p>同一学生、范围、筛选与选中状态在所有视图中持续保留。</p>
-        </div>
-      </div>
-      <div className="view-switcher" role="tablist" aria-label="学生视图切换">
-        {views.map((item) => (
-          <button
-            role="tab"
-            aria-selected={view === item}
-            className={view === item ? "active" : ""}
-            onClick={() => setView(item)}
-            key={item}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
+      <StudentPageTitle title={title} description="同一学生、范围、筛选与选中状态在所有视图中持续保留。" />
+      <StudentViewSwitcher current={view} onSelect={setView} />
       {(view === "清单" || view === "表格") && <div className="student-search">
         <label htmlFor="demo-student-search">搜索学生</label>
         <input id="demo-student-search" type="search" placeholder="输入姓名或学号" value={query} onChange={event => setQuery(event.target.value)} />
@@ -2365,35 +2331,13 @@ function TablePreview({ selectStudent, activeStudentId, query = "" }: any) {
   const { students } = useMockDomainStore()
   const matches = students.filter(student => `${student.name} ${student.id}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   return (
-    <div className="data-table">
-      <div className="table-head">
-        <span>学生</span>
-        <span>学号</span>
-        <span>座位</span>
-        <span>状态</span>
-      </div>
+    <>
       <p className="student-result-count" role="status">共 {matches.length} 位演示学生</p>
       {matches.length === 0 && <p className="student-empty">未找到匹配学生。请检查姓名或学号，或清空搜索；未自动创建或匹配其他身份。</p>}
-      {matches.map((s) => (
-        <button
-          key={s.id}
-          onClick={() => selectStudent(s.id)}
-          className={
-            activeStudentId === s.id ? "table-row selected" : "table-row"
-          }
-        >
-          <span>
-            <i className="avatar">{s.name[0]}</i>
-            {s.name}
-          </span>
-          <span>{s.id}</span>
-          <span>{s.seat}</span>
-          <span>
-            <b>在读</b>
-          </span>
-        </button>
-      ))}
-    </div>
+      <StudentRosterTable rows={matches.map(student => ({ id: student.id, name: student.name,
+        cells: [student.id, student.seat, <b>在读</b>] }))} columns={["学生", "学号", "座位", "状态"]}
+        selectedId={activeStudentId} onSelect={selectStudent} />
+    </>
   )
 }
 function GridPreview() {

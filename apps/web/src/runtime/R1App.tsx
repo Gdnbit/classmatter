@@ -56,6 +56,7 @@ import { WorkSummary } from "./WorkSummary"
 import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
 import { SidebarFrame } from "@/shell/Sidebar/SidebarFrame"
 import { AttentionColumns } from "@/shell/AttentionColumns"
+import { StudentPageTitle, StudentViewSwitcher, StudentProfileHeader } from "@/shell/StudentPresentation"
 import "./connected-workbench.css"
 
 const kinds: Record<string, string> = {
@@ -868,7 +869,7 @@ export default function R1App() {
   return (
     <div className="r1-shell connected-runtime">
       <WorkbenchFrame workspaceClassName="r1-main" sidebar={
-      <SidebarFrame footer={<button className="user-area" aria-label="退出登录" disabled={busy} onClick={requestLogout}>
+      <SidebarFrame footer={<button className="user-area r1-logout" aria-label="退出登录" disabled={busy} onClick={requestLogout}>
         <span className="avatar">班</span><span>本机工作台<small>退出登录</small></span><LogOut size={16} />
       </button>}>
         <div className="scope"><strong>班事有谱 · ClassMatter</strong><span>{classroom ? `${classroom.name} · ${classroom.term_name}` : "尚未建立班级与学期"}</span></div>
@@ -913,7 +914,7 @@ export default function R1App() {
                 termLoad.current++
                 setTermMetadata(null)
                 setPage(id)
-                if (id === "students") setStudentView("list")
+                if (id === "students") { setStudentView("list"); setSelectedStudent("") }
                 setTask(null)
               }}
             >
@@ -1133,13 +1134,15 @@ export default function R1App() {
           )}
           {page === "students" && (
             <>
-              <div className="r1-heading">
-                <h1>{selected ? selected.name : "学生"}</h1>
-                <p>姓名不是唯一身份，关联使用稳定 ID。</p>
-              </div>
-              <div className="r1-toolbar">
-                <button aria-pressed={studentView === "list"} onClick={() => setStudentView("list")}>列表</button>
-                <button aria-pressed={studentView === "table"} onClick={() => setStudentView("table")}>表格</button>
+              {selected ? <StudentProfileHeader name={selected.name}
+                identity={`${selected.student_id} · ${classroom?.name || ""} · ${selected.status === "inactive" ? "已停用" : "在班"}`}
+                description="当前班级与学期的已查询数据；事实、观察与草稿保持区分。"
+                onBack={() => { setSelectedStudent(""); setRecord(null); setTask(null) }}
+                actions={<button className="primary" disabled={!canEditStudent || busy} onClick={() => { setRecord(null); open("record") }}>添加记录</button>} />
+                : <StudentPageTitle title="学生" description="同一学生、范围、筛选与选中状态在清单和表格中持续保留。" />}
+              {!selected && <StudentViewSwitcher current={studentView === "list" ? "清单" : "表格"} connected
+                onSelect={view => setStudentView(view === "表格" ? "table" : "list")} />}
+              {!selected && <div className="r1-toolbar student-search">
                 <input
                   aria-label="搜索学生"
                   placeholder="搜索姓名或内部 ID"
@@ -1158,17 +1161,12 @@ export default function R1App() {
                 >
                   添加学生
                 </button>
-                {selected && (
-                  <button onClick={() => { setSelectedStudent(""); setSearch(""); setRecord(null); setTask(null) }}>
-                    返回全部学生
-                  </button>
-                )}
-              </div>
+              </div>}
               {!classroom ? (
                 <p>请先建立班级与学期。</p>
               ) : (
                 <div className={`r1-student-layout${studentView === "table" ? " r1-student-table-layout" : ""}`}>
-                  <div className="r1-student-list">
+                  {!selected && <div className="r1-student-list">
                     <p className="r1-muted" role="status">显示 {matchingStudents.length} / {students.length} 位学生</p>
                     <StudentDirectory students={matchingStudents} activity={activity} selectedId={selectedStudent} view={studentView} disabled={navigationBlocked}
                       onSelect={id => { setSelectedStudent(id); setRecord(null); setTask(null) }} />
@@ -1178,12 +1176,12 @@ export default function R1App() {
                     {!!students.length && !matchingStudents.length && (
                       <p className="r1-muted">没有匹配的学生。请清空搜索或核对内部 ID；不会自动匹配其他人。</p>
                     )}
-                  </div>
+                  </div>}
                   <section>
                     {selectedStudent && !selected && <p className="r1-warning" role="status">{queryFresh ? "此学生不在当前已授权班级查询中。请明确选择名单中的学生；不会自动替换为其他人。" : "正在核对所选学生；当前快照不能确认此对象。"}</p>}
-                    {selected && <nav className="r1-toolbar" aria-label="学生详情视图">
+                    {selected && <nav className="view-switcher" aria-label="学生详情视图">
                       {([["overview", "概览"], ["timeline", "时间线"], ["tasks", "跟进"], ["records", "记录"]] as const).map(([tab, label]) =>
-                        <button key={tab} aria-pressed={studentTab === tab} onClick={() => setStudentTab(tab)}>{label}</button>)}
+                        <button key={tab} className={studentTab === tab ? "active" : undefined} aria-pressed={studentTab === tab} onClick={() => setStudentTab(tab)}>{label}</button>)}
                     </nav>}
                     {selected && studentTab === "unavailable" && <section className="r1-card"><h2>此学生视图尚未接入</h2><p>成绩、文件和关系不是当前查询字段；不展示样例画像。</p><button onClick={() => setStudentTab("overview")}>返回学生概览</button></section>}
                     {selected && (studentTab === "overview" || studentTab === "tasks") && (
