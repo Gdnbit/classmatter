@@ -63,6 +63,28 @@ Electron 的安装脚本由 `pnpm-workspace.yaml` 精确允许；若机器全局
 
 ## 合成持久化开发入口（W2-01，非发行版）
 
+### Explicit model transport for the owned desktop service
+
+2026-11-03：桌面开发入口可将操作者显式许可的模型端点及可选本机代理传入自有后端。先准备已有合成实例、启动PG并由本人设置Owner，再在本目录构建和启动：
+
+```powershell
+pnpm build:runtime
+node scripts/runtime-launch.cjs --model-api-base-url https://generativelanguage.googleapis.com/v1beta/openai/ --model-api-proxy http://127.0.0.1:7890
+```
+
+独立D1实例使用：
+
+```powershell
+pnpm build:runtime:d1
+node scripts/runtime-launch.cjs --profile conversation-d1 --model-api-base-url https://generativelanguage.googleapis.com/v1beta/openai/ --model-api-proxy http://127.0.0.1:7890
+```
+
+代理可省略；示例不启动代理、不改变系统设置。端点最多4个、参数逐个重复，只允许无凭据/查询/片段的HTTPS或127.0.0.1开发HTTP；代理只接受规范`http://127.0.0.1:PORT`。UI中保存的base URL必须与许可值精确一致，包括末尾斜杠。启动参数不接受Key、模型自动选择或自动启用；诊断Key不会导入。此处仅提供通道许可，仍需本人登录，经原BCG预览/批准/提交保存配置、显式合成连接测试并启用。没有通过连接测试不能直接启用，默认仍离线。
+
+可信本机快捷方式可以保留这些非秘密参数，修改后须正常退出并重新启动；第二实例仅聚焦原窗口，不更新运行中权限。不带参数重开，已保存配置仍在，通道许可恢复关闭。不新增renderer接口、IPC、runtime-source字段或存储Schema，不自动初始化/迁移数据库。只支持现有合成开发入口，不等于免安装发行或真实Provider质量验收。
+
+`test_desktop_model_network.py`及`runtime-model-network.cjs`使用一次性自有PG/Owner与假Key，验证实际Electron→自有Python→原BCG/QG、未测试启用被拒绝、重启后网络默认关闭，以及零模型测试/启用/调用审计；不调用外部API。保留原桌面关闭、下载、进程证明及D1回归断言。
+
 ### D1 独立入口候选（2026-10-27，整单元验收仍在进行）
 
 只有显式 `pnpm build:runtime:d1`、`pnpm check:runtime:d1`、`pnpm open:runtime:d1` 选择新D1根和数据库；旧命令仍R1，`pnpm start`仍离线Demo。D1默认端口8001、独立用户配置目录与session partition，不停止或接管占用8000的服务。先由操作者按后端README在全新授权根完成D1初始化、本人Owner设置、原Risk.X control初始化并启动PG。不得迁移已有R1、复制DPAPI或手改运行描述以绕过检查。

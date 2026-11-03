@@ -4,7 +4,14 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {desktopService}=require('./runtime-service.cjs');
 const {allowed,CSP,exitDownload}=require('./runtime-policy.cjs');
+const {networkFromSwitches}=require('./model-network.cjs');
 let source,d1=false,sourceInvalid=false;
+let modelNetwork;
+try {
+  modelNetwork=networkFromSwitches(
+    app.commandLine.hasSwitch('classmatter-model-api-bases')?app.commandLine.getSwitchValue('classmatter-model-api-bases'):undefined,
+    app.commandLine.hasSwitch('classmatter-model-api-proxy')?app.commandLine.getSwitchValue('classmatter-model-api-proxy'):undefined);
+} catch {sourceInvalid=true;}
 try {
   source=JSON.parse(fs.readFileSync(path.join(__dirname,'runtime-source.json'),'utf8'));
   const keys=Object.keys(source).sort().join(',');
@@ -37,7 +44,7 @@ else {
       if(window) window.close();
       // No automatic replay or reattachment after a service crash.
       app.quit();
-    },source.runtimeRoot,d1?'conversation-d1':'r1',d1?source.servicePort:8000);
+    },source.runtimeRoot,d1?'conversation-d1':'r1',d1?source.servicePort:8000,modelNetwork);
     origin=await service.start();
     const isolated=session.fromPartition(d1?'classmatter-synthetic-d1':'classmatter-synthetic-runtime');
     isolated.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
@@ -57,7 +64,7 @@ else {
     window.webContents.on('will-attach-webview',event=>event.preventDefault());
     window.on('page-title-updated',event=>event.preventDefault());
     const menu=Menu.buildFromTemplate([
-      {label:'文件',submenu:[{label:'关于运行模式',click:()=>dialog.showMessageBox(window,{type:'info',message:'合成持久化开发模式',detail:'复用现有R1业务页面和后端；不是完整冻结UX迁移或正式发行。仅合成数据。关闭时停止本次API进程，不初始化/迁移/停止数据库。仅允许已批准的JSON退出包下载并由你选择保存位置。真实模型和系统工具未启用。'})},{role:'quit',label:'退出'}]},
+      {label:'文件',submenu:[{label:'关于运行模式',click:()=>dialog.showMessageBox(window,{type:'info',message:'合成持久化开发模式',detail:'复用现有R1业务页面和后端；不是完整冻结UX迁移或正式发行。仅合成数据。关闭时停止本次API进程，不初始化/迁移/停止数据库。仅允许已批准的JSON退出包下载并由你选择保存位置。'+(modelNetwork.bases.length?'本次允许手动配置模型端点；仍需登录、保存配置、连接测试和明确启用，默认离线。系统命令工具未开放。':'真实模型和系统工具未启用。')})},{role:'quit',label:'退出'}]},
       {label:'编辑',submenu:[{role:'undo',label:'撤销'},{role:'redo',label:'重做'},{role:'cut',label:'剪切'},{role:'copy',label:'复制'},{role:'paste',label:'粘贴'},{role:'selectAll',label:'全选'}]},
       {label:'视图',submenu:[{role:'reload',label:'重新加载'},{role:'resetZoom',label:'实际大小'},{role:'zoomIn',label:'放大'},{role:'zoomOut',label:'缩小'},{role:'togglefullscreen',label:'全屏'}]},
       {label:'帮助',submenu:[{label:'运行范围',click:()=>menu.items[0].submenu.items[0].click()}]},

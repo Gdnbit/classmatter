@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 import sys
 import threading
+from dataclasses import replace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
@@ -15,6 +16,8 @@ def main():
     parser.add_argument("--runtime-root", type=Path)
     parser.add_argument("--profile", choices=("r1", "conversation-d1"), default="r1")
     parser.add_argument("--parent-pipe", action="store_true")
+    parser.add_argument("--model-api-base-url", action="append", default=[])
+    parser.add_argument("--model-api-proxy")
     args = parser.parse_args()
     key = os.environ.pop("CLASSMATTER_DESKTOP_PROCESS_KEY", "")
     if not re.fullmatch(r"[a-f0-9]{64}", key):
@@ -26,7 +29,10 @@ def main():
     from class_os.interfaces.http.web import mount_web
     from class_os.interfaces.http.desktop_host import install_desktop_proof
     import uvicorn
-    settings = Settings.from_env(os.environ)
+    settings = replace(Settings.from_env(os.environ), model_api_bases=tuple(args.model_api_base_url),
+                       model_api_proxy=args.model_api_proxy)
+    if len(set(args.model_api_base_url)) != len(args.model_api_base_url) or (args.model_api_proxy is not None and not args.model_api_base_url):
+        raise ValueError("Invalid model transport options")
     runtime = LocalRuntime(args.runtime_root, profile=args.profile)
     if args.profile == "conversation-d1":
         from class_os.infrastructure.durable_local_runtime import compose as compose_d1

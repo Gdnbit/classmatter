@@ -13,7 +13,7 @@ const result=spawnSync(process.execPath,[path.join(web,'node_modules/vite/bin/vi
 if(result.status!==0)process.exit(1);
 fs.mkdirSync(stage,{recursive:true});
 fs.copyFileSync(path.join(desktop,'runtime-main.cjs'),path.join(stage,'main.cjs'));
-for(const file of ['runtime-service.cjs','runtime-policy.cjs','preload.cjs'])fs.copyFileSync(path.join(desktop,file),path.join(stage,file));
+for(const file of ['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs'])fs.copyFileSync(path.join(desktop,file),path.join(stage,file));
 fs.writeFileSync(path.join(stage,'package.json'),JSON.stringify({name:'classmatter-synthetic-runtime',version:'0.1.0',main:'main.cjs'}));
 fs.writeFileSync(path.join(stage,'runtime-source.json'),JSON.stringify(d1
   ? {schema_version:2,repositoryRoot:root,runtimeRoot:path.join(root,'.local-runtime/synthetic-conversation-d1'),profile:'conversation-d1',servicePort:8001}

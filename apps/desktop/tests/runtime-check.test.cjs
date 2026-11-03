@@ -70,6 +70,7 @@ test('actual launcher rejects missing prerequisites and malformed/fixture source
   const f = fixture(t);
   f.put('apps/desktop/scripts/runtime-launch.cjs', fs.readFileSync(path.join(__dirname, '../scripts/runtime-launch.cjs')));
   f.put('apps/desktop/runtime-check.cjs', fs.readFileSync(path.join(__dirname, '../runtime-check.cjs')));
+  f.put('apps/desktop/model-network.cjs', fs.readFileSync(path.join(__dirname, '../model-network.cjs')));
   function reject() {
     const result = spawnSync(process.execPath, [path.join(f.root, 'apps/desktop/scripts/runtime-launch.cjs')], { encoding: 'utf8', windowsHide: true, timeout: 5000 });
     assert.equal(result.status, 2, result.stderr);

@@ -4,6 +4,7 @@ const { randomBytes, createHmac, timingSafeEqual } = require('node:crypto');
 const http = require('node:http');
 const path = require('node:path');
 const fs = require('node:fs');
+const { validateNetwork } = require('./model-network.cjs');
 
 function serviceURL(value) {
   try {
@@ -95,7 +96,8 @@ class OwnedService {
   }
 }
 
-function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, profile = 'r1', servicePort = profile === 'conversation-d1' ? 8001 : 8000) {
+function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, profile = 'r1', servicePort = profile === 'conversation-d1' ? 8001 : 8000, modelNetwork) {
+  const network=validateNetwork(modelNetwork);
   if (!['r1', 'conversation-d1'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
   if (!Number.isInteger(servicePort) || servicePort < 1024 || servicePort > 65535 || (profile === 'r1' && servicePort !== 8000)) throw new Error('Invalid owned service port');
   if (process.platform !== 'win32' || !path.isAbsolute(repositoryRoot) || !path.isAbsolute(uiRoot)) throw new Error('Unsupported desktop runtime');
@@ -111,6 +113,8 @@ function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, p
     delete env.PYTHONPATH; delete env.PYTHONHOME;
     const args = ['-I', entry, '--ui-root', ui, '--runtime-root', runtime, '--parent-pipe'];
     if (profile !== 'r1') args.push('--profile', profile);
+    for(const base of network.bases)args.push('--model-api-base-url',base);
+    if(network.proxy!==null)args.push('--model-api-proxy',network.proxy);
     return spawn(executable, args, { cwd: path.dirname(entry), env, shell: false, windowsHide: true, stdio: ['pipe', 'ignore', 'ignore'] });
   }});
 }
