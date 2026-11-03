@@ -220,7 +220,8 @@ class ConversationTransaction(BusinessTransaction):
 
     def conversation_history(self, binding, class_id, term_id, thread_id, *, before_ordinal=None, expected_version=None):
         from .recovery_admission_store import AdmissionTransaction
-        if type(self) is not AdmissionTransaction and self._connection.execute(text("""SELECT
+        from .workbench import WorkbenchTransaction
+        if type(self) not in (AdmissionTransaction, WorkbenchTransaction) and self._connection.execute(text("""SELECT
             EXISTS(SELECT 1 FROM class_os.conversation_result_receipt
                 WHERE workspace_id=:workspace_id AND thread_id=:thread AND protocol='fixed-result')
             OR EXISTS(SELECT 1 FROM class_os.conversation_query_source WHERE workspace_id=:workspace_id AND thread_id=:thread)

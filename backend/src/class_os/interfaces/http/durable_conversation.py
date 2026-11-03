@@ -200,10 +200,14 @@ class ControlPreview(WireModel):
     payload: ControlPayload
 
 
-def create_durable_app(settings, *, worker, query, sdk, readiness=None, model_controller=None):
+def create_durable_app(settings, *, worker, query, sdk, readiness=None, model_controller=None, _workbench=False):
     # Exact scoped runtime validates Gateway/store/identity composition. This is
     # an opt-in trusted factory, not a request-controlled capability selector.
     from class_os.infrastructure.durable_agent import DurableChatRuntime
+    from class_os.application.workbench import WorkbenchBusinessGateway, WorkbenchQueryGateway
+    is_workbench = type(worker) is WorkbenchBusinessGateway and type(query) is WorkbenchQueryGateway
+    if type(_workbench) is not bool or _workbench != is_workbench:
+        raise ValueError('Exact durable profile composition required')
     runtime = DurableChatRuntime(worker, query, sdk)
     if model_controller is not None:
         from class_os.infrastructure.model_control import ModelController
@@ -215,7 +219,8 @@ def create_durable_app(settings, *, worker, query, sdk, readiness=None, model_co
         sdk.provider_label = "managed-model"
         sdk.provider_state = model_controller.label
     app = create_app(settings, identity=worker.identity, business=worker, query=query, readiness=readiness,
-                     model_controller=model_controller)
+                     model_controller=model_controller,
+                     document_business=worker if _workbench else None, document_query=query if _workbench else None)
     from class_os.application.conversation_control import ControlReauthenticationRequired
     from .app import rejection
     @app.exception_handler(ControlReauthenticationRequired)
@@ -225,7 +230,10 @@ def create_durable_app(settings, *, worker, query, sdk, readiness=None, model_co
         return rejection(428, "business_rejected", request.state.request_id)
     app.include_router(router(runtime))
     from .durable_views import router as views_router
-    app.include_router(views_router(query, worker))
+    app.include_router(views_router(query, worker, workbench=_workbench))
+    if _workbench:
+        from .workbench import router as workbench_router
+        app.include_router(workbench_router(query))
     return app
 
 

@@ -79,3 +79,13 @@
 正文请求仅在模块显式启用且路径为文档preview时采用640KiB上限，覆盖100000字符被JSON转义后的体积；身份、原命令、批准等仍为原8KiB。保留重复JSON字段、NaN/Infinity、同源、Cookie、CSRF与审计失败拒绝。导出11个固定文档schema，原有schema保持字节不变；前端复用既有Ajv构建时生成模式，保持严格additionalProperties和disjoint command literals，不在浏览器编译任意schema。
 
 `runtime/documents.ts`为固定typed client，不接mock、不缓存业务数据，不自动保存/批准/重试。响应限制1MiB、严格UTF-8/日期/身份与班级学期/文档/版本/分页/来源权威核对；丢失提交结果后只由调用方显式GET原请求回执，未知结果不重放。原文档页面与运行实例尚未装配，客户端单测不能当作UI验收。
+
+## D2-DOC 与原领域共用同一服务
+
+`application/workbench.py`显式组合文档策略与既有ConversationWorkerGateway/ConversationInteractionQuery；`infrastructure/workbench.py`将原AdmissionTransaction与文档固定SQL组合，仍使用同一个BCG事务、ISB、store和数据库。没有另建写入引擎、Owner或班级。仅允许原生、未转移/导入/退役的已初始化D2；文件先落地而SQL尚未提交的旧fence也必须拒绝所有普通读取。
+
+原D1对话完整性验证使用闭集旧审计协议。D2先用`domain/workbench_audit.py`验证全部审计：仅三个新增文档读取动作归文档分区，共用BCG的命令审计仍保留在原分区；重复ID、未知动作、跨范围、伪造写回执或未来时间拒绝。原D1校验器原样验证其分区，原native结果commit校验继续执行；这只是私有对话组件证明，不能作为完整D2退出包。公共旧exit/transfer/import/retirement路径均拒绝，新的完整退出仍未交付，不默默遗漏文档。
+
+`interfaces/http/workbench.py`通过固定装配复用原durable HTTP/SSE与Pydantic AI loop，额外挂文档路由。新capabilities显式声明workbench-d2、synthetic-only、文档协议及complete_exit=false，不冒充旧D1 capabilities。审计v2包含文档动作，保留R1/D1 wire schema；对话活动/历史继续使用已验收的既有协议。结果捕获器和typed历史阅读器仅新增一个显式、完整证据校验的D2类型，不使用isinstance放行任意子类，不向模型注册新业务写工具。
+
+这仍是受测服务装配，尚非本机默认启动。运行描述、同实例备份/升级/恢复及原前端页面还未接入；不得据此迁移用户库、创建另一套空工作空间或宣称整个原型完成。现有D1组件验证的包/行数上限仍有效，不把合成开发通过当长期生产容量结论。

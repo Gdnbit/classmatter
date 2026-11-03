@@ -46,8 +46,10 @@ class CapturedResult:
 class ResultCapture:
     def __init__(self, ticket, credentials, query):
         from .conversation_interaction import ConversationInteractionQuery
+        from .workbench import WorkbenchQueryGateway
         coordinates = binding(credentials)
-        if type(ticket) is not ClaimedRun or type(query) is not ConversationInteractionQuery or coordinates[3] != ticket.scope.workspace_id:
+        if (type(ticket) is not ClaimedRun or type(query) not in (ConversationInteractionQuery, WorkbenchQueryGateway)
+                or coordinates[3] != ticket.scope.workspace_id):
             raise CommandRejected()
         self.ticket = ticket
         self.store, self.identity = query.store, query.identity

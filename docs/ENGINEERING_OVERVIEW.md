@@ -28,6 +28,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 后续HTTP子单元新增`interfaces/http/documents.py`固定DTO/路由、11份文档schema；仅由同一ISB及两document gateways显式装配，默认D1服务未启用。元数据分页带范围与快照，历史正文按版本读取；原app仅该模块preview有640KiB请求上限，其他身份/命令保持8KiB。`apps/web/src/runtime/documents.ts`、构建时Ajv validator及对应测试提供绑定/失败关闭/未知回执核对；不增加业务缓存、自动重试或runtime schema编译。原页面控制器、同实例升级与完整退出仍需后续单元，未以客户端代码替代实际UI验收。
 
+服务组合进一步由`application/workbench.py`、`infrastructure/workbench.py`及`interfaces/http/workbench.py`复用原BCG/QG/ISB、durable HTTP/SSE和Pydantic AI。仅接受显式原生D2类型与同一store，保留旧fence及typed结果证据；新增文档读取审计先闭集验证，再交原D1校验器验证其组件分区，不删除共用命令审计或忽略未知动作。公共旧退出/转移/导入拒绝；D2 capabilities和审计v2明确版本，不伪装旧D1。结果捕获/历史阅读器采用显式两个已知类型，任意子类仍拒绝。默认本机运行描述与UI尚未切换，完整D2退出/恢复准入和生产容量仍需单独验证。
+
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 
 ## Agent Runtime 与未来 Work Runtime（2026-10-22 非实施研究）

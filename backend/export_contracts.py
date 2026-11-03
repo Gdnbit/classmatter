@@ -22,6 +22,7 @@ from class_os.interfaces.http.durable_views import (ActivityResponse as DurableA
     CapabilitiesResponse as DurableCapabilities, ExitSummary as DurableExitSummary, ExitPreview as DurableExitPreview)
 from class_os.interfaces.http.documents import (DocumentCreate, DocumentRevise, DocumentState, DocumentPreview,
     DocumentReceipt, DocumentApproval, DocumentRejection, DocumentResponse, RevisionResponse, DocumentPage, RevisionPage)
+from class_os.interfaces.http.workbench import WorkbenchCapabilities, WorkbenchAuditResponse
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
 from class_os.interfaces.http.roster import (ApprovalBody, ClassBody, CommitBody, ContextResponse,
@@ -68,7 +69,8 @@ def main():
                         ("document-receipt.v1", DocumentReceipt), ("document.v1", DocumentResponse),
                         ("document-approval.v1", DocumentApproval), ("document-rejection.v1", DocumentRejection),
                         ("document-revision.v1", RevisionResponse), ("document-list.v1", DocumentPage),
-                        ("document-history.v1", RevisionPage)]:
+                        ("document-history.v1", RevisionPage), ("workbench-capabilities.v1", WorkbenchCapabilities),
+                        ("workbench-audit.v2", WorkbenchAuditResponse)]:
         target = root / f"{name}.schema.json"
         content = json.dumps(model.model_json_schema(), indent=2, ensure_ascii=False) + "\n"
         if args.check:

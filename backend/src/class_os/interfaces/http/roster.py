@@ -336,6 +336,11 @@ def credentials(request, workspace_id, *, write=False):
 
 def router(business, query):
     routes = APIRouter(prefix="/api/workspaces/{workspace_id}")
+    from class_os.application.workbench import WorkbenchQueryGateway
+    audit_model = AuditResponse
+    if type(query) is WorkbenchQueryGateway:
+        from .workbench import WorkbenchAuditResponse
+        audit_model = WorkbenchAuditResponse
 
     @routes.post("/commands/preview", response_model=PreviewResponse)
     def preview(workspace_id: UUID, request: Request, body: CommandBody):
@@ -404,7 +409,7 @@ def router(business, query):
     def activity(workspace_id: UUID, class_id: UUID, term_id: UUID, request: Request):
         return {"data": query.projection(*credentials(request, workspace_id), class_id, term_id)}
 
-    @routes.get("/classes/{class_id}/terms/{term_id}/audit", response_model=AuditResponse)
+    @routes.get("/classes/{class_id}/terms/{term_id}/audit", response_model=audit_model)
     def audit_log(workspace_id: UUID, class_id: UUID, term_id: UUID, request: Request):
         return query.audit_log(*credentials(request, workspace_id), class_id, term_id)
 
