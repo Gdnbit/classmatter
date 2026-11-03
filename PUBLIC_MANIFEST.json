@@ -444,7 +444,7 @@
       "sha256": "d6e88c0ef7ef16b47fa54331c7099e192f53688eab5d047614e4a83ba890e664"
     },
     "apps/desktop/runtime-service.cjs": {
-      "sha256": "f5897f182bdabdce58b32cf6e7673ebf87a4df6dd84a0d761986be2ddfaa2cca"
+      "sha256": "016b8862eb96bb6191027c59017ba2c40f18f3ab1af3e4eab0ebf716ba90793a"
     },
     "apps/desktop/scripts/runtime-build.cjs": {
       "sha256": "de35e772762fa26ced07d68be01fc9ef7212ec73835d0b752470e806a502f7c9"
@@ -456,10 +456,10 @@
       "sha256": "b904b1089c70c683d1438d310292f16b124f4e8c63a26facd5e28b345e96470a"
     },
     "apps/desktop/tests/runtime-service.test.cjs": {
-      "sha256": "8af2b45d494120769bb3736e46bd6a15572bdca659b4654f36d2d99c06c8b5a0"
+      "sha256": "81ccdd2f6b2d2104330bb5a0da6d73eafd7c68f4bd5a93d544593a0c82732821"
     },
     "apps/desktop/tests/service-fixture.cjs": {
-      "sha256": "850b1c445b5f69db869116d059aeb2f3c9087eb33c400df12867e7e2493350d0"
+      "sha256": "76790a6d71164f6d12b5b97b87411b1e1879e90e461ae199e2f84dbadb733c1b"
     },
     "backend/desktop.py": {
       "sha256": "a6c8fbf694362f537fdb4169ac7c7c30a98300a2b79446e72ef57b15ec272139"
@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "c7f92c25755ddf23f0a550cdae5270cfaef8ef0f0e81508bff21a6b81d817331"
+      "sha256": "540be471a615bd2cae40b896855202b1a6faeffb311785a78939555dd496a3b7"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -525,7 +525,7 @@
       "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
     },
     "apps/desktop/README.md": {
-      "sha256": "8e6bab69a1802f0b4c51215dd0fe83a70ff907c6b569ba5fc618eae5bb84fe05"
+      "sha256": "2ffb6ce2df8c703fa0abcd0ad8deb6d7e204d2d7fdb33f073b05602b6e29c829"
     },
     "apps/desktop/scripts/build.cjs": {
       "sha256": "586d17fa8f21ce2eda947c78a55d2139f4c979fd6110a9f0336d585fb777b7fc"
@@ -1450,7 +1450,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "87c000d02b2dd82472f75c259887c4b308f17049fcf08235c02ce9ca37808c1c"
+      "sha256": "57f15cb9ab80261a93278c555241afd8bffa5a73e52b2eee5a3c5fe3860230f9"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

@@ -4,6 +4,7 @@ const { randomBytes, createHmac, timingSafeEqual } = require('node:crypto');
 const http = require('node:http');
 const path = require('node:path');
 const fs = require('node:fs');
+const { performance } = require('node:perf_hooks');
 const { validateNetwork } = require('./model-network.cjs');
 
 function serviceURL(value) {
@@ -13,23 +14,34 @@ function serviceURL(value) {
   } catch { return false; }
 }
 
-function readJSON(origin, route, headers = {}) {
+function readJSON(origin, route, headers = {}, timeout = 500) {
   return new Promise((resolve, reject) => {
+    const expires=performance.now()+timeout;
+    let timer, settled=false;
+    const finish=(error,value)=>{
+      if(settled)return;
+      settled=true;clearTimeout(timer);
+      if(!error && performance.now()>=expires)error=new Error('service_timeout');
+      if(error)reject(error);else resolve(value);
+    };
     const request = http.get(origin + route, { headers, agent: false }, response => {
       let bytes = 0, body = '';
       response.on('data', chunk => {
         bytes += chunk.length;
-        if (bytes > 2048) { response.destroy(); request.destroy(new Error('invalid_service_response')); return; }
+        if (bytes > 2048) { finish(new Error('invalid_service_response')); response.destroy(); request.destroy(); return; }
         body += chunk.toString('utf8');
       });
       response.on('end', () => {
-        try { if (response.statusCode !== 200) throw new Error(); resolve(JSON.parse(body)); }
-        catch { reject(new Error('service_unavailable')); }
+        try { if (response.statusCode !== 200) throw new Error(); finish(null,JSON.parse(body)); }
+        catch { finish(new Error('service_unavailable')); }
       });
-      response.on('error', () => reject(new Error('service_unavailable')));
+      response.on('error', () => finish(new Error('service_unavailable')));
+      response.on('aborted', () => finish(new Error('service_unavailable')));
     });
-    request.setTimeout(500, () => request.destroy(new Error('service_timeout')));
-    request.on('error', () => reject(new Error('service_unavailable')));
+    // A socket inactivity timeout can be extended indefinitely by slow bytes.
+    // Bound the complete connect/headers/body exchange, not each idle interval.
+    timer=setTimeout(()=>{finish(new Error('service_timeout'));request.destroy();},timeout);
+    request.on('error', () => finish(new Error('service_unavailable')));
   });
 }
 
@@ -62,20 +74,25 @@ class OwnedService {
         if (this.state === 'ready') { this.state = 'failed'; this.onUnexpectedExit(); }
         else if (this.state === 'starting') this.state = 'failed';
       });
-      const deadline = Date.now() + this.timeout;
-      while (Date.now() < deadline && this.state === 'starting') {
+      const deadline = performance.now() + this.timeout;
+      const budget=()=>{
+        const remaining=deadline-performance.now();
+        if(remaining<=0)throw new Error('service_start_failed');
+        return Math.min(500,remaining);
+      };
+      while (performance.now() < deadline && this.state === 'starting') {
         try {
           const challenge = randomBytes(32).toString('hex');
-          const proof = await readJSON(this.origin, '/health/desktop', {'x-classmatter-challenge': challenge});
+          const proof = await readJSON(this.origin, '/health/desktop', {'x-classmatter-challenge': challenge},budget());
           if (!validProof(proof, key, challenge)) throw new Error('service_identity_mismatch');
-          const ready = await readJSON(this.origin, '/health/ready');
+          const ready = await readJSON(this.origin, '/health/ready',{},budget());
           if (ready.schema_version !== 'class-os.health.v1' || ready.mode !== 'synthetic-development' || ready.service !== 'class-os-api' || ready.status !== 'ready' || ['database','identity','business_gateways'].some(name => ready.components?.[name] !== 'connected')) throw new Error('service_not_ready');
-          if (this.state !== 'starting' || this.child.exitCode !== null || this.child.signalCode !== null) throw new Error('service_exited');
+          if (performance.now() >= deadline || this.state !== 'starting' || this.child.exitCode !== null || this.child.signalCode !== null) throw new Error('service_exited');
           this.state = 'ready';
           return this.origin;
         } catch (error) {
           if (error.message === 'service_identity_mismatch') throw error;
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, Math.max(0,Math.min(50,deadline-performance.now()))));
         }
       }
       throw new Error('service_start_failed');

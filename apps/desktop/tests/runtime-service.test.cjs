@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const { createHmac } = require('node:crypto');
 const net = require('node:net');
+const http = require('node:http');
 const path = require('node:path');
 const { OwnedService, serviceURL, validProof } = require('../runtime-service.cjs');
 const { allowed, CSP, exitDownload } = require('../runtime-policy.cjs');
@@ -75,6 +76,17 @@ for(const mode of ['wrong','not-ready','oversize','exit']) test(`startup ${mode}
   assert.equal(service.state,'stopped');
   assert.ok(child().exitCode!==null || child().signalCode!==null);
 });
+
+for(const mode of ['slow-proof','slow-ready']) test(`startup ${mode} cannot extend its deadline by dripping a valid response`,async()=>{
+  const {service,child}=await fixture(mode);
+  const started=performance.now();
+  try {
+    await assert.rejects(service.start(),/Desktop service unavailable/);
+    assert.ok(performance.now()-started<2300,'Startup must not wait for the 2600ms response');
+    assert.equal(service.state,'stopped');
+    assert.ok(child().exitCode!==null || child().signalCode!==null);
+  } finally { await service.stop(); }
+});
 test('occupied port rejects attachment and does not terminate the existing listener',async()=>{
   const server=net.createServer(socket=>socket.destroy());
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -82,4 +94,31 @@ test('occupied port rejects attachment and does not terminate the existing liste
   const service=new OwnedService({origin:`http://127.0.0.1:${port}`,timeout:600,spawnService:key=>spawn(process.execPath,[path.join(__dirname,'service-fixture.cjs'),String(port),'ready'],{env:{...process.env,CLASSMATTER_DESKTOP_PROCESS_KEY:key},windowsHide:true,stdio:'ignore'})});
   try { await assert.rejects(service.start()); assert.ok(server.listening); }
   finally { await service.stop(); await new Promise(resolve=>server.close(resolve)); }
+});
+
+test('slow occupied listener cannot hold startup open or be terminated by cleanup',async()=>{
+  let requests=0;
+  const server=http.createServer((_request,response)=>{
+    requests++;response.writeHead(200,{'content-type':'application/json'});response.write(' ');
+    const interval=setInterval(()=>response.write(' '),40);
+    const timer=setTimeout(()=>response.end('{}'),2600);
+    response.once('close',()=>{clearInterval(interval);clearTimeout(timer);});
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const port=server.address().port;
+  let child;
+  const service=new OwnedService({origin:`http://127.0.0.1:${port}`,timeout:400,spawnService:key=>{
+    child=spawn(process.execPath,[path.join(__dirname,'service-fixture.cjs'),String(port),'ready'],
+      {env:{...process.env,CLASSMATTER_DESKTOP_PROCESS_KEY:key},windowsHide:true,stdio:'ignore'});
+    return child;
+  }});
+  const started=performance.now();
+  try {
+    await assert.rejects(service.start(),/Desktop service unavailable/);
+    assert.ok(requests>0,'Actual existing listener must be exercised');
+    assert.ok(performance.now()-started<1600,'Do not await the slow listener body');
+    assert.ok(server.listening);
+    assert.equal(service.state,'stopped');
+    assert.ok(child.exitCode!==null || child.signalCode!==null);
+  } finally { await service.stop(); server.closeAllConnections(); await new Promise(resolve=>server.close(resolve)); }
 });
