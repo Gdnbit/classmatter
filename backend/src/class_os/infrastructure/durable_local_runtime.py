@@ -38,6 +38,9 @@ class OwnedD1Services:
         self.business_database.close()
         self.identity_database.close()
 
+    def surface(self, connection):
+        _surface(connection)
+
     def readiness(self):
         from .source_transfer import ProtectedSourceTransfer
         from .source_retirement import ProtectedSourceRetirement
@@ -45,7 +48,7 @@ class OwnedD1Services:
         from .recovery_admission import ProtectedTargetAdmission
         workspace = self.restrictions.workspace_id
         with self.business_database.transaction(read_only=True) as connection:
-            _surface(connection)
+            self.surface(connection)
             row = connection.execute(text("""SELECT owner_id,authority_id,epoch,head_hash,transfer_id
                 FROM class_os.conversation_control WHERE workspace_id=:workspace"""),
                 {"workspace": workspace}).mappings().one_or_none()

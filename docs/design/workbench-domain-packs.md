@@ -89,3 +89,15 @@
 `interfaces/http/workbench.py`通过固定装配复用原durable HTTP/SSE与Pydantic AI loop，额外挂文档路由。新capabilities显式声明workbench-d2、synthetic-only、文档协议及complete_exit=false，不冒充旧D1 capabilities。审计v2包含文档动作，保留R1/D1 wire schema；对话活动/历史继续使用已验收的既有协议。结果捕获器和typed历史阅读器仅新增一个显式、完整证据校验的D2类型，不使用isinstance放行任意子类，不向模型注册新业务写工具。
 
 这仍是受测服务装配，尚非本机默认启动。运行描述、同实例备份/升级/恢复及原前端页面还未接入；不得据此迁移用户库、创建另一套空工作空间或宣称整个原型完成。现有D1组件验证的包/行数上限仍有效，不把合成开发通过当长期生产容量结论。
+
+## D2-DOC 同实例升级与运行入口
+
+`workbench_upgrade.py`是受信本机operator，不是HTTP、identity pipe或Agent工具。D2复用D1同一默认目录、数据库名、Owner和受保护控制，不允许初始化空D2、通用migrate或重新bootstrap。显式`backend/local.py upgrade-workbench --profile conversation-d1`只适用于已初始化、原生且无运行服务/其他数据库客户端/在途run/转移导入退役fence的合成实例；升级不会自动关闭用户窗口、杀连接或停止其他实例。现阶段不得自动执行到用户实例；原页面、完整退出和桌面协议仍有前置依赖。
+
+顺序是：持有协调、身份、业务会话锁→原D1结构/权限/保护头核验→完整pg_dump与临时克隆pg_restore核验→DPAPI密封升级凭据→同一事务迁移0027并复核原业务库存→原描述只替换profile值并原子发布。保留原描述的编码与换行，不替换数据库/目录。既有Owner、班级、学生、任务、消息、模型配置及身份不复制到新世界。凭据仅包含固定范围标识和哈希，不含密码、正文或dump。
+
+DDL或验收失败在提交前回滚，原D1仍可用；已核验备份与失败凭据保留。重试会重新核验当前库存并归档旧凭据，不恢复旧会话或删除备份。SQL提交后配置发布失败，重试必须验证原描述哈希、既有升级凭据、Owner/范围、保护头及旧业务库存，才允许向前完成发布；不得以旧D1代码降级读取0027。成功后再次调用只验证当前证据并返回，不重复迁移。升级凭据损坏/缺失、额外连接、源fence或不一致均拒绝；失败不输出连接凭据或原始数据库异常。
+
+`workbench_local_runtime.py`显式装配同一QG/BCG/ISB/Pydantic AI及原SSE，启动/就绪必须核验D2结构、列级权限、文档历史完整性和升级凭据。NativeSetup对明确D2只复用既有开发身份，不创建Owner/control；原免密码开发入口及重新验证仍走原ISB，普通个人身份不会被开发模式接管。`serve --profile workbench-d2`是operator级显式服务入口，并未切换桌面默认profile或前端协议；备份/检查选择完整D2库存，依然complete_exit=false、activation_allowed=false。
+
+验收需覆盖原班级/学生/已完成消息保留、同一Owner、免密码进入和会话旋转、实际HTTP发现/文档列表、损坏凭据拒绝、已连接应用拒绝、迁移回滚、提交后发布失败续接、幂等重入及旧D1回归。Windows DPAPI/真实PG本机测试与现有双平台CI覆盖范围分别记录，不把Linux跳过的Windows测试算通过。完整D2可移植退出、迁移激活和原编辑器仍未交付；回滚方式是启用前撤回代码，启用后停止服务保留原库/受检checkpoint交operator处理，禁止DROP文档表或篡改迁移head。

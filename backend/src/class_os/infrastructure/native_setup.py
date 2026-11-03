@@ -19,13 +19,22 @@ from class_os.infrastructure.durable_local_runtime import _surface, open_service
 
 class NativeSetup:
     def __init__(self, runtime, *, development=False):
-        if type(runtime) is not LocalRuntime or runtime.profile != 'conversation-d1':
-            raise ValueError('Owned D1 runtime required')
+        if type(runtime) is not LocalRuntime or runtime.profile not in ('conversation-d1', 'workbench-d2'):
+            raise ValueError('Owned D1/D2 runtime required')
+        if runtime.profile == 'workbench-d2':
+            from .workbench_upgrade import verify_upgrade_receipt
+            verify_upgrade_receipt(runtime)
         self.runtime = runtime
         self.development = development is True
         self.services = self.login = self.proposal = self.operation_id = self.receipt = None
         self.client = secrets.token_urlsafe(32)
         self.commit_key = uuid4()
+
+    def _open_services(self):
+        if self.runtime.profile == 'workbench-d2':
+            from .workbench_local_runtime import open_services as open_workbench
+            return open_workbench(self.runtime)
+        return open_services(self.runtime)
 
     def close(self):
         if self.services is not None:
@@ -42,14 +51,20 @@ class NativeSetup:
         business = self.runtime.database('runtime')
         try:
             with business.transaction(read_only=True) as connection:
-                _surface(connection)
+                if self.runtime.profile == 'workbench-d2':
+                    from .workbench_local_runtime import surface
+                    surface(connection)
+                else:
+                    _surface(connection)
                 controls = connection.execute(text('SELECT count(*) FROM class_os.conversation_control')).scalar_one()
             with identity.transaction(read_only=True) as connection:
                 owners = connection.execute(text('SELECT count(*) FROM class_os.owner_account')).scalar_one()
             if owners not in (0, 1) or controls not in (0, 1) or controls > owners:
                 raise ValueError('Setup requires review')
+            if self.runtime.profile == 'workbench-d2' and (owners != 1 or controls != 1):
+                raise ValueError('Existing D2 identity and control required; no bootstrap')
             if controls:
-                services = open_services(self.runtime)
+                services = self._open_services()
                 try:
                     services.readiness()
                 finally:
@@ -76,7 +91,7 @@ class NativeSetup:
     def preview_control(self, password):
         if self.proposal is not None or self.status()['ready']:
             raise ValueError('Control setup already prepared')
-        self.services = open_services(self.runtime)
+        self.services = self._open_services()
         try:
             self.login = self.services.identity.login(password, self.client)
             auth = (self.login.token, self.client, self.login.csrf, self.login.subject.workspace_id)
@@ -134,7 +149,7 @@ class NativeSetup:
 
     def development_reauthenticate(self, client, token, csrf):
         password = self._developer_password()
-        services = open_services(self.runtime)
+        services = self._open_services()
         try:
             services.readiness()
             result = services.identity.reauthenticate(token, client, csrf, password)
@@ -166,7 +181,7 @@ class NativeSetup:
             # This does not create any student/fact/task or promote a release Gate.
             self.approve_control(proposal['operation_id'], proposal['payload_hash'], True)
             self.close()
-        services = open_services(self.runtime)
+        services = self._open_services()
         try:
             services.readiness()
             result = services.identity.login(password, self.client)
