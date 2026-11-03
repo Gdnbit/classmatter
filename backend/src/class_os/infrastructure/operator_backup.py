@@ -52,11 +52,13 @@ def encoded(value):
 
 class SyntheticBackup:
     def __init__(self, runtime, *, codec=protect, profile="r1"):
-        if profile not in ("r1", "conversation-d1"):
+        if profile not in ("r1", "conversation-d1", "workbench-d2"):
             raise ValueError("Unsupported checkpoint profile")
         self.head, self.tables = schema_profile(profile)
         self.profile = profile
-        self.kind = "class-os.owned-synthetic-backup.v1" if profile == "r1" else "classmatter.owned-conversation-backup.v1"
+        self.kind = {"r1": "class-os.owned-synthetic-backup.v1",
+                     "conversation-d1": "classmatter.owned-conversation-backup.v1",
+                     "workbench-d2": "classmatter.owned-workbench-backup.v1"}[profile]
         self.runtime, self.codec = runtime, codec
 
     def _binding(self):
@@ -122,7 +124,8 @@ class SyntheticBackup:
                     "complete_exit": False, "checkpoints": sorted(entries, key=lambda row: row["backup_id"]),
                     "pending_files": pending, "unrecognized_files": unrecognized}
             if self.profile != "r1":
-                result.update(schema_version="classmatter.conversation-backup-catalog.v1", activation_allowed=False)
+                result.update(schema_version=("classmatter.workbench-backup-catalog.v1" if self.profile == "workbench-d2"
+                                             else "classmatter.conversation-backup-catalog.v1"), activation_allowed=False)
             return result
         except Exception:
             raise BackupRejected() from None
@@ -140,6 +143,9 @@ class SyntheticBackup:
             validate_conversation_integrity(connection)
             from .target_import_store import validate_import_integrity
             validate_import_integrity(connection)
+        if profile == "workbench-d2":
+            from .documents import validate_document_integrity
+            validate_document_integrity(connection)
 
     @staticmethod
     def _inventory(connection, *, profile="r1"):
@@ -267,7 +273,7 @@ class SyntheticBackup:
         for a later import: that must establish its own commit-time authority.
         """
         from .conversation_restrictions import ProtectedConversationRestrictions
-        if (self.profile != "conversation-d1" or type(restrictions) is not ProtectedConversationRestrictions
+        if (self.profile not in ("conversation-d1", "workbench-d2") or type(restrictions) is not ProtectedConversationRestrictions
                 or restrictions.root != self.runtime.root):
             raise BackupRejected()
         return self._check(artifact, restrictions=restrictions)
@@ -318,7 +324,8 @@ class SyntheticBackup:
                     "portable": False, "complete_exit": False, "table_count": len(self.tables)}
             if self.profile != "r1":
                 result.pop("verified")
-                result.update(schema_version="classmatter.conversation-backup-check.v1",
+                result.update(schema_version=("classmatter.workbench-backup-check.v1" if self.profile == "workbench-d2"
+                                              else "classmatter.conversation-backup-check.v1"),
                               snapshot_integrity_verified=True, activation_allowed=False)
                 if current is not None:
                     result.update(current_restrictions_verified_at_check=True, observation_only=True)

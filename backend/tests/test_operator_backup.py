@@ -295,7 +295,10 @@ def test_actual_operator_cli_owned_scram_runtime(tmp_path, request, monkeypatch,
     try:
         spec = importlib.util.spec_from_file_location("class_os_test_local_backup_cli", Path(__file__).resolve().parents[1] / "local.py")
         module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
-        monkeypatch.setattr("class_os.infrastructure.local_runtime.LocalRuntime", lambda: runtime)
+        def selected_runtime(*, profile):
+            assert profile == "r1"
+            return runtime
+        monkeypatch.setattr("class_os.infrastructure.local_runtime.LocalRuntime", selected_runtime)
         monkeypatch.setattr(sys, "argv", ["local.py", "backup"])
         assert module.main() == 0
         created = json.loads(capsys.readouterr().out)
