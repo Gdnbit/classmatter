@@ -38,6 +38,29 @@ async function main(){
         await page.getByRole('dialog').waitFor({state:'hidden'});
       }
       await page.getByRole('combobox',{name:'切换班级学期'}).getByRole('option',{name:'合成免密码开发验收班 · 合成开发学期',exact:true}).waitFor({state:'attached'});
+      if(pass===0){
+        await page.getByRole('button',{name:'设置',exact:true}).click();
+        await page.getByRole('button',{name:'重新验证身份',exact:true}).click();
+        assert.equal(await page.getByRole('dialog').locator('input[type=password]').count(),0);
+        await page.getByRole('button',{name:'明确执行身份操作',exact:true}).click();
+        await page.getByRole('dialog').waitFor({state:'hidden'});
+        await page.getByText('身份已确认，会话已旋转；旧会话绑定的草稿与批准失效。',{exact:true}).waitFor();
+        await page.getByRole('button',{name:'退出登录',exact:true}).click();
+        await page.getByRole('button',{name:'进入本机开发',exact:true}).waitFor();
+        assert.equal(await page.locator('input[type=password]').count(),0);
+        await assert.rejects(page.evaluate(()=>window.classMatterDesktop.reauthenticateDevelopment()));
+        await page.getByRole('button',{name:'进入本机开发',exact:true}).click();
+        await page.locator('.app-shell > .sidebar .new-chat').waitFor();
+        await page.getByRole('combobox',{name:'切换班级学期'}).getByRole('option',{name:'合成免密码开发验收班 · 合成开发学期',exact:true}).waitFor({state:'attached'});
+        // Owned fixture only: a lost/expired browser capability must reach the
+        // same explicit passwordless re-entry, not automatic replay/login.
+        await app.evaluate(async({BrowserWindow},url)=>BrowserWindow.getAllWindows()[0].webContents.session.cookies.remove(url,'class_os_session'),`http://127.0.0.1:${port}/api`);
+        await page.reload();
+        await page.getByRole('button',{name:'进入本机开发',exact:true}).waitFor();
+        assert.equal(await page.locator('input[type=password]').count(),0);
+        await page.getByRole('button',{name:'进入本机开发',exact:true}).click();
+        await page.locator('.app-shell > .sidebar .new-chat').waitFor();
+      }
       await page.reload();await page.locator('.app-shell > .sidebar .new-chat').waitFor();
       assert.equal(await page.getByLabel('Owner 密码').count(),0);
       await app.close();app=null;

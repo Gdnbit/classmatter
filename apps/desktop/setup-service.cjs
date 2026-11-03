@@ -8,6 +8,7 @@ function validRequest(value) {
   const keys=Object.keys(value).sort().join(',');
   if(value.operation==='status')return keys==='operation';
   if(value.operation==='development_access')return keys==='operation';
+  if(value.operation==='development_reauthenticate')return keys==='client,csrf,operation,session' && ['client','csrf','session'].every(name=>typeof value[name]==='string'&&/^[A-Za-z0-9_-]{32,128}$/.test(value[name]));
   if(['create_owner','preview_control'].includes(value.operation))return keys==='operation,password' && typeof value.password==='string' && value.password.length>=16 && value.password.length<=256;
   return value.operation==='approve_control' && keys==='confirmed,operation,operation_id,payload_hash' && value.confirmed===true && typeof value.operation_id==='string' && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(value.operation_id) && typeof value.payload_hash==='string' && /^[a-f0-9]{64}$/.test(value.payload_hash);
 }

@@ -107,7 +107,22 @@ type Pending = {
   approval?: string
 }
 
+async function developmentSession(action: "enter" | "reauthenticate") {
+  const host = window.classMatterDesktop
+  const invoke = action === "enter" ? host?.enterDevelopment : host?.reauthenticateDevelopment
+  if (host?.development !== true || !invoke) throw new Error("本机开发会话不可用")
+  try {
+    await invoke()
+    return await identityRequest("session", "/api/identity/session")
+  } catch {
+    const unknown = new IdentityOutcomeUnknown()
+    unknown.message = "本机开发身份操作未确认。请点击继续重新建立会话；不会重放业务操作。"
+    throw unknown
+  }
+}
+
 export default function R1App() {
+  const localDevelopment = window.classMatterDesktop?.development === true
   const [modelRevision, setModelRevision] = useState(0)
   const [modelUncertain, setModelUncertain] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
@@ -599,7 +614,8 @@ export default function R1App() {
           ? await identityRequest("signedOut", `/api/identity/${path}`, { password: String(values.get("password") || "") }, session.csrf_token)
           : form === "reissue"
             ? await identityRequest("kit", `/api/identity/${path}`, { password: String(values.get("password") || "") }, session.csrf_token)
-            : await identityRequest("session", `/api/identity/${path}`, { password: String(values.get("password") || "") }, session.csrf_token)
+            : localDevelopment ? await developmentSession("reauthenticate")
+              : await identityRequest("session", `/api/identity/${path}`, { password: String(values.get("password") || "") }, session.csrf_token)
         runningAgent.current?.abort(); loading.current++
         setPending(null); setForm(null); setReplacingIdentifier(null); setMessages([]); setMessage(""); setConversationId("")
         setAgentDraft(null); setAgentRecordNote(null); setRecordNoteQuote(""); setAgentStatus(""); setDraftTitle(""); setExportId("")
@@ -1480,7 +1496,7 @@ export default function R1App() {
                   文件、语音、微信、长记忆和自动化均不在 R1 实现范围。
                 </p>
               </section>
-              <section className="r1-card"><h2>身份与恢复</h2><p>这些操作需要当前密码，不经 Agent。重新签发会撤销旧恢复码和全部旧会话；全部设备退出不改变密码。</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></div></section>
+              <section className="r1-card"><h2>身份与恢复</h2><p>{localDevelopment ? "本机合成开发会话无需输入密码。重新验证将旋转当前会话，旧草稿与批准失效；不会提交业务变更。" : "这些操作需要当前密码，不经 Agent。重新签发会撤销旧恢复码和全部旧会话；全部设备退出不改变密码。"}</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button>{!localDevelopment && <><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></>}</div></section>
               {runtimeProfile === "conversation-d1" ? (classroom
                 ? <DurableExit key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`} session={session} classroom={classroom}
                     disabled={busy || !queryFresh || refreshing || !!pending || !!form} onBusyChange={setExitBusy} onError={fail} />
@@ -1599,7 +1615,7 @@ export default function R1App() {
               </button>
             </header>
             <form onSubmit={submitForm}>
-              {(form === "reauth" || form === "reissue" || form === "logout-all") && <><Field label="当前密码（身份验证）" name="password" type="password" maxLength={256} /><p className="r1-muted">明确提交后执行身份操作。{form === "reissue" ? "旧恢复码与所有旧会话将失效，请离线保存仅显示一次的新码。" : form === "logout-all" ? "所有设备将立即退出；密码与未使用恢复码保持有效。" : "当前会话将旋转，旧的未提交草稿/批准失效。"}</p></>}
+              {(form === "reauth" || form === "reissue" || form === "logout-all") && <>{!(localDevelopment && form === "reauth") && <Field label="当前密码（身份验证）" name="password" type="password" maxLength={256} />}<p className="r1-muted">明确提交后执行身份操作。{form === "reissue" ? "旧恢复码与所有旧会话将失效，请离线保存仅显示一次的新码。" : form === "logout-all" ? "所有设备将立即退出；密码与未使用恢复码保持有效。" : "当前会话将旋转，旧的未提交草稿/批准失效。"}</p></>}
               {form === "class" && (
                 <>
                   <Field label="班级名称" name="name" maxLength={80} />
@@ -1945,6 +1961,16 @@ function Login({
       setPending(false)
     }
   }
+  if (window.classMatterDesktop?.development === true) return <main className="r1-auth"><section>
+    <small>班事有谱 · CLASSMATTER</small><h1>回到本机开发工作台</h1>
+    <p>开发会话已暂停或过期。点击继续即可进入，不需要密码；不会自动提交之前的操作。</p>
+    {error && <p role="alert" className="r1-error">{error}</p>}
+    <button disabled={pending || busy} onClick={() => {
+      if (pending || busy) return
+      setPending(true)
+      void developmentSession("enter").then(onSession).catch(onError).finally(() => setPending(false))
+    }}>{pending ? "正在进入…" : "进入本机开发"}</button>
+  </section></main>
   return (
     <main className="r1-auth">
       <section>
