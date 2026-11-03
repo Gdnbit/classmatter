@@ -1,0 +1,127 @@
+{
+  "$defs": {
+    "DocumentView": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "plain-text",
+            "markdown"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "operation": {
+          "enum": [
+            "document.create",
+            "document.revise",
+            "document.archive",
+            "document.restore"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "created_by": {
+          "format": "uuid",
+          "title": "Created By",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 100000,
+          "title": "Body",
+          "type": "string"
+        },
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "status",
+        "title",
+        "format",
+        "operation",
+        "created_by",
+        "created_at",
+        "body",
+        "document_id",
+        "class_id",
+        "term_id",
+        "updated_at"
+      ],
+      "title": "DocumentView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.document.v1",
+      "default": "classmatter.document.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "content_authority": {
+      "const": "working-draft",
+      "default": "working-draft",
+      "title": "Content Authority",
+      "type": "string"
+    },
+    "workspace_id": {
+      "format": "uuid",
+      "title": "Workspace Id",
+      "type": "string"
+    },
+    "data": {
+      "$ref": "#/$defs/DocumentView"
+    }
+  },
+  "required": [
+    "workspace_id",
+    "data"
+  ],
+  "title": "DocumentResponse",
+  "type": "object"
+}

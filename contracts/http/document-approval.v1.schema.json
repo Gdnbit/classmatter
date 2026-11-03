@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.document-approval.v1",
+      "default": "classmatter.document-approval.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "approval": {
+      "maxLength": 128,
+      "minLength": 32,
+      "title": "Approval",
+      "type": "string"
+    }
+  },
+  "required": [
+    "approval"
+  ],
+  "title": "DocumentApproval",
+  "type": "object"
+}

@@ -20,6 +20,8 @@ from class_os.interfaces.http.durable_conversation import (ListingResponse as Du
 from class_os.interfaces.operator.support import SupportReport
 from class_os.interfaces.http.durable_views import (ActivityResponse as DurableActivity, AuditResponse as DurableAudit,
     CapabilitiesResponse as DurableCapabilities, ExitSummary as DurableExitSummary, ExitPreview as DurableExitPreview)
+from class_os.interfaces.http.documents import (DocumentCreate, DocumentRevise, DocumentState, DocumentPreview,
+    DocumentReceipt, DocumentApproval, DocumentRejection, DocumentResponse, RevisionResponse, DocumentPage, RevisionPage)
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
 from class_os.interfaces.http.roster import (ApprovalBody, ClassBody, CommitBody, ContextResponse,
@@ -60,7 +62,13 @@ def main():
                         ("conversation-d1-create.v1", DurableCreate), ("conversation-d1-rename.v1", DurableRename),
                         ("conversation-d1-send.v1", DurableSend), ("conversation-d1-version.v1", DurableVersion),
                         ("conversation-d1-empty.v1", DurableEmpty), ("conversation-d1-run.v1", DurableRun),
-                        ("conversation-d1-preview.v1", DurablePreview), ("conversation-d1-control-status.v1", DurableControlStatus)]:
+                        ("conversation-d1-preview.v1", DurablePreview), ("conversation-d1-control-status.v1", DurableControlStatus),
+                        ("document-create.v1", DocumentCreate), ("document-revise.v1", DocumentRevise),
+                        ("document-state.v1", DocumentState), ("document-preview.v1", DocumentPreview),
+                        ("document-receipt.v1", DocumentReceipt), ("document.v1", DocumentResponse),
+                        ("document-approval.v1", DocumentApproval), ("document-rejection.v1", DocumentRejection),
+                        ("document-revision.v1", RevisionResponse), ("document-list.v1", DocumentPage),
+                        ("document-history.v1", RevisionPage)]:
         target = root / f"{name}.schema.json"
         content = json.dumps(model.model_json_schema(), indent=2, ensure_ascii=False) + "\n"
         if args.check:

@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from sqlalchemy import text
 
-from class_os.application.roster import CommandRejected
+from class_os.application.roster import CommandRejected, fingerprint
 from class_os.domain.documents import CreateDocument, ReviseDocument, next_document_state, content
 from class_os.domain.roster import Receipt
 from .roster import PostgresBusinessStore
@@ -104,6 +104,51 @@ class DocumentTransaction(ConversationTransaction):
             FROM class_os.working_document_revision WHERE workspace_id=:workspace_id AND document_id=:d AND version=:version"""
         rows = tuple(dict(row) for row in self._connection.execute(text(statement), {**values, "version": header["version"]}).mappings())
         return rows if history else {**dict(header), **rows[0]}
+
+    def document_page(self, binding, class_id, term_id, document_id, offset, expected_snapshot):
+        if not self.class_context(binding['workspace_id'], class_id, term_id):
+            raise CommandRejected()
+        values = {**binding, 'c': class_id, 't': term_id, 'd': document_id}
+        if document_id is None:
+            statement = """SELECT d.document_id,d.class_id,d.term_id,d.status,d.version,d.created_at,d.updated_at,
+                r.title,r.format FROM class_os.working_document d
+                JOIN class_os.working_document_revision r USING(workspace_id,document_id,version,status)
+                WHERE d.workspace_id=:workspace_id AND d.owner_id=:actor_id AND d.class_id=:c AND d.term_id=:t
+                ORDER BY d.updated_at DESC,d.document_id LIMIT 10001"""
+        else:
+            header = self._document_header(binding, document_id)
+            if not header or header['class_id'] != class_id or header['term_id'] != term_id:
+                raise CommandRejected()
+            # History pages contain metadata only; fetch each bounded body by
+            # immutable version. Never materialize thousands of large bodies.
+            statement = """SELECT version,status,title,format,operation,created_by,created_at
+                FROM class_os.working_document_revision WHERE workspace_id=:workspace_id AND document_id=:d
+                ORDER BY version DESC LIMIT 10001"""
+        rows = tuple(dict(row) for row in self._connection.execute(text(statement), values).mappings())
+        if len(rows) > 10000:
+            raise CommandRejected()
+        digest_rows = [{key: str(value) if type(value) is not int else value for key, value in row.items()} for row in rows]
+        snapshot = fingerprint({'workspace': str(binding['workspace_id']), 'owner': str(binding['actor_id']),
+                                'class': str(class_id), 'term': str(term_id),
+                                'document': str(document_id) if document_id else None, 'items': digest_rows})
+        if expected_snapshot is not None and snapshot != expected_snapshot:
+            raise CommandRejected()
+        return {'workspace_id': binding['workspace_id'], 'class_id': class_id, 'term_id': term_id,
+                **({'document_id': document_id} if document_id is not None else {}),
+                'data': rows[offset:offset + 50], 'snapshot': snapshot,
+                'next_offset': offset + 50 if offset + 50 < len(rows) else None}
+
+    def document_revision(self, binding, class_id, term_id, document_id, version):
+        current = self._document_header(binding, document_id)
+        if (not current or version > current['version'] or current['class_id'] != class_id or current['term_id'] != term_id
+                or not self.class_context(binding['workspace_id'], class_id, term_id)):
+            raise CommandRejected()
+        row = self._connection.execute(text("""SELECT version,status,title,body,format,operation,created_by,created_at
+            FROM class_os.working_document_revision WHERE workspace_id=:workspace_id AND document_id=:d AND version=:v"""),
+            {**binding, 'd': document_id, 'v': version}).mappings().one_or_none()
+        if row is None:
+            raise CommandRejected()
+        return dict(row)
 
 
 def validate_document_integrity(connection):

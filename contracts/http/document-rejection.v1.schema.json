@@ -1,0 +1,21 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.document-rejection.v1",
+      "default": "classmatter.document-rejection.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "const": "rejected",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "status"
+  ],
+  "title": "DocumentRejection",
+  "type": "object"
+}

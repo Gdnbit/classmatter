@@ -50,7 +50,7 @@
 | 原页面/动作 | 当前工程状态 | 后续验收单元 |
 |---|---|---|
 | 对话、学生、事实、任务 | 已有合成持久化；原界面逐项共享 | 继续回归，不重复造底层 |
-| 数据与内容/文档/小结保存/版本 | 领域/BCG/QG/版本库及完整本机快照验证已有；HTTP/UI/实例升级与完整退出未完成 | D2-DOC |
+| 数据与内容/文档/小结保存/版本 | 领域/BCG/QG/版本库、HTTP/typed client及本机快照验证已有；原UI/实例升级与完整退出未完成 | D2-DOC |
 | 成绩表格/考试/统计/更正/导入 | 原型仍为样例，未完成 | D2-GRD、D2-IMPORT |
 | 座位布局/交换/拖拽/方案/打印 | 原型仍为样例，未完成 | D2-SEA |
 | 名单事务/批量改动 | 手工单条已有；批量未完成 | D2-ROSTER |
@@ -69,3 +69,13 @@
 本机checkpoint新增独立D2种类，完整登记两张新表并检查历史连续性、状态转换、正文边界、当前版本和时间。真实pg_dump/pg_restore临时克隆比较完整库存哈希与当前restriction；明确activation_allowed=false、complete_exit=false，不作为可移植退出或导入授权。旧D1服务/备份遇到新表或新head明确拒绝，不生成遗漏文档的成功包。
 
 这只是存储子单元。HTTP typed contracts、原文档编辑器、同一实例显式升级及完整退出尚需后续实现验收；未对用户运行实例迁移，也未改变开发入口或个人认证。
+
+## D2-DOC HTTP/客户端子单元
+
+显式document_business/document_query必须与同一ISB及store装配，缺任意一项拒绝；默认R1/D1 composition不启用该模块。原app增加可选文档router，不新增旁路写引擎或Agent工具。`document-commands`路由仅适配原BCG四命令与批准/拒绝/提交/回执；领域存储、批准及同事务审计仍在原gateway执行。旧R1请求与wire schema不变。
+
+文档列表/版本历史采用50项元数据页，scope/snapshot/next_offset显式返回；路径包含闭集snapshot与offset，不开放任意查询参数。后续页遇到集合变化返回409，不默默拼接两个快照；历史页不批量返回正文，按稳定document_id/version单独读取不可变正文。当前和历史正文均标记working-draft，不是事实或已发送材料。200项截断的内部前置查询不作为HTTP全集接口。
+
+正文请求仅在模块显式启用且路径为文档preview时采用640KiB上限，覆盖100000字符被JSON转义后的体积；身份、原命令、批准等仍为原8KiB。保留重复JSON字段、NaN/Infinity、同源、Cookie、CSRF与审计失败拒绝。导出11个固定文档schema，原有schema保持字节不变；前端复用既有Ajv构建时生成模式，保持严格additionalProperties和disjoint command literals，不在浏览器编译任意schema。
+
+`runtime/documents.ts`为固定typed client，不接mock、不缓存业务数据，不自动保存/批准/重试。响应限制1MiB、严格UTF-8/日期/身份与班级学期/文档/版本/分页/来源权威核对；丢失提交结果后只由调用方显式GET原请求回执，未知结果不重放。原文档页面与运行实例尚未装配，客户端单测不能当作UI验收。

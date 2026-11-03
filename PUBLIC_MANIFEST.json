@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "2202bb3fcb99949d3f1d490ddb5ea34abaec5ed6c8a9f661ae58ce52db5be4da"
+      "sha256": "f48c6a42f859aa094d1601d3b1ddee3b1d19b4ac4b7d5900639a327a35173f8d"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -597,7 +597,7 @@
       "sha256": "621abe829c09997032a39ed95e05396b58889d9ae92ca316c59099c45232711d"
     },
     ".gitattributes": {
-      "sha256": "ced429c03e274aaf0d431cf63c461fa4e24aa426323179b3e96ba992cce42391"
+      "sha256": "d8dcad82c27b6c219a79efef25b2e999b049c6798ddf90f24c430bc64c5944fe"
     },
     ".github/workflows/synthetic-ci.yml": {
       "sha256": "67f80679dafa71d191c095db7c29f4fdd30cb91f75977d9392f651b79a2abad2"
@@ -654,7 +654,7 @@
       "sha256": "6857940a16627475250d8d98cf9711cf58e418459b8a7f97755f0c3180ed845f"
     },
     "apps/web/package.json": {
-      "sha256": "1b690b959f0c7fa98be9cc440237357f3da43201afa96bda3d2fb847ab529202"
+      "sha256": "2c39239c3c970b6541cf9318322fd6456e99b332d68ce2a4d1355a5b547b8173"
     },
     "apps/web/pnpm-lock.yaml": {
       "sha256": "c684a8b108321e9dcce6bf62b4b1b4b6e8e64f4e55e3019ed95f1f95ca184251"
@@ -930,7 +930,7 @@
       "sha256": "134d8ff2665521c5442ba83236cd0069e6e1a0180e1da42e130e6230235500fe"
     },
     "backend/export_contracts.py": {
-      "sha256": "6cfdeef87be5e712259b7ab5105324010f3c310451010a08bf3ad189fa955a19"
+      "sha256": "14ad2e4322f9c40f6efdcca609f6aa1f3b068c5d419eb986a0b2a334ad7791e9"
     },
     "backend/local.py": {
       "sha256": "237deb2fed419c338939862bfcc30b28950d97b517ef766d7531eb940ebc47f6"
@@ -1065,7 +1065,7 @@
       "sha256": "b96bf7254dd9f0f708123d20a44511c1bb08f578f026fd7958b751e0fa3fce9f"
     },
     "backend/src/class_os/interfaces/http/app.py": {
-      "sha256": "748bf18c565ac2b4285293661fbf2943d59d9799696675a1d8c36cc723c29583"
+      "sha256": "3981f756df97ff8c8b763e420002d32c634e20863bb5178a7b794ca6d51573b4"
     },
     "backend/src/class_os/interfaces/http/contracts.py": {
       "sha256": "97909305991a549d7b8c43294856a8bd9086629d7f7261626a5349341e39e2e1"
@@ -1444,7 +1444,7 @@
       "sha256": "556da89d40408994ecaad651e17422b9c2747fe3d9770198b21a05446af0803d"
     },
     "docs/ENGINEERING_OVERVIEW.md": {
-      "sha256": "664d8df2c25ea9335f6b4c88be1f2cfd209b7ced1f34348910e8b9cf5bb9ab5b"
+      "sha256": "891d777b5670007b68ee9e8a6dc57b65a945140d3a7c48dfd050876ae1fb0d56"
     },
     "docs/OPEN_SOURCE_READINESS.md": {
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
@@ -2729,10 +2729,10 @@
       "sha256": "6ae4b0b4aa0149a7435cb28f73ef370ffe363d6544b8c2050aed1961cc07f7fd"
     },
     "backend/src/class_os/application/documents.py": {
-      "sha256": "5a447cbc3b8b0b46ccd5ce04e4eb32d4b90e5f8796ea594d9223a071e183c83d"
+      "sha256": "c664a897c97d264e205897d75874ebadd7a9245429d064a4a7a75d0ed2e11359"
     },
     "backend/src/class_os/infrastructure/documents.py": {
-      "sha256": "4cab07f2ed40bf34480abcb32caeabc0d0175c383f6ccaf3973d9e97169fbcb2"
+      "sha256": "3d10bcddb70fcae82718661ec2c5ade6bb42698ccff03a6cc430e49a5bf64454"
     },
     "backend/db/migrations/versions/0027_working_documents.py": {
       "sha256": "3a489d196ffdc4eabcc475747c6e821bce7a87117be6b1fcaaf4b1062e8c3ac0"
@@ -2744,7 +2744,61 @@
       "sha256": "98cee3358abd27af766e81687ef352c5f3c74eb4ff21b15927046b2c85dbbadd"
     },
     "docs/design/workbench-domain-packs.md": {
-      "sha256": "8dc307e29db7e150b476717b91720f1bcfe5308785dc2d5ae61c20db17abad53"
+      "sha256": "4e3abde021771a426f398518f2589de5ac5f63d366be5f226e4bb694cf689ca1"
+    },
+    "apps/web/scripts/generate-documents.mjs": {
+      "sha256": "48c25cfb71666f49438e1d28fe951c21de529f98d72f146f131a95dd22f3736c"
+    },
+    "apps/web/src/runtime/document-validators.cjs": {
+      "sha256": "ef83da1b60a1140761313eb7337e72e40bb0b2d2d9010043be9abd0cd8d1fe68"
+    },
+    "apps/web/src/runtime/document-validators.d.cts": {
+      "sha256": "4770a3dcf480220a9e7fb588b94219d7bf0b58cbd44a98a8648d11ee560ff711"
+    },
+    "apps/web/src/runtime/documents.ts": {
+      "sha256": "333e3d4f0b017804ddfb123ab11a75e341014c54b8d873edf103f6cf7b41968c"
+    },
+    "apps/web/tests/documents.mjs": {
+      "sha256": "021742ccc5c4f36430efc91dbfeeb03911fa0ee1b4d3e4a7a05e3effc311d5e7"
+    },
+    "backend/src/class_os/interfaces/http/documents.py": {
+      "sha256": "76ee01600fe769d6ab5b7e9d5bb284cdb2ebae89e73dd79e3107056d4610b2cb"
+    },
+    "backend/tests/test_documents_http.py": {
+      "sha256": "4200801a1f95fbf74ea157396e99e624df18e304a1d390d46c4aeaeff63b1dcb"
+    },
+    "contracts/http/document-create.v1.schema.json": {
+      "sha256": "c0aff45b53f2f658343109e8ac9921c46b4ea9235d846e8b868b2c8251b943fe"
+    },
+    "contracts/http/document-revise.v1.schema.json": {
+      "sha256": "f385024b93cf3a76662df72707b826808b1818a368e32f2d052d8b4ed93fbaa2"
+    },
+    "contracts/http/document-state.v1.schema.json": {
+      "sha256": "b8ec6328929a3b77033c912c4eb606ef45fe6f77f068590e62513268c6d379f2"
+    },
+    "contracts/http/document-preview.v1.schema.json": {
+      "sha256": "9a9f063ef4041ba38ae5c8aee838948f0658e7ecc27a61fcb1d90aedcdbe1bab"
+    },
+    "contracts/http/document-receipt.v1.schema.json": {
+      "sha256": "8d0cdc802c778ce3e64eefa07144b7e763d79a83208d51f67fd281e36e622a79"
+    },
+    "contracts/http/document-approval.v1.schema.json": {
+      "sha256": "c755cb751e2acffa17ecff638ac6ddb341c6dba56282008792a3c348dca0bcc1"
+    },
+    "contracts/http/document-rejection.v1.schema.json": {
+      "sha256": "a49664f1da61449bcd0a4de648fba4dd633610d3185372b4135ece4cbe9144ea"
+    },
+    "contracts/http/document.v1.schema.json": {
+      "sha256": "64a0fcd1e33b7cf235e9b6f87d8e9dd455657803fc6fb4ce419d3325a0bdd738"
+    },
+    "contracts/http/document-revision.v1.schema.json": {
+      "sha256": "498089d2b280a972ffc0741bbcf49a3c1a24187cab022ce90a9c7dfd94521013"
+    },
+    "contracts/http/document-list.v1.schema.json": {
+      "sha256": "cf14d76b81ab04b9c4ca5cf8cf09a12dd9e17a410425b62a2813d427656d519c"
+    },
+    "contracts/http/document-history.v1.schema.json": {
+      "sha256": "ff10f71523312098ad76855090cfe042e009c068add8ed64a689b9dbf9292c82"
     }
   }
 }
