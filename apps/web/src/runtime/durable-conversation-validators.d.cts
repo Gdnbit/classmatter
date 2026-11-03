@@ -11,3 +11,5 @@ export const state: ValidateFunction
 export const receipt: ValidateFunction
 export const exitSummary: ValidateFunction
 export const exitPreview: ValidateFunction
+export const workbenchCapabilities: ValidateFunction
+export const workbenchAudit: ValidateFunction

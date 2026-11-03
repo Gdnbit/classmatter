@@ -157,7 +157,7 @@ export async function request<T>(
 }
 
 export type AuditPage = {
-  schema_version: "class-os.business-audit.v1" | "classmatter.business-audit.v1"
+  schema_version: "class-os.business-audit.v1" | "classmatter.business-audit.v1" | "classmatter.business-audit.v2"
   as_of: string
   truncated: boolean
   partial_history: true

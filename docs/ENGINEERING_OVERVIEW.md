@@ -32,6 +32,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 `infrastructure/workbench_upgrade.py`承载独立受信operator的D1→D2同实例升级：同根同库、原身份/保护头、受检完整checkpoint、DPAPI固定升级凭据、事务迁移和原子配置发布；会话锁跨越SQL提交与发布，失败可回滚或凭证续接，不自动覆盖/降级。`workbench_local_runtime.py`提供显式D2就绪和同服务lifespan装配；`native_setup.py`仅复用既有D2身份及免密码开发标记；`backend/local.py`提供显式upgrade-workbench/serve及完整D2 checkpoint。默认桌面和用户实例没有切换，原UI协议/编辑器及完整退出仍待实施。测试入口为`backend/tests/test_workbench_upgrade.py`，只操作自己创建的临时集群，不修改用户数据。
 
+原前端协议后续由`runtime/durable-conversation.ts`显式识别D1/D2及两者缺失的R1；R1App复用原耐久组件/学生/工作/小结，不新建工作台。固定生成器增加workbench capabilities与audit v2两份既有schema，拒绝权限/故障回退；D2审计支持文档动作，设置页和客户端均拒绝遗漏文档的旧退出。浏览器入口为`backend/tests/test_workbench_web.py`与`apps/web/tests/workbench-browser.mjs`，实际PG/HTTP/浏览器验证原学生刷新及审计，无业务写入或mock。文档编辑器/原路由绑定、完整退出及默认桌面切换仍未完成。
+
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 
 ## Agent Runtime 与未来 Work Runtime（2026-10-22 非实施研究）
