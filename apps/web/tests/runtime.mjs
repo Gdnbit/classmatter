@@ -335,7 +335,7 @@ try {
   await page.getByText('查看来源事实与历史', { exact: true }).click();
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('button', { name: /合成浏览器学生.*版本/ }).click();
-  const nameTarget = await page.getByRole('button', { name: /合成浏览器学生.*版本/ }).innerText();
+  const nameTarget = await page.locator('.student-profile-head').innerText();
   const nameTargetId = nameTarget.match(/[0-9a-f]{8}/)[0];
   let wrongReceiptDelivered = 0;
   let receiptLookupCount = 0;
@@ -412,13 +412,14 @@ try {
       assert.equal(unavailableDeliveryCount, 1);
       page.off('request', countReceiptLookup);
     }
-    const renamed = page.getByRole('button', { name: new RegExp(`${nextName}.*版本`) });
+    const renamed = page.locator('.student-profile-head').filter({ hasText: nextName });
     await renamed.waitFor();
     assert((await renamed.innerText()).includes(nameTargetId));
     await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
     await page.getByRole('button', { name: '工作', exact: true }).click();
     await page.getByRole('button', { name: /合成浏览器跟进任务.*未开始/ }).waitFor();
     await page.getByRole('button', { name: '学生', exact: true }).click();
+    await page.getByRole('button', { name: new RegExp(`${nextName}.*版本`) }).click();
   }
   await page.getByRole('button', { name: '工作', exact: true }).click();
   await page.getByRole('button', { name: /合成浏览器跟进任务.*未开始/ }).click();
@@ -684,6 +685,7 @@ try {
   await page.getByRole('button', { name: '停用（保留历史）', exact: true }).click();
   await page.getByRole('button', { name: '明确批准并提交', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: '返回学生列表', exact: true }).click();
   await page.getByRole('button', { name: /合成浏览器学生.*已停用/ }).click();
   for (const name of ['更正学生姓名', '记录事实', '建立跟进', '添加来源标识', '停用（保留历史）', '基于事实建立跟进']) {
     const controls = page.getByRole('button', { name, exact: true });
