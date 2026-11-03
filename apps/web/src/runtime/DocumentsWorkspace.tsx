@@ -6,11 +6,13 @@ import { documentClient, type DocumentCommand, type DocumentMetadata, type Docum
 import { R1Dialog } from "./R1Dialog"
 import "./documents-workspace.css"
 
+export type DocumentDraftContent = Readonly<{ title: string; body: string; format: "plain-text" | "markdown" }>
 type Props = {
   session: Session; classroom: Classroom; documentId: string; canWrite: boolean; canEdit: boolean
   onSelect: (id: string) => void; onSaved: (id: string) => void
   onDirtyChange: (value: boolean) => void; onBusyChange: (value: boolean) => void
   onError: (error: unknown) => void; onReauthenticate: () => void
+  initialDraft?: DocumentDraftContent; onInitialDraftUsed?: () => void
 }
 type Pending = { proposal: DocumentPreview; key: string; approval: string | null; unknown: boolean }
 const time = (value: string) => new Date(value).toLocaleString("zh-CN", { hour12: false })
@@ -83,7 +85,15 @@ export function DocumentsWorkspace(props: Props) {
     const controller = new AbortController()
     setCurrent(null); setHistory(null); setHistorical(null); setError(""); setEdited(false); setPending(null); setAnchor(null); setTab("修改后")
     setTitle(""); setBody(""); setFormat("plain-text")
-    if (!documentId || fresh) { setLoading(false); candidate.current = crypto.randomUUID(); return () => controller.abort() }
+    if (!documentId || fresh) {
+      setLoading(false); candidate.current = crypto.randomUUID()
+      if (fresh && props.initialDraft) {
+        setTitle(props.initialDraft.title); setBody(props.initialDraft.body); setFormat(props.initialDraft.format)
+        setEdited(true); setNotice("已转入小结草稿，尚未保存。正文保留当时来源标识，不代表当前事实保证。")
+        props.onInitialDraftUsed?.()
+      }
+      return () => controller.abort()
+    }
     setLoading(true)
     Promise.all([api.read(documentId, controller.signal), api.history(documentId, undefined, controller.signal)])
       .then(([value, revisions]) => {
