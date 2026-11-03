@@ -4,6 +4,12 @@ Layered modular monolith, synthetic-only. Python 3.13, uv 0.11.7, PostgreSQL 18.
 
 ## Local entry point
 
+### Read-only doctor and support
+
+`uv run --frozen python local.py doctor` returns closed health metadata; `support` adds only allowlisted numeric versions from the operator process. They probe only `/health/live` and `/health/ready` at127.0.0.1 on the explicitly configured `CLASS_OS_PORT` (default8000). They do not discover or authenticate an instance, select a database via `--profile`, initialize an Owner, or repair anything. For a D1 service, the operator must deliberately configure its API port; a green R1 endpoint is not evidence of D1 readiness. `complete_operator_check`/`complete_support_bundle` remain false.
+
+Each complete network exchange, including slow headers/body, has an absolute two-second deadline. Two sequential probes may consume about four seconds, excluding interpreter/import, local metadata and cleanup costs; this is not an end-to-end RTO promise. The already locked HTTPX transport has no environment proxy, redirect, retry or shared Cookie jar between probes. Raw wire bytes are bounded to8193 for an8192-byte limit; compressed bodies are not transparently expanded into health evidence. Duplicate/incomplete/extra JSON fields remain rejected. Outputs never include raw bodies, response headers, paths, credentials or exception details. These synchronous operator functions are not HTTP/Agent entry points and do not import the database/model runtime. Existing health/support schemas and exit statuses are unchanged.
+
 ### Explicit Gemini native adapter and model-only proxy
 
 The existing `chat-completions` configuration with exact base URL `https://generativelanguage.googleapis.com/v1beta/openai/` selects Pydantic AI's native Google adapter internally. This preserves Google's tool thought signatures across turns; generic OpenAI text compatibility is insufficient for this protocol. No HTTP DTO, business schema, tool or model-selection fallback is added. Other configured endpoints retain the existing OpenAI adapters. The selected model is not automatically replaced; the tested free candidate is `gemini-3.1-flash-lite`. Availability and free quota are account-specific, not guaranteed by an alias or this configuration.
