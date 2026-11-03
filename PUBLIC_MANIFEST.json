@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "46bc41acb60fb5b938fc990beff8c5c5e7b18a6a0d3449231739523dcee83241"
+      "sha256": "9d5e666a62575e971bc15f2b6c09bceaf3b99951e728d7767d36f3d7a6871807"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -1444,7 +1444,7 @@
       "sha256": "556da89d40408994ecaad651e17422b9c2747fe3d9770198b21a05446af0803d"
     },
     "docs/ENGINEERING_OVERVIEW.md": {
-      "sha256": "60d1cc77e57b82cf85dc4aa2a60edacb55abb5e2ca4a0adf8e71079d9590740d"
+      "sha256": "7abc7629bdaae178b334b1d10c30be0e5c794f001b5c01335bd1f22ebe789593"
     },
     "docs/OPEN_SOURCE_READINESS.md": {
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
@@ -2744,7 +2744,7 @@
       "sha256": "98cee3358abd27af766e81687ef352c5f3c74eb4ff21b15927046b2c85dbbadd"
     },
     "docs/design/workbench-domain-packs.md": {
-      "sha256": "6ee95d41816d2ba72b94fecf931ca13c9846ebc296d1b45b18eab615a4cc27bd"
+      "sha256": "f82f03306ef6c8a7a6c9215398cd976b2576d00d31eaa712c892359a88273482"
     },
     "apps/web/scripts/generate-documents.mjs": {
       "sha256": "48c25cfb71666f49438e1d28fe951c21de529f98d72f146f131a95dd22f3736c"
@@ -2807,7 +2807,7 @@
       "sha256": "5cd3e0cf0026c57ff24a285541940b3052769dc770a7be9f2ab9d15e54f0c035"
     },
     "backend/src/class_os/infrastructure/workbench.py": {
-      "sha256": "d603d424fd6e5e99782270fa7717d705e5418ada83a34a00b0eefd0b946db840"
+      "sha256": "ed2a8b0af7946822b5b93e30d764031a38eba7647b9f7811d54b61ca06a1ce87"
     },
     "backend/src/class_os/interfaces/http/workbench.py": {
       "sha256": "985526efcf9d7869ae7e550abfee9d6ef9382a9d2919bc7ffac5ab474046e881"
@@ -2856,6 +2856,15 @@
     },
     "backend/tests/test_summary_document_web.py": {
       "sha256": "a6b11c48ff545e4f56d726699b1c14ab68b2e9224e71bddb556230c7801d5bf6"
+    },
+    "backend/src/class_os/domain/workbench_export.py": {
+      "sha256": "d9475450a2ee9527fdd985368241893e4c0e7cd1c69a68e76194df96977bbc4f"
+    },
+    "backend/tests/test_workbench_export.py": {
+      "sha256": "57bf1662535fff27c96595b24f10d6b37f3623c7c48dc439b22b668398fef6e7"
+    },
+    "backend/tests/test_workbench_export_projection.py": {
+      "sha256": "441f74bd146cc0c1e92f127705120ac4b1f2ce47efa38e1871c765929e56a062"
     }
   }
 }

@@ -131,3 +131,13 @@ DDL或验收失败在提交前回滚，原D1仍可用；已核验备份与失败
 转入内容只有title/body/format，临时绑定当前ISB会话、Owner、workspace、班级和学期；不写URL、localStorage、sessionStorage或Memory库。初始草稿仅消费一次，随后新建不重复旧小结；身份或范围改变时清除，不携带旧批准或业务权限。保存仍调用原documentClient的预览/批准/同键提交，刷新只能从同一QG读取已保存版本。
 
 正文保留当时的record/task标识、版本、查询时点，以及Fact/Observation的原有文字区分；这是可读来源摘录，不是自动核验的材料引用图、当前事实保证或持续同步视图。编辑与保存不修改原事实/任务，不升格AI/用户断言，也不自动外发。真实PG/HTTP/浏览器验证转入前零文档、转入后零POST、显式三步保存、刷新正文一致、seed消费一次、离线转入拒绝/恢复核对、原记录与任务版本不变；教师净减负仍待真实用户验证。
+
+## 包含文档的固定数据归档组件（用户导出尚未接入）
+
+旧export_job CHECK只允许既有v1–v6包，原对话组件也不能代替完整D2数据。新`domain/workbench_export.py`先定义闭集`classmatter.workbench-data.v1`：原v6历史组件、两张文档表的全部固定列及不可变版本、三个文档读取动作的完整审计分区。文档声明working-draft；数据为synthetic-only，integrity_not_authority=true、complete_exit=false、activation_allowed=false。它不是导入授权、源身份认证或完整生命周期退出。不得把校验通过当作用户已获下载/恢复权限。
+
+文档head/每个revision必须同一workspace/Owner，关联真实core中的class/term；全部版本从1连续到head，当前状态/时间与最后版本一致，归档/恢复不得改变正文，作者必须为当前原生Owner。字段/表/操作类型均为固定闭集，未知JSON字段、丢失/重复/错序版本、跨范围、伪造审计和未来时间拒绝。保留CRLF和原始文本，不执行正文。整体沿用1MiB canonical JSON及每集合10000行边界，超限拒绝，不截断。业务快照摘要包含所有文档与原v6业务摘要；读取审计只进完整包checksum，查询本身不会使预览基准失效。
+
+`WorkbenchTransaction._workbench_data_bundle`仅为内部、受控时间/保护根及原串行事务的数据收集，读取固定registry全部行，不使用UI的50项元数据页。保留原v6/native结果commit校验和所有审计，不把新动作丢给旧校验器忽略；所有转移/退役/导入/准入file-first fence仍拒绝。没有新增QG方法、HTTP/Tool、写命令或导出记录；外部原旧导出仍拒绝不完整D2。测试直接在真实ISB租约和自建PG中检查该内部组件，不冒充用户导出验收。
+
+下一实施依赖明确：新增迁移而非改写0027，固定扩展export_job协议及command/audit闭集；兼容已有0027本机checkpoint/升级凭据，验证失败回滚/续接；原BCG Risk-X预览、近期验证、明确批准、同键提交、回执/过期/保护头核对；再接固定HTTP/前端协议与原设置页。完整已保存业务数据归档和跨机恢复/退役是不同验收，后者未通过时不得把complete_exit/activation_allowed改真。默认桌面与用户实例继续等待相应验收，免密码开发不变。

@@ -38,6 +38,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 小结转文档由既有`runtime/WorkSummary.tsx`、R1App范围绑定和DocumentsWorkspace的一次性typed初始草稿承载。只转移本人编辑的title/body/format，不新建Memory/Workflow层、不增加API或命令；来源失效/离线不转入，转入本身不保存，仍需原BCG预览批准。`backend/tests/test_summary_document_web.py`与`apps/web/tests/summary-document-browser.mjs`以真实PG/HTTP/浏览器验证来源摘录保留、零自动写入、明确保存/刷新、一次性消费及原事实任务不变；D1原复制路径继续工作。完整世界退出和默认桌面仍待后续，旧会话批准失效后的长草稿恢复也需专项验收。
 
+包含文档的归档组件先由`domain/workbench_export.py`固定包/列/版本链/审计/大小校验及`WorkbenchTransaction._workbench_data_bundle`全量串行收集承载；原私有v6组件验证保留，文档全版本附于独立闭集根，工作草稿不变成事实。`backend/tests/test_workbench_export.py`覆盖重算哈希后的篡改，`test_workbench_export_projection.py`在真实ISB/PG/SDK验证历史与当前班级、全部修订/聊天/审计及fence拒绝。当前没有新的用户QG/HTTP/Tool或持久化导出命令，export_job旧约束和默认运行未更改；后续需新增迁移、兼容0027 checkpoint/升级、原Risk-X BCG和固定UI协议，不得绕过约束启用。
+
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 
 ## Agent Runtime 与未来 Work Runtime（2026-10-22 非实施研究）
