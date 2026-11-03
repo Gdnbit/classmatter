@@ -81,11 +81,15 @@ async function json<T>(schema: Schema, path: string, session: Session, body?: un
   return decodeD1<T>(schema, JSON.parse(text))
 }
 function root(session: Session) { return `/api/workspaces/${id(session.subject.workspace_id)}` }
-export async function discoverD1(session: Session, signal?: AbortSignal): Promise<"r1" | "conversation-d1"> {
+export type DurableProfile = "conversation-d1" | "workbench-d2"
+export async function discoverD1(session: Session, signal?: AbortSignal): Promise<"r1" | DurableProfile> {
   try { await json("capabilities", `${root(session)}/conversation-d1/capabilities`, session, undefined, signal); return "conversation-d1" }
+  catch (error) { if (!(error instanceof ApiError && error.status === 404)) throw error }
+  try { await json("workbenchCapabilities", `${root(session)}/workbench-d2/capabilities`, session, undefined, signal); return "workbench-d2" }
   catch (error) { if (error instanceof ApiError && error.status === 404) return "r1"; throw error }
 }
-export function d1Client(session: Session, current: Pick<Classroom, "class_id" | "term_id">) {
+export function d1Client(session: Session, current: Pick<Classroom, "class_id" | "term_id">, profile: DurableProfile = "conversation-d1") {
+  if (profile !== "conversation-d1" && profile !== "workbench-d2") throw mismatch()
   const classId = id(current.class_id), termId = id(current.term_id)
   const base = `${root(session)}/conversation-d1/classes/${classId}/terms/${termId}`
   const thread = (value: string) => `${base}/conversations/${id(value)}`
@@ -172,15 +176,19 @@ export function d1Client(session: Session, current: Pick<Classroom, "class_id" |
       return value
     },
     async exitPreview(exportId: string) {
+      if (profile === "workbench-d2") throw new Error("完整数据退出尚未接通，不能生成遗漏文档的旧退出包。")
       const summary = await json<{ snapshot_hash: string }>("exitSummary", `${root(session)}/conversation-d1/exit/summary`, session)
       const value = await json<ExitPreview>("exitPreview", `${root(session)}/conversation-d1/exit/preview`, session,
         { export_id: id(exportId), expected_snapshot_hash: summary.snapshot_hash })
       if (value.payload.export_id !== exportId || value.payload.expected_snapshot_hash !== summary.snapshot_hash) throw mismatch()
       return value
     },
-    exitDownload: (exportId: string) => `${root(session)}/conversation-d1/exit/${id(exportId)}/download`,
+    exitDownload: (exportId: string) => {
+      if (profile === "workbench-d2") throw mismatch()
+      return `${root(session)}/conversation-d1/exit/${id(exportId)}/download`
+    },
     activity: (signal?: AbortSignal, studentId?: string) => json<{ data: Activity }>("activity",
       base + (studentId ? `/students/${id(studentId)}/timeline` : "/activity"), session, undefined, signal),
-    audit: () => json<AuditPage>("audit", base + "/audit", session),
+    audit: () => json<AuditPage>(profile === "workbench-d2" ? "workbenchAudit" : "audit", base + "/audit", session),
   }
 }

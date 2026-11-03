@@ -101,3 +101,11 @@ DDL或验收失败在提交前回滚，原D1仍可用；已核验备份与失败
 `workbench_local_runtime.py`显式装配同一QG/BCG/ISB/Pydantic AI及原SSE，启动/就绪必须核验D2结构、列级权限、文档历史完整性和升级凭据。NativeSetup对明确D2只复用既有开发身份，不创建Owner/control；原免密码开发入口及重新验证仍走原ISB，普通个人身份不会被开发模式接管。`serve --profile workbench-d2`是operator级显式服务入口，并未切换桌面默认profile或前端协议；备份/检查选择完整D2库存，依然complete_exit=false、activation_allowed=false。
 
 验收需覆盖原班级/学生/已完成消息保留、同一Owner、免密码进入和会话旋转、实际HTTP发现/文档列表、损坏凭据拒绝、已连接应用拒绝、迁移回滚、提交后发布失败续接、幂等重入及旧D1回归。Windows DPAPI/真实PG本机测试与现有双平台CI覆盖范围分别记录，不把Linux跳过的Windows测试算通过。完整D2可移植退出、迁移激活和原编辑器仍未交付；回滚方式是启用前撤回代码，启用后停止服务保留原库/受检checkpoint交operator处理，禁止DROP文档表或篡改迁移head。
+
+## 原界面识别D2（文档编辑器前置）
+
+原`durable-conversation.ts`客户端在旧D1发现明确404之后才核验固定D2 capabilities；两者都明确404才使用旧R1。权限拒绝、故障、取消或响应违约不触发回退。D2只接受固定synthetic-only/历史v2/文档v1/complete_exit=false，构建时严格生成两个固定schema validator，没有浏览器自定义schema编译。profile参数仅决定响应协议，不授予服务端权限。
+
+原R1App以明确D1/D2两值共享现有耐久聊天、学生、工作、小结和导航；不会把D2活动误读成R1或切成另一工作台。审计读取选择固定D2审计v2，包含文档读取动作；原D1协议和schema不变，未知动作继续拒绝。D2设置页不显示旧不完整导出按钮，显式客户端也拒绝旧退出操作且不发请求；服务端仍独立拒绝，UI不是权限边界。
+
+此项只准备原页面共用协议。实际浏览器/HTTP/PG验证原学生页刷新与文档审计读取，不表示文档编辑器、默认桌面D2或完整退出已启用；这些仍按下一独立动作验收，不创建样例数据替代。

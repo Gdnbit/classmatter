@@ -69,6 +69,49 @@ test('only explicit missing capability means R1; rejection or outage never becom
   } finally { globalThis.fetch = original; }
 });
 
+test('D2 discovery is explicit, closed and never an outage fallback', async () => {
+  const original = globalThis.fetch, calls = [];
+  const capability = { schema_version: 'classmatter.workbench-capabilities.v1', profile: 'workbench-d2',
+    data_mode: 'synthetic-only', history_protocol: 'classmatter.conversation-history.v2',
+    document_protocol: 'classmatter.document.v1', complete_exit: false };
+  try {
+    globalThis.fetch = async path => { calls.push(path); return path.endsWith('/workbench-d2/capabilities')
+      ? response(capability) : new Response('', { status: 404 }); };
+    assert.equal(await api.discoverD1(session), 'workbench-d2');
+    assert.equal(calls.length, 2);
+    assert.ok(calls.every(path => path.startsWith(`/api/workspaces/${session.subject.workspace_id}/`)));
+    for (const value of [{ ...capability, complete_exit: true }, { ...capability, data_mode: 'production' },
+      { ...capability, unexpected: true }, { ...capability, document_protocol: 'arbitrary' }]) {
+      globalThis.fetch = async path => path.endsWith('/workbench-d2/capabilities') ? response(value) : new Response('', { status: 404 });
+      await assert.rejects(api.discoverD1(session));
+    }
+    for (const status of [401, 403, 409, 500, 503]) {
+      globalThis.fetch = async path => new Response('', { status: path.endsWith('/workbench-d2/capabilities') ? status : 404 });
+      await assert.rejects(api.discoverD1(session));
+    }
+  } finally { globalThis.fetch = original; }
+});
+
+test('D2 audit accepts document reads but rejects unknown actions; partial exit issues no request', async () => {
+  const original = globalThis.fetch, workbench = api.d1Client(session, current, 'workbench-d2');
+  const page = { schema_version: 'classmatter.business-audit.v2', as_of: instant, truncated: false, partial_history: true,
+    entries: [{ event_id: randomUUID(), action: 'document.read', outcome: 'allowed', occurred_at: instant,
+      proposal_id: null, payload_hash: null, receipt_id: null, resource_id: randomUUID(), resource_version: null }] };
+  let calls = 0;
+  try {
+    globalThis.fetch = async () => { calls++; return response(page); };
+    assert.equal((await workbench.audit()).entries[0].action, 'document.read');
+    await assert.rejects(client.audit());
+    page.entries[0].action = 'arbitrary.ddl';
+    await assert.rejects(workbench.audit());
+    const before = calls;
+    await assert.rejects(workbench.exitPreview(randomUUID()));
+    assert.throws(() => workbench.exitDownload(randomUUID()));
+    assert.equal(calls, before);
+    assert.throws(() => api.d1Client(session, current, 'unknown-profile'));
+  } finally { globalThis.fetch = original; }
+});
+
 test('receipt status uses original proposal AND idempotency key, without a new write or retry', async () => {
   const original = globalThis.fetch, key = randomUUID(), proposal = { proposal_id: randomUUID(), payload_hash: 'a'.repeat(64),
     payload: { command: 'conversation.clear', thread_id: threadId, class_id: current.class_id, term_id: current.term_id, expected_version: 2 } };

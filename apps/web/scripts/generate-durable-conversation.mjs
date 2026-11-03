@@ -10,6 +10,7 @@ const names = {
   activity: 'activity-d1.v1', audit: 'business-audit-d1.v1',
   state: 'command-status.v1', receipt: 'roster-receipt.v1',
   exitSummary: 'conversation-d1-exit-summary.v1', exitPreview: 'conversation-d1-exit-preview.v1',
+  workbenchCapabilities: 'workbench-capabilities.v1', workbenchAudit: 'workbench-audit.v2',
 };
 const ajv = new Ajv({ strict: true, allErrors: false, ownProperties: true,
   coerceTypes: false, useDefaults: false, removeAdditional: false, code: { source: true, esm: false } });
