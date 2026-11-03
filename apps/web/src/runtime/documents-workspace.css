@@ -1,0 +1,9 @@
+.connected-documents .document-layout { margin-top: 18px; }
+.connected-documents .document-layout > aside button { width: 100%; text-align: left; overflow-wrap: anywhere; }
+.connected-documents .document-layout small { display: block; margin-top: 4px; }
+.connected-documents .document-layout label { display: grid; gap: 8px; margin: 16px 0; }
+.connected-documents input, .connected-documents select, .connected-documents textarea { width: 100%; box-sizing: border-box; }
+.connected-documents textarea { min-height: 340px; resize: vertical; line-height: 1.8; }
+.document-text { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 48vh; overflow: auto; }
+@media (max-width: 980px) { .connected-documents .document-layout > aside:last-child { display: block; grid-column: 1 / -1; } }
+@media (max-width: 767px) { .connected-documents .document-layout > aside { display: block; padding: 16px; } }

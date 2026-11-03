@@ -68,9 +68,18 @@ export function useRuntimeNavigation(blocked: boolean) {
     setWorkFilter: (workFilter: RuntimeRoute["workFilter"]) => change({ workFilter }),
     setStudentView: (studentView: RuntimeRoute["studentView"]) => change({ studentView }),
     setStudentTab: (studentTab: RuntimeRoute["studentTab"]) => change({ studentTab }),
+    setDocument: (documentId: string) => change({ page: "documents", documentId }),
+    adoptDocument: (documentId: string) => {
+      // Receipt adoption must preserve a user destination already deferred.
+      mode.current = "replace"
+      if (pending.current?.route.documentId === current.current.documentId)
+        pending.current = { ...pending.current, route: { ...pending.current.route, documentId } }
+      const next = { ...current.current, documentId }
+      current.current = next; setRoute(next)
+    },
     reset: () => apply(runtimeRoute(), "replace"),
     clearTask,
-    clearSelection: () => apply({ ...current.current, studentId: "", taskId: "", workFilter: "all", studentTab: "overview",
+    clearSelection: () => apply({ ...current.current, studentId: "", taskId: "", documentId: "", workFilter: "all", studentTab: "overview",
       conversationId: "", conversationClassId: "", conversationTermId: "" }, "replace"),
   }
 }

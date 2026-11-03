@@ -34,6 +34,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 原前端协议后续由`runtime/durable-conversation.ts`显式识别D1/D2及两者缺失的R1；R1App复用原耐久组件/学生/工作/小结，不新建工作台。固定生成器增加workbench capabilities与audit v2两份既有schema，拒绝权限/故障回退；D2审计支持文档动作，设置页和客户端均拒绝遗漏文档的旧退出。浏览器入口为`backend/tests/test_workbench_web.py`与`apps/web/tests/workbench-browser.mjs`，实际PG/HTTP/浏览器验证原学生刷新及审计，无业务写入或mock。文档编辑器/原路由绑定、完整退出及默认桌面切换仍未完成。
 
+文档页面后续由`runtime/DocumentsWorkspace.tsx`在原三栏/页签中连接固定client，配套局部CSS；R1App只装配范围/状态/入口，`navigation.ts`/`useRuntimeNavigation.ts`保留原/data文档深链和安全导航。本文档模块不扩充Agent工具或API写引擎；本地编辑与可提交状态分离，离线草稿不丢、提交需范围重新核对。预览/批准/幂等提交/未知回执/版本CAS/归档恢复和不可变历史均沿用原QG/BCG。`backend/tests/test_documents_web.py`及`apps/web/tests/documents-browser.mjs`验证真实PG/HTTP/浏览器与回复丢失/并发/跨范围矩阵；截图留本机忽略目录。小结一键转文档、完整退出及默认桌面启用尚未完成。
+
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 
 ## Agent Runtime 与未来 Work Runtime（2026-10-22 非实施研究）

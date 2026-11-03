@@ -12,6 +12,7 @@ import {
   X,
   LogOut,
   RefreshCw,
+  FileText,
 } from "lucide-react"
 import {
   ApiError,
@@ -53,6 +54,7 @@ import { DurableHistory, DurableComposer } from "./DurableConversation"
 import { AttributionLabel } from "./AttributionLabel"
 import { DurableExit } from "./DurableExit"
 import { WorkSummary } from "./WorkSummary"
+import { DocumentsWorkspace } from "./DocumentsWorkspace"
 import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
 import { SidebarFrame } from "@/shell/Sidebar/SidebarFrame"
 import { AttentionColumns } from "@/shell/AttentionColumns"
@@ -133,6 +135,8 @@ export default function R1App() {
   const [durableDraft, setDurableDraft] = useState(false)
   const [exitBusy, setExitBusy] = useState(false)
   const [summaryDraft, setSummaryDraft] = useState(false)
+  const [documentDraft, setDocumentDraft] = useState(false)
+  const [documentBusy, setDocumentBusy] = useState(false)
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState("")
@@ -176,7 +180,7 @@ export default function R1App() {
   const loading = useRef(0)
   const connectivity = useRef(0)
   const interactionBlocked = busy || confirmLogout || durableBusy || durableDraft || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
-  const navigationBlocked = summaryDraft || interactionBlocked
+  const navigationBlocked = summaryDraft || documentDraft || documentBusy || interactionBlocked
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
   const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
@@ -373,7 +377,7 @@ export default function R1App() {
   const refreshContext = useRef({ reload, fail, session, blocked: true })
   refreshContext.current = {
     reload, fail, session,
-    blocked: busy || confirmLogout || durableBusy || exitBusy || runtimeProfile === "loading" || runtimeProfile === "failed" || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage
+    blocked: busy || confirmLogout || durableBusy || exitBusy || documentDraft || documentBusy || runtimeProfile === "loading" || runtimeProfile === "failed" || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage
       || page === "settings" || !!runningAgent.current,
   }
   const foregroundRefresh = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
@@ -463,7 +467,7 @@ export default function R1App() {
     })
   }
   function requestLogout() {
-    if (summaryDraft || durableDraft || message.trim()) setConfirmLogout(true)
+    if (summaryDraft || documentDraft || durableDraft || message.trim()) setConfirmLogout(true)
     else logoutCurrentSession()
   }
   async function preview(command: Command) {
@@ -923,6 +927,7 @@ export default function R1App() {
             ["dashboard", "总览", LayoutDashboard],
             ["students", "学生", Users],
             ["work", "工作", ClipboardList],
+            ["documents", "数据与内容", FileText],
             ["settings", "设置", Settings],
           ] as const).map(([id, label, Icon]) => (
             <button
@@ -988,15 +993,15 @@ export default function R1App() {
       </SidebarFrame>
       } header={
         <header className="topbar r1-topbar">
-          <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "settings" ? "设置" : "班事有谱"}</strong>
+          <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "documents" ? "数据与内容" : page === "settings" ? "设置" : "班事有谱"}</strong>
           <span role={refreshing ? "status" : undefined}>
             {refreshing ? "正在读取当前班级与学期…" : classroom?.term_name || "先建立班级与学期"}
             {classroom?.status === "archived" && " · 历史只读"}
           </span>
           <button
             aria-label="刷新数据"
-            disabled={interactionBlocked}
-            onClick={() => void action(() => reload())}
+            disabled={interactionBlocked || documentBusy}
+            onClick={() => void action(() => reload(documentDraft ? classroom : undefined))}
           >
             <RefreshCw size={16} />
           </button>
@@ -1019,7 +1024,7 @@ export default function R1App() {
         {!refreshing && !queryFresh && (
           <div className="r1-warning" role="status">
             <strong>当前列表尚未刷新。</strong>这里只保留上次成功读取的快照（若有），不是最新数据；新业务预览已暂停。成功回执不因读取失败而失效，结果未知的提交仍须核对原请求。
-            <button disabled={busy} onClick={() => void action(() => reload())}>重新读取数据</button>
+            <button disabled={busy || documentBusy} onClick={() => void action(() => reload(documentDraft ? classroom : undefined))}>重新读取数据</button>
           </div>
         )}
         <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}`} onScroll={event => {
@@ -1427,6 +1432,15 @@ export default function R1App() {
               ))}
             </>
           )}
+          {page === "documents" && (runtimeProfile === "workbench-d2" && classroom
+            ? <DocumentsWorkspace key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`}
+                session={session} classroom={classroom} documentId={navigation.route.documentId}
+                canWrite={editable && !busy && !form && !pending && queryFresh && !refreshing}
+                canEdit={classroom.status !== "archived" && !busy && !form && !pending}
+                onSelect={navigation.setDocument} onSaved={navigation.adoptDocument}
+                onDirtyChange={setDocumentDraft} onBusyChange={setDocumentBusy} onError={fail}
+                onReauthenticate={() => open("reauth")} />
+            : <section className="r1-card"><h1>数据与内容</h1><p>文档需要同实例文档服务与当前班级学期。当前入口未启用；没有加载样例文档或另建数据。</p></section>)}
           {page === "settings" && (
             <>
               <div className="r1-heading">
@@ -1566,7 +1580,7 @@ export default function R1App() {
       </WorkbenchFrame>
       {confirmLogout && <R1Dialog titleId="r1-logout-title" onDismiss={() => setConfirmLogout(false)}>
         <h2 id="r1-logout-title">退出并丢弃未保存草稿？</h2>
-        <p>本页有未保存的小结或未发送的文字。退出登录将丢弃这些本地草稿；已保存的聊天记录和业务数据不会删除。</p>
+        <p>本页有未保存的文档、小结或未发送的文字。退出登录将丢弃这些本地草稿；已保存的聊天记录和业务数据不会删除。</p>
         <button autoFocus onClick={() => setConfirmLogout(false)}>继续编辑</button>
         <button className="r1-primary" onClick={logoutCurrentSession}>丢弃草稿并退出</button>
       </R1Dialog>}
