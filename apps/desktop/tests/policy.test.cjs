@@ -26,6 +26,18 @@ test('preload exports only four fixed menu requests, never arbitrary IPC', async
   assert.equal(requests.length, 4);
   for (const request of requests) assert.equal(request[0], 'desktop:menu');
 });
+test('explicit development preload exposes two fixed identity actions without caller payloads',async()=>{
+  let bridge;const requests=[];
+  const source=await fs.readFile(path.join(__dirname,'../preload.cjs'),'utf8');
+  vm.runInNewContext(source,{process:{argv:['--classmatter-development-no-password']},require:name=>{
+    assert.equal(name,'electron');return {contextBridge:{exposeInMainWorld:(_name,api)=>bridge=api},ipcRenderer:{send:()=>{},invoke:(...args)=>{requests.push(args);return Promise.resolve(true);}}};
+  }});
+  assert.deepEqual(Object.keys(bridge).sort(),['development','enterDevelopment','openMenu','reauthenticateDevelopment']);
+  assert.equal(bridge.development,true);
+  await bridge.enterDevelopment({operation:'arbitrary',path:'elsewhere'});
+  await bridge.reauthenticateDevelopment('not-a-token');
+  assert.deepEqual(requests,[['desktop:development-session','enter'],['desktop:development-session','reauthenticate']]);
+});
 test('existing deep links resolve to SPA, assets have explicit MIME', () => {
   for (const route of ['/', '/students', '/students/s-001?tab=timeline', '/work', '/data/documents/parents-001', '/settings/user', '/spaces/midterm']) assert.equal(resolveResource(ORIGIN + route).relative, 'index.html');
   assert.equal(resolveResource(`${ORIGIN}/assets/index-abc.js`).type, 'text/javascript; charset=utf-8');

@@ -8,7 +8,7 @@ const task = '00000000-0000-0000-0000-000000000002'
 test('supported R1 paths round-trip exact identity/view/filter without domain objects', () => {
   for (const path of ['/', '/dashboard', '/settings', '/students', '/students?view=table',
     ...['overview', 'timeline', 'tasks', 'records'].flatMap(tab => [`/students/${id}${tab === 'overview' ? '' : `?tab=${tab}`}`, `/students/${id}?view=table${tab === 'overview' ? '' : `&tab=${tab}`}`]),
-    '/work', `/work?student=${id}&task=${task}&filter=waiting`, '/work?filter=closed']) {
+    '/work', `/work?student=${id}&task=${task}&filter=waiting`, '/work?filter=closed', '/work?filter=mine']) {
     const route = parseRuntimeRoute(path)
     assert.equal(runtimePath(route), path)
     assert.deepEqual(parseRuntimeRoute(runtimePath(route)), route)

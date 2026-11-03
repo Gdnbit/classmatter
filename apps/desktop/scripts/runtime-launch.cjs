@@ -3,8 +3,11 @@ const path=require('node:path');
 const fs=require('node:fs');
 const {prerequisites}=require('../runtime-check.cjs');
 const {parseLaunchArguments,electronArguments}=require('../model-network.cjs');
-const options=parseLaunchArguments(process.argv.slice(2));
+const args=process.argv.slice(2),development=args.includes('--development-no-password');
+if(args.filter(value=>value==='--development-no-password').length>1)throw new Error('Duplicate development switch');
+const options=parseLaunchArguments(args.filter(value=>value!=='--development-no-password'));
 const d1=options.profile==='conversation-d1';
+if(development&&!d1)throw new Error('Development identity requires the synthetic D1 profile');
 const stage=path.resolve(__dirname,d1?'../.build/runtime-d1':'../.build/runtime');
 const repositoryRoot=path.resolve(__dirname,'../../..');
 const report=prerequisites(repositoryRoot,process.platform,d1?'conversation-d1':'r1');
@@ -21,6 +24,8 @@ if(typeof source.repositoryRoot!=='string' || path.resolve(source.repositoryRoot
   console.error('Rebuild the runtime before launch; an integration fixture descriptor is not a user profile.');process.exit(1);
 }
 const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
-const child=spawn(require('electron'),[stage,...electronArguments(options.network)],{stdio:'ignore',env,windowsHide:true});
+// This child is the user-requested GUI, not a background helper. SW_HIDE can
+// suppress the first native show even though its API and renderer are ready.
+const child=spawn(require('electron'),[stage,...electronArguments(options.network),...(development?['--classmatter-development-no-password']:[])],{stdio:'ignore',env,windowsHide:false});
 child.on('error',()=>{console.error('Desktop runtime could not start.');process.exitCode=1;});
 child.on('exit',code=>{process.exitCode=code||0;});

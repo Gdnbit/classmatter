@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, PanelLeft } from "lucide-react"
 import "./desktop.css"
 
 declare global {
-  interface Window { classMatterDesktop?: { openMenu: (name: string) => void } }
+  interface Window { classMatterDesktop?: { openMenu: (name: string) => void; development?: boolean; enterDevelopment?: () => Promise<void>; reauthenticateDevelopment?: () => Promise<void> } }
 }
 
 export default function DesktopChrome() {
@@ -28,7 +28,7 @@ export default function DesktopChrome() {
           <button key={id} aria-haspopup="menu" onClick={() => window.classMatterDesktop?.openMenu(id)}>{label}</button>
         ))}
       </nav>
-      <span className="desktop-demo-badge">{import.meta.env.VITE_CLASS_OS_DEMO === "true" ? "合成演示" : "合成持久化开发"}</span>
+      <span className="desktop-demo-badge">{import.meta.env.VITE_CLASS_OS_DEMO === "true" ? "离线样例" : "本机 · 合成数据"}</span>
     </header>
   )
 }

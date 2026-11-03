@@ -22,10 +22,12 @@ function prerequisites(repositoryRoot, platform = process.platform, profile = 'r
   const config = json(path.join(runtime, 'runtime.json'));
   const checks = {
     windows: platform === 'win32',
-    backend: regular(path.join(root, 'backend/.venv/Scripts/python.exe')) && regular(path.join(root, 'backend/desktop.py')),
+    backend: regular(path.join(root, 'backend/.venv/Scripts/python.exe')) && regular(path.join(root, 'backend/desktop.py'))
+      && (!d1 || regular(path.join(root, 'backend/desktop_setup.py'))),
     electron: regular(path.join(desktop, 'node_modules/electron/index.js')),
     build: marker?.mode === (d1?'synthetic-conversation-d1':'synthetic-runtime') && regular(path.join(stage, 'ui/index.html'))
-      && ['main.cjs','runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs'].every(name=>regular(path.join(stage,name))),
+      && ['main.cjs','runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs',
+        ...(d1?['setup-service.cjs','setup-window.cjs','setup-preload.cjs','setup.html','setup.css','setup-ui.js']:[])].every(name=>regular(path.join(stage,name))),
     source: !!source && source.schema_version === (d1?2:1) && Object.keys(source).sort().join(',') === (d1?'profile,repositoryRoot,runtimeRoot,schema_version,servicePort':'repositoryRoot,runtimeRoot,schema_version')
       && (!d1 || (source.profile==='conversation-d1' && source.servicePort===8001))
       && typeof source.repositoryRoot === 'string' && path.isAbsolute(source.repositoryRoot) && path.resolve(source.repositoryRoot) === root

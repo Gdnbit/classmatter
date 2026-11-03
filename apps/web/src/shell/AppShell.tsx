@@ -5,6 +5,10 @@ import TopBar from "@/shell/TopBar/TopBar"
 import Sidebar from "@/shell/Sidebar/Sidebar"
 
 import MobileNav from "@/shell/MobileNav"
+import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
+import { AttentionColumns } from "@/shell/AttentionColumns"
+import { StudentPageTitle, StudentViewSwitcher, StudentRosterTable, StudentProfileHeader } from "@/shell/StudentPresentation"
+import { WorkHeading, WorkTabs, WorkItemButton } from "@/shell/WorkPresentation"
 
 import Inspector from "@/shell/Inspector/Inspector"
 
@@ -423,17 +427,28 @@ function AppShell() {
   }
 
   return (
-    <div className="app-shell">
-      <Sidebar workspace={workspace} setWorkspace={setWorkspace} />
-      <div className="shell-main">
-        <TopBar
+    <WorkbenchFrame
+      sidebar={<Sidebar workspace={workspace} setWorkspace={setWorkspace} />}
+      header={<TopBar
           workspace={workspace}
           transaction={transaction}
           inspectorOpen={inspectorOpen}
           onInspector={() => setInspectorOpen(!inspectorOpen)}
-        />
-        <div className="body-grid" data-inspector={inspectorOpen}>
-          <main className="workspace">
+        />}
+      inspector={inspectorOpen ? <Inspector
+        activeStudent={activeStudentWithSeat}
+        transaction={transaction}
+        onSelect={selectStudent}
+        onDiscard={() => setTransaction("discarded")}
+        onCommit={commit}
+        onConfirmCommit={confirmCommit}
+        onCancelConfirm={() => setTransaction("preview-ready")}
+        onUnknown={() => setTransaction("outcome-unknown")}
+        onCheck={() => setTransaction("preview-ready")}
+      /> : null}
+      mobileNav={<MobileNav workspace={workspace} setWorkspace={setWorkspace}
+        moreOpen={mobileMoreOpen} setMoreOpen={setMobileMoreOpen} />}
+    >
             {workspace === "conversation" ? (
               <Conversation
                 key={activeConversationId}
@@ -477,29 +492,7 @@ function AppShell() {
                 onDiscuss={(student: Student) => { setWorkspace("conversation"); setInput(`关于${student.name}（学号${student.id}）：`); setInspectorOpen(true) }}
               />
             )}
-          </main>
-          {inspectorOpen && (
-            <Inspector
-              activeStudent={activeStudentWithSeat}
-              transaction={transaction}
-              onSelect={selectStudent}
-              onDiscard={() => setTransaction("discarded")}
-              onCommit={commit}
-              onConfirmCommit={confirmCommit}
-              onCancelConfirm={() => setTransaction("preview-ready")}
-              onUnknown={() => setTransaction("outcome-unknown")}
-              onCheck={() => setTransaction("preview-ready")}
-            />
-          )}
-        </div>
-      </div>
-      <MobileNav
-        workspace={workspace}
-        setWorkspace={setWorkspace}
-        moreOpen={mobileMoreOpen}
-        setMoreOpen={setMobileMoreOpen}
-      />
-    </div>
+    </WorkbenchFrame>
   )
 }
 
@@ -586,14 +579,11 @@ function Conversation({
 function Ambient({ compact = false }: { compact?: boolean }) {
   const { tasks } = useDemoWork()
   const open = useDemoTaskDetails()
-  return <div className={compact ? "ambient compact" : "ambient"}>
-    {([["需要我处理", "mine"], ["可能遗漏", "possible"], ["等待别人", "waiting"]] as const).map(([label, state]) => (
-      <section key={state}><h3>{label}</h3>
+  const column = (state: "mine" | "possible" | "waiting") => <>
         {tasks.filter(t => t.state === state).map(task => <button key={task.id} onClick={() => open(task)}>{task.title} · {task.due}<ChevronRight size={14}/></button>)}
         {!tasks.some(t => t.state === state) && <p className="demo-capability-note">暂无此类演示事项</p>}
-      </section>
-    ))}
-  </div>
+      </>
+  return <AttentionColumns compact={compact}>{[column("mine"), column("possible"), column("waiting")]}</AttentionColumns>
 }
 
 function ResponsibilityCandidate({ state, feedback, onAction }: any) {
@@ -1258,15 +1248,14 @@ function WorkWorkspace(_: any) {
   const scope = workspaceId ? tasks.filter(t => t.workspaceId === workspaceId) : tasks
   const states: Record<string, string> = { "需要我处理": "mine", "等待别人": "waiting", "可能遗漏": "possible", "已闭环": "done" }
   const rows = scope.filter(t => tab === "全部" || (tab === "即将截止" ? t.state !== "done" && /今天|明天|已逾期/.test(t.due) : t.state === states[tab]))
-  return <WorkspaceShell title={space?.name || (workspaceId ? "未知工作空间" : "工作")} description={space ? space.detail + " · 仅当前演示范围" : "按注意力状态查看同一份演示事项；未确认职责不自动归属。"} icon={ClipboardList}>
-    <div className="tabbar">
-      {["需要我处理", "等待别人", "可能遗漏", "即将截止", "已闭环", "全部"].map(label => <button key={label} className={tab === label ? "active" : ""} onClick={() => setTab(label)}>{label}</button>)}
-    </div>
+  return <div className="surface">
+    <WorkHeading title={space?.name || (workspaceId ? "未知工作空间" : "工作")} description={space ? space.detail + " · 仅当前演示范围" : "按注意力状态查看同一份演示事项；未确认职责不自动归属。"} />
+    <WorkTabs items={["需要我处理", "等待别人", "可能遗漏", "即将截止", "已闭环", "全部"].map(label => ({ id: label, label }))} current={tab} onSelect={setTab} />
     <div className="work-list">
-      {rows.map(task => <button key={task.id} onClick={() => open(task)}><strong>{task.title}</strong><span>{task.due}</span><em>{task.state === "done" ? "演示已完成" : task.source}</em><ChevronRight size={16}/></button>)}
+      {rows.map(task => <WorkItemButton key={task.id} onSelect={() => open(task)} title={task.title} due={task.due} status={task.state === "done" ? "演示已完成" : task.source} />)}
       {!rows.length && <p className="demo-capability-note">此范围暂无该类演示事项。未自动创建任务或修改其他工作空间。</p>}
     </div>
-  </WorkspaceShell>
+  </div>
 }
 function DataWorkspace({ setWorkspace }: any) {
   const [tab, setTab] = useState("文件")
@@ -2167,24 +2156,11 @@ function StudentDetailWorkspace({ studentId, activeTab, onBack, onDiscuss }: any
   }
   return (
     <div className="surface student-detail-page">
-      <button className="back-link" onClick={onBack}>
-        <ChevronLeft size={16} /> 返回学生列表
-      </button>
-      <header className="student-profile-head">
-        <span className="profile-avatar">{student.name[0]}</span>
-        <div>
-          <p className="eyebrow">学生详情 · 合成样例，非真实人物事实</p>
-          <h1>{student.name}</h1>
-          <p>{student.id} · 合成演示班 · 在读</p>
-        </div>
-        <button
-          className="primary"
-          onClick={() => onDiscuss(student)}
-        >
-          添加记录
-        </button>
-        <button className="object-discuss" onClick={() => onDiscuss(student)}>围绕此学生对话</button>
-      </header>
+      <StudentProfileHeader name={student.name} identity={`${student.id} · 合成演示班 · 在读`}
+        description="合成样例，非真实人物事实" onBack={onBack} actions={<>
+          <button className="primary" onClick={() => onDiscuss(student)}>添加记录</button>
+          <button className="object-discuss" onClick={() => onDiscuss(student)}>围绕此学生对话</button>
+        </>} />
       <div className="view-switcher" role="tablist" aria-label="学生详情栏目">
         {tabs.map(([label, id]) => (
           <button
@@ -2246,32 +2222,10 @@ function StudentWorkspace({
 }: any) {
   const [view, setView] = useState("清单")
   const [query, setQuery] = useState("")
-  const views = ["清单", "表格", "座位", "宿舍", "小队", "画布"]
   return (
     <div className="surface student-surface">
-      <div className="surface-title">
-        <span className="surface-icon">
-          <Users size={22} />
-        </span>
-        <div>
-          <p className="eyebrow">共享实体 · 多视图</p>
-          <h1>{title}</h1>
-          <p>同一学生、范围、筛选与选中状态在所有视图中持续保留。</p>
-        </div>
-      </div>
-      <div className="view-switcher" role="tablist" aria-label="学生视图切换">
-        {views.map((item) => (
-          <button
-            role="tab"
-            aria-selected={view === item}
-            className={view === item ? "active" : ""}
-            onClick={() => setView(item)}
-            key={item}
-          >
-            {item}
-          </button>
-        ))}
-      </div>
+      <StudentPageTitle title={title} description="同一学生、范围、筛选与选中状态在所有视图中持续保留。" />
+      <StudentViewSwitcher current={view} onSelect={setView} />
       {(view === "清单" || view === "表格") && <div className="student-search">
         <label htmlFor="demo-student-search">搜索学生</label>
         <input id="demo-student-search" type="search" placeholder="输入姓名或学号" value={query} onChange={event => setQuery(event.target.value)} />
@@ -2377,35 +2331,13 @@ function TablePreview({ selectStudent, activeStudentId, query = "" }: any) {
   const { students } = useMockDomainStore()
   const matches = students.filter(student => `${student.name} ${student.id}`.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()))
   return (
-    <div className="data-table">
-      <div className="table-head">
-        <span>学生</span>
-        <span>学号</span>
-        <span>座位</span>
-        <span>状态</span>
-      </div>
+    <>
       <p className="student-result-count" role="status">共 {matches.length} 位演示学生</p>
       {matches.length === 0 && <p className="student-empty">未找到匹配学生。请检查姓名或学号，或清空搜索；未自动创建或匹配其他身份。</p>}
-      {matches.map((s) => (
-        <button
-          key={s.id}
-          onClick={() => selectStudent(s.id)}
-          className={
-            activeStudentId === s.id ? "table-row selected" : "table-row"
-          }
-        >
-          <span>
-            <i className="avatar">{s.name[0]}</i>
-            {s.name}
-          </span>
-          <span>{s.id}</span>
-          <span>{s.seat}</span>
-          <span>
-            <b>在读</b>
-          </span>
-        </button>
-      ))}
-    </div>
+      <StudentRosterTable rows={matches.map(student => ({ id: student.id, name: student.name,
+        cells: [student.id, student.seat, <b>在读</b>] }))} columns={["学生", "学号", "座位", "状态"]}
+        selectedId={activeStudentId} onSelect={selectStudent} />
+    </>
   )
 }
 function GridPreview() {

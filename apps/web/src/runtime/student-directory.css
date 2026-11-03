@@ -5,3 +5,12 @@
 .r1-directory-table th{color:#69746d;font-weight:500;background:#f7f9f7}
 .r1-directory-table button{width:100%;text-align:left}
 .r1-student-table-layout .r1-student-list{min-width:0;display:block}
+.connected-runtime .r1-student-layout{grid-template-columns:minmax(0,1fr)}
+.connected-runtime .r1-student-list{display:block;min-width:0}
+.connected-runtime .r1-directory-table .data-table{min-width:640px}
+.connected-runtime .r1-directory-table .table-row{display:grid;grid-template-columns:1fr 1.4fr 1.3fr 1fr;align-items:center;width:100%;border:0;border-radius:0;text-align:left}
+.connected-runtime .r1-directory-table .table-head{grid-template-columns:1fr 1.4fr 1.3fr 1fr}
+.connected-runtime .student-profile-head{flex-wrap:wrap;gap:16px;margin:20px 0 28px}
+.connected-runtime .student-profile-head>div{min-width:0;flex:1;overflow-wrap:anywhere}
+.connected-runtime .surface-title{margin:8px 0 28px}
+.connected-runtime .view-switcher button:disabled{cursor:not-allowed;opacity:.45}

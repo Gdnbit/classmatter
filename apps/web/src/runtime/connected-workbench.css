@@ -1,0 +1,27 @@
+/* Original shell is shared with the fixture UI; live controllers own all data. */
+.connected-runtime{display:contents}
+.connected-runtime .app-shell{height:100dvh;min-height:0}
+.desktop-host .connected-runtime .app-shell{height:calc(100dvh - var(--desktop-bar-height))}
+.connected-runtime .app-shell>.sidebar{width:auto;min-height:0}
+.connected-runtime .sidebar .scope{display:flex;flex-direction:column;gap:7px}
+.connected-runtime .sidebar .scope span{font-size:11px;color:var(--muted)}
+.connected-runtime .workspace.r1-main{border-radius:0;min-height:0}
+.connected-runtime .r1-topbar{padding-inline:28px}
+.connected-runtime .r1-topbar strong{font-size:14px}
+.connected-runtime .workspace-nav button[aria-current=page]{background:var(--sidebar-active,#dfe7e2)}
+.connected-runtime .sidebar .r1-scope{margin-top:16px;padding-inline:8px}
+.connected-runtime .sidebar .r1-scope select{display:block;width:100%;margin-top:8px}
+.connected-runtime .chat-history{margin-top:22px}
+.connected-runtime .sidebar-empty{font-size:12px;color:var(--muted);padding:8px}
+.connected-runtime .r1-composer{border-radius:23px;flex-shrink:0}
+@media(max-width:720px){
+  .connected-runtime .app-shell{display:flex;flex-direction:column}
+  .connected-runtime .app-shell>.sidebar{display:flex;height:auto;max-height:170px;flex-shrink:0}
+  .connected-runtime .sidebar-scroll{padding:8px 12px}
+  .connected-runtime .sidebar .scope,.connected-runtime .sidebar .r1-scope,.connected-runtime .sidebar .chat-history,.connected-runtime .sidebar .user-area{display:none}
+  .connected-runtime .workspace-nav{display:flex;overflow:auto}
+  .connected-runtime .workspace-nav button{white-space:nowrap}
+  .connected-runtime .shell-main{min-height:0;padding-bottom:0;flex:1}
+  .connected-runtime .shell-main>.body-grid{height:auto;min-height:0;display:flex}
+  .connected-runtime .workspace{height:auto;flex:1}
+}

@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'none'; connect-src 'none'; form-action 'none'; frame-src 'none'; base-uri 'none'"><meta name="viewport" content="width=device-width,initial-scale=1"><title>班事有谱 · 首次设置</title><link rel="stylesheet" href="setup.css"></head>
+<body><main><small>班事有谱 · CLASSMATTER</small><h1>准备你的工作台</h1><p>现有界面将连接本机数据库。当前仅使用合成数据；不会导入真实师生信息。</p><p id="status" role="status">正在检查本机设置…</p>
+<form id="password-form" hidden><label>本机 Owner 密码<input id="password" type="password" minlength="16" maxlength="256" autocomplete="new-password" required></label><label id="repeat-label">再次输入密码<input id="repeat" type="password" maxlength="256" autocomplete="new-password"></label><p>至少 16 个字符。密码只提交给本机身份服务，不写入聊天或日志。</p><button id="password-submit" type="submit">设置并继续</button></form>
+<section id="recovery" hidden><h2>请保存一次性恢复码</h2><p>仅在此显示一次。遗失密码时使用，不要发到聊天或上传 GitHub。</p><pre id="codes"></pre><label><input id="saved" type="checkbox">我已在安全位置保存恢复码</label><button id="recovery-next" disabled>继续</button></section>
+<section id="preview" hidden><h2>启用本机会话存储</h2><p>此操作只初始化当前实例的会话控制；不会创建学生、事实或任务。请核对后批准。</p><pre id="payload"></pre><p id="hash"></p><button id="approve">批准本次初始化</button></section>
+<button id="continue" hidden>进入工作台</button><p id="error" role="alert"></p></main><script src="setup-ui.js"></script></body></html>

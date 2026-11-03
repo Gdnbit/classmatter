@@ -65,7 +65,7 @@
 
 ## ✦ 产品能力
 
-**独立 PC Demo：** 已新增 Windows x64 桌面宿主，复用现有前端，打包后不依赖浏览器或本地 Web 服务。当前仅合成演示，不是完整本地 Agent，也不连接数据库/真实模型。见[桌面运行与打包](apps/desktop/README.md)。
+**独立 PC 工作台：** Windows x64 桌面默认接本机 D1 数据库，沿用原型布局；开发入口免输密码。对话、学生、事实和任务复用已有受控读写流程，尚未覆盖全部原型页面。离线样例仅供显式开发回归；免安装持久化发行包和完整本地 Agent 尚未交付。当前仅合成数据。见[桌面运行与打包](apps/desktop/README.md)。
 
 ### 从一件班务开始，形成完整的工作闭环
 
@@ -136,22 +136,22 @@ flowchart LR
 目前的本机持久化运行入口面向 **Windows**，依赖 PowerShell 7、Node.js 22–24、pnpm 11.19.0、Python 3.13、uv 0.11.7 和 PostgreSQL 18.6 binaries；本机凭据使用 DPAPI。
 
 ```powershell
-# 构建 Web
-cd apps/web
-pnpm install --frozen-lockfile
-pnpm typecheck
-pnpm build
-
-# 初始化并启动
-cd ../../backend
+# 准备依赖与自有合成数据库（已有实例不要重复 init）
+cd backend
 uv sync --frozen
-uv run --frozen python local.py init --pg-root '<PostgreSQL18安装目录>'
-uv run --frozen python local.py start
-uv run --frozen python local.py bootstrap
-uv run --frozen python local.py serve
+uv run --frozen python local.py init --profile conversation-d1 --pg-root '<PostgreSQL18安装目录>'
+uv run --frozen python local.py start --profile conversation-d1
+
+# 构建并打开独立桌面开发应用
+cd ../apps/web
+pnpm install --frozen-lockfile
+cd ../desktop
+pnpm install --frozen-lockfile
+pnpm build
+pnpm start
 ```
 
-浏览器打开 **http://127.0.0.1:8000**。运行结束后可执行 `uv run --frozen python local.py stop`。请在交互终端妥善保管密码和恢复码，勿将运行目录或真实学生资料提交到仓库。
+开发入口直接打开独立窗口，不要求输入密码；生成的开发凭据仅保存在当前用户本机。退出应用不删除数据库；需要停止数据库时，在 backend 执行 `uv run --frozen python local.py stop --profile conversation-d1`。勿将运行目录、凭据或真实学生资料提交到仓库。已有个人Owner不会被开发入口接管，具体边界及兼容操作见桌面文档。
 
 <details>
 <summary><strong>验证命令、Demo 模式与适用边界</strong></summary>
