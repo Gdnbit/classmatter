@@ -1,0 +1,141 @@
+{
+  "$defs": {
+    "DocumentMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "plain-text",
+            "markdown"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "version": {
+          "maximum": 2147483647,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "draft",
+            "archived"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "document_id",
+        "class_id",
+        "term_id",
+        "title",
+        "format",
+        "version",
+        "status",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "DocumentMetadata",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.document-list.v1",
+      "default": "classmatter.document-list.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "content_authority": {
+      "const": "working-draft",
+      "default": "working-draft",
+      "title": "Content Authority",
+      "type": "string"
+    },
+    "workspace_id": {
+      "format": "uuid",
+      "title": "Workspace Id",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "data": {
+      "items": {
+        "$ref": "#/$defs/DocumentMetadata"
+      },
+      "maxItems": 50,
+      "title": "Data",
+      "type": "array"
+    },
+    "snapshot": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Snapshot",
+      "type": "string"
+    },
+    "next_offset": {
+      "anyOf": [
+        {
+          "exclusiveMaximum": 10000,
+          "minimum": 50,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Next Offset"
+    }
+  },
+  "required": [
+    "workspace_id",
+    "class_id",
+    "term_id",
+    "data",
+    "snapshot",
+    "next_offset"
+  ],
+  "title": "DocumentPage",
+  "type": "object"
+}

@@ -2,6 +2,7 @@
 import ipaddress
 import json
 import logging
+import re
 from uuid import uuid4
 
 from fastapi import FastAPI, Request
@@ -59,12 +60,16 @@ class LocalBoundary:
             # Bound credential requests before JSON/Pydantic parsing, including
             # chunked requests. Never reflect body fragments in an error.
             body = bytearray()
+            root = scope.get('app')
+            document_preview = (getattr(getattr(root, 'state', None), 'document_commands_enabled', False)
+                and re.fullmatch(r'/api/workspaces/[0-9a-fA-F-]{36}/document-commands/preview', scope.get('path', '')))
+            body_limit = 640 * 1024 if document_preview else 8192
             while True:
                 message = await receive()
                 if message["type"] == "http.disconnect":
                     return
                 body.extend(message.get("body", b""))
-                if len(body) > 8192:
+                if len(body) > body_limit:
                     return await rejection(400, "invalid_request", request_id)(scope, receive, send)
                 if not message.get("more_body", False):
                     break
@@ -120,7 +125,8 @@ class LocalBoundary:
             await rejection(500, "internal_error", request_id)(scope, receive, secured_send)
 
 
-def create_app(settings: Settings, *, identity=None, business=None, query=None, readiness=None, agent=None, model_controller=None):
+def create_app(settings: Settings, *, identity=None, business=None, query=None, readiness=None, agent=None,
+               model_controller=None, document_business=None, document_query=None):
     app = FastAPI(debug=False, docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(LocalBoundary, settings=settings)
 
@@ -154,6 +160,20 @@ def create_app(settings: Settings, *, identity=None, business=None, query=None, 
         @app.exception_handler(CommandRejected)
         async def command_error(request: Request, exc: CommandRejected):
             return rejection(409, "business_rejected", request.state.request_id)
+
+    if document_business is not None or document_query is not None:
+        if (identity is None or document_business is None or document_query is None
+                or document_business.identity is not identity or document_query.identity is not identity
+                or document_business.store is not document_query.store):
+            raise ValueError('Document composition requires the same identity and both document Gateways')
+        from .documents import router as document_router
+        from class_os.application.roster import CommandRejected
+        app.include_router(document_router(document_business, document_query))
+        app.state.document_commands_enabled = True
+
+        @app.exception_handler(CommandRejected)
+        async def document_error(request: Request, exc: CommandRejected):
+            return rejection(409, 'business_rejected', request.state.request_id)
 
     if agent is not None:
         if identity is None or query is None:

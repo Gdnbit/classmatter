@@ -1,0 +1,43 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "command": {
+      "enum": [
+        "document.archive",
+        "document.restore"
+      ],
+      "title": "Command",
+      "type": "string"
+    },
+    "document_id": {
+      "format": "uuid",
+      "title": "Document Id",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "expected_version": {
+      "exclusiveMaximum": 2147483647,
+      "minimum": 1,
+      "title": "Expected Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "command",
+    "document_id",
+    "class_id",
+    "term_id",
+    "expected_version"
+  ],
+  "title": "DocumentState",
+  "type": "object"
+}

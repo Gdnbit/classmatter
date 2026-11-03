@@ -1,5 +1,6 @@
 """Post-R1 document policy using the original BCG, not an Agent write tool."""
 from dataclasses import dataclass
+import re
 from uuid import UUID
 
 from class_os.domain.documents import CreateDocument, ReviseDocument, ChangeDocumentState, decode_document
@@ -60,3 +61,25 @@ class DocumentQueryGateway(QueryGateway):
             return tx.read_documents(binding, class_id, term_id, document_id, history)
         action = "document.list" if document_id is None else "document.history" if history else "document.read"
         return self._run(credentials, action, read, class_id=class_id, term_id=term_id, resource_id=document_id)
+
+    def page(self, token, client, csrf, workspace_id, class_id, term_id, *, document_id=None, offset=0, snapshot=None):
+        def read(tx, binding, now):
+            if (any(type(value) is not UUID for value in (class_id, term_id))
+                    or document_id is not None and type(document_id) is not UUID
+                    or type(offset) is not int or not 0 <= offset < 10000 or offset % 50
+                    or (snapshot is not None and (type(snapshot) is not str or not re.fullmatch('[a-f0-9]{64}', snapshot)))
+                    or (offset > 0 and snapshot is None)):
+                raise CommandRejected()
+            return tx.document_page(binding, class_id, term_id, document_id, offset, snapshot)
+        action = 'document.history' if document_id is not None else 'document.list'
+        return self._run((token, client, csrf, workspace_id), action, read,
+                         class_id=class_id, term_id=term_id, resource_id=document_id)
+
+    def revision(self, token, client, csrf, workspace_id, class_id, term_id, document_id, version):
+        def read(tx, binding, now):
+            if (any(type(value) is not UUID for value in (class_id, term_id, document_id))
+                    or type(version) is not int or not 1 <= version <= 2147483647):
+                raise CommandRejected()
+            return tx.document_revision(binding, class_id, term_id, document_id, version)
+        return self._run((token, client, csrf, workspace_id), 'document.read', read,
+                         class_id=class_id, term_id=term_id, resource_id=document_id)

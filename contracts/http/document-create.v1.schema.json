@@ -1,0 +1,55 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "command": {
+      "const": "document.create",
+      "title": "Command",
+      "type": "string"
+    },
+    "document_id": {
+      "format": "uuid",
+      "title": "Document Id",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "title": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Title",
+      "type": "string"
+    },
+    "body": {
+      "maxLength": 100000,
+      "title": "Body",
+      "type": "string"
+    },
+    "format": {
+      "enum": [
+        "plain-text",
+        "markdown"
+      ],
+      "title": "Format",
+      "type": "string"
+    }
+  },
+  "required": [
+    "command",
+    "document_id",
+    "class_id",
+    "term_id",
+    "title",
+    "body",
+    "format"
+  ],
+  "title": "DocumentCreate",
+  "type": "object"
+}
