@@ -9,7 +9,7 @@
       "sha256": "1d600de20e76757a56733415f95a31ad4c665bc33efd6698418b7a5639f8d876"
     },
     "apps/web/tests/work-summary-browser.mjs": {
-      "sha256": "a8dc6b2b81c99e029bf0c848ae194e1adaf61dd733151cddbf241dc83a82ba5c"
+      "sha256": "0f40a8cc29d3a5dff901f0aed3ac1e989ada1225e1de5468ad08061410c1ecf9"
     },
     "apps/web/tests/work-summary.mjs": {
       "sha256": "c41963914949c7298d6b85c8b14a0f122195799ac930f7d640a84eea9da2431f"
@@ -369,7 +369,7 @@
       "sha256": "158daeb107b79046bb035319c7a72aa2cc7956ff01a7d03cedcb34e9d4bacf86"
     },
     "docs/changes/2026-10-24-d1-durable-conversation.md": {
-      "sha256": "06ec1e667e50c61972111e3673af74db9d51414daef788843c7306e5c5ef7950"
+      "sha256": "dd25cc4cabee49c227e7115ade04dc0ab6aa691b741b58cb96b0fcff1817325e"
     },
     "apps/desktop/runtime-check.cjs": {
       "sha256": "003300d88181dbce8c6557d94473ba23c1493351120b6d6cee0bff28f4332d6b"
@@ -405,10 +405,10 @@
       "sha256": "0662362324e8754e9ca379d7729aebf9a8bf4205ef1b46bf683225ae4aae5bd4"
     },
     "apps/web/src/runtime/query-refresh.ts": {
-      "sha256": "779b88126742d1b1ad1785a9b4eb2feeb8a4e51efa1ccdcf55359ec59bba06b7"
+      "sha256": "52fd1d5a4ed468adf64c427e047c6af602047f5218cbbb261899f81ce7ae080e"
     },
     "apps/web/tests/query-refresh.mjs": {
-      "sha256": "bb036d19d48a159faab1a8f8327d43ef78331eae0de46fe1ae5f625cfd0f2547"
+      "sha256": "421b5e2daa218c0fdfe9036e02a35879f2c69bae1b2dbc3fcfdf931011d13461"
     },
     "docs/design/live-data-delivery-acceptance.md": {
       "sha256": "5e30523fcc35c3b545f56cdf1ed82442660ea86133aebb639a248bdd9c58ef7d"
@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "f74af456cf5f24cb9529e7ec0444684554a08ae640d772624a9618efeed4bbee"
+      "sha256": "1ee7e115e8f1a7d5493efb7d33fc9f8ade69d3c7d331041838d86fdb5b010361"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -648,7 +648,7 @@
       "sha256": "a916845977c93c4a807d1bf56dd224f0d8015d7a46620643b30eec79e843987b"
     },
     "apps/web/README.md": {
-      "sha256": "2f78579536aed5bfd0898734f3ffd31ae8f8db150000427329d469a81254466c"
+      "sha256": "8bdb743d17414d178d189ecd3383044f8e781d5ed0ec8b9ddd234fd25baf006c"
     },
     "apps/web/index.html": {
       "sha256": "6857940a16627475250d8d98cf9711cf58e418459b8a7f97755f0c3180ed845f"
@@ -711,7 +711,7 @@
       "sha256": "fe5baeec654888996fa3a94a03251bea227325fa54dc53a4e351ecd72d8d4d9b"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "d91e0142f41701a06c74778c0da9222b698788536cbb1b7b8295c5883892a70e"
+      "sha256": "ccdd2e0171d7d5703dacdc0ffb323f53965e098bd0295cad6a59a147e63b47d6"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "8f005293650b914c64f9649c7c70efe41080d6a310c275aff9fdf4707588160b"
@@ -762,7 +762,7 @@
       "sha256": "deb36a29ca8bbe3e98739c11a5f181a990f82f730568d47879be9f78dd71b3f4"
     },
     "apps/web/src/runtime/runtime.css": {
-      "sha256": "7e452e0649063e9d0b7de0bc635eadf9ead4d04c346602e905843726db00332d"
+      "sha256": "483ea52e7849fbc3dbfc84bdaae76babfa8f1a331d4d5a14e6979bf35bb5ecb3"
     },
     "apps/web/src/runtime/term-metadata.ts": {
       "sha256": "32714f9fc270b48d43f812aeaf15750aa8c3e56348df5432b8c9c55782ef7fc8"
@@ -855,7 +855,7 @@
       "sha256": "507d510cee982bdd2b6af4169e3701fb42642c849558155cdbdf0339d5442885"
     },
     "apps/web/tests/runtime.mjs": {
-      "sha256": "bfa322d4b1d92c899c009b6522b61620d7d9d0c011bdb3b0343dc3ded02dfd4a",
+      "sha256": "26ddcdfc1c10781fe01ac4b3b5659e3bb043cb526dedf27017cd366464d88816",
       "reviewed_pattern_exceptions": [
         {
           "rule": "email-shape",
@@ -1450,7 +1450,7 @@
       "sha256": "fcd17f445f36cca352545e81aa1539650eaf72341df0c42e011b2d3cef66bf2e"
     },
     "docs/PUBLIC_AUDIT.md": {
-      "sha256": "14380e37681af8df8cc000d9b947abaecc5b56d6ca479f6a9908bc400ce6bcd5"
+      "sha256": "7b61d69ec68c3954e0f168c615bb985161c712502a5ada2407ca15c6ef2402d2"
     },
     "docs/README.md": {
       "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"

@@ -30,6 +30,27 @@ try {
   assert.match(original, /\[task:[a-f0-9-]{36}@1\]/);
   assert(original.includes('来源作者：'));
   await editor.fill(original + '\n人工补充：仍为未核对草稿。');
+  const beforeLogout = writes.length;
+  const logout = page.getByRole('button', { name: '退出登录', exact: true });
+  const confirmLogout = page.getByRole('dialog', { name: '退出并丢弃未保存草稿？', exact: true });
+  await logout.click();
+  await confirmLogout.waitFor({ timeout: 4000 });
+  assert(await confirmLogout.getByRole('button', { name: '继续编辑', exact: true }).evaluate(node => node === document.activeElement));
+  assert.equal(writes.length, beforeLogout); // A dialog is not an ISB mutation.
+  await page.keyboard.press('Escape');
+  await confirmLogout.waitFor({ state: 'hidden' });
+  assert.equal(await editor.inputValue(), original + '\n人工补充：仍为未核对草稿。');
+  assert(await logout.evaluate(node => node === document.activeElement));
+  await logout.click();
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await confirmLogout.evaluate(node => node.scrollWidth > node.clientWidth), false);
+  const dialogBox=await confirmLogout.boundingBox();
+  assert(dialogBox && dialogBox.x>=10 && Math.abs(dialogBox.x+dialogBox.width/2-195)<2);
+  await page.screenshot({ path: '../../test-results/logout-draft-modal.png', fullPage: true });
+  await confirmLogout.getByRole('button', { name: '继续编辑', exact: true }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  assert.equal(writes.length, beforeLogout);
+  assert.equal(await editor.inputValue(), original + '\n人工补充：仍为未核对草稿。');
   await page.screenshot({ path: '../../test-results/work-summary.png', fullPage: true });
   await page.getByRole('button', { name: '复制已核对草稿', exact: true }).click();
   await page.getByText('已按本人操作复制；未保存或发送。', { exact: true }).waitFor();
@@ -83,6 +104,28 @@ try {
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('button', { name: '总览', exact: true }).click();
   assert.equal(await editor.count(), 0);
+  await generate.click();
+  await editor.fill('合成未保存小结：明确丢弃后退出。');
+  await logout.click();
+  await confirmLogout.getByRole('button', { name: '丢弃草稿并退出', exact: true }).click();
+  await page.getByLabel('Owner 密码').waitFor();
+  assert.equal(await editor.count(), 0);
+  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  await page.getByRole('button', { name: '总览', exact: true }).click();
+  await generate.waitFor();
+  assert.equal(await editor.count(), 0); // No draft recovery/cache after explicit discard.
+  await page.getByRole('button', { name: '对话', exact: true }).click();
+  const unsent = page.getByLabel('输入消息', { exact: true });
+  await unsent.fill('合成未发送文字：取消退出后仍在。');
+  await logout.click();
+  await confirmLogout.waitFor();
+  await confirmLogout.getByRole('button', { name: '继续编辑', exact: true }).click();
+  assert.equal(await unsent.inputValue(), '合成未发送文字：取消退出后仍在。');
+  await unsent.fill('');
+  await logout.click(); // No draft: original immediate logout remains.
+  await page.getByLabel('Owner 密码').waitFor();
+  assert.deepEqual(writes.slice(writeCount), ['/api/identity/logout', '/api/identity/login', '/api/identity/logout']);
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   console.log(JSON.stringify({ summary: 'actual QG/PG, editable/copy/offline/navigation/discard', writes: 0, errors, external }));
 } finally { await context.close(); await browser.close(); }

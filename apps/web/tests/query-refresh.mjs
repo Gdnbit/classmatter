@@ -92,6 +92,31 @@ test('read failure is reported without an autonomous retry loop', async () => {
   f.controller.request(); await f.tick(250); assert.equal(f.state.reads, 2)
 })
 
+test('an event queued during a failed read cannot become an autonomous retry', async () => {
+  let reject
+  const reason=new Error('synthetic failed in-flight read')
+  const f=fixture(()=>new Promise((_,failure)=>{reject=failure}))
+  f.controller.request();await f.tick(250)
+  f.controller.request();reject(reason)
+  await f.tick(0);await f.tick(60000)
+  assert.equal(f.state.reads,1)
+  assert.deepEqual(f.state.failures,[reason])
+  assert.equal(f.timers.size,0)
+  f.controller.request();await f.tick(250)
+  assert.equal(f.state.reads,2)
+  reject(reason);await f.tick(0)
+})
+
+test('explicit reads consume older queued events while allowing later fresh events', async () => {
+  const f=fixture();f.state.idle=false
+  for(let i=0;i<20;i++)f.controller.request()
+  f.controller.discardPending()
+  f.state.idle=true;f.controller.resume();await f.tick(60000)
+  assert.equal(f.state.reads,0)
+  f.controller.request();await f.tick(250)
+  assert.equal(f.state.reads,1)
+})
+
 test('dispose clears timers and ignores late failure from the previous session', async () => {
   const pending = fixture()
   pending.controller.request(); pending.controller.dispose()
