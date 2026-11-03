@@ -8,6 +8,8 @@ Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷�
 
 用户随后明确要求本机开发暂不输入密码。因此默认 `pnpm start` 带可信 `--development-no-password` 开关，直接进入合成开发工作台。私有父进程为尚无Owner的实例创建随机开发身份，凭据仅以当前用户DPAPI保存为忽略的 `developer-identity.dpapi`，通过原ISB登录并在加载页面前安装原HttpOnly/SameSite Cookie；初始化仍经原BCG。不开公共免登录HTTP路由，不返回密码/token给renderer，不改变普通API认证、Agent工具或正式Gate。既有个人Owner且无开发凭据标记时拒绝接管，不重置密码或清空原库。重复启动使用同一开发身份与数据库，不重复初始化。此开发实例不作为真实数据或正式账号迁移准入。
 
+开发会话退出/过期或Cookie丢失后，页面提供“进入本机开发”；设置中的“重新验证身份”也无需输入密码。只有明确开发启动的preload暴露这两个无调用方参数的固定动作；父进程复核发送窗口、主frame、同源和单请求状态，读取当前隔离session的Cookie，通过私有管道调用原ISB登录或reauthenticate。重新验证撤销旧会话、旋转当前Cookie；renderer仍用原session契约核对身份，失败/未知结果清理旧授权状态，不重放业务操作。没有后台自动续期、公共免认证路由、任意IPC/文件路径或业务命令。个人入口仍保持原密码/恢复流程；开发入口不展示无法使用的个人密码恢复操作。
+
 不带该开发开关的兼容入口仍使用本人设置流程：应用内设置密码、保存一次性恢复码、重新验证身份、核对并批准原 Risk X 会话控制初始化，无需打开终端。它不是当前默认开发体验。`backend/desktop_setup.py` 是由桌面进程私有管道拥有的适配器；不监听 HTTP，不向业务页面或 Agent 暴露 bootstrap arming、密码、恢复码、身份 token 或通用 IPC。setup preload 只在独立本地设置窗口加载，严格限制资源/导航/发送者。错误、超时和丢失响应不自动重试写操作；恢复码未收到时使用原 ISB 恢复码重发流程，不能重建 Owner。
 
 前置条件仍是已准备的自有合成数据库、运行中的 PostgreSQL、锁定依赖及正确构建。不会自动初始化/迁移/清空现有数据库，不会解除退出/转移限制或覆盖并发工作。旧 CLI 保留为操作兼容入口。独立离线样例仅供开发者回归，显式使用 `pnpm build:fixture` / `pnpm start:fixture`；下方旧记录中的 `pnpm start` 仅描述当时历史状态，当前命令以本段为准。

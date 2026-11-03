@@ -34,6 +34,7 @@ async function main(){
   try{
     app=await electron.launch({executablePath:require('electron'),args:[stage],env});
     const page=await app.firstWindow();
+    assert.equal(await page.evaluate(()=>typeof window.classMatterDesktop?.enterDevelopment),'undefined');
     page.on('pageerror',error=>errors.push(error.message));
     page.on('request',request=>{
       if(/^https?:/.test(request.url()) && !request.url().startsWith(origin+'/'))external.push(request.url());

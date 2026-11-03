@@ -41,6 +41,36 @@ def test_development_identity_requires_explicit_trusted_flag():
     setup.development = False
     with pytest.raises(ValueError, match='Explicit local development'):
         setup.handle({'operation': 'development_access'})
+    with pytest.raises(ValueError, match='Explicit local development'):
+        setup.handle({'operation': 'development_reauthenticate', 'client': 'a' * 43, 'session': 'b' * 43, 'csrf': 'c' * 43})
+
+
+@pytest.mark.db
+@pytest.mark.skipif(os.name != 'nt', reason='Actual Windows protected developer identity')
+def test_development_reauthentication_revokes_the_original_session(tmp_path, request):
+    from class_os.application.identity import IdentityDenied
+    from class_os.infrastructure.durable_local_runtime import open_services
+    runtime = LocalRuntime(tmp_path / 'development-session-rotation', profile='conversation-d1')
+    runtime.initialize(request.config.getoption('--pg-root'))
+    runtime.start()
+    setup = NativeSetup(runtime, development=True)
+    services = None
+    try:
+        before = setup.handle({'operation': 'development_access'})['cookies']
+        after = setup.handle({'operation': 'development_reauthenticate', **before})['cookies']
+        assert after['client'] == before['client'] and after['session'] != before['session']
+        services = open_services(runtime)
+        current = services.identity.authenticate(after['session'], after['client'], after['csrf'])
+        assert current.owner_id and after['csrf'] != before['csrf']
+        with pytest.raises(IdentityDenied):
+            services.identity.authenticate(before['session'], before['client'], before['csrf'])
+        with pytest.raises(IdentityDenied):
+            setup.handle({'operation': 'development_reauthenticate', **before})
+    finally:
+        if services is not None:
+            services.close()
+        setup.close()
+        runtime.stop()
 
 
 @pytest.mark.db

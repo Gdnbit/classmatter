@@ -58,14 +58,14 @@ else {
     },source.runtimeRoot,d1?'conversation-d1':'r1',d1?source.servicePort:8000,modelNetwork);
     origin=await service.start();
     const isolated=session.fromPartition(d1?'classmatter-synthetic-d1':'classmatter-synthetic-runtime');
-    if(developerCookies){
-      if(Object.keys(developerCookies).sort().join(',')!=='client,csrf,session')throw new Error('Invalid local identity');
-      for(const [name,value] of Object.entries(developerCookies)){
+    const installDeveloperCookies=async cookies=>{
+      if(!cookies||Object.keys(cookies).sort().join(',')!=='client,csrf,session')throw new Error('Invalid local identity');
+      for(const [name,value] of Object.entries(cookies)){
         if(typeof value!=='string'||!/^[A-Za-z0-9_-]{32,128}$/.test(value))throw new Error('Invalid local identity');
         await isolated.cookies.set({url:origin+'/api',name:'class_os_'+name,value,httpOnly:true,sameSite:'strict',path:'/api',secure:false});
       }
-      developerCookies=null;
-    }
+    };
+    if(developerCookies){await installDeveloperCookies(developerCookies);developerCookies=null;}
     isolated.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
     isolated.setPermissionCheckHandler(()=>false);
     isolated.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!allowed(origin,details.url)}));
@@ -76,7 +76,29 @@ else {
       // leaves the destination to the user. Never set an arbitrary save path.
       item.setSaveDialogOptions({title:d1?'保存已批准的合成证据退出包':'保存已批准的合成核心退出包',defaultPath:d1?'ClassMatter-synthetic-conversation-v6.json':'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});
     });
-    window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · ClassMatter',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
+    window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · ClassMatter',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),additionalArguments:development?['--classmatter-development-no-password']:[],session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
+    let developmentBusy=false;
+    ipcMain.handle('desktop:development-session',async(event,action)=>{
+      if(!development||developmentBusy||!window||event.sender!==window.webContents||event.senderFrame!==window.webContents.mainFrame||!allowed(origin,event.senderFrame.url)||!['enter','reauthenticate'].includes(action))throw new Error('开发会话不可用');
+      developmentBusy=true;let pipe;
+      try{
+        let request={operation:'development_access'};
+        if(action==='reauthenticate'){
+          const cookies=await isolated.cookies.get({url:origin+'/api'});
+          request={operation:'development_reauthenticate'};
+          for(const name of ['client','session','csrf']){
+            const matches=cookies.filter(cookie=>cookie.name==='class_os_'+name&&cookie.path==='/api');
+            if(matches.length!==1)throw new Error('Missing original identity');
+            request[name]=matches[0].value;
+          }
+        }
+        pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true);
+        const result=await pipe.request(request);
+        if(!window||window.isDestroyed())throw new Error('Window closed');
+        await installDeveloperCookies(result.cookies);return true;
+      }catch{throw new Error('开发会话未完成，请重新打开应用后核对。');}
+      finally{pipe?.stop();developmentBusy=false;}
+    });
     window.webContents.setWindowOpenHandler(()=>({action:'deny'}));
     window.webContents.on('will-navigate',(event,url)=>{if(!allowed(origin,url))event.preventDefault();});
     window.webContents.on('will-redirect',(event,url)=>{if(!allowed(origin,url))event.preventDefault();});

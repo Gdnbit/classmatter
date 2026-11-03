@@ -13,6 +13,14 @@ test('closed setup requests reject extra fields, bad types and arbitrary operati
   assert.equal(validRequest({operation:'status'}),true);
   assert.equal(validRequest({operation:'create_owner',password:'synthetic-password-only'}),true);
 });
+test('developer identity pipe has a closed context and no renderer-selected paths',()=>{
+  const context={operation:'development_reauthenticate',client:'a'.repeat(43),session:'b'.repeat(43),csrf:'c'.repeat(43)};
+  assert.equal(validRequest(context),true);
+  assert.equal(validRequest({...context,path:'elsewhere'}),false);
+  assert.equal(validRequest({...context,session:2}),false);
+  assert.equal(validRequest({...context,csrf:''}),false);
+  assert.equal(validRequest({operation:'development_access',password:'synthetic-unregistered'}),false);
+});
 test('one request at a time; proof and credentials stay on the private pipe',async()=>{
   const {child,sent,pipe}=fixture();
   const reply=pipe.request({operation:'status'});

@@ -107,6 +107,10 @@ class NativeSetup:
             return self.status()
         if payload == {'operation': 'development_access'}:
             return self.development_access()
+        if operation == 'development_reauthenticate' and set(payload) == {'operation', 'client', 'session', 'csrf'}:
+            if any(type(payload[name]) is not str or not 32 <= len(payload[name]) <= 128 for name in ('client', 'session', 'csrf')):
+                raise ValueError('Closed identity context required')
+            return self.development_reauthenticate(payload['client'], payload['session'], payload['csrf'])
         if operation in ('create_owner', 'preview_control') and set(payload) == {'operation', 'password'}:
             password = payload['password']
             if type(password) is not str or not 16 <= len(password) <= 256:
@@ -116,6 +120,28 @@ class NativeSetup:
             return self.approve_control(payload['operation_id'], payload['payload_hash'], payload['confirmed'])
         raise ValueError('Unregistered setup request')
 
+    def _developer_password(self):
+        if not self.development:
+            raise ValueError('Explicit local development required')
+        marker = self.runtime.root / 'developer-identity.dpapi'
+        if marker.is_symlink() or not marker.is_file() or marker.stat().st_size > 8192:
+            raise ValueError('Developer identity requires review')
+        credentials = json.loads(protect(marker.read_bytes(), decrypt=True))
+        if (set(credentials) != {'schema_version', 'password'} or credentials['schema_version'] != 1
+                or type(credentials['password']) is not str or not 16 <= len(credentials['password']) <= 256):
+            raise ValueError('Developer identity requires review')
+        return credentials['password']
+
+    def development_reauthenticate(self, client, token, csrf):
+        password = self._developer_password()
+        services = open_services(self.runtime)
+        try:
+            services.readiness()
+            result = services.identity.reauthenticate(token, client, csrf, password)
+            return {'cookies': {'client': client, 'session': result.token, 'csrf': result.csrf}}
+        finally:
+            services.close()
+
     def development_access(self):
         # Explicit trusted desktop flag only; never registered in HTTP/tools.
         # Refuse to adopt an existing personal Owner. No shared/default password.
@@ -124,12 +150,7 @@ class NativeSetup:
         state = self.status()
         marker = self.runtime.root / 'developer-identity.dpapi'
         if marker.exists():
-            if marker.is_symlink() or not marker.is_file() or marker.stat().st_size > 8192:
-                raise ValueError('Developer identity requires review')
-            credentials = json.loads(protect(marker.read_bytes(), decrypt=True))
-            if set(credentials) != {'schema_version', 'password'} or credentials['schema_version'] != 1:
-                raise ValueError('Developer identity requires review')
-            password = credentials['password']
+            password = self._developer_password()
         else:
             if state['owner_present']:
                 raise ValueError('Existing personal identity cannot be adopted')
