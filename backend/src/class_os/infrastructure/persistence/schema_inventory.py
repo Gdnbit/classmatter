@@ -28,8 +28,16 @@ D1_COLUMNS = MappingProxyType({
         "queued_until", "generation", "started_at", "lease_until", "ended_at", "cancel_requested_at",
         "input_tokens", "output_tokens", "duration_ms"}),
 })
+D2_COLUMNS = MappingProxyType({
+    "working_document": frozenset({"workspace_id", "document_id", "owner_id", "class_id", "term_id",
+        "status", "version", "created_at", "updated_at"}),
+    "working_document_revision": frozenset({"workspace_id", "document_id", "version", "status", "title",
+        "body", "format", "operation", "created_by", "created_at"}),
+})
+D2_TABLES = frozenset(D2_COLUMNS)
 SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
-                                   "conversation-d1": ("0026", REGISTERED_TABLES | D1_TABLES)})
+                                   "conversation-d1": ("0026", REGISTERED_TABLES | D1_TABLES),
+                                   "workbench-d2": ("0027", REGISTERED_TABLES | D1_TABLES | D2_TABLES)})
 
 
 def schema_profile(value="r1"):

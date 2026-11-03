@@ -24,6 +24,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 原R1 profile使用head0016、22张登记表、risk r1.3；隔离D1开发profile要求head0026，不自动升级旧R1实例。0015显示名更正、0016学期元数据更正及后续D1 migration均保留历史和权限约束。恢复使用经验证快照/前滚，禁止破坏性downgrade。退出/恢复的协议、限制和验收按profile分别记录，不能用core退出或合成恢复测试声称完整跨机/真实数据/退役准入。
 
+2026-11-04后续原界面领域接入按[领域增量设计](design/workbench-domain-packs.md)推进。内部`workbench-d2`/0027先提供文档head/revision、闭集领域命令、复用BCG的策略适配及受限QG/SQL存储；`application/documents.py`不是新写引擎，`infrastructure/documents.py`不是通用仓库。数据库inventory/列级角色检查保留D1约束，operator checkpoint增加完整D2表及历史完整性检查。此子单元没有HTTP/UI启用、运行实例迁移或新Agent工具；旧D1服务不能用于新库，完整应用升级与退出另行验收，不把新profile暴露成第二工作台。
+
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 
 ## Agent Runtime 与未来 Work Runtime（2026-10-22 非实施研究）

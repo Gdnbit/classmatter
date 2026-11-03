@@ -1,7 +1,7 @@
 """Owned synthetic profile's read-only critical guards, not a full ACL matrix."""
 from sqlalchemy import text
 
-from .schema_inventory import REGISTERED_TABLES, D1_TABLES, D1_COLUMNS, schema_profile
+from .schema_inventory import REGISTERED_TABLES, D1_COLUMNS, D2_COLUMNS, schema_profile
 
 
 ROLE_NAMES = ("class_os_migrator", "class_os_identity", "class_os_runtime")
@@ -55,7 +55,7 @@ def validate_role_guards(connection, *, profile="r1"):
         'class_os.business_audit','session_digest','SELECT')""")).scalar_one():
         reject()
 
-    if profile == "conversation-d1":
+    if profile in ("conversation-d1", "workbench-d2"):
         updates = {"conversation_import": set(), "conversation_provenance": set(), "conversation_source_audit": set(),
                    "conversation_admission": set(), "conversation_origin": set(),
                    "conversation_query_source": set(), "conversation_task_draft": {"title", "visibility"}, "conversation_result_receipt": set(),
@@ -64,14 +64,19 @@ def validate_role_guards(connection, *, profile="r1"):
                    "conversation_turn": set(), "conversation_message": {"body", "visibility"},
                    "conversation_run": {"state", "version", "generation", "started_at", "lease_until", "ended_at",
                                         "cancel_requested_at", "input_tokens", "output_tokens", "duration_ms"}}
-        for table in sorted(D1_TABLES):
+        inventory = D1_COLUMNS
+        if profile == "workbench-d2":
+            inventory = {**D1_COLUMNS, **D2_COLUMNS}
+            updates = {**updates, "working_document": {"status", "version", "updated_at"},
+                       "working_document_revision": set()}
+        for table in sorted(inventory):
             columns = connection.execute(text("""SELECT attname,
                 pg_catalog.has_column_privilege('class_os_runtime',attrelid,attnum,'UPDATE') AS writable,
                 pg_catalog.has_column_privilege('class_os_runtime',attrelid,attnum,'SELECT') AS readable,
                 pg_catalog.has_column_privilege('class_os_runtime',attrelid,attnum,'INSERT') AS insertable
                 FROM pg_catalog.pg_attribute WHERE attrelid=pg_catalog.to_regclass(:table)
                 AND attnum>0 AND NOT attisdropped"""), {"table": "class_os." + table}).mappings().all()
-            if ({row["attname"] for row in columns} != D1_COLUMNS[table]
+            if ({row["attname"] for row in columns} != inventory[table]
                     or any(type(row[key]) is not bool for row in columns for key in ("writable", "readable", "insertable"))
                     or {row["attname"] for row in columns if row["writable"]} != updates[table]
                     or any(not row["readable"] or not row["insertable"] for row in columns)):
