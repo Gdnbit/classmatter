@@ -30,6 +30,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 服务组合进一步由`application/workbench.py`、`infrastructure/workbench.py`及`interfaces/http/workbench.py`复用原BCG/QG/ISB、durable HTTP/SSE和Pydantic AI。仅接受显式原生D2类型与同一store，保留旧fence及typed结果证据；新增文档读取审计先闭集验证，再交原D1校验器验证其组件分区，不删除共用命令审计或忽略未知动作。公共旧退出/转移/导入拒绝；D2 capabilities和审计v2明确版本，不伪装旧D1。结果捕获/历史阅读器采用显式两个已知类型，任意子类仍拒绝。默认本机运行描述与UI尚未切换，完整D2退出/恢复准入和生产容量仍需单独验证。
 
+`infrastructure/workbench_upgrade.py`承载独立受信operator的D1→D2同实例升级：同根同库、原身份/保护头、受检完整checkpoint、DPAPI固定升级凭据、事务迁移和原子配置发布；会话锁跨越SQL提交与发布，失败可回滚或凭证续接，不自动覆盖/降级。`workbench_local_runtime.py`提供显式D2就绪和同服务lifespan装配；`native_setup.py`仅复用既有D2身份及免密码开发标记；`backend/local.py`提供显式upgrade-workbench/serve及完整D2 checkpoint。默认桌面和用户实例没有切换，原UI协议/编辑器及完整退出仍待实施。测试入口为`backend/tests/test_workbench_upgrade.py`，只操作自己创建的临时集群，不修改用户数据。
+
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 
 ## Agent Runtime 与未来 Work Runtime（2026-10-22 非实施研究）

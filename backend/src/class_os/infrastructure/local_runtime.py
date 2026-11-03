@@ -25,6 +25,7 @@ D1_ROOT = ROOT.parent / "synthetic-conversation-d1"
 PROFILES = {
     "r1": ("class-os-owned-synthetic-v1", "class_os_synthetic_local", ROOT),
     "conversation-d1": ("classmatter-owned-synthetic-conversation-d1", "class_os_synthetic_conversation_local", D1_ROOT),
+    "workbench-d2": ("classmatter-owned-synthetic-workbench-d2", "class_os_synthetic_conversation_local", D1_ROOT),
 }
 ROLES = ("root", "migrator", "identity", "runtime")
 
@@ -61,7 +62,8 @@ class LocalRuntime:
             raise ValueError("Unknown owned synthetic profile")
         self.profile = profile
         self.root = Path(root if root is not None else PROFILES[profile][2]).resolve()
-        if any(self.root == entry[2].resolve() and name != profile for name, entry in PROFILES.items()):
+        if any(self.root == entry[2].resolve() and name != profile
+               and {name, profile} != {'conversation-d1', 'workbench-d2'} for name, entry in PROFILES.items()):
             raise ValueError("Another profile's default runtime root is reserved")
         self.cluster = self.root / "cluster"
         self.manifest = self.root / "runtime.json"
@@ -90,6 +92,8 @@ class LocalRuntime:
             raise RuntimeError(f"Local PostgreSQL {binary} failed; no automatic reset attempted")
 
     def initialize(self, pg_root):
+        if self.profile == 'workbench-d2':
+            raise RuntimeError('D2 requires verified in-place upgrade of the existing D1 runtime')
         if os.name != "nt" or self.root.exists():
             raise RuntimeError("Initialization requires a new owned Windows runtime directory")
         binaries = Path(pg_root).resolve()
@@ -167,6 +171,8 @@ class LocalRuntime:
         return Database(url, migration=role == "migrator", identity=role == "identity", profile=self.profile)
 
     def upgrade(self):
+        if self.profile == 'workbench-d2':
+            raise RuntimeError('D2 requires the verified workbench upgrade operator')
         database = self.database("migrator")
         try:
             migrate(database)

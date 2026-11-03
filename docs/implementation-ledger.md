@@ -2,6 +2,20 @@
 
 当前状态以页首最新日期的证据及下方能力表为准；后续日期段落是当时的工程结果。离线夹具与连接数据库的工程配置必须区分，但不应成为用户需要选择的两套工作台。后端及隔离R1/D1通过不代表原型整体接线或生产准入完成。
 
+## 2026-11-04 同实例受检升级与免密码运行入口（D2-DOC，原UI尚待绑定）
+
+同服务装配PR58精确headdbcf92d的完整Windows/Ubuntu CI41682158812成功，按expected head合入main：ba57d2df6c579c50b127339b096b2dd4777e0158。当前单元从该源树继续，不覆盖用户D1实例、其他工作树或原私有库。
+
+新增`workbench_upgrade.py`与`workbench_local_runtime.py`；修改现有LocalRuntime、NativeSetup及local operator。D2复用同一根/数据库/Owner，拒绝空库初始化/重新bootstrap/普通migrate。升级只接受原生、保护头对齐、无源/目标fence或在途run、无已知服务监听/其他数据库连接的实例。原协调/身份/业务会话锁跨越完整checkpoint实际pg_dump/restore克隆核验、DPAPI固定升级凭据、事务迁移和描述原子发布；失败保留库/备份/凭据，SQL提交后发布失败有库存与范围绑定的向前续接，不重置身份或降级head。
+
+显式D2 compose复用原QG/BCG/ISB/SDK/HTTP/SSE，lifespan关闭自有连接；NativeSetup只复用既有身份和开发DPAPI标记，保留免密码开发进入/重新验证及个人身份不得接管。operator新增upgrade-workbench与显式serve/完整D2 checkpoint选择；未切换桌面默认启动或用户数据实例，不能用尚不支持D2发现的原前端连接假装UI验收。
+
+初始6项Windows真实PG/DPAPI升级测试通过63.35秒。扩大旧本机运行/原native/备份组合后42通过、1宿主跳过、1失败273.91秒，失败为额外runtime角色连接未阻止升级：pg_stat_activity对其他角色的backend_type可能返回NULL。修正为NULL也拒绝，不授予pg_read_all_stats或扩大权限；最终回归及公开扫描证据在本单元最终记录补充。测试中仅使用自建临时Owner/集群，未使用外部Provider、真实师生信息或费用。
+
+价值是原数据世界升级后仍可读取原班级、学生与已完成聊天，无需老师重录、建立新工作空间或设置开发密码。原文档编辑器/完整D2退出/桌面默认协议切换仍未交付，成绩和座位继续保留未完成；本单元不宣称整个Demo已打通。追溯D2-DOC后续合成开发，不变更冻结R1 Requirement/Eval/Task/Gate。启用前可撤回此代码单元；启用后必须停止服务、保留原库及受检checkpoint交operator处理，不DROP文档表或手改迁移版本。
+
+修正后的实际Windows PG18.6/DPAPI升级与原native回归25通过199.72秒，包含旧Owner/class/student/两条已完成消息保留、实际HTTP D2发现/文档列表/旧D1发现404、免密码开发进入/原会话旋转/拒绝重复Owner/个人开发接管拒绝、损坏凭据拒绝、已有runtime连接阻止升级、事务回滚与保留备份、发布失败续接及幂等重入。日志为本机忽略目录`test-results/workbench-native-final.log`及对应JUnit XML；未把本机路径/凭据/运行产物提交。完整非DB735通过、4宿主跳过、657 DB另验115.80秒，8项既有Google适配器弃用告警未隐藏；根82自测26.91秒、7静态套件/75份Markdown、contract漂移检查通过。首次根自测因旧manifest哈希出现6项失败，逐项内容/来源审核并登记10份文件真实SHA-256后全部通过，没有放宽guard。固定8.30.1文件及全历史扫描4既有已审查、0未解决、不增加豁免。既有CI的Windows job并未运行全部DPAPI数据库测试，以上是另行实际本机证据，不能说成CI覆盖；本PR仍需自己的完整Windows/Ubuntu CI通过才合并。
+
 ## 2026-11-04 文档与原领域同服务装配（候选，尚未启用本机UI）
 
 承接HTTP提交970916f / PR57。新增Workbench gateways/store/typed factory，复用原BCG事务与Pydantic AI，不创建第二工作台、身份或数据库。文档、原学生/任务及对话共享同一Owner/class/term和原receipt/audit；D2仅原生未转移/导入/退役实例可用，旧文件先落地fence也拒绝。capabilities显式D2及complete_exit=false，旧D1 capabilities不在D2注册；原API和durable视图的审计v2包含全部文档动作，其他旧wire schema不修改。默认desktop/local配置仍是D1，用户实例未迁移或重启。
