@@ -8,6 +8,7 @@ import MobileNav from "@/shell/MobileNav"
 import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
 import { AttentionColumns } from "@/shell/AttentionColumns"
 import { StudentPageTitle, StudentViewSwitcher, StudentRosterTable, StudentProfileHeader } from "@/shell/StudentPresentation"
+import { WorkHeading, WorkTabs, WorkItemButton } from "@/shell/WorkPresentation"
 
 import Inspector from "@/shell/Inspector/Inspector"
 
@@ -1247,15 +1248,14 @@ function WorkWorkspace(_: any) {
   const scope = workspaceId ? tasks.filter(t => t.workspaceId === workspaceId) : tasks
   const states: Record<string, string> = { "需要我处理": "mine", "等待别人": "waiting", "可能遗漏": "possible", "已闭环": "done" }
   const rows = scope.filter(t => tab === "全部" || (tab === "即将截止" ? t.state !== "done" && /今天|明天|已逾期/.test(t.due) : t.state === states[tab]))
-  return <WorkspaceShell title={space?.name || (workspaceId ? "未知工作空间" : "工作")} description={space ? space.detail + " · 仅当前演示范围" : "按注意力状态查看同一份演示事项；未确认职责不自动归属。"} icon={ClipboardList}>
-    <div className="tabbar">
-      {["需要我处理", "等待别人", "可能遗漏", "即将截止", "已闭环", "全部"].map(label => <button key={label} className={tab === label ? "active" : ""} onClick={() => setTab(label)}>{label}</button>)}
-    </div>
+  return <div className="surface">
+    <WorkHeading title={space?.name || (workspaceId ? "未知工作空间" : "工作")} description={space ? space.detail + " · 仅当前演示范围" : "按注意力状态查看同一份演示事项；未确认职责不自动归属。"} />
+    <WorkTabs items={["需要我处理", "等待别人", "可能遗漏", "即将截止", "已闭环", "全部"].map(label => ({ id: label, label }))} current={tab} onSelect={setTab} />
     <div className="work-list">
-      {rows.map(task => <button key={task.id} onClick={() => open(task)}><strong>{task.title}</strong><span>{task.due}</span><em>{task.state === "done" ? "演示已完成" : task.source}</em><ChevronRight size={16}/></button>)}
+      {rows.map(task => <WorkItemButton key={task.id} onSelect={() => open(task)} title={task.title} due={task.due} status={task.state === "done" ? "演示已完成" : task.source} />)}
       {!rows.length && <p className="demo-capability-note">此范围暂无该类演示事项。未自动创建任务或修改其他工作空间。</p>}
     </div>
-  </WorkspaceShell>
+  </div>
 }
 function DataWorkspace({ setWorkspace }: any) {
   const [tab, setTab] = useState("文件")
