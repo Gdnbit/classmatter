@@ -81,7 +81,9 @@ export function DocumentsWorkspace(props: Props) {
     })
     return () => controller.abort()
   }, [api, refresh])
-  useEffect(() => {
+  useLayoutEffect(() => {
+    // A new route must never paint the previous document as an editable new
+    // draft. Reset selection/content before paint, not in a later passive tick.
     const controller = new AbortController()
     setCurrent(null); setHistory(null); setHistorical(null); setError(""); setEdited(false); setPending(null); setAnchor(null); setTab("修改后")
     setTitle(""); setBody(""); setFormat("plain-text")

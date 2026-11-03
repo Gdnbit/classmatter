@@ -477,7 +477,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "df858767be4d566020a6b3b2288db7211f534dc5fa5e5e05f40cde26ff015eaf"
+      "sha256": "46bc41acb60fb5b938fc990beff8c5c5e7b18a6a0d3449231739523dcee83241"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -2744,7 +2744,7 @@
       "sha256": "98cee3358abd27af766e81687ef352c5f3c74eb4ff21b15927046b2c85dbbadd"
     },
     "docs/design/workbench-domain-packs.md": {
-      "sha256": "1b1bf06cb10bce9765b2402e65b59bbd32b97fef07febef40d3fefac29a7e620"
+      "sha256": "6ee95d41816d2ba72b94fecf931ca13c9846ebc296d1b45b18eab615a4cc27bd"
     },
     "apps/web/scripts/generate-documents.mjs": {
       "sha256": "48c25cfb71666f49438e1d28fe951c21de529f98d72f146f131a95dd22f3736c"
@@ -2840,7 +2840,7 @@
       "sha256": "d45c144d1fe76e2a261e0dbcfd7b375def5f17233e2336992c436c3a77851814"
     },
     "apps/web/src/runtime/DocumentsWorkspace.tsx": {
-      "sha256": "0a1cbc1390272eda35e6346ffea61512c59920048421bddc8ce7bf6d3c4ac7fa"
+      "sha256": "d4c80eed89ee7eefbbdf8c18f88a2fd7fc286eb008d4103460f028aa84890ab6"
     },
     "apps/web/src/runtime/documents-workspace.css": {
       "sha256": "e9d8ba30c4d1afc2b8d4558ea3a647cf33092d52e983175a3a445eeb99181474"
