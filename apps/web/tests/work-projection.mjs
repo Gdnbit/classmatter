@@ -21,6 +21,8 @@ test('class attention partitions open tasks once, irrespective of student views'
 test('work filters intersect explicit identity and status without fallback', () => {
   assert.deepEqual(ids(filterWorkTasks(tasks, 's1', 'all')), ['1', '4'])
   assert.deepEqual(ids(filterWorkTasks(tasks, '', 'open')), ['1', '2', '3'])
+  assert.deepEqual(ids(filterWorkTasks(tasks, '', 'mine')), ['1', '3'])
+  assert.deepEqual(ids(filterWorkTasks(tasks, 's2', 'mine')), []) // Overdue waiting is not reassigned to the teacher.
   assert.deepEqual(ids(filterWorkTasks(tasks, '', 'closed')), ['4', '5'])
   assert.deepEqual(ids(filterWorkTasks(tasks, 's2', 'waiting')), ['2'])
   assert.deepEqual(filterWorkTasks(tasks, 's1', 'waiting'), [])

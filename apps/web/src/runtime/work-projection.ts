@@ -1,7 +1,7 @@
 import type { TaskItem } from "./api.ts"
 import { isOpenTask } from "./student-directory.ts"
 
-export type WorkFilter = "all" | "open" | "waiting" | "closed"
+export type WorkFilter = "all" | "open" | "mine" | "waiting" | "closed"
 
 // Input is already authorized for one class/term. These are views, not a
 // responsibility assignment, reminder engine or new source of business truth.
@@ -19,6 +19,7 @@ export function filterWorkTasks(tasks: readonly TaskItem[], studentId: string, f
     (!studentId || task.student_id === studentId) &&
     (filter === "all" ||
       (filter === "open" && isOpenTask(task)) ||
+      (filter === "mine" && isOpenTask(task) && task.status !== "waiting") ||
       (filter === "waiting" && task.status === "waiting") ||
       (filter === "closed" && !isOpenTask(task))),
   )

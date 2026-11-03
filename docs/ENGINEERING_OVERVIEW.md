@@ -8,7 +8,7 @@
 
 Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务变更走 strict closed command → domain validation → 风险分类 → 服务端 preview → 必要的人工 approve → BCG 原子 commit + 幂等 receipt + 同事务 audit。ISB 只管理身份生命周期。UI 不复制领域规则。会话失效、权限/版本变化或审计不可用均失败关闭，不自动重放未知结果的写请求。
 
-`backend/src/class_os/domain/` 是封闭领域规则；`application/` 是 use case/gateway；`infrastructure/` 是 SQL/模型/记忆/凭据 adapters；`interfaces/http/` 是装配、严格 DTO 和同源路由；`backend/local.py` 是受信 operator 入口。`apps/web/src/runtime/` 是实际 UI；`shell/` 是显式 mock 演示。`contracts/` 的 generated schema 必须由 exporter 检查漂移，不能手改绕过。
+`backend/src/class_os/domain/` 是封闭领域规则；`application/` 是 use case/gateway；`infrastructure/` 是 SQL/模型/记忆/凭据 adapters；`interfaces/http/` 是装配、严格 DTO 和同源路由；`backend/local.py` 是受信 operator 入口。`apps/web/src/runtime/` 持有实际UI控制器和typed API客户端；`shell/` 持有冻结原型和逐项提取的共享展示组件，不是业务事实源。`WorkbenchFrame`、`SidebarFrame`、`AttentionColumns`、`StudentPresentation`、`WorkPresentation` 由原型夹具和数据库入口共用；mock store仅在显式fixture构建接入。`contracts/` 的 generated schema 必须由 exporter 检查漂移，不能手改绕过。
 
 ## 事实、记忆和开放世界
 
@@ -18,11 +18,11 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 ## 当前技术与限制
 
-可选 `apps/desktop/` 是 Electron 独立 Windows Demo 宿主，复用 `apps/web` 的显式合成构建，通过本地资源协议加载，不启动后端或数据库，也不改变 Agent Harness。其单独构建、窗口/沙箱边界和进程验收见[桌面设计](desktop-demo.md)。新增桌面宿主不代表正式 R1 或原型内全部业务能力已交付。
+`apps/desktop/` 是Electron独立Windows宿主。当前候选开发入口默认连接自有D1实例并托管已有API子进程，先验证进程proof/readiness，再开放该loopback同源；按用户要求免输密码，只对显式本机合成开发使用DPAPI开发身份，普通API仍经ISB/QG/BCG。不会自动初始化、迁移、清空或接管个人实例。原离线资源协议构建保留为显式fixture回归。运行入口及边界以[桌面说明](../apps/desktop/README.md)为准；[早期桌面设计](desktop-demo.md)记录原离线宿主。候选分支不代表完整原型、正式R1或发行准入。
 
 2026-10-22 W2-01新增独立的源码开发runtime入口，复用已有R1页面和后端，托管固定自有API进程，先验证每次启动的进程proof与readiness，再开放该loopback同源。它不改变离线Demo、不初始化/迁移/启动用户数据库、不代设owner；不是全部冻结Demo页面绑定完成。临时SCRAM数据库+真实Electron已验证事实/任务经原BCG持久化及应用重启后复用，Agent fake只读/草稿不自动写入；正式发布、真实模型、完整退出仍未完成。代码与剩余项见[实现台账](implementation-ledger.md)。
 
-数据库当前 head0016、22 张登记表、risk r1.3；没有自动迁移已存在实例。0015 显示名更正、0016 学期元数据更正均保留历史 migration 和权限约束。恢复使用经验证快照/前滚，禁止破坏性 downgrade。退出包有 core 验证及上限，但 `lifecycle_complete=false`，不是完整跨机恢复或退役实现。
+原R1 profile使用head0016、22张登记表、risk r1.3；隔离D1开发profile要求head0026，不自动升级旧R1实例。0015显示名更正、0016学期元数据更正及后续D1 migration均保留历史和权限约束。恢复使用经验证快照/前滚，禁止破坏性downgrade。退出/恢复的协议、限制和验收按profile分别记录，不能用core退出或合成恢复测试声称完整跨机/真实数据/退役准入。
 
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 
@@ -36,7 +36,7 @@ Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任�
 
 [数据库与实时数据演进设计](design/database-live-data-design.md)核对当前PostgreSQL模型与完整Demo之间的缺口，并细化会话/运行、工作专题、跨页一致、变更订阅、索引、迁移和退出。当前主库与QG/BCG/ISB继续复用；“实时”不代表已存在业务订阅流，“工作专题”不等于授权workspace，“聊天可保存”不等于人物事实或长期记忆。
 
-该文档是后续设计提案，不取代canonical SDD或批准新release。D0可先复用既有R1接口绑定真实页面；耐久聊天、工作专题及新事件表须另立后续change，并同步schema inventory/最小权限/备份/退出/生命周期验证。当前无对应新迁移、性能或真实用户验收；不把所有演示栏目接假数据后声称生产化。
+该文档记录原D0/D1演进提案，不取代canonical SDD或批准新release。耐久聊天、来源/退出/恢复后来已按独立D1变更实施并有合成工程证据，当前状态以[实现台账](implementation-ledger.md)为准；工作专题及未实现的新领域仍需独立设计、权限/迁移/生命周期验证和用户研究。不把所有演示栏目接假数据后声称生产化。
 
 ## 验证与发行
 

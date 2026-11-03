@@ -56,7 +56,7 @@ export function parseRuntimeRoute(path: string): RuntimeRoute {
   if (url.pathname === "/work") {
     const studentId = url.searchParams.get("student") || "", taskId = url.searchParams.get("task") || ""
     const filter = url.searchParams.get("filter") || "all"
-    if ((studentId && !uuid.test(studentId)) || (taskId && !uuid.test(taskId)) || !["all", "open", "waiting", "closed"].includes(filter)) return unavailable()
+    if ((studentId && !uuid.test(studentId)) || (taskId && !uuid.test(taskId)) || !["all", "open", "mine", "waiting", "closed"].includes(filter)) return unavailable()
     return { ...runtimeRoute("work"), studentId: studentId.toLowerCase(), taskId: taskId.toLowerCase(), workFilter: filter as WorkFilter }
   }
   return unavailable()

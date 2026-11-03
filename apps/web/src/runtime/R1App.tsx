@@ -57,6 +57,7 @@ import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
 import { SidebarFrame } from "@/shell/Sidebar/SidebarFrame"
 import { AttentionColumns } from "@/shell/AttentionColumns"
 import { StudentPageTitle, StudentViewSwitcher, StudentProfileHeader } from "@/shell/StudentPresentation"
+import { WorkHeading, WorkTabs, WorkItemButton } from "@/shell/WorkPresentation"
 import "./connected-workbench.css"
 
 const kinds: Record<string, string> = {
@@ -1299,10 +1300,13 @@ export default function R1App() {
           )}
           {page === "work" && (
             <>
-              <div className="r1-heading">
-                <h1>工作与跟进</h1>
-                <p>个人工作状态不代表学校授权或他人已接受交接。</p>
-              </div>
+              <WorkHeading title="工作与跟进" description="个人工作状态不代表学校授权或他人已接受交接。" />
+              <WorkTabs current={workFilter} onSelect={id => { setWorkFilter(id as WorkFilter); setTask(null) }} items={[
+                { id: "mine", label: "需要我处理" }, { id: "waiting", label: "等待别人" },
+                { id: "possible", label: "可能遗漏", disabled: true, explanation: "通知责任候选尚未接入" },
+                { id: "due", label: "即将截止", disabled: true, explanation: "提醒规则尚未接入；任务仍展示已查询的截止时间" },
+                { id: "closed", label: "已结束（完成 / 取消）" }, { id: "all", label: "全部" },
+              ]} />
               <div className="r1-toolbar">
                 <button
                   disabled={!classroom || !editable}
@@ -1329,6 +1333,7 @@ export default function R1App() {
                 <select aria-label="按状态筛选任务" value={workFilter} onChange={event => { setWorkFilter(event.target.value as WorkFilter); setTask(null) }}>
                   <option value="all">全部状态</option>
                   <option value="open">未结束</option>
+                  <option value="mine">需要我处理</option>
                   <option value="waiting">等待别人</option>
                   <option value="closed">已结束（完成 / 取消）</option>
                 </select>
@@ -1340,18 +1345,9 @@ export default function R1App() {
               {!tasks.length && <p className="r1-muted">{selectedStudent || workFilter !== "all" ? "当前筛选下没有任务，可清空筛选查看全部。" : "尚无任务。"}</p>}
               {tasks.map((item) => (
                 <article className="r1-card" key={item.task_id}>
-                  <button
-                    className="r1-task-title"
-                    onClick={() =>
-                      setTask(task?.task_id === item.task_id ? null : item)
-                    }
-                  >
-                    <strong>{item.title}</strong>
-                    <span>
-                      {states[item.status]}
-                      {item.overdue ? " · 已逾期" : ""}
-                    </span>
-                  </button>
+                  <WorkItemButton className="r1-task-title" title={item.title} due={displayTime(item.due_at)}
+                    status={`${states[item.status]}${item.overdue ? " · 已逾期" : ""}`}
+                    onSelect={() => setTask(task?.task_id === item.task_id ? null : item)} />
                   <p>
                     {studentName(item.student_id)} · {displayTime(item.due_at)}{" "}
                     · v{item.version}

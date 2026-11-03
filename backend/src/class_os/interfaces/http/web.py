@@ -20,7 +20,7 @@ def navigation_query_allowed(path: str, method: str, query: bytes) -> bool:
     elif re.fullmatch(r"/students/[^/]+", path):
         allowed = {"view": {"list", "table"}, "tab": {"overview", "timeline", "tasks", "records", "unavailable", "grades", "files", "relations"}}
     elif path == "/work":
-        allowed = {"filter": {"all", "open", "waiting", "closed"}, "student": None, "task": None}
+        allowed = {"filter": {"all", "open", "mine", "waiting", "closed"}, "student": None, "task": None}
     else:
         return False
     try:
