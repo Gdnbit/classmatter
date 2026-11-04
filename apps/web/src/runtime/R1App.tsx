@@ -54,7 +54,7 @@ import { DurableHistory, DurableComposer } from "./DurableConversation"
 import { AttributionLabel } from "./AttributionLabel"
 import { DurableExit } from "./DurableExit"
 import { WorkSummary } from "./WorkSummary"
-import { DocumentsWorkspace } from "./DocumentsWorkspace"
+import { DocumentsWorkspace, type DocumentDraftContent } from "./DocumentsWorkspace"
 import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
 import { SidebarFrame } from "@/shell/Sidebar/SidebarFrame"
 import { AttentionColumns } from "@/shell/AttentionColumns"
@@ -137,6 +137,7 @@ export default function R1App() {
   const [summaryDraft, setSummaryDraft] = useState(false)
   const [documentDraft, setDocumentDraft] = useState(false)
   const [documentBusy, setDocumentBusy] = useState(false)
+  const [documentSeed, setDocumentSeed] = useState<{ scope: string; draft: DocumentDraftContent } | null>(null)
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState("")
@@ -226,6 +227,7 @@ export default function R1App() {
     runningAgent.current?.abort()
     setConversationId(""); setMessages([]); setAgentDraft(null); setAgentRecordNote(null); setRecordNoteQuote(""); setAgentStatus("")
     setAgentStudent("")
+    setDocumentSeed(null)
   }, [session?.csrf_token, session?.subject.workspace_id, classroom?.class_id, classroom?.term_id])
   useEffect(() => () => { runningAgent.current?.abort() }, [])
   useEffect(() => { setAuditPage(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
@@ -1132,7 +1134,14 @@ export default function R1App() {
               </div>
               {durableProfile && classroom && activity && <WorkSummary
                 key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`}
-                classroom={classroom} activity={activity} students={students} fresh={queryFresh && !refreshing} onDraftChange={setSummaryDraft} />}
+                classroom={classroom} activity={activity} students={students} fresh={queryFresh && !refreshing} onDraftChange={setSummaryDraft}
+                onDocumentDraft={runtimeProfile === "workbench-d2" && classroom.status !== "archived" ? text => {
+                  if (!queryFresh || refreshing || busy || form || pending) return false
+                  setDocumentSeed({ scope: `${session.csrf_token}/${session.subject.owner_id}/${session.subject.workspace_id}/${classroom.class_id}/${classroom.term_id}`,
+                    draft: { title: Array.from(`${classroom.name} · 班级工作小结`).slice(0, 80).join(""), body: text, format: "plain-text" } })
+                  navigation.setDocument("new")
+                  return true
+                } : undefined} />}
               <h2>任务</h2>
               {taskCards(openTasks)}
               <h2>最近事实</h2>
@@ -1437,7 +1446,9 @@ export default function R1App() {
                 session={session} classroom={classroom} documentId={navigation.route.documentId}
                 canWrite={editable && !busy && !form && !pending && queryFresh && !refreshing}
                 canEdit={classroom.status !== "archived" && !busy && !form && !pending}
-                onSelect={navigation.setDocument} onSaved={navigation.adoptDocument}
+                initialDraft={documentSeed?.scope === `${session.csrf_token}/${session.subject.owner_id}/${session.subject.workspace_id}/${classroom.class_id}/${classroom.term_id}` ? documentSeed.draft : undefined}
+                onInitialDraftUsed={() => setDocumentSeed(null)}
+                onSelect={id => { setDocumentSeed(null); navigation.setDocument(id) }} onSaved={id => { setDocumentSeed(null); navigation.adoptDocument(id) }}
                 onDirtyChange={setDocumentDraft} onBusyChange={setDocumentBusy} onError={fail}
                 onReauthenticate={() => open("reauth")} />
             : <section className="r1-card"><h1>数据与内容</h1><p>文档需要同实例文档服务与当前班级学期。当前入口未启用；没有加载样例文档或另建数据。</p></section>)}
