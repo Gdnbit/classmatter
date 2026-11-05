@@ -2,6 +2,10 @@
 
 - [Logo 资产登记](../assets/brand/README.md)：用户指定的带字标识与独立图形原件、哈希及本地留档边界；图片未随源码公开，不代表应用图标已替换。
 
+## 任务中心的产品形态参考（2026-11-05 · Discovery / Future）
+
+- [以教师任务为中心：LobeHub 与 Teambition 参考](product/2026-11-05-teacher-task-centered-workspace.md)：记录从 Session 转向教师任务的方向，区分项目发起人观点、未逐字核实的文章作者理解与 AI 整理建议；主动协作、验收及任务管理作为研究问题。**页面、导航与逻辑动线未定，不改变已有实现或 R1 范围。**
+
 ## 数据库与真实数据接入（2026-10-23 · 设计提案）
 
 - [真实数据闭环执行目标与验收台账](design/live-data-delivery-acceptance.md)：Goal必交范围、U0—U3依赖、11项验收指标与证据要求；D1—D3单独后续变更，不自动扩R1。
