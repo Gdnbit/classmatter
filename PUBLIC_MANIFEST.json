@@ -1453,7 +1453,7 @@
       "sha256": "7b61d69ec68c3954e0f168c615bb985161c712502a5ada2407ca15c6ef2402d2"
     },
     "docs/README.md": {
-      "sha256": "a3e3ea00af4af3ad0ae0b4aecea1cf02f818ce038931d27cbb4fba73d9a330cf"
+      "sha256": "0229275eabee074368dbeb16972665527c62a0ef71f361e125c6db368a686524"
     },
     "docs/changes/2026-10-08-synthetic-development-admission.md": {
       "sha256": "d67c0a71f21431a90f84301ceae2ce790f8a0aeb120052840b0b6032731a9f40"
@@ -2856,6 +2856,9 @@
     },
     "backend/tests/test_summary_document_web.py": {
       "sha256": "a6b11c48ff545e4f56d726699b1c14ab68b2e9224e71bddb556230c7801d5bf6"
+    },
+    "docs/product/2026-11-05-teacher-task-centered-workspace.md": {
+      "sha256": "22ae1d2b9a2c301f6086d310360729607ee91144e35ec16c690d0120f1313a5b"
     }
   }
 }
