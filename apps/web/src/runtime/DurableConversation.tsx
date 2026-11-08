@@ -11,10 +11,10 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
   useEffect(() => { if (last) end.current?.scrollIntoView({ block: "nearest" }) }, [last])
   const current = s.history
   return <section className="r1-durable" aria-label="已保存的对话">
-    <div className="r1-toolbar"><button disabled={s.blocked} onClick={() => void s.refresh()}>重新读取对话</button>
-      <span className="r1-muted">{s.fresh ? "来自当前授权数据库" : "正在核对；上次快照不能用于提交"}</span></div>
+    <div className="r1-toolbar"><button disabled={s.blocked || s.needsClassroom} onClick={() => void s.refresh()}>重新读取对话</button>
+      <span className="r1-muted">{s.needsClassroom ? "建立班级与学期后可保存和读取对话" : s.fresh ? "来自当前授权数据库" : "正在核对；上次快照不能用于提交"}</span></div>
     <details className="r1-card" open={!current}><summary>已保存的会话（{s.listing?.data.length || 0}）</summary>
-      {s.text.trim() && <p className="r1-muted">切换班级、学期或会话前请先发送或清空未发送文字；不会把它带到另一范围。未发送文字不跨刷新保存。</p>}
+      {s.text.trim() && <p className="r1-muted">{s.needsClassroom ? "首次建立班级时会保留当前草稿；刷新或关闭窗口不会保留。" : "切换班级、学期或会话前请先发送或清空未发送文字；不会把它带到另一范围。未发送文字不跨刷新保存。"}</p>}
       {s.listing?.data.map(item => <button key={item.thread_id} aria-current={current?.history.thread_id === item.thread_id ? "true" : undefined}
         disabled={s.blocked || !!s.text.trim()} onClick={() => s.select(item.thread_id)}>{item.title} · {item.status === "cleared" ? "已清除" : item.status === "archived" ? "已归档" : "有效"}</button>)}
       {!s.listing?.data.length && <p className="r1-muted">尚无已保存会话。发送第一条消息时会创建。</p>}
@@ -72,7 +72,7 @@ export function DurableComposer({ state: s, students, canWrite }: { state: Durab
       onChange={event => s.setText(event.target.value)} onKeyDown={event => {
         if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (allowed) void s.send() }
       }} />
-    <div><span className="r1-muted">耐久会话 · 附件/语音仍未接入</span>
+    <div><span className="r1-muted" role="status">{s.needsClassroom ? "可以先输入草稿；发送前请在左侧建立班级与学期。草稿尚未保存。" : "耐久会话 · 附件/语音仍未接入"}</span>
       <label>班级助理<select aria-label="Agent 交互模式" value={s.mode} disabled={s.blocked} onChange={event => s.setMode(event.target.value as typeof s.mode)}>
         <option value="read">查询当前工作</option><option value="draft">仅生成任务草稿</option><option value="chat">讨论，不调用工具</option></select></label>
       {!fixed && s.mode === "read" && <label className="r1-agent-scope">查询范围<select aria-label="助理查询范围" value={s.student} disabled={s.blocked} onChange={event => s.setStudent(event.target.value)}>

@@ -27,8 +27,10 @@ export function useDurableConversation(props: Props) {
   const [inputReady, setInputReady] = useState(false)
   const [pending, setPending] = useState<{ preview: Preview; key: string; approval: string | null; attempted: boolean } | null>(null)
   const [title, setTitle] = useState("")
-  const key = props.enabled && props.session && props.classroom
-    ? `${props.session.subject.owner_id}/${props.session.subject.workspace_id}/${props.session.csrf_token}/${props.classroom.class_id}/${props.classroom.term_id}/${props.threadId}` : ""
+  const identity = props.enabled && props.session
+    ? `${props.session.subject.owner_id}/${props.session.subject.workspace_id}/${props.session.csrf_token}` : ""
+  const key = identity ? `${identity}/${props.classroom ? `${props.classroom.class_id}/${props.classroom.term_id}` : "unassigned"}/${props.threadId}` : ""
+  const previousScope = useRef({ identity: "", classId: "", threadId: "" })
   const api = () => {
     const p = latest.current
     if (!p.enabled || !p.session || !p.classroom) throw new Error("请先确认当前班级与身份。")
@@ -41,14 +43,20 @@ export function useDurableConversation(props: Props) {
     latest.current.onError(error)
   }
   useEffect(() => { latest.current.onBusyChange(working || !!pending) }, [working, pending])
-  useEffect(() => { latest.current.onDraftChange(!!text.trim()) }, [text])
+  useEffect(() => { latest.current.onDraftChange(!!text.trim()) }, [text, key])
   useEffect(() => {
+    const previous = previousScope.current
+    const keepUnassignedDraft = !!identity && previous.identity === identity && !previous.classId && !previous.threadId && !!props.classroom && !props.threadId
+    previousScope.current = { identity, classId: props.classroom?.class_id || "", threadId: props.threadId }
     const generation = ++epoch.current, connection = connectivity.current
     request.current?.abort(); stream.current?.abort(); running.current = null
     operation.current = null
     setHistory(null); setListing(null); setPending(null); setWorking(false); setFresh(false); setInputReady(false); setStatus(""); setTitle("")
-    setText(""); setStudent("")
+    if (!keepUnassignedDraft) setText("")
+    setStudent("")
     if (!key) return
+    // Local composition does not require a business scope. Sending still does.
+    if (!latest.current.classroom) { setInputReady(true); return }
     const controller = new AbortController(); request.current = controller
     const client = api(), selected = latest.current.threadId
     Promise.all([client.list(controller.signal), selected ? client.history(selected, controller.signal) : Promise.resolve(null)])
@@ -80,7 +88,7 @@ export function useDurableConversation(props: Props) {
   refreshIdle.current = !working && !pending && title === (history?.history.title || "")
   const foreground = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
   useEffect(() => {
-    if (!key) return
+    if (!key || !props.classroom) return
     const controller = createQueryRefresh({
       read: async () => { await refreshRef.current() },
       invalidate: () => {
@@ -205,6 +213,7 @@ export function useDurableConversation(props: Props) {
     })
   }
   return { history, listing, text, setText, mode, setMode, student, setStudent, title, setTitle, status, working, fresh, inputReady, pending,
+    needsClassroom: !props.classroom,
     blocked: working || !!pending, active: active(history?.turns.at(-1)), isStreaming: !!stream.current,
     send: () => send(), startSaved: (turn: Turn) => send(turn), stop,
     refresh: () => operate(async () => { await refresh() }),
