@@ -453,7 +453,7 @@
       "sha256": "b3d0d3e15885c04854979dcbc303f55823bd49b7c2cd618a908c97754ec201ab"
     },
     "apps/desktop/runtime-main.cjs": {
-      "sha256": "97e8b19697758136a8ff27bd4e2e632ede057aeeb89fc0f59411942d1851b535"
+      "sha256": "1034b0ea0cb0592bc57286a7928a0f2fb6811b0fd7bcdce1828b338382bc5cdf"
     },
     "apps/desktop/runtime-policy.cjs": {
       "sha256": "d6e88c0ef7ef16b47fa54331c7099e192f53688eab5d047614e4a83ba890e664"
@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "ba4b5bd52f8988b1623b43c5816014b5aa6bc7e146427a13f0ce2ad04ef0f0b2"
+      "sha256": "f1ba63c4fc6a62bfe944c3ec66d706726572f6bb0526e7cdd51c3ccbe552c621"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "b1a26abf7c46969fb825181166ee3533532d330340e53aa0706421488af71ca7"
@@ -540,7 +540,7 @@
       "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
     },
     "apps/desktop/README.md": {
-      "sha256": "ef167c2be22ebe2bf82df3dbcc2a92d845b0cd25eca55fa34c2c36f0d4065c0f"
+      "sha256": "c3b377b2a3bdbeb5a34e02851d70a0a3d7b6ab184a0f9bc19dbf99b7434f9bc8"
     },
     "apps/desktop/scripts/build.cjs": {
       "sha256": "586d17fa8f21ce2eda947c78a55d2139f4c979fd6110a9f0336d585fb777b7fc"
@@ -1044,10 +1044,10 @@
       "sha256": "75d4f30948937887e1bb8e3ab882156ac0edcf0cabfce509cbd9cded777effd0"
     },
     "backend/src/class_os/infrastructure/model_control.py": {
-      "sha256": "fd92e4779fc8eb51bf720f46d141a180aac640e892893a34f939a726369a26ef"
+      "sha256": "a20a9ff4adbcd2c77f9f3895ce648a712d5031be3978982c151ae3938f60f791"
     },
     "backend/src/class_os/infrastructure/model_provider.py": {
-      "sha256": "7cc9fabb814e471c7772679fd5fcbcd859f5a1ed4128fdab0fbce72a6ba36dc6"
+      "sha256": "332b934ede500370958b3fdeb67f09c82c3a5fd3a180198dd399886a6351e406"
     },
     "backend/src/class_os/infrastructure/model_secrets.py": {
       "sha256": "a4c31c1888e62b110079d19319ebbbd6d2757d7835e45b75683e03a52385364c"
@@ -2612,7 +2612,7 @@
       "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"
     },
     "backend/tests/test_google_provider.py": {
-      "sha256": "efc4a293da17b34c3d38a1fffd4e4d3c4a8a8e1fdc54f094f616d9cfa4abcea1"
+      "sha256": "d9db9524ce80fb2cfb58e1f64da31c220ccbbf6be9c1223a32d2a80cd7d74e23"
     },
     "third_party/licenses/python/cryptography-50.0.2/0.txt": {
       "sha256": "3e0c7c091a948b82533ba98fd7cbb40432d6f1a9acbf85f5922d2f99a93ae6bb"
@@ -2723,7 +2723,7 @@
       "sha256": "4da8bff23f30a364cddefe98f1e5f19b1d79215717730955f10e2130dfdcb638"
     },
     "backend/src/class_os/infrastructure/native_setup.py": {
-      "sha256": "55ced33442020c33320722a9d3f047dc3e4758e96e5fb879e4013c7b3a0bebe2"
+      "sha256": "623f342dee2b7b8abffc57afee3d2f300b38272e994cc1501b0500bf2883e3d6"
     },
     "backend/tests/test_native_setup.py": {
       "sha256": "053318e17695ea8016dbe71135a3dd858279ed73c527b278c0ffd1131e8e3cda"
@@ -2930,7 +2930,7 @@
       "sha256": "3d03eaca59107e79c91ee86943e9e93abebb1c25057133758ef4d67152b9b3c7"
     },
     "backend/src/class_os/infrastructure/workspace_local_runtime.py": {
-      "sha256": "ccd9515bce8f7ce824d67311dc5d493ecc12ced165b5aca3f335251b7d904d73"
+      "sha256": "ff799933de2a3d1ac0e85b8a32f6329fc859e928c36ac0660645152b078996a0"
     },
     "backend/src/class_os/infrastructure/workspace_tool_contracts.py": {
       "sha256": "eb19002fb5951c9d4341021a435491efc7d43d69065f5589246efaaea20737cf"
@@ -2948,7 +2948,7 @@
       "sha256": "5f5ce95ab86f039c6cb9bdad8923da2d947524df549ead7545c0317487c48d1f"
     },
     "backend/tests/test_workspace_chat_storage.py": {
-      "sha256": "a77087b061fd1b12abcf0da4699d077aadfa588734b2dbed9603d355722615ea"
+      "sha256": "1ec38c5ed6543c31817d08ea8524e5f99bee989a359662f6cd00c71ea3e147a6"
     },
     "backend/tests/test_workspace_desktop.py": {
       "sha256": "e749423620aedc4ebe229d24adb5aa7fcb06766616bf53949d9f22598c3ceef4"
@@ -2990,13 +2990,25 @@
       "sha256": "63960ad5c85e3ec77e7764eeeda849d15f1d5da3655b266c778dcd76b5c21cd0"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "c22065dcd1fc251d05b390825cf65d4141c62ebe7f5634141a91a5864d0146e6"
+      "sha256": "ed3970c4aca45b18bb5fa096b91f7f2975d4ebca96d3951713122e068b15047e"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
     },
     "backend/tests/test_local_identity.py": {
       "sha256": "24eac662fd38bd78788e9b6761e809cee39200124bf44122534239ce36bbcd3f"
+    },
+    "apps/desktop/tests/live-chat-acceptance.cjs": {
+      "sha256": "64abcd3d64d4f55a0fc90f36b801d45d4018ebfd004ac12a03435eca1402d48a"
+    },
+    "apps/desktop/tests/live-chat-optin.test.cjs": {
+      "sha256": "5858985a3724a1629cc06d83f37306e30e2185923a4f0192e9d7f583453e6b61"
+    },
+    "backend/src/class_os/infrastructure/local_model_activation.py": {
+      "sha256": "21539a3b64a7f03629edd4d9b6bed908a1d190cd583c88e924a46df46c5e93e0"
+    },
+    "backend/tests/test_local_model_activation.py": {
+      "sha256": "555c1e50a1f93fafb575cdb17a06e927c90b56f6e4789cc242847e177edd8233"
     }
   }
 }

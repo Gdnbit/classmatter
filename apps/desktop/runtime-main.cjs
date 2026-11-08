@@ -4,7 +4,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {desktopService}=require('./runtime-service.cjs');
 const {allowed,CSP,exitDownload}=require('./runtime-policy.cjs');
-const {networkFromSwitches}=require('./model-network.cjs');
+const {networkFromSwitches,validateNetwork}=require('./model-network.cjs');
 let source,d1=false,sourceInvalid=false;
 let modelNetwork;
 try {
@@ -49,7 +49,13 @@ else {
     let developerCookies;
     if(development){
       const pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true,source.profile);
-      try{developerCookies=(await pipe.request({operation:'development_access'})).cookies;}finally{pipe.stop();}
+      try{
+        const opened=await pipe.request({operation:'development_access'});
+        developerCookies=opened.cookies;
+        // Only the current local workspace may restore the previously tested
+        // and explicitly enabled transport. Explicit operator flags win.
+        if(source.profile==='workspace-chat-d3'&&!modelNetwork.bases.length&&opened.model_network!==undefined)modelNetwork=validateNetwork(opened.model_network);
+      }finally{pipe.stop();}
     }else if(d1)setupWindow=await require('./setup-window.cjs').prepareWorkspace({BrowserWindow,ipcMain,session},source);
     service=desktopService(source.repositoryRoot,path.join(__dirname,'ui'),()=>{
       if(window) window.close();

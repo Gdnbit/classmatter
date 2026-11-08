@@ -56,7 +56,11 @@ def model_for_configuration(configuration, client):
             raise ConfigurationRejected()
         # Use the SDK's native message protocol: the compatible API adapter does
         # not preserve Gemini tool thought signatures. Never forge a signature.
-        return GoogleModel(configuration.model, provider=client.provider)
+        # This low-latency model otherwise spends the short interactive budget
+        # on default thinking before it can return a tool call. Other model
+        # families retain their SDK defaults; not every Gemini accepts MINIMAL.
+        settings = {"google_thinking_config": {"thinking_level": "MINIMAL"}} if configuration.model == "gemini-3.1-flash-lite" else None
+        return GoogleModel(configuration.model, provider=client.provider, settings=settings)
     if (not isinstance(client, AsyncOpenAI)
             or str(client.base_url).rstrip("/") != configuration.base_url.rstrip("/")
             or client.max_retries != 0 or client.organization or client.project):
@@ -81,8 +85,8 @@ async def configured_client(configuration, key, *, proxy=None):
         logging.getLogger(name).setLevel(logging.CRITICAL)
     transport = {"proxy": proxy} if proxy is not None else {}
     # Google rejects explicitly advertised request deadlines below 10 seconds;
-    # controller/runtime outer budgets remain unchanged and can cancel sooner.
-    timeout = 10 if _google_configuration(configuration) else 8
+    # Controller/runtime outer budgets cap the complete loop and can cancel sooner.
+    timeout = 30 if _google_configuration(configuration) else 8
     async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=timeout, **transport) as http:
         if _google_configuration(configuration):
             http.event_hooks["request"].append(_google_request_boundary)

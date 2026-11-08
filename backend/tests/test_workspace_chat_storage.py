@@ -74,6 +74,30 @@ def test_no_class_chat_persists_and_reconstructs_without_model(workspace_chat):
 
 
 @pytest.mark.db
+def test_more_than_one_page_survives_reconstruction_and_archive(workspace_chat):
+    business, query, credentials, _, runtime, _, store, boundary = workspace_chat
+    thread = uuid4()
+    for index in range(25):
+        request = uuid4()
+        business.send(credentials, thread, request, f"synthetic message {index + 1}")
+        ticket = business.claim(credentials, thread, request)
+        business.finish(credentials, ticket, "completed", f"synthetic answer {index + 1}")
+    rebuilt = WorkspaceChatQueryGateway(boundary, WorkbenchStore(runtime, store.restrictions), clock=business.clock)
+    latest = rebuilt.history(credentials, thread)
+    assert [turn['ordinal'] for turn in latest['turns']] == list(range(6, 26))
+    assert latest['next_before'] == 6
+    earlier = rebuilt.history(credentials, thread, before=latest['next_before'])
+    assert [turn['ordinal'] for turn in earlier['turns']] == list(range(1, 6))
+    assert earlier['next_before'] is None
+    assert [turn['assistant_text'] for turn in earlier['turns'] + latest['turns']] == [f"synthetic answer {i}" for i in range(1, 26)]
+    business.control(credentials, thread, latest['thread']['version'], 'archive')
+    assert query.history(credentials, thread)['thread']['status'] == 'archived'
+    assert query.history(credentials, thread, before=6)['turns'] == earlier['turns']
+    with pytest.raises(CommandRejected):
+        business.send(credentials, thread, uuid4(), 'must not append to archived history')
+
+
+@pytest.mark.db
 def test_cancel_and_clear_cannot_release_late_output_or_replay(workspace_chat):
     business, query, credentials, _, _, _, _, _ = workspace_chat
     thread, request = uuid4(), uuid4()

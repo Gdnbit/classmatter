@@ -16,7 +16,7 @@ Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷�
 
 旧D1/D2实例须先停止本项目API和桌面，再在`backend`中显式执行`.venv/Scripts/python.exe local.py upgrade-chat --profile conversation-d1`（D2使用`workbench-d2`）。升级保留同根Owner、既有数据与开发身份，每步先完整checkpoint并隔离恢复校验，SQL提交后才发布新profile描述符；失败保留证据、支持向前恢复，不自动DROP/重建。**启动命令不做迁移**，不能把旧库直接声明为D3。`pnpm check:runtime:d3`只检查前置文件，不能代替API readiness或恢复验收。D1构建命令继续保留作兼容回归，不可用旧代码直接打开已升级新库。
 
-原设置中的模型接入、连通性测试和启用流程继续使用。本轮当前用户实例只读核验无模型配置；默认无外部调用，合成回答不代表真实模型质量已通过。D3已支持完整本机checkpoint及隔离恢复，包含文档与新聊天表；完整跨机退出/迁移仍不开放。详见[聊天设计和使用检查](../../docs/design/workspace-chat-and-actions.md)。下方2026-11-03等段落为历史实现记录，D1默认入口已被本节取代。
+原设置中的模型接入、连通性测试和启用流程继续使用。新实例默认不调用外部模型；本机明确测试启用后，D3会跨重启恢复同一配置和已确认传输，停用也会保留。Key本身不会触发启用。模型变化会提示重新确认，不能用合成回答冒充真实AI。原桌面已完成Gemini3.1 Flash-Lite多轮聊天、刷新/重启恢复及九类创建编辑候选的12轮真实合成调用样本；免费服务仍可能限流或超时。D3支持完整本机checkpoint及隔离恢复，包含文档与新聊天表；恢复实例不会继承模型启用记录，完整跨机退出/迁移仍不开放。详见[聊天设计和使用检查](../../docs/design/workspace-chat-and-actions.md)。下方2026-11-03等段落为历史实现记录，D1默认入口已被本节取代。
 
 ## 2026-11-03 单一工作台入口修正
 
@@ -53,6 +53,16 @@ Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷�
 这是未签名的本机解压运行版，不是已签名安装包或正式 Release。不要建议用户关闭 SmartScreen/杀毒或绕过组织策略。安装器、自动更新、签名、公网分发、完整二进制审查另行验收。
 
 ## 从源码运行与打包
+
+真实模型专项可以在关闭当前桌面后手动复现。只适用于**尚无班级的独立合成D3实例**，先在原设置完成模型保存、检测及明确启用Gemini3.1 Flash-Lite，再构建D3。该脚本会真实调用已启用模型并创建合成班级、学生、任务和文档；不会替你登记Key、开通计费、重置或覆盖已有班级。不得用它对实际工作数据库做回归。已有班级会在发送前拒绝，默认`pnpm test`/CI不会运行真实模型。
+
+```powershell
+$env:CLASSMATTER_RUN_LIVE_CHAT_ACCEPTANCE = '1'
+node tests/live-chat-acceptance.cjs
+Remove-Item Env:CLASSMATTER_RUN_LIVE_CHAT_ACCEPTANCE
+```
+
+真实调用结果写入被Git忽略的`test-results/live-chat-acceptance.json`；原UI确认、数据库回读、上下文和完整重启都有断言，失败不自动重复模型轮次。该脚本不替代无费用的固定fixture/故障矩阵和正式发布验收。
 
 要求 Windows x64、Node 22.20 或受支持的 24.x、pnpm 11.19.0。先在 `apps/web` 执行 `pnpm install --frozen-lockfile`，再在本目录执行：
 

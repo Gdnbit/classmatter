@@ -157,6 +157,8 @@ class NativeSetup:
         return credentials['password']
 
     def development_reauthenticate(self, client, token, csrf):
+        if not self.development:
+            raise ValueError('Explicit local development required')
         if self.runtime.profile == 'workspace-chat-d3':
             return self.local_access()
         password = self._developer_password()
@@ -169,12 +171,12 @@ class NativeSetup:
             services.close()
 
     def development_access(self):
+        if not self.development:
+            raise ValueError('Explicit local development required')
         if self.runtime.profile == 'workspace-chat-d3':
             return self.local_access()
         # Explicit trusted desktop flag only; never registered in HTTP/tools.
         # Refuse to adopt an existing personal Owner. No shared/default password.
-        if not self.development:
-            raise ValueError('Explicit local development required')
         state = self.status()
         marker = self.runtime.root / 'developer-identity.dpapi'
         if marker.exists():
@@ -254,7 +256,13 @@ class NativeSetup:
                 self.approve_control(self.operation_id, self.proposal.payload_hash, True)
                 self.close()
                 result = boundary.connect(self.client)
-            return {'cookies': {'client': self.client, 'session': result.token, 'csrf': result.csrf}}
+            response = {'cookies': {'client': self.client, 'session': result.token, 'csrf': result.csrf}}
+            if self.runtime.profile == 'workspace-chat-d3':
+                from .local_model_activation import LocalModelActivation
+                selected = LocalModelActivation(self.runtime.root, workspace_id).read()
+                if selected is not None:
+                    response['model_network'] = {'bases': [selected['base_url']], 'proxy': selected['proxy']}
+            return response
         finally:
             database.close()
 

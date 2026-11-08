@@ -73,12 +73,15 @@ def open_services(runtime, *, local_development=False):
 def compose(settings, runtime, *, local_development=False):
     from .agent import PydanticAgentRuntime
     from .model_control import ModelController
+    from .local_model_activation import LocalModelActivation
     from class_os.interfaces.http.workspace_chat import create_workspace_chat_app
     services = open_services(runtime, local_development=local_development)
     try:
         sdk = PydanticAgentRuntime(services.query, timeout=45)
         controller = ModelController(services.query, services.worker.store.model_secrets, sdk,
-            allowed_bases=settings.model_api_bases, proxy=settings.model_api_proxy)
+            allowed_bases=settings.model_api_bases, proxy=settings.model_api_proxy,
+            activation=LocalModelActivation(runtime.root, services.restrictions.workspace_id,
+                proxy=settings.model_api_proxy) if local_development else None)
         app = create_workspace_chat_app(settings, worker=services.worker, query=services.query, sdk=sdk,
             readiness=services.readiness, model_controller=controller)
     except Exception:
