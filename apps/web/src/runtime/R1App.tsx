@@ -148,6 +148,8 @@ export default function R1App() {
   const [profileRetry, setProfileRetry] = useState(0)
   const [durableBusy, setDurableBusy] = useState(false)
   const [durableDraft, setDurableDraft] = useState(false)
+  const [workspaceBusy, setWorkspaceBusy] = useState(false)
+  const [workspaceDraft, setWorkspaceDraft] = useState(false)
   const [exitBusy, setExitBusy] = useState(false)
   const [summaryDraft, setSummaryDraft] = useState(false)
   const [documentDraft, setDocumentDraft] = useState(false)
@@ -200,6 +202,7 @@ export default function R1App() {
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
   const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
+  useLayoutEffect(() => { setError("") }, [navigation.route.conversationId, navigation.route.conversationClassId, navigation.route.conversationTermId])
   useLayoutEffect(() => {
     if (page === "settings") { setSettingsOpen(true); navigation.setPage("conversation") }
   }, [page])
@@ -487,7 +490,7 @@ export default function R1App() {
     })
   }
   function requestLogout() {
-    if (summaryDraft || documentDraft || durableDraft || message.trim()) setConfirmLogout(true)
+    if (summaryDraft || documentDraft || durableDraft || workspaceDraft || workspaceBusy || message.trim()) setConfirmLogout(true)
     else logoutCurrentSession()
   }
   async function preview(command: Command) {
@@ -869,10 +872,10 @@ export default function R1App() {
     onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
     onBusyChange: value => { if (!workspaceMode) setDurableBusy(value) }, onDraftChange: value => { if (!workspaceMode) setDurableDraft(value) }, onError: fail,
   })
-  const workspaceConversation = useWorkspaceChat({ enabled: workspaceMode, session, threadId: navigation.route.conversationId,
+  const workspaceConversation = useWorkspaceChat({ enabled: runtimeProfile === "workspace-chat-d3", session, threadId: workspaceMode ? navigation.route.conversationId : "",
     canInteract: !!session && !busy && !form && !pending && !modelUncertain, refreshSignal: activity,
     onSelect: id => navigation.setConversation("", "", id), onSaved: navigation.adoptWorkspaceConversation,
-    onBusy: value => { if (workspaceMode) setDurableBusy(value) }, onDraft: value => { if (workspaceMode) setDurableDraft(value) }, onError: fail,
+    onBusy: setWorkspaceBusy, onDraft: setWorkspaceDraft, onError: fail,
     onPreview: proposal => setPending({ proposal, key: crypto.randomUUID() }) })
 
   const conversationStarted = workspaceMode ? !!navigation.route.conversationId || !!workspaceConversation.pendingSend || !!workspaceConversation.history?.turns.length : durableProfile ? !!navigation.route.conversationId || !!durable.history?.history.messages.length || !!durable.chatMessages.length || durable.working : !!messages.length
@@ -977,9 +980,10 @@ export default function R1App() {
           <p className="side-kicker">聊天</p>
         <button
           className="new-chat"
-          disabled={busy || durableBusy || !!runningAgent.current || (workspaceMode ? !!workspaceConversation.text.trim() || !!workspaceConversation.pendingSend : durableProfile && !!durable.text.trim())}
-          onClick={() => void action(async () => {
-            if (workspaceMode) { workspaceConversation.newChat(); setPage("conversation"); return }
+          disabled={workspaceMode ? navigationBlocked : busy || durableBusy || !!runningAgent.current || (durableProfile && !!durable.text.trim())}
+          onClick={() => {
+            if (workspaceMode) { setError(""); workspaceConversation.newChat(); return }
+            void action(async () => {
             if (durableProfile) { durable.newChat(); navigation.setConversation("", "", ""); setPage("conversation"); return }
             const generation = loading.current
             if (conversationId) {
@@ -997,15 +1001,17 @@ export default function R1App() {
             setMessages([])
             setMessage("")
             setPage("conversation")
-          })}
+          })}}
         >
           <Plus size={17} />
           新对话
         </button>
 
+          {workspaceMode && workspaceConversation.pendingThreads.map(item => <button className="conversation-item" key={`pending-${item.thread_id}`} disabled={navigationBlocked}
+            onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.title} · 待确认</button>)}
           {workspaceMode && workspaceConversation.listing?.data.map(item => <button className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`} key={item.thread_id}
-            disabled={workspaceConversation.working || !!workspaceConversation.text.trim() || !!workspaceConversation.pendingSend}
-            onClick={() => { workspaceConversation.select(item.thread_id); setPage("conversation") }}>{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
+            disabled={navigationBlocked}
+            onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
           {!workspaceMode && durableProfile && durable.listing?.data.map(item => <button
             className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`}
             key={item.thread_id} disabled={durable.blocked || !!durable.text.trim()}
@@ -1013,11 +1019,11 @@ export default function R1App() {
             {item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}
           </button>)}
           {workspaceMode && !!durable.listing?.data.length && <><p className="side-kicker">当前班级的旧对话</p>{durable.listing.data.map(item => <button
-            className="conversation-item" key={`class-${item.thread_id}`} disabled={durable.blocked || workspaceConversation.working || !!workspaceConversation.text.trim() || !!workspaceConversation.pendingSend}
+            className="conversation-item" key={`class-${item.thread_id}`} disabled={navigationBlocked || durable.blocked}
             onClick={() => durable.select(item.thread_id)}>{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
             {durable.listing.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多班级旧对话</button>}</>}
-          {!(workspaceMode ? workspaceConversation.listing?.data.length || durable.listing?.data.length : durable.listing?.data.length) && <p className="sidebar-empty">尚无已保存对话</p>}
-          {workspaceMode ? workspaceConversation.listing?.next_offset && <button disabled={workspaceConversation.working} onClick={() => void workspaceConversation.moreThreads()}>更多会话</button>
+          {!(workspaceMode ? workspaceConversation.listing?.data.length || workspaceConversation.pendingThreads.length || durable.listing?.data.length : durable.listing?.data.length) && <p className="sidebar-empty">尚无已保存对话</p>}
+          {workspaceMode ? workspaceConversation.listing?.next_offset && <button disabled={workspaceConversation.listingBusy} onClick={() => void workspaceConversation.moreThreads()}>更多会话</button>
             : durable.listing?.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多会话</button>}
         </section>
       </SidebarFrame>
@@ -1590,7 +1596,7 @@ export default function R1App() {
                 <p>
                   选择并连接你要使用的模型。
                 </p>
-                <ModelConfigurationForm key={`${session.csrf_token}/${modelRevision}`} session={session} disabled={busy} onError={fail}
+                <ModelConfigurationForm key={`${session.csrf_token}/${modelRevision}`} session={session} disabled={busy || workspaceBusy} onError={fail}
                   onPreview={command => { setSettingsOpen(false); return action(() => preview(command)) }} onModeChanged={verified => {
                     setModelUncertain(!verified)
                     runningAgent.current?.abort(); setConversationId(""); setMessages([]); setMessage(""); setAgentDraft(null); setAgentRecordNote(null); setRecordNoteQuote(""); setAgentStatus("")

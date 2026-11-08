@@ -6,6 +6,8 @@ import subprocess
 import threading
 import time
 import json
+import asyncio
+import traceback
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
@@ -16,6 +18,7 @@ from openai import AsyncOpenAI
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
 from sqlalchemy import text
+from starlette.middleware import Middleware
 
 from class_os.application.workbench import WorkbenchBusinessGateway, WorkbenchQueryGateway
 from class_os.infrastructure.agent import PydanticAgentRuntime
@@ -28,6 +31,79 @@ from class_os.infrastructure.model_secrets import ModelSecrets
 from class_os.domain.model_configuration import ModelConfiguration, Protocol
 from test_model_secrets import fixture_codec
 from test_agent_api_protocol import protocol_reply
+
+
+@pytest.mark.db
+def test_chat_navigation_keeps_drafts_and_background_runs_isolated(workspace_chat):
+    _, _, _, owner, _, clock, store, boundary = workspace_chat
+    commands = WorkbenchBusinessGateway(boundary, store, clock=lambda: clock[0])
+    query = WorkbenchQueryGateway(boundary, store, clock=lambda: clock[0])
+    gates = {name: threading.Event() for name in ('甲', '乙')}
+    calls = []
+    activity = []
+    def factory(request):
+        async def respond(messages, info):
+            calls.append(request.text)
+            activity.append(('entered', request.text, round(time.monotonic(), 2)))
+            try:
+                if request.text in ('等待甲', '等待乙'):
+                    while not gates[request.text[-1]].is_set():
+                        await asyncio.sleep(.02)
+                return ModelResponse(parts=[TextPart('回复：' + request.text)])
+            finally:
+                activity.append(('exited', request.text, round(time.monotonic(), 2)))
+        return FunctionModel(respond)
+    # Match the deployed chat timeout while the test explicitly holds replies.
+    sdk = PydanticAgentRuntime(query, model_factory=factory, timeout=45)
+    with socket.socket() as probe:
+        probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
+    root = Path(__file__).resolve().parents[2]
+    app = create_workspace_chat_app(Settings(port=port), worker=commands, query=query, sdk=sdk)
+    failures = []
+    class Diagnostic:
+        def __init__(self, app): self.app = app
+        async def __call__(self, scope, receive, send):
+            try:
+                await self.app(scope, receive, send)
+            except Exception as error:
+                failures.append((type(error).__name__, [(Path(frame.filename).name, frame.name, frame.lineno)
+                    for frame in traceback.extract_tb(error.__traceback__)[-5:]]))
+                raise
+    app.user_middleware.append(Middleware(Diagnostic))
+    # Owned disposable test controls only; never mounted by production assembly.
+    @app.get('/__fixture__/state')
+    def state():
+        return {'calls': list(calls), 'active': sdk.active, 'activity': list(activity)}
+    @app.post('/__fixture__/release/{name}')
+    def release(name: str):
+        gates[name].set()
+        return {'released': True}
+    @app.post('/__fixture__/hold/{name}')
+    def hold(name: str):
+        gates[name].clear()
+        return {'held': True}
+    mount_web(app, root / 'apps/web/dist')
+    server = uvicorn.Server(uvicorn.Config(app, host='127.0.0.1', port=port, proxy_headers=False,
+        access_log=False, log_level='error', timeout_graceful_shutdown=5))
+    thread = threading.Thread(target=server.run, daemon=True); thread.start()
+    try:
+        deadline = time.monotonic() + 10
+        while not server.started:
+            assert thread.is_alive() and time.monotonic() < deadline
+            time.sleep(.05)
+        result = subprocess.run(['node', 'tests/chat-navigation-browser.mjs'], cwd=root / 'apps/web',
+            env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}'), capture_output=True,
+            text=True, encoding='utf-8', timeout=100, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        assert result.returncode == 0, result.stdout + result.stderr + repr(failures) + repr(activity)
+        assert calls == ['会话甲', '会话乙', '延迟保存甲', '延迟新会话', '待恢复新会话', '等待甲', '等待乙', '等待甲']
+        with owner.transaction(read_only=True) as connection:
+            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='completed'")).scalar_one() == 7
+            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='cancelled'")).scalar_one() == 1
+            assert connection.execute(text('SELECT count(*) FROM class_os.school_class')).scalar_one() == 0
+    finally:
+        for gate in gates.values(): gate.set()
+        server.should_exit = True; thread.join(timeout=10)
+        assert not thread.is_alive()
 
 
 @pytest.mark.db
