@@ -39,6 +39,17 @@ try {
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.r1-welcome')).visibility === 'hidden');
   assert((await page.locator('.r1-welcome').boundingBox()).height < 1);
   assert.equal(await page.locator('.r1-messages .avatar').count(), 0);
+  for (const copy of ['聊天由本机数据库保存，普通聊天无需班级', '聊天已接入数据库 · 涉及班级时才使用班级工具', '聊天 · 涉及班级时再关联', '本轮运行记录']) assert.equal(await page.getByText(copy, { exact: true }).count(), 0);
+  const answer = history.getByRole('article', { name: '助手回复', exact: true }).first();
+  await answer.getByText(/^用时 \d+\.\d 秒$/).waitFor();
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write'], { origin: base });
+  await answer.getByRole('button', { name: '复制回答', exact: true }).click();
+  await answer.getByText('已复制回答', { exact: true }).waitFor();
+  assert.equal(await page.evaluate(() => navigator.clipboard.readText()), '合成普通聊天已回复，不需要班级。');
+  await page.evaluate(() => { globalThis.originalClipboardWrite = navigator.clipboard.writeText.bind(navigator.clipboard); navigator.clipboard.writeText = async () => { throw new Error('Owned clipboard denial'); }; });
+  await answer.getByRole('button', { name: '复制回答', exact: true }).click();
+  await answer.getByText('复制失败，请选择文字复制', { exact: true }).waitFor();
+  await page.evaluate(() => { navigator.clipboard.writeText = globalThis.originalClipboardWrite; delete globalThis.originalClipboardWrite; });
   const leftInset = await page.locator('article.assistant').first().evaluate(element => element.getBoundingClientRect().left - document.querySelector('.r1-scroll').getBoundingClientRect().left);
   assert(leftInset >= 20 && leftInset <= 44);
   assert.deepEqual(await page.evaluate(() => ({ x: scrollX, overflow: document.documentElement.scrollWidth > innerWidth, sidebar: document.querySelector('.sidebar').scrollLeft })), { x: 0, overflow: false, sidebar: 0 });

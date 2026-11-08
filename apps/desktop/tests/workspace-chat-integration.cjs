@@ -28,11 +28,18 @@ async function launch() {
   await page.getByRole('region', { name: '已保存的对话' }).getByText('合成升级前消息', { exact: true }).waitFor();
   await page.getByRole('button', { name: '新对话', exact: true }).click();
   await page.waitForURL(url => url.pathname === '/');
-  await page.getByText('聊天由本机数据库保存，普通聊天无需班级', { exact: true }).waitFor();
+  await page.getByLabel('输入消息').waitFor();
   await page.getByLabel('输入消息').fill('合成桌面重启持久聊天');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   const history = page.getByRole('region', { name: '已保存的对话' });
   await history.locator('article.assistant').waitFor();
+  const answer = history.getByRole('article', { name: '助手回复', exact: true }).last();
+  const answerText = await answer.locator('p').first().textContent();
+  await answer.getByRole('button', { name: '复制回答', exact: true }).click();
+  await answer.getByText('已复制回答', { exact: true }).waitFor({ timeout: 3000 });
+  // Windows clipboard line endings may be CRLF; compare the original text,
+  // never the rendered innerText or action labels, without printing clipboard data.
+  assert.equal(await app.evaluate(async ({ clipboard }, expected) => (await clipboard.readText()).replace(/\r\n/g,'\n') === expected.replace(/\r\n/g,'\n'), answerText), true);
   const chatPath = new URL(page.url()).pathname;
   assert.match(chatPath, /^\/chats\/[a-f0-9-]{36}$/);
   await app.close(); app = null;

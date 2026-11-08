@@ -16,7 +16,7 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
   </section>
   return <section className="r1-durable" aria-label="已保存的对话">
     <div className="r1-toolbar"><button disabled={s.blocked || s.needsClassroom} onClick={() => void s.refresh()}>重新读取对话</button>
-      <span className="r1-muted">{s.needsClassroom ? "建立班级与学期后可保存和读取对话" : s.fresh ? "来自当前授权数据库" : "正在核对；上次快照不能用于提交"}</span></div>
+      {!s.fresh && <span className="r1-muted">正在加载…</span>}</div>
     <details className="r1-card" open={!current}><summary>已保存的会话（{s.listing?.data.length || 0}）</summary>
       {s.text.trim() && <p className="r1-muted">{s.needsClassroom ? "首次建立班级时会保留当前草稿；刷新或关闭窗口不会保留。" : "切换班级、学期或会话前请先发送或清空未发送文字；不会把它带到另一范围。未发送文字不跨刷新保存。"}</p>}
       {s.listing?.data.map(item => <button key={item.thread_id} aria-current={current?.history.thread_id === item.thread_id ? "true" : undefined}
@@ -76,9 +76,9 @@ export function DurableComposer({ state: s, students, canWrite }: { state: Durab
       onChange={event => s.setText(event.target.value)} onKeyDown={event => {
         if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (allowed) void s.send() }
       }} />
-    <div><span className="r1-muted">{s.workspaceChat ? "普通聊天 · 无需班级 · 临时上下文" : s.needsClassroom ? "此操作需要关联班级与学期，普通聊天不需要。" : "班级会话 · 已发送消息会保存"}</span>
+    <div>
       <label>助理<select aria-label="Agent 交互模式" value={s.mode === "chat" && !s.workspaceChat ? "class-chat" : s.mode} disabled={s.blocked} onChange={event => s.setMode(event.target.value as typeof s.mode | "class-chat")}>
-        <option value="chat">普通聊天</option><option value="read">查询班级工作</option><option value="draft">准备班级任务草稿</option><option value="class-chat">关联班级讨论</option></select></label>
+        <option value="chat">聊天</option><option value="read">查询班级工作</option><option value="draft">准备班级任务草稿</option><option value="class-chat">关联班级讨论</option></select></label>
       {!fixed && s.mode === "read" && <label className="r1-agent-scope">查询范围<select aria-label="助理查询范围" value={s.student} disabled={s.blocked} onChange={event => s.setStudent(event.target.value)}>
         <option value="">全班当前工作</option>{unavailableStudent && <option value={s.student}>原学生已不可用，请重新选择</option>}{students.filter(item => item.status === "active").map(item => <option key={item.student_id} value={item.student_id}>{item.name} · 个人跟进</option>)}</select></label>}
       {s.working && s.isStreaming ? <button type="button" aria-label="停止 Agent" onClick={() => void s.stop()}><X size={18} /></button>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { ArrowUp, X } from "lucide-react"
+import { ArrowUp, Copy, Check, X } from "lucide-react"
 import type { ChatCandidate } from "./workspace-chat"
 import type { WorkspaceChatController } from "./useWorkspaceChat"
 import { R1Dialog } from "./R1Dialog"
@@ -8,7 +8,25 @@ import { ModelSwitcher } from "./ModelSwitcher"
 
 const labels = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "task.create": "建立任务", "task.update": "修改任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
-const states = { queued: "输入已保存，尚未启动", running: "运行中，尚无保存的回答", completed: "回答已保存", failed: "本轮失败，未自动重跑", cancelled: "本轮已取消", unknown: "本轮结果未知，未自动重跑" }
+const states = { queued: "等待回复", running: "正在回复…", completed: "回复完成", failed: "回复失败，请稍后再试", cancelled: "已停止回复", unknown: "暂时无法确认回复结果" }
+function AnswerActions({ text, duration }: { text: string; duration: number | null }) {
+  const [copied, setCopied] = useState(false), [failed, setFailed] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(text)
+      setFailed(false); setCopied(true)
+      if (timer.current) clearTimeout(timer.current)
+      timer.current = setTimeout(() => setCopied(false), 2000)
+    } catch { setCopied(false); setFailed(true) }
+  }
+  return <div className="r1-answer-actions">
+    {duration !== null && <span>用时 {(duration / 1000).toFixed(1)} 秒</span>}
+    <button type="button" aria-label="复制回答" onClick={() => void copy()}>{copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}{copied ? "已复制" : "复制回答"}</button>
+    <span role="status">{failed ? "复制失败，请选择文字复制" : copied ? "已复制回答" : ""}</span>
+  </div>
+}
 function CandidateContent({ value }: { value: ChatCandidate }) {
   return <>
     {"name" in value && <p>{"previous_name" in value && <>原名称：{value.previous_name} → </>}名称：{value.name}</p>}
@@ -17,7 +35,6 @@ function CandidateContent({ value }: { value: ChatCandidate }) {
     {"title" in value && <p>标题：{value.title}</p>}
     {"status" in value && <p>状态：{value.status === "waiting" ? "等待别人" : value.status === "in-progress" ? "进行中" : "未开始"}</p>}
     {"body" in value && <details open><summary>核对文档正文（工作草稿，非正式事实）</summary><p className="r1-document-draft">{value.body}</p></details>}
-    {"expected_version" in value && <small>基于版本 {value.expected_version}；保存时还会重新校验。</small>}
   </>
 }
 export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatController }) {
@@ -25,8 +42,8 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
   const latest = s.history?.turns.at(-1)
   useEffect(() => { if (latest) end.current?.scrollIntoView({ block: "nearest", inline: "nearest" }) }, [latest?.turn_id, latest?.state])
   return <section aria-label="已保存的对话">
-    <div className="r1-toolbar"><span className="r1-muted">{s.fresh ? "聊天由本机数据库保存，普通聊天无需班级" : "正在核对聊天保存状态…"}</span>
-      <button disabled={s.working} onClick={s.refresh}>重新读取对话</button>
+    <div className="r1-toolbar">
+      <button disabled={s.working} onClick={s.refresh}>刷新对话</button>
       {s.history && <><button disabled={!s.fresh || s.working || s.lastActive || s.history.thread.status !== "active"} onClick={() => void s.control("archive")}>归档对话</button>
         <button disabled={!s.fresh || s.working || s.lastActive || s.history.thread.status === "cleared"} onClick={() => setClear(true)}>清除聊天正文</button></>}
     </div>
@@ -35,15 +52,14 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
     <div className="r1-messages">
       {s.history?.turns.map(turn => <div key={turn.turn_id}>
         {turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
-        {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p></article>}
+        {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
         {turn.state !== "completed" && <p className="r1-muted">{states[turn.state]}</p>}
         {turn.state === "queued" && <button disabled={s.working || !s.fresh} onClick={() => void s.startQueued(turn)}>继续已保存的本轮</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{labels[turn.candidate.command]}</h2><CandidateContent value={turn.candidate} />
-          {turn.action_receipt ? <p role="status">已保存 · 业务版本 {turn.action_receipt.version}</p>
+          {turn.action_receipt ? <p role="status">已保存</p>
             : <><p className="r1-muted">这项操作尚未保存。核对内容后预览，再确认执行。</p><button className="r1-primary" disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.preview(turn)}>预览这项操作</button></>}
         </section>}
-        {turn.duration_ms !== null && <details className="r1-muted"><summary>本轮运行记录</summary><p>{states[turn.state]} · {turn.duration_ms} ms · 输入/输出Token：{turn.input_tokens ?? "未提供"} / {turn.output_tokens ?? "未提供"}。Token为供应商报告，不是计费确认。</p></details>}
       </div>)}
     </div>
     {s.status && <p role="status" className="r1-muted">{s.status}</p>}
@@ -62,7 +78,7 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
   return <form className="r1-composer" onSubmit={event => { event.preventDefault(); void s.send() }}>
     <textarea aria-label="输入消息" placeholder="随便聊聊，或告诉我你想创建、修改什么……" maxLength={2000} value={s.text}
       onChange={event => s.setText(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (s.canSend) void s.send() } }} />
-    <div><span className="r1-muted">聊天已接入数据库 · 涉及班级时才使用班级工具</span>
+    <div>
       <ModelSwitcher session={session} state={s.model} revision={modelRevision} disabled={s.working || s.lastActive || !!s.pendingSend}
         onManage={onManageModels} onPreview={onPreviewModel} onVerified={onModelVerified} onError={onError} />
       {s.lastActive ? <button type="button" aria-label="停止 Agent" onClick={() => void s.stop()}><X size={18} /></button>

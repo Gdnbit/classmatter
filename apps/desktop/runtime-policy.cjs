@@ -10,4 +10,7 @@ function exitDownload(origin,value,mime,size) {
   const url=new URL(value),id='[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}';
   return !url.search && !url.hash && new RegExp('^/api/workspaces/'+id+'/(?:conversation-d1/)?exit/'+id+'/download$').test(url.pathname);
 }
-module.exports={allowed,CSP,exitDownload};
+function clipboardWrite(origin,permission,details) {
+  return permission==='clipboard-sanitized-write' && details?.isMainFrame===true && allowed(origin,details.requestingUrl);
+}
+module.exports={allowed,CSP,exitDownload,clipboardWrite};

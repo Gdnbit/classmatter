@@ -5,6 +5,14 @@ const os = require('node:os');
 const path = require('node:path');
 const { ORIGIN, CSP, localURL, resolveResource, serveResource } = require('../policy.cjs');
 const vm = require('node:vm');
+const { clipboardWrite } = require('../runtime-policy.cjs');
+
+test('answer copy permits only text writes from the same main frame', () => {
+  const origin='http://127.0.0.1:8001', details={isMainFrame:true,requestingUrl:origin+'/chats/synthetic'};
+  assert.equal(clipboardWrite(origin,'clipboard-sanitized-write',details),true);
+  for(const permission of ['clipboard-read','deprecated-sync-clipboard-read','media','unknown']) assert.equal(clipboardWrite(origin,permission,details),false);
+  for(const request of [null,{}, {...details,isMainFrame:false}, {...details,requestingUrl:'https://example.invalid'}, {...details,requestingUrl:'http://127.0.0.1:8002'}]) assert.equal(clipboardWrite(origin,'clipboard-sanitized-write',request),false);
+});
 
 test('only the exact app origin is trusted', () => {
   for (const url of ['https://example.com', 'http://127.0.0.1:8443', 'file:///etc/passwd', 'classmatter://evil/', 'classmatter://app:80/', 'classmatter://user@app/']) assert.equal(localURL(url), false, url);

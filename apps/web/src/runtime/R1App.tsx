@@ -1024,7 +1024,7 @@ export default function R1App() {
         <header className="topbar r1-topbar">
           <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "documents" ? "数据与内容" : page === "settings" ? "设置" : "班事有谱"}</strong>
           <span role={refreshing ? "status" : undefined}>
-            {page === "conversation" && (workspaceMode || (durableProfile ? durable.workspaceChat : agentMode === "chat")) ? "聊天 · 涉及班级时再关联" : refreshing ? "正在读取当前班级与学期…" : classroom?.term_name || "先建立班级与学期"}
+            {page === "conversation" ? "" : refreshing ? "正在加载…" : classroom?.term_name || ""}
             {classroom?.status === "archived" && " · 历史只读"}
           </span>
           <button
@@ -1081,15 +1081,12 @@ export default function R1App() {
                 <small>CLASSMATTER · 对话</small>
                 <h1>今天想处理什么？</h1>
                 <p>少记、少追、少重复。事实由你确认，系统帮你复用。</p>
-                <p className="r1-muted">{workspaceMode ? "直接聊、直接说想创建或修改什么。聊天保存在本机；涉及班级数据时才关联，业务变更由你核对确认。" : durableProfile && durable.workspaceChat ? "直接聊天，无需先建班。普通聊天使用临时上下文，刷新不恢复；班级查询与操作才需要关联班级。" : durableProfile
-                  ? "已发送文字和完成结果由数据库保存。历史 AI 内容不是正式事实；不会因刷新而重新调用模型。"
-                  : "对话仅为临时上下文，刷新或重启不保证恢复；已确认的事实与任务另由数据库保存。"}</p>
               </div>
               <AttentionColumns className="r1-attention">{[
                 taskCards(attention.needsAction),
                 <>
                   <p className="r1-muted">
-                    R1 暂无通知责任候选。系统不依据 AI 推断自动判责。
+                    暂无待提醒事项
                   </p>
                   {duplicates.length > 0 && (
                     <button onClick={() => setPage("students")}>

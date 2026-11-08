@@ -3,7 +3,7 @@ const {app,BrowserWindow,Menu,session,ipcMain,dialog}=require('electron');
 const fs=require('node:fs');
 const path=require('node:path');
 const {desktopService}=require('./runtime-service.cjs');
-const {allowed,CSP,exitDownload}=require('./runtime-policy.cjs');
+const {allowed,CSP,exitDownload,clipboardWrite}=require('./runtime-policy.cjs');
 const {networkFromSwitches,validateNetwork}=require('./model-network.cjs');
 let source,d1=false,sourceInvalid=false;
 let modelNetwork;
@@ -72,8 +72,8 @@ else {
       }
     };
     if(developerCookies){await installDeveloperCookies(developerCookies);developerCookies=null;}
-    isolated.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
-    isolated.setPermissionCheckHandler(()=>false);
+    isolated.setPermissionRequestHandler((contents,permission,callback,details)=>callback(!!window && contents===window.webContents && clipboardWrite(origin,permission,details)));
+    isolated.setPermissionCheckHandler((contents,permission,_requestingOrigin,details)=>!!window && contents===window.webContents && clipboardWrite(origin,permission,details));
     isolated.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!allowed(origin,details.url)}));
     isolated.webRequest.onHeadersReceived((details,callback)=>callback({responseHeaders:{...details.responseHeaders,'Content-Security-Policy':[CSP],'X-Content-Type-Options':['nosniff']}}));
     isolated.on('will-download',(event,item,contents)=>{

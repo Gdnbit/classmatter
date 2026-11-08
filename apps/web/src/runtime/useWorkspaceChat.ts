@@ -78,7 +78,7 @@ export function useWorkspaceChat(props: Props) {
     const controller = new AbortController(); stream.current = controller
     try {
       await client().start(thread, turn.request_id, controller.signal, kind => {
-        if (generation === epoch.current) setStatus(kind.startsWith("tool.") ? "正在通过受控工具查询或准备候选…" : "正在回复；以保存后的结果为准…")
+        if (generation === epoch.current) setStatus(kind.startsWith("tool.") ? "正在整理…" : "正在回复…")
       })
     } catch (error) {
       if (generation === epoch.current && !controller.signal.aborted) setStatus("运行或连接未完成，正在核对保存状态；不会自动重跑。")
