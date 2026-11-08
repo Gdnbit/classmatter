@@ -85,7 +85,7 @@ export function useWorkspaceChat(props: Props) {
     } finally { if (stream.current === controller) stream.current = null }
   }
   async function send() {
-    if (!props.canInteract || !freshScope || working || operation.current || pendingSend || active(last) || !navigator.onLine || !text.trim() || history?.thread.status && history.thread.status !== "active") return
+    if (!props.canInteract || model?.mode === "stale" || !freshScope || working || operation.current || pendingSend || active(last) || !navigator.onLine || !text.trim() || history?.thread.status && history.thread.status !== "active") return
     const target = { thread: selected.current || crypto.randomUUID(), request: crypto.randomUUID(), text }
     await operate(async generation => {
       setPendingSend(target); selected.current = target.thread
@@ -109,6 +109,7 @@ export function useWorkspaceChat(props: Props) {
             savedInput = true
           }
           if (savedInput) latest.current.onSaved(target.thread)
+          if (restored?.turns.find(row => row.request_id === target.request)?.state === "completed") setStatus("")
         }
       }
     })
@@ -129,7 +130,7 @@ export function useWorkspaceChat(props: Props) {
     catch (error) { if (generation === epoch.current) report(error) }
   }
   return { history, listing, model, text, setText, working, fresh: freshScope, status, pendingSend, send, lastActive: active(last),
-    canSend: props.canInteract && freshScope && !working && !pendingSend && !active(last) && (!history || history.thread.status === "active") && navigator.onLine,
+    canSend: props.canInteract && model?.mode !== "stale" && freshScope && !working && !pendingSend && !active(last) && (!history || history.thread.status === "active") && navigator.onLine,
     stop, refresh: () => void refreshRef.current().catch(report),
     select: (thread: string) => { if (!working && !text.trim() && !pendingSend) latest.current.onSelect(thread) },
     newChat: () => { if (!working && !text.trim() && !pendingSend) { epoch.current++; reader.current?.abort(); selected.current = ""; setHistory(null); setFresh(false); setStatus(""); latest.current.onSelect(""); void refreshRef.current("").catch(report) } },

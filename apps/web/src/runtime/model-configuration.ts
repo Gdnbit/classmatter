@@ -69,3 +69,17 @@ export async function modelControl(session: Session, operation: "test" | "enable
     ...(operation === "test" ? { request_id: crypto.randomUUID() } : {}) }
   return decodeModelStatus(await request(`${workspace(session)}/agent/configuration/${operation}`, body, session.csrf_token, signal))
 }
+
+export async function stageModelSwitch(session: Session, state: ModelStatus, model: string): Promise<Command> {
+  if (!state.configuration || !state.candidate_id || !state.key_configured) throw new Error("请先配置模型服务商")
+  const data = await request<unknown>(`${workspace(session)}/agent/configuration/stage-model`, {
+    source_candidate_id: state.candidate_id, expected_version: state.version, model,
+  }, session.csrf_token)
+  const valid = staged(data); staged.errors = null
+  if (!valid) throw new Error("模型切换候选响应不匹配")
+  const command = (data as { command: Command }).command
+  if (command.command !== "model_configuration.save" || command.expected_version !== state.version
+    || command.model !== model || command.base_url !== state.configuration.base_url || command.protocol !== state.configuration.protocol)
+    throw new Error("模型切换范围不匹配，未采纳")
+  return command
+}

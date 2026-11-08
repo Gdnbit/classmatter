@@ -83,6 +83,18 @@ class ModelController:
             raise ConfigurationRejected()
         return self.secrets.stage(credentials, profile, key, version)
 
+    async def stage_model(self, credentials, source, version, model):
+        """Reuse the current provider credential, returning only an original BCG candidate."""
+        row = await self._row(credentials)
+        if self.runtime.active or self._testing or self.signature(row) != (source, version) or not self.permitted(row):
+            raise ConfigurationRejected()
+        previous = self.profile(row)
+        target = ModelConfiguration(previous.protocol, model, previous.base_url)
+        if target == previous:
+            raise ConfigurationRejected()
+        key = self.secrets.open(credentials[3], source, version, previous, bytes(row['sealed']))
+        return self.secrets.stage(credentials, target, key.get_secret_value(), version)
+
     async def test(self, credentials, candidate, version, request_id):
         row = await self._row(credentials)
         if self.signature(row) != (candidate, version) or not self.permitted(row):

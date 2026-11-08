@@ -37,6 +37,12 @@ class ModelStaged(WireModel):
     command: ModelControlBody
 
 
+class ModelSwitchBody(WireModel):
+    source_candidate_id: UUID
+    expected_version: int = Field(strict=True, ge=1, lt=2147483647)
+    model: str = Field(strict=True, min_length=1, max_length=128)
+
+
 class ModelStatus(WireModel):
     schema_version: Literal["class-os.model-status.v1"]
     storage_available: bool = Field(strict=True)
@@ -123,6 +129,12 @@ def router(query, controller=None):
         auth = await available(request, workspace_id)
         await controller.test(auth, body.candidate_id, body.version, body.request_id)
         return ModelStatus(**await controller.status(auth))
+
+    @routes.post("/stage-model", response_model=ModelStaged)
+    async def stage_model(workspace_id: UUID, request: Request, body: ModelSwitchBody):
+        auth = await available(request, workspace_id)
+        command = await controller.stage_model(auth, body.source_candidate_id, body.expected_version, body.model)
+        return ModelStaged(schema_version="class-os.model-staged.v1", command=ModelControlBody(**command.canonical()))
 
     @routes.post("/enable", response_model=ModelStatus)
     async def enable(workspace_id: UUID, request: Request, body: ModelEnableBody):

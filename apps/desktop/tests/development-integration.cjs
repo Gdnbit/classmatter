@@ -28,7 +28,8 @@ async function main(){
         assert(cookie?.httpOnly && cookie.sameSite==='strict' && cookie.path==='/api');
       }
       if(pass===0){
-        await page.getByRole('button',{name:'建立班级与学期',exact:true}).click();
+        await page.getByRole('button',{name:'设置',exact:true}).click();
+      await page.getByRole('button',{name:'建立班级与学期',exact:true}).click();
         await page.getByLabel('班级名称',{exact:true}).fill('合成免密码开发验收班');
         await page.getByLabel('学期名称',{exact:true}).fill('合成开发学期');
         await page.getByLabel('学期开始').fill('2026-09-01');
@@ -37,7 +38,9 @@ async function main(){
         await page.getByRole('button',{name:'明确批准并提交',exact:true}).click();
         await page.getByRole('dialog').waitFor({state:'hidden'});
       }
-      await page.getByRole('combobox',{name:'切换班级学期'}).getByRole('option',{name:'合成免密码开发验收班 · 合成开发学期',exact:true}).waitFor({state:'attached'});
+      await page.getByRole('button',{name:'设置',exact:true}).click();
+      await page.getByRole('combobox',{name:'设置中切换班级'}).getByRole('option',{name:'合成免密码开发验收班 · 合成开发学期',exact:true}).waitFor({state:'attached'});
+      await page.getByRole('button',{name:'关闭设置',exact:true}).click();
       if(pass===0){
         await page.getByRole('button',{name:'设置',exact:true}).click();
         await page.getByRole('button',{name:'重新验证身份',exact:true}).click();
@@ -51,7 +54,9 @@ async function main(){
         await assert.rejects(page.evaluate(()=>window.classMatterDesktop.reauthenticateDevelopment()));
         await page.getByRole('button',{name:'进入本机开发',exact:true}).click();
         await page.locator('.app-shell > .sidebar .new-chat').waitFor();
-        await page.getByRole('combobox',{name:'切换班级学期'}).getByRole('option',{name:'合成免密码开发验收班 · 合成开发学期',exact:true}).waitFor({state:'attached'});
+        await page.getByRole('button',{name:'设置',exact:true}).click();
+        await page.getByRole('combobox',{name:'设置中切换班级'}).getByRole('option',{name:'合成免密码开发验收班 · 合成开发学期',exact:true}).waitFor({state:'attached'});
+        await page.getByRole('button',{name:'关闭设置',exact:true}).click();
         // Owned fixture only: a lost/expired browser capability must reach the
         // same explicit passwordless re-entry, not automatic replay/login.
         await app.evaluate(async({BrowserWindow},url)=>BrowserWindow.getAllWindows()[0].webContents.session.cookies.remove(url,'class_os_session'),`http://127.0.0.1:${port}/api`);

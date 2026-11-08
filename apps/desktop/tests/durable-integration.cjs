@@ -49,6 +49,7 @@ async function main(){
     assert.equal(await page.locator('.r1-sidebar').count(),0);
     const history=page.getByRole('region',{name:'已保存的对话'});
     if(phase==='create'){
+      await page.getByRole('button',{name:'设置',exact:true}).click();
       await page.getByRole('button',{name:'建立班级与学期',exact:true}).click();
       await page.getByLabel('班级名称',{exact:true}).fill('合成D1桌面验收班');
       await page.getByLabel('学期名称',{exact:true}).fill('合成D1学期');

@@ -16,7 +16,9 @@ export function R1Dialog({ titleId, children, onDismiss, busy = false, returnFoc
     dialog.showModal()
     return () => {
       if (dialog.open) dialog.close()
-      if (previous instanceof HTMLElement && previous.isConnected && !previous.matches(":disabled")) previous.focus()
+      const target = previous instanceof HTMLElement && previous.isConnected ? previous
+        : document.querySelector<HTMLElement>("[data-modal-focus-fallback]")
+      if (target && !target.matches(":disabled")) target.focus()
     }
   }, [])
   return <dialog ref={ref} className="r1-modal" aria-labelledby={titleId} onKeyDown={event => {

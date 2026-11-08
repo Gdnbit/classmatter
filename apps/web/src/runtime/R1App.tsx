@@ -9,6 +9,7 @@ import {
   Users,
   LayoutDashboard,
   LayoutList,
+  MoreHorizontal,
   X,
   LogOut,
   RefreshCw,
@@ -127,9 +128,19 @@ async function developmentSession(action: "enter" | "reauthenticate") {
 
 export default function R1App() {
   const localDevelopment = window.classMatterDesktop?.development === true
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const moreRoot = useRef<HTMLDetailsElement>(null)
   const [modelRevision, setModelRevision] = useState(0)
   const [modelUncertain, setModelUncertain] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
+  useEffect(() => { setSettingsOpen(false); setMoreOpen(false) }, [session?.csrf_token])
+  useEffect(() => {
+    if (!moreOpen) return
+    const close = (event: PointerEvent) => { if (!moreRoot.current?.contains(event.target as Node)) setMoreOpen(false) }
+    document.addEventListener("pointerdown", close)
+    return () => document.removeEventListener("pointerdown", close)
+  }, [moreOpen])
   const [runtimeProfile, setRuntimeProfile] = useState<"loading" | "failed" | "r1" | "conversation-d1" | "workbench-d2" | "workspace-chat-d3">("loading")
   const workbenchProfile = runtimeProfile === "workbench-d2" || runtimeProfile === "workspace-chat-d3"
   const durableProfile = runtimeProfile === "conversation-d1" || workbenchProfile
@@ -188,6 +199,9 @@ export default function R1App() {
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
   const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
+  useLayoutEffect(() => {
+    if (page === "settings") { setSettingsOpen(true); navigation.setPage("conversation") }
+  }, [page])
   // A detail selection is an ID, not an older copy of a business object.
   const task = activity?.tasks.find(item => item.task_id === navigation.route.taskId) || null
   const setTask = (item: TaskItem | null) => navigation.setTaskId(item?.task_id || "")
@@ -477,6 +491,7 @@ export default function R1App() {
   }
   async function preview(command: Command) {
     if (!session) return
+    setSettingsOpen(false)
     // Model configuration has its own controller/version checks; a roster
     // read failure must not prevent removing a configured external provider.
     if ((!queryFresh || refreshing) && !command.command.startsWith("model_configuration."))
@@ -535,6 +550,7 @@ export default function R1App() {
     if (command.startsWith("model_configuration.")) {
       runningAgent.current?.abort(); setConversationId(""); setMessages([]); setMessage(""); setAgentStatus("")
       setModelRevision(value => value + 1)
+      workspaceConversation.refresh()
     }
     if (command === "exit_export.create") setExportId(receipt.resource_id)
     setPending(null)
@@ -584,6 +600,7 @@ export default function R1App() {
   const openTasks = attention.open
 
   function open(next: Form) {
+    setSettingsOpen(false)
     termLoad.current++
     setTermMetadata(null)
     setError("")
@@ -593,6 +610,7 @@ export default function R1App() {
   }
   async function openTerm() {
     if (!session || !classroom) return
+    setSettingsOpen(false)
     const generation = loading.current, requestId = ++termLoad.current
     setTermMetadata(null)
     try {
@@ -856,6 +874,8 @@ export default function R1App() {
     onBusy: value => { if (workspaceMode) setDurableBusy(value) }, onDraft: value => { if (workspaceMode) setDurableDraft(value) }, onError: fail,
     onPreview: proposal => setPending({ proposal, key: crypto.randomUUID() }) })
 
+  const conversationStarted = workspaceMode ? !!navigation.route.conversationId || !!workspaceConversation.pendingSend || !!workspaceConversation.history?.turns.length : durableProfile ? !!navigation.route.conversationId || !!durable.history?.history.messages.length || !!durable.chatMessages.length || durable.working : !!messages.length
+
   if (checking)
     return (
       <div className="r1-auth">
@@ -907,10 +927,53 @@ export default function R1App() {
   return (
     <div className="r1-shell connected-runtime">
       <WorkbenchFrame workspaceClassName="r1-main" sidebar={
-      <SidebarFrame footer={window.classMatterDesktop?.localOnly === true ? <div className="user-area"><span className="avatar">班</span><span>本机工作区<small>直接使用 · 无需账号</small></span></div> : <button className="user-area r1-logout" aria-label="退出登录" disabled={busy} onClick={requestLogout}>
-        <span className="avatar">班</span><span>本机工作台<small>退出登录</small></span><LogOut size={16} />
-      </button>}>
-        <div className="scope"><strong>班事有谱 · ClassMatter</strong><span>{classroom ? `${classroom.name} · ${classroom.term_name}` : "尚未建立班级与学期"}</span></div>
+      <SidebarFrame footer={<div className="r1-workspace-footer">
+        {window.classMatterDesktop?.localOnly === true ? <div className="user-area"><span className="avatar">班</span><span>本机工作区</span></div> : <button className="user-area r1-logout" aria-label="退出登录" disabled={busy} onClick={requestLogout}><span className="avatar">班</span><span>本机工作区</span><LogOut size={16} /></button>}
+        <button className="r1-settings-trigger" data-modal-focus-fallback aria-label="设置" title="设置" disabled={busy || durableBusy || documentBusy} onClick={() => setSettingsOpen(true)}><Settings size={19} /></button>
+      </div>}>
+        <nav className="workspace-nav" aria-label="主要工作组件">
+          {([
+            ["conversation", "对话", MessageSquare],
+            ["dashboard", "总览", LayoutDashboard],
+            ["students", "学生", Users],
+            ["work", "工作", ClipboardList],
+          ] as const).map(([id, label, Icon]) => (
+            <button
+              key={id}
+              aria-current={page === id && (id !== "students" || studentView === "list") ? "page" : undefined}
+              onClick={() => {
+                termLoad.current++
+                setTermMetadata(null)
+                setPage(id)
+                if (id === "students") { setStudentView("list"); setSelectedStudent("") }
+                setTask(null)
+              }}
+            >
+              <Icon size={17} />
+              {label}
+            </button>
+          ))}
+          <details ref={moreRoot} className="r1-sidebar-more" open={moreOpen} onToggle={event => setMoreOpen(event.currentTarget.open)} onKeyDown={event => { if (event.key === "Escape") { setMoreOpen(false); event.currentTarget.querySelector("summary")?.focus() } }}>
+            <summary aria-label="更多功能"><MoreHorizontal size={19} /></summary>
+            <div className="r1-sidebar-more-menu">
+              <button onClick={() => { setMoreOpen(false); setPage("documents") }}><FileText size={17} />数据与内容</button>
+              <button onClick={() => { setMoreOpen(false); setSelectedStudent(""); setStudentView("table"); setPage("students") }}><LayoutList size={17} />视图</button>
+            </div>
+          </details>
+        </nav>
+        <section className="r1-sidebar-events" aria-label="事件">
+          <p className="side-kicker">事件</p>
+          {!queryFresh && <small className="r1-muted">正在核对最新事项</small>}
+          <div className="r1-sidebar-event-list">
+            {openTasks.map(item => <button key={item.task_id} className="r1-sidebar-event" onClick={() => { setSelectedStudent(""); setWorkFilter("all"); setTask(item); setPage("work") }}>
+              <span className={`r1-event-dot ${item.status}`} aria-hidden="true" />
+              <span><strong>{item.title}</strong><small>{item.status === "in-progress" ? "进行中" : item.status === "waiting" ? "等待反馈" : "待处理"}{item.due_at && <> · {displayTime(item.due_at)}</>}</small></span>
+            </button>)}
+            {!openTasks.length && <p className="sidebar-empty">暂无未完成事件</p>}
+          </div>
+        </section>
+        <section className="chat-history" aria-label="聊天列表">
+          <p className="side-kicker">聊天</p>
         <button
           className="new-chat"
           disabled={busy || durableBusy || !!runningAgent.current || (workspaceMode ? !!workspaceConversation.text.trim() || !!workspaceConversation.pendingSend : durableProfile && !!durable.text.trim())}
@@ -938,66 +1001,7 @@ export default function R1App() {
           <Plus size={17} />
           新对话
         </button>
-        <nav className="workspace-nav" aria-label="主要工作组件">
-          {([
-            ["conversation", "对话", MessageSquare],
-            ["dashboard", "总览", LayoutDashboard],
-            ["students", "学生", Users],
-            ["work", "工作", ClipboardList],
-            ["documents", "数据与内容", FileText],
-            ["settings", "设置", Settings],
-          ] as const).map(([id, label, Icon]) => (
-            <button
-              key={id}
-              aria-current={page === id && (id !== "students" || studentView === "list") ? "page" : undefined}
-              onClick={() => {
-                termLoad.current++
-                setTermMetadata(null)
-                setPage(id)
-                if (id === "students") { setStudentView("list"); setSelectedStudent("") }
-                setTask(null)
-              }}
-            >
-              <Icon size={17} />
-              {label}
-            </button>
-          ))}
-          <button aria-current={page === "students" && studentView === "table" ? "page" : undefined} onClick={() => {
-            setSelectedStudent(""); setStudentView("table"); setPage("students")
-          }}><LayoutList size={17} />视图</button>
-        </nav>
-        <section className="r1-scope">
-          <label>
-            当前班级 / 学期
-            <select
-              aria-label="切换班级学期"
-              disabled={navigationBlocked}
-              value={classroom?.class_id || ""}
-              onChange={(event) => {
-                const target = classes.find(
-                  (item) => item.class_id === event.target.value,
-                )
-                setSelectedStudent("")
-                void action(() => reload(target || null))
-              }}
-            >
-              <option value="" disabled>
-                尚未建立
-              </option>
-              {classes.map((item) => (
-                <option key={item.class_id} value={item.class_id}>
-                  {item.name} · {item.term_name}
-                  {item.status === "archived" ? "（归档只读）" : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-          {!classes.some((item) => item.status === "active") && (
-            <button disabled={busy || refreshing || !queryFresh} onClick={() => open("class")}>建立班级与学期</button>
-          )}
-        </section>
-        <section className="chat-history" aria-label="聊天列表">
-          <p className="side-kicker">聊天</p>
+
           {workspaceMode && workspaceConversation.listing?.data.map(item => <button className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`} key={item.thread_id}
             disabled={workspaceConversation.working || !!workspaceConversation.text.trim() || !!workspaceConversation.pendingSend}
             onClick={() => { workspaceConversation.select(item.thread_id); setPage("conversation") }}>{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
@@ -1072,6 +1076,7 @@ export default function R1App() {
           </section>}
           {page === "conversation" && (
             <>
+              <div className={`r1-welcome${conversationStarted ? " r1-welcome-hidden" : ""}`} inert={conversationStarted || undefined}><div className="r1-welcome-inner">
               <div className="r1-heading">
                 <small>CLASSMATTER · 对话</small>
                 <h1>今天想处理什么？</h1>
@@ -1115,6 +1120,7 @@ export default function R1App() {
                 </button>
                 <button onClick={() => setPage("students")}>查看学生</button>
               </div>
+              </div></div>
               {workspaceMode && <WorkspaceChatHistory state={workspaceConversation} />}
               {!workspaceMode && durableProfile && <DurableHistory state={durable} canWrite={editable && !busy && !form && !pending}
                 onDraft={title => { setDraftTitle(title); setRecord(null); open("task") }} />}
@@ -1476,15 +1482,67 @@ export default function R1App() {
                 onDirtyChange={setDocumentDraft} onBusyChange={setDocumentBusy} onError={fail}
                 onReauthenticate={() => open("reauth")} />
             : <section className="r1-card"><h1>数据与内容</h1><p>文档需要同实例文档服务与当前班级学期。当前入口未启用；没有加载样例文档或另建数据。</p></section>)}
-          {page === "settings" && (
-            <>
-              <div className="r1-heading">
-                <h1>设置与数据</h1>
-                <p>本地合成开发模式 · 不能接入真实学生数据。</p>
-              </div>
+
+        </div>
+        {page === "conversation" && newReply && <button className="r1-new-reply" type="button" onClick={() => {
+          followingConversation.current = true
+          scrollToLatest()
+          messageInput.current?.focus({ preventScroll: true })
+        }}>查看新回复</button>}
+        {page === "conversation" && workspaceMode && <WorkspaceChatComposer state={workspaceConversation} session={session} modelRevision={modelRevision}
+          onManageModels={() => setSettingsOpen(true)} onPreviewModel={command => action(() => preview(command))}
+          onModelVerified={verified => { setModelUncertain(!verified); if (verified) { setModelRevision(value => value + 1); workspaceConversation.refresh() } }} onError={fail} />}
+        {page === "conversation" && durableProfile && !workspaceMode && <DurableComposer state={durable} students={students}
+          canWrite={editable && !busy && !form && !pending && !modelUncertain} />}
+        {page === "conversation" && !durableProfile && (
+          <form
+            className="r1-composer"
+            onSubmit={(event) => {
+              event.preventDefault()
+              void sendMessage()
+            }}
+          >
+            <textarea
+              ref={messageInput}
+              aria-label="输入消息"
+              placeholder="输入、查询、记录或安排班级工作……"
+              value={message}
+              maxLength={2000}
+              onChange={(event) => setMessage(event.target.value)}
+              onKeyDown={(event) => {
+                if (
+                  event.key === "Enter" &&
+                  !event.shiftKey &&
+                  !event.nativeEvent.isComposing
+                ) {
+                  event.preventDefault()
+                  void sendMessage()
+                }
+              }}
+            />
+            <div>
+              <span className="r1-muted">
+                附件 / 语音：后续版本 · 当前仅文字
+              </span>
+              <label>班级助理<select aria-label="Agent 交互模式" value={agentMode} disabled={busy || refreshing || !!runningAgent.current} onChange={event => void changeAgentContext("", event.target.value as AgentInteraction)}><option value="read">查询当前工作</option><option value="draft">仅生成任务草稿</option><option value="record-note">整理记录原文草稿</option><option value="chat">讨论，不调用工具</option></select></label>
+              {agentMode === "read" && <label className="r1-agent-scope">查询范围<select aria-label="助理查询范围" value={agentStudent} disabled={busy || refreshing || !!runningAgent.current} onChange={event => void changeAgentContext(event.target.value)}>
+                <option value="">全班当前工作</option>
+                {agentScopeUnavailable && <option value={agentStudent} disabled>已选学生不可用，请重新选择</option>}
+                {students.filter(item => item.status === "active").map(item => <option key={item.student_id} value={item.student_id}>{item.name} · 个人跟进</option>)}
+              </select></label>}
+              {runningAgent.current ? <button type="button" aria-label="停止 Agent" onClick={() => runningAgent.current?.abort()}><X size={18} /></button> : <button aria-label="发送消息" disabled={!message.trim() || busy || modelUncertain || (agentMode !== "chat" && (refreshing || !classroom || !editable || agentScopeUnavailable))}>
+                <ArrowUp size={18} />
+              </button>}
+            </div>
+          </form>
+        )}
+      </WorkbenchFrame>
+      {settingsOpen && <R1Dialog titleId="r1-settings-title" busy={busy || exitBusy} onDismiss={() => setSettingsOpen(false)}>
+        <div className="r1-settings-heading"><h2 id="r1-settings-title">设置</h2><button aria-label="关闭设置" disabled={busy || exitBusy} onClick={() => setSettingsOpen(false)}><X size={18} /></button></div>
+        <div className="r1-settings-content">
               <section className="r1-card">
                 <h2>当前班级与学期</h2>
-                <button disabled={!classroom || busy || refreshing} onClick={event => { auditOpener.current = event.currentTarget; void action(async () => {
+                <button disabled={!classroom || busy || refreshing} onClick={event => { auditOpener.current = event.currentTarget; setSettingsOpen(false); void action(async () => {
                   if (!classroom) return
                   const generation = loading.current
                   try {
@@ -1537,7 +1595,7 @@ export default function R1App() {
                   默认使用离线合成模型。仅在显式允许地址、测试通过并启用后调用配置 API；模型不会直接拥有数据库写入或批准权限。
                 </p>
                 <ModelConfigurationForm key={`${session.csrf_token}/${modelRevision}`} session={session} disabled={busy} onError={fail}
-                  onPreview={command => action(() => preview(command))} onModeChanged={verified => {
+                  onPreview={command => { setSettingsOpen(false); return action(() => preview(command)) }} onModeChanged={verified => {
                     setModelUncertain(!verified)
                     runningAgent.current?.abort(); setConversationId(""); setMessages([]); setMessage(""); setAgentDraft(null); setAgentRecordNote(null); setRecordNoteQuote(""); setAgentStatus("")
                     setNotice(verified ? "模型运行状态已核对，旧对话视图已清理；业务数据未变。" : "模型状态待核对，暂不发送新的 Agent 消息；直接业务 UI 仍可使用。")
@@ -1559,61 +1617,10 @@ export default function R1App() {
                 })}>生成合成核心退出包</button>
                 {exportId && <p><a href={`${workspace(session)}/exit/${exportId}/download`} download>下载已批准的核心包（30分钟内）</a></p>}
               </section>}
-              <button disabled={busy} onClick={requestLogout}>注销当前会话</button>
-            </>
-          )}
+              {window.classMatterDesktop?.localOnly !== true && <button disabled={busy} onClick={requestLogout}>注销当前会话</button>}
+
         </div>
-        {page === "conversation" && newReply && <button className="r1-new-reply" type="button" onClick={() => {
-          followingConversation.current = true
-          scrollToLatest()
-          messageInput.current?.focus({ preventScroll: true })
-        }}>查看新回复</button>}
-        {page === "conversation" && workspaceMode && <WorkspaceChatComposer state={workspaceConversation} />}
-        {page === "conversation" && durableProfile && !workspaceMode && <DurableComposer state={durable} students={students}
-          canWrite={editable && !busy && !form && !pending && !modelUncertain} />}
-        {page === "conversation" && !durableProfile && (
-          <form
-            className="r1-composer"
-            onSubmit={(event) => {
-              event.preventDefault()
-              void sendMessage()
-            }}
-          >
-            <textarea
-              ref={messageInput}
-              aria-label="输入消息"
-              placeholder="输入、查询、记录或安排班级工作……"
-              value={message}
-              maxLength={2000}
-              onChange={(event) => setMessage(event.target.value)}
-              onKeyDown={(event) => {
-                if (
-                  event.key === "Enter" &&
-                  !event.shiftKey &&
-                  !event.nativeEvent.isComposing
-                ) {
-                  event.preventDefault()
-                  void sendMessage()
-                }
-              }}
-            />
-            <div>
-              <span className="r1-muted">
-                附件 / 语音：后续版本 · 当前仅文字
-              </span>
-              <label>班级助理<select aria-label="Agent 交互模式" value={agentMode} disabled={busy || refreshing || !!runningAgent.current} onChange={event => void changeAgentContext("", event.target.value as AgentInteraction)}><option value="read">查询当前工作</option><option value="draft">仅生成任务草稿</option><option value="record-note">整理记录原文草稿</option><option value="chat">讨论，不调用工具</option></select></label>
-              {agentMode === "read" && <label className="r1-agent-scope">查询范围<select aria-label="助理查询范围" value={agentStudent} disabled={busy || refreshing || !!runningAgent.current} onChange={event => void changeAgentContext(event.target.value)}>
-                <option value="">全班当前工作</option>
-                {agentScopeUnavailable && <option value={agentStudent} disabled>已选学生不可用，请重新选择</option>}
-                {students.filter(item => item.status === "active").map(item => <option key={item.student_id} value={item.student_id}>{item.name} · 个人跟进</option>)}
-              </select></label>}
-              {runningAgent.current ? <button type="button" aria-label="停止 Agent" onClick={() => runningAgent.current?.abort()}><X size={18} /></button> : <button aria-label="发送消息" disabled={!message.trim() || busy || modelUncertain || (agentMode !== "chat" && (refreshing || !classroom || !editable || agentScopeUnavailable))}>
-                <ArrowUp size={18} />
-              </button>}
-            </div>
-          </form>
-        )}
-      </WorkbenchFrame>
+      </R1Dialog>}
       {confirmLogout && <R1Dialog titleId="r1-logout-title" onDismiss={() => setConfirmLogout(false)}>
         <h2 id="r1-logout-title">退出并丢弃未保存草稿？</h2>
         <p>本页有未保存的文档、小结或未发送的文字。退出登录将丢弃这些本地草稿；已保存的聊天记录和业务数据不会删除。</p>

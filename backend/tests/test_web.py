@@ -118,10 +118,13 @@ def test_real_browser_direct_ui_record_task_and_reload(roster):
                 time.sleep(.05)
             assert client.get(f"http://127.0.0.1:{port}/").status_code == 200
             assert client.get(f"http://127.0.0.1:{port}/api/not-real").status_code == 404
-        result = subprocess.run(["node", "tests/runtime.mjs"], cwd=root / "apps/web",
-                                env=dict(os.environ, CLASS_OS_TEST_URL=f"http://127.0.0.1:{port}"),
-                                timeout=130, capture_output=True, text=True, encoding="utf-8",
-                                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        try:
+            result = subprocess.run(["node", "tests/runtime.mjs"], cwd=root / "apps/web",
+                                    env=dict(os.environ, CLASS_OS_TEST_URL=f"http://127.0.0.1:{port}"),
+                                    timeout=130, capture_output=True, text=True, encoding="utf-8",
+                                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        except subprocess.TimeoutExpired as error:
+            pytest.fail(f"Original UI timed out: {error.stdout!r} {error.stderr!r}")
         assert result.returncode == 0, result.stdout + result.stderr
         assert lost_commit_response.is_set()
         assert lost_identity_response.is_set() and len(identity_reissues) == 2

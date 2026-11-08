@@ -7,6 +7,7 @@ const base = process.env.CLASS_OS_TEST_URL;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Disposable fixture URL required');
 const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, timezoneId: 'Asia/Shanghai' });
+page.setDefaultTimeout(8000);
 async function expectLatestSourceInViewport() {
   await page.waitForFunction(() => {
     const region = document.querySelector('.r1-scroll');
@@ -16,6 +17,24 @@ async function expectLatestSourceInViewport() {
     const viewport = region.getBoundingClientRect(), reply = latest.getBoundingClientRect();
     return reply.top >= viewport.top && reply.bottom <= viewport.bottom;
   }, null, { timeout: 1500 });
+}
+async function observed(promise, label) {
+  let timer;
+  try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`Expected owned fixture event: ${label}`)), 10000); })]); }
+  finally { clearTimeout(timer); }
+}
+async function closeSettings() {
+  const close = page.getByRole('button', { name: '关闭设置', exact: true });
+  if (await close.isVisible()) await close.click();
+}
+async function ensureSettingsControl(name) {
+  const control = page.getByRole('button', { name, exact: true });
+  if (!await control.isVisible()) await page.getByRole('button', { name: '设置', exact: true }).click();
+}
+async function classControl() {
+  const control = page.getByRole('button', { name: '建立班级与学期', exact: true });
+  if (!await control.isVisible()) await page.getByRole('button', { name: '设置', exact: true }).click();
+  return control;
 }
 const faults = [];
 const externalRequests = [];
@@ -29,17 +48,21 @@ try {
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByRole('heading', { name: '今天想处理什么？' }).waitFor();
   await page.getByRole('status').waitFor();
-  assert.equal(await page.getByRole('button', { name: '建立班级与学期', exact: true }).isDisabled(), true);
+  assert.equal(await (await classControl()).isDisabled(), true);
+  await closeSettings();
   await page.getByRole('status').waitFor({ state: 'hidden' });
   const initialReadRoute = /\/workspaces\/[0-9a-f-]+\/classes$/;
   await page.route(initialReadRoute, route => route.fulfill({ status: 503, body: 'synthetic-private-initial-read-canary' }));
+  await closeSettings();
   await page.getByRole('button', { name: '刷新数据', exact: true }).click();
   await page.getByText('当前列表尚未刷新。', { exact: true }).waitFor();
-  assert.equal(await page.getByRole('button', { name: '建立班级与学期', exact: true }).isDisabled(), true);
+  assert.equal(await (await classControl()).isDisabled(), true);
+  await closeSettings();
   assert(!(await page.locator('body').innerText()).includes('synthetic-private-initial-read-canary'));
   await page.unroute(initialReadRoute);
+  await closeSettings();
   await page.getByRole('button', { name: '重新读取数据', exact: true }).click();
-  await page.getByRole('button', { name: '建立班级与学期', exact: true }).click();
+  await (await classControl()).click();
   for (let index = 0; index < 9; index++) {
     await page.keyboard.press('Tab');
     assert.equal(await page.getByRole('dialog').evaluate(element => element.contains(document.activeElement)), true);
@@ -50,8 +73,8 @@ try {
   }
   await page.keyboard.press('Escape');
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  assert.equal(await page.getByRole('button', { name: '建立班级与学期', exact: true }).evaluate(element => element === document.activeElement), true);
-  await page.getByRole('button', { name: '建立班级与学期', exact: true }).click();
+  assert.equal(await page.getByRole('button', { name: '设置', exact: true }).evaluate(element => element === document.activeElement), true);
+  await (await classControl()).click();
   await page.getByLabel('班级名称', { exact: true }).fill('合成放弃的预览');
   await page.getByLabel('学期名称', { exact: true }).fill('合成学期');
   await page.getByLabel('学期开始').fill('2026-09-01');
@@ -62,7 +85,7 @@ try {
   await page.keyboard.press('Escape');
   assert.equal((await rejected).status(), 200);
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
-  await page.getByRole('button', { name: '建立班级与学期', exact: true }).click();
+  await (await classControl()).click();
   await page.getByLabel('班级名称', { exact: true }).fill('合成浏览器班');
   await page.getByLabel('学期名称', { exact: true }).fill('合成学期');
   await page.getByLabel('学期开始').fill('2026-09-01');
@@ -89,6 +112,7 @@ try {
   assert.equal((await rejectedConfig).status(), 400);
   assert.equal((await page.getByRole('alert').textContent()).includes('synthetic-secret-canary'), false);
   await page.getByText('模型配置、连接与启用', { exact: true }).click();
+  await ensureSettingsControl('编辑班级名称');
   await page.getByRole('button', { name: '编辑班级名称', exact: true }).click();
   assert.equal(await page.getByLabel('班级名称', { exact: true }).inputValue(), '合成浏览器班');
   await page.getByLabel('班级名称', { exact: true }).fill('合成浏览器班更名');
@@ -110,8 +134,10 @@ try {
     await metadataHeld;
     await route.fulfill({ response });
   }, { times: 1 });
+  await ensureSettingsControl('更正学期信息');
   await page.getByRole('button', { name: '更正学期信息', exact: true }).click();
-  await metadataSeen;
+  await observed(metadataSeen, 'metadataSeen');
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   const metadataReturned = page.waitForResponse(response => response.url().endsWith('/metadata'));
   releaseMetadata();
@@ -123,6 +149,7 @@ try {
     const response = await route.fetch();
     await route.fulfill({ response, body: JSON.stringify({ ...(await response.json()), term_id: crypto.randomUUID(), name: 'synthetic-untrusted-term-canary' }) });
   }, { times: 1 });
+  await ensureSettingsControl('更正学期信息');
   await page.getByRole('button', { name: '更正学期信息', exact: true }).click();
   await page.getByRole('alert').filter({ hasText: '学期信息未通过范围或格式校验' }).waitFor();
   assert.equal(await page.getByRole('dialog').count(), 0);
@@ -131,7 +158,8 @@ try {
   page.off('request', countMetadataPreviews);
   // Term is its own aggregate: two metadata corrections, no class-version change.
   for (const [name, start, end] of [['合成更正学期', '2026-08-31', '2027-02-01'], ['合成学期', '2026-09-01', '2027-01-31']]) {
-    await page.getByRole('button', { name: '更正学期信息', exact: true }).click();
+    await ensureSettingsControl('更正学期信息');
+  await page.getByRole('button', { name: '更正学期信息', exact: true }).click();
     assert.equal(await page.getByLabel('学期名称', { exact: true }).inputValue(), name === '合成更正学期' ? '合成学期' : '合成更正学期');
     await page.getByLabel('学期名称', { exact: true }).fill(name);
     await page.getByLabel('学期开始').fill(start);
@@ -150,6 +178,7 @@ try {
     await page.getByRole('button', { name: '设置', exact: true }).click();
     await page.locator('.r1-card p').filter({ hasText: new RegExp(`^合成浏览器班更名 · ${name}$`) }).waitFor();
   }
+  await closeSettings();
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('button', { name: '添加学生', exact: true }).click();
   await page.getByLabel('学生姓名（允许同名，内部 ID 区分）').fill('合成浏览器学生');
@@ -223,7 +252,7 @@ try {
   page.on('request', countForeground);
   const returnedRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
   await page.evaluate(() => { for (let index = 0; index < 20; index++) window.dispatchEvent(new Event('focus')); });
-  await returnedRead;
+  await observed(returnedRead, 'returnedRead');
   await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
   assert.equal(foregroundReads, 1);
   assert.equal(foregroundWrites, 0);
@@ -235,7 +264,7 @@ try {
   assert.equal(await page.getByLabel('事实原文（观察类型请留空）').inputValue(), '合成未提交表单，不能被自动刷新打断');
   const deferredRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
   await page.keyboard.press('Escape');
-  await deferredRead;
+  await observed(deferredRead, 'deferredRead');
   await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
   assert.equal(foregroundReads, 2);
   assert.equal(foregroundWrites, 0);
@@ -245,7 +274,7 @@ try {
   await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
   const reconnectedRead = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
   await page.context().setOffline(false);
-  await reconnectedRead;
+  await observed(reconnectedRead, 'reconnectedRead');
   await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '记录事实' && !button.disabled));
   assert.equal(foregroundReads, 3);
   assert.equal(foregroundWrites, 0);
@@ -263,7 +292,7 @@ try {
     await route.fulfill({ response });
   });
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await oldReadReady;
+  await observed(oldReadReady, 'oldReadReady');
   await page.context().setOffline(true);
   await page.waitForFunction(() => !navigator.onLine);
   await page.context().setOffline(false);
@@ -277,6 +306,7 @@ try {
   const countRefreshWrites = request => { if (request.method() === 'POST' && /\/commands\/(preview|approve|commit)$/.test(request.url())) refreshWrites++; };
   page.on('request', countRefreshWrites);
   await page.route(activityRoute, route => route.fulfill({ status: 503, contentType: 'text/plain', body: 'synthetic-private-refresh-canary' }));
+  await closeSettings();
   await page.getByRole('button', { name: '刷新数据', exact: true }).click();
   await page.getByText('当前列表尚未刷新。', { exact: true }).waitFor();
   await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
@@ -287,6 +317,7 @@ try {
   await page.getByText('当前列表尚未刷新。', { exact: true }).waitFor();
   assert.equal(refreshWrites, 0);
   await page.unroute(activityRoute);
+  await closeSettings();
   await page.getByRole('button', { name: '重新读取数据', exact: true }).click();
   await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '基于事实建立跟进' && !button.disabled));
   assert.equal(await page.getByRole('button', { name: '基于事实建立跟进', exact: true }).isEnabled(), true);
@@ -316,6 +347,7 @@ try {
   assert(!(await page.locator('body').innerText()).includes('synthetic-private-after-save-canary'));
   assert.equal(await page.getByRole('button', { name: '记录事实', exact: true }).isDisabled(), true);
   await page.unroute(activityRoute);
+  await closeSettings();
   await page.getByRole('button', { name: '重新读取数据', exact: true }).click();
   await page.getByRole('region', { name: '学生详情摘要' }).getByText('合成浏览器跟进任务', { exact: true }).waitFor();
   assert.equal(savedTaskCommits, 1);
@@ -326,6 +358,7 @@ try {
   await page.getByRole('button', { name: '生成预览', exact: true }).click();
   await page.getByRole('button', { name: '明确批准并提交', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  await closeSettings();
   await page.getByRole('button', { name: '工作', exact: true }).click();
   await page.getByText('查看来源事实与历史', { exact: true }).click();
   await page.getByText('关联记录，不锁定建立任务时的版本；以下显示当前事实及历史更正。', { exact: true }).waitFor();
@@ -333,6 +366,7 @@ try {
   assert.equal(await page.getByText('事实：合成浏览器确认事实，不是 AI 推断', { exact: true }).count(), 2);
   await page.getByText('更正理由：合成来源历史验收', { exact: true }).waitFor();
   await page.getByText('查看来源事实与历史', { exact: true }).click();
+  await closeSettings();
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('button', { name: /合成浏览器学生.*版本/ }).click();
   const nameTarget = await page.locator('.student-profile-head').innerText();
@@ -416,11 +450,14 @@ try {
     await renamed.waitFor();
     assert((await renamed.innerText()).includes(nameTargetId));
     await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
-    await page.getByRole('button', { name: '工作', exact: true }).click();
+    await closeSettings();
+  await page.getByRole('button', { name: '工作', exact: true }).click();
     await page.getByRole('button', { name: /合成浏览器跟进任务.*未开始/ }).waitFor();
-    await page.getByRole('button', { name: '学生', exact: true }).click();
+    await closeSettings();
+  await page.getByRole('button', { name: '学生', exact: true }).click();
     await page.getByRole('button', { name: new RegExp(`${nextName}.*版本`) }).click();
   }
+  await closeSettings();
   await page.getByRole('button', { name: '工作', exact: true }).click();
   await page.getByRole('button', { name: /合成浏览器跟进任务.*未开始/ }).click();
   await page.getByRole('button', { name: '编辑标题与截止时间', exact: true }).click();
@@ -430,6 +467,7 @@ try {
   await page.getByRole('button', { name: '确认提交', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.reload();
+  await closeSettings();
   await page.getByRole('button', { name: '工作', exact: true }).click();
   await page.getByRole('button', { name: /合成浏览器跟进任务更正.*未开始.*已逾期/ }).click();
   await page.getByRole('button', { name: '完成并记结果', exact: true }).click();
@@ -439,8 +477,10 @@ try {
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.getByText('结果：合成浏览器验收完成', { exact: true }).waitFor();
   await page.reload();
+  await closeSettings();
   await page.getByRole('button', { name: '工作', exact: true }).click();
   await page.getByText('结果：合成浏览器验收完成', { exact: true }).waitFor();
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.getByLabel('输入消息').fill('合成查询当前工作');
   await page.getByLabel('Agent 交互模式').selectOption('read');
@@ -475,11 +515,13 @@ try {
   };
   await page.route('**/agent/events', delayReadDelivery);
   try {
-    await page.getByRole('button', { name: '总览', exact: true }).click();
-    await page.getByRole('button', { name: '对话', exact: true }).click();
+    await closeSettings();
+  await page.getByRole('button', { name: '总览', exact: true }).click();
+    await closeSettings();
+  await page.getByRole('button', { name: '对话', exact: true }).click();
     await page.getByLabel('输入消息').fill('合成延迟回复，阅读历史时不要抢回滚动');
     await page.getByRole('button', { name: '发送消息', exact: true }).click();
-    await readReady;
+    await observed(readReady, 'readReady');
     let requestsDuringAgent = 0;
     const countWhileAgent = request => { if (new URL(request.url()).pathname.startsWith('/api/')) requestsDuringAgent++; };
     page.on('request', countWhileAgent);
@@ -530,17 +572,19 @@ try {
   };
   await page.route('**/agent/events', holdCancelled);
   try {
-    await page.getByRole('button', { name: '总览', exact: true }).click();
-    await page.getByRole('button', { name: '对话', exact: true }).click();
+    await closeSettings();
+  await page.getByRole('button', { name: '总览', exact: true }).click();
+    await closeSettings();
+  await page.getByRole('button', { name: '对话', exact: true }).click();
     // Navigation renders asynchronously in the shared shell. Establish the
     // retained conversation before taking the cancellation baseline, rather
     // than counting the outgoing dashboard's absent message elements.
-    await page.getByRole('heading', { name: '今天想处理什么？', exact: true }).waitFor();
+    await page.locator('.r1-messages article.assistant').last().waitFor();
     await expectLatestSourceInViewport();
     const answersBeforeStop = await page.locator('.r1-messages article.assistant').count();
     await page.getByLabel('输入消息').fill('合成取消后迟到结果不得采纳');
     await page.getByRole('button', { name: '发送消息', exact: true }).click();
-    await cancelReady;
+    await observed(cancelReady, 'cancelReady');
     const commandsAfterStop = [];
     const noReplay = request => { if (request.method() === 'POST') commandsAfterStop.push(request.url()); };
     page.on('request', noReplay);
@@ -549,8 +593,9 @@ try {
     await page.getByText('页面切换已延后。', { exact: false }).waitFor();
     await page.getByRole('button', { name: '停止 Agent', exact: true }).click();
     await page.getByRole('heading', { name: '今天的班级工作', exact: true }).waitFor();
-    releaseCancelled(); await cancelDone;
-    await page.getByRole('button', { name: '对话', exact: true }).click();
+    releaseCancelled(); await observed(cancelDone, 'cancelDone');
+    await closeSettings();
+  await page.getByRole('button', { name: '对话', exact: true }).click();
     await page.getByText('已停止 · 未采纳未完成结果', { exact: true }).waitFor();
     assert.equal(await page.locator('.r1-messages article.assistant').count(), answersBeforeStop);
     assert.equal(await page.getByRole('heading', { name: '未提交的任务草稿', exact: true }).count(), 0);
@@ -558,7 +603,7 @@ try {
     assert.deepEqual(commandsAfterStop, []);
     page.off('request', noReplay);
   } finally {
-    releaseCancelled(); await cancelDone;
+    releaseCancelled(); await observed(cancelDone, 'cancelDone');
     await page.unroute('**/agent/events', holdCancelled);
   }
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -570,8 +615,10 @@ try {
   await page.getByLabel('输入消息').fill('合成 Agent 未提交任务');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   await page.getByRole('heading', { name: '未提交的任务草稿', exact: true }).waitFor();
+  await closeSettings();
   await page.getByRole('button', { name: '工作', exact: true }).click();
   assert.equal(await page.getByRole('button', { name: /合成 Agent 未提交任务/ }).count(), 0);
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.getByRole('button', { name: '打开草稿并核对', exact: true }).click();
   assert.equal(await page.getByLabel('跟进标题').inputValue(), '合成 Agent 未提交任务');
@@ -586,8 +633,10 @@ try {
   await page.getByLabel('输入消息').fill(noteQuote);
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   await page.getByRole('heading', { name: '待核对的原文草稿', exact: true }).waitFor();
+  await closeSettings();
   await page.getByRole('button', { name: '学生', exact: true }).click();
   assert.equal(await page.getByText(noteQuote, { exact: true }).count(), 0);
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.setViewportSize({ width: 320, height: 760 });
   await page.getByRole('button', { name: '打开原文草稿并核对', exact: true }).click();
@@ -613,8 +662,10 @@ try {
   await page.getByRole('button', { name: '确认提交', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.setViewportSize({ width: 1440, height: 1000 });
+  await closeSettings();
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByText(confirmedNote, { exact: true }).waitFor();
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   assert.equal(await page.getByRole('heading', { name: '待核对的原文草稿', exact: true }).count(), 0);
   let expiredForgetObserved = 0;
@@ -635,6 +686,7 @@ try {
   assert(composer && composer.y + composer.height <= 1000 && composer.y > 700);
   await mkdir('test-results', { recursive: true });
   await page.getByRole('button', { name: '设置', exact: true }).click();
+  await ensureSettingsControl('查看班级业务审计');
   await page.getByRole('button', { name: '查看班级业务审计', exact: true }).click();
   await page.getByRole('heading', { name: '班级业务审计 · 只读摘要', exact: true }).waitFor();
   const auditDialog = page.getByRole('dialog');
@@ -645,10 +697,12 @@ try {
   assert.equal(await auditDialog.getByRole('button').count(), 1);
   await page.keyboard.press('Escape');
   await auditDialog.waitFor({ state: 'hidden' });
-  assert.equal(await page.getByRole('button', { name: '查看班级业务审计', exact: true }).evaluate(element => element === document.activeElement), true);
+  assert.equal(await page.getByRole('button', { name: '设置', exact: true }).evaluate(element => element === document.activeElement), true);
+  await ensureSettingsControl('生成合成核心退出包');
   await page.getByRole('button', { name: '生成合成核心退出包', exact: true }).click();
   await page.getByRole('button', { name: '明确批准并提交', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: '设置', exact: true }).click();
   const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('link', { name: '下载已批准的核心包（30分钟内）', exact: true }).click()]);
   await download.saveAs('test-results/core-exit.json');
   const bundle = JSON.parse(await readFile('test-results/core-exit.json', 'utf8'));
@@ -677,10 +731,12 @@ try {
   assert.equal(bundle.lifecycle_status.complete, false);
   assert(!JSON.stringify(bundle).includes('synthetic-test-passphrase-2026'));
   assert.equal(bundle.core.school_class[0].name, '合成浏览器班更名');
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.getByLabel('Agent 交互模式').selectOption('read');
   await page.getByLabel('助理查询范围', { exact: true }).selectOption(selectedStudentId);
   await page.locator('.r1-messages').getByText(/助理查询范围：合成浏览器学生/).waitFor();
+  await closeSettings();
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('button', { name: /合成浏览器学生.*版本/ }).click();
   await page.getByRole('button', { name: '停用（保留历史）', exact: true }).click();
@@ -694,6 +750,7 @@ try {
     for (const control of await controls.all()) assert.equal(await control.isDisabled(), true);
   }
   await page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }).waitFor();
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.locator('.r1-messages').getByText(/已选学生不可用.*不会回落全班/).waitFor();
   await page.getByLabel('输入消息').fill('停用范围不能发送的合成消息');
@@ -703,6 +760,7 @@ try {
   page.on('request', trackBlockedSend);
   await page.getByLabel('输入消息').press('Enter');
   // Complete an actual read-only UI request instead of sleeping to flush the event.
+  await closeSettings();
   await page.getByRole('button', { name: '刷新数据', exact: true }).click();
   await page.getByRole('status').waitFor({ state: 'hidden' });
   assert.equal(blockedAgentRequests.length, 0);
@@ -719,10 +777,12 @@ try {
     await otherPage.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
     await otherPage.getByRole('button', { name: '登录', exact: true }).click();
     await otherPage.getByRole('heading', { name: '今天想处理什么？' }).waitFor();
+    await ensureSettingsControl('重新验证身份');
     await page.getByRole('button', { name: '重新验证身份', exact: true }).click();
     await page.getByLabel('当前密码（身份验证）').fill('synthetic-test-passphrase-2026');
     await page.getByRole('button', { name: '明确执行身份操作', exact: true }).click();
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
+    await ensureSettingsControl('重新签发离线恢复码');
     await page.getByRole('button', { name: '重新签发离线恢复码', exact: true }).click();
     await page.getByLabel('当前密码（身份验证）').fill('synthetic-test-passphrase-2026');
     await page.getByRole('button', { name: '明确执行身份操作', exact: true }).click();
@@ -738,6 +798,7 @@ try {
     await page.getByRole('heading', { name: '今天想处理什么？' }).waitFor();
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.getByRole('button', { name: '设置', exact: true }).click();
+    await ensureSettingsControl('重新签发离线恢复码');
     await page.getByRole('button', { name: '重新签发离线恢复码', exact: true }).click();
     await page.getByLabel('当前密码（身份验证）').fill('synthetic-test-passphrase-2026');
     await page.getByRole('button', { name: '明确执行身份操作', exact: true }).click();
@@ -750,6 +811,7 @@ try {
     assert.equal(await page.locator('pre').count(), 0);
     await otherPage.getByRole('button', { name: '刷新数据', exact: true }).click();
     await otherPage.getByLabel('Owner 密码').waitFor();
+    await ensureSettingsControl('注销全部设备');
     await page.getByRole('button', { name: '注销全部设备', exact: true }).click();
     await page.getByLabel('当前密码（身份验证）').fill('synthetic-test-passphrase-2026');
     await page.getByRole('button', { name: '明确执行身份操作', exact: true }).click();
@@ -765,6 +827,7 @@ try {
   await page.getByRole('button', { name: '核对当前登录状态（只读）', exact: true }).click();
   await page.getByRole('heading', { name: '今天想处理什么？' }).waitFor();
   await page.getByText('登录状态已只读核对；没有重新执行前次身份操作，也不据此判定它已经完成。', { exact: true }).waitFor();
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.getByRole('status').filter({ hasText: '正在读取' }).waitFor({ state: 'hidden' });
   await page.screenshot({ path: 'test-results/runtime-desktop.png' });
@@ -787,9 +850,10 @@ try {
   await page.getByRole('button', { name: '预览保存模型配置（不联网）', exact: true }).click();
   await page.getByRole('heading', { name: '确认这次变更', exact: true }).waitFor();
   assert.equal((await page.getByRole('dialog').textContent()).includes('synthetic-browser-api-secret'), false);
-  assert.equal(await page.getByLabel('API 密钥', { exact: true }).inputValue(), '');
+  assert.equal(await page.getByLabel('API 密钥', { exact: true }).count(), 0); // Settings unmounted before preview.
   await page.getByRole('button', { name: '明确批准并提交', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByText('模型配置、连接与启用', { exact: true }).click();
   await page.getByRole('status').filter({ hasText: '配置版本 1' }).waitFor();
   assert.equal(await page.getByRole('button', { name: '测试已保存连接（可能计费）', exact: true }).isDisabled(), true);
@@ -804,8 +868,9 @@ try {
     try { await route.fulfill({ response }); } catch { /* Client deliberately aborted delivery. */ }
   });
   await page.getByRole('button', { name: '测试已保存连接（可能计费）', exact: true }).click();
-  await testCommitted;
+  await observed(testCommitted, 'testCommitted');
   await page.getByText('模型配置、连接与启用', { exact: true }).click();
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.getByLabel('输入消息').fill('未知模型状态不能发送');
   assert.equal(await page.getByRole('button', { name: '发送消息', exact: true }).isDisabled(), true);
@@ -819,6 +884,7 @@ try {
   await page.getByLabel('我确认访问此供应商并可能计费，仅用于合成数据验证', { exact: true }).check();
   await page.getByRole('button', { name: '启用已测试模型（本次启动）', exact: true }).click();
   await page.getByRole('status').filter({ hasText: '已启用配置 API' }).waitFor();
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.getByLabel('Agent 交互模式').selectOption('read');
   await page.getByLabel('输入消息').fill('合成配置API实际查询');
@@ -831,15 +897,18 @@ try {
   await page.getByRole('button', { name: '预览移除已保存配置', exact: true }).click();
   await page.getByRole('button', { name: '明确批准并提交', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByText('模型配置、连接与启用', { exact: true }).click();
   await page.getByRole('status').filter({ hasText: '配置版本 2。尚未保存密钥' }).waitFor();
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await page.getByText('模型配置、连接与启用', { exact: true }).click();
+  await ensureSettingsControl('预览归档（历史仍可查看）');
   await page.getByRole('button', { name: '预览归档（历史仍可查看）', exact: true }).click();
   await page.getByRole('button', { name: '明确批准并提交', exact: true }).click();
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.getByRole('button', { name: '编辑班级名称', exact: true }).waitFor({ state: 'hidden' });
   assert.equal(await page.getByRole('button', { name: '更正学期信息', exact: true }).count(), 0);
+  await closeSettings();
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('button', { name: /合成浏览器学生.*已停用/ }).click();
   await page.locator('article.r1-card').filter({ has: page.getByText('合成浏览器确认事实，不是 AI 推断', { exact: true }) }).getByRole('button', { name: '查看历史版本', exact: true }).click();
@@ -849,6 +918,7 @@ try {
   assert.equal(await page.getByRole('dialog').evaluate(element => element.scrollWidth > element.clientWidth), false);
   await page.getByRole('button', { name: '关闭表单', exact: true }).click();
   await page.getByRole('button', { name: '设置', exact: true }).click();
+  await ensureSettingsControl('查看班级业务审计');
   await page.getByRole('button', { name: '查看班级业务审计', exact: true }).click();
   await page.getByRole('heading', { name: '班级业务审计 · 只读摘要', exact: true }).waitFor();
   await page.getByText('查看回执与摘要', { exact: true }).first().click();
@@ -859,6 +929,7 @@ try {
   page.on('request', request=>{
     if(request.method()==='POST' && new URL(request.url()).pathname==='/api/identity/logout')logoutPosts.push(request.url());
   });
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.getByLabel('输入消息', { exact: true }).fill('合成R1未发送文字');
   await page.getByRole('button', { name: '设置', exact: true }).click();
@@ -867,6 +938,7 @@ try {
   await logoutDialog.waitFor();
   await logoutDialog.getByRole('button',{name:'继续编辑',exact:true}).click();
   assert.equal(logoutPosts.length,0);
+  await closeSettings();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   assert.equal(await page.getByLabel('输入消息', { exact: true }).inputValue(),'合成R1未发送文字');
   await page.getByLabel('输入消息', { exact: true }).fill('');
@@ -880,6 +952,10 @@ try {
   assert.deepEqual(faults, []);
   assert.deepEqual(externalRequests, [], 'UI must not connect to the candidate provider');
   console.log('PASS: real browser login/class/roster/record/task/note-review/reload/mobile; actual business calls with owned delivery faults');
+} catch (error) {
+  console.error('Original UI failure:', error);
+  console.error('Visible UI:', await page.locator('body').evaluate(element => { const copy = element.cloneNode(true); copy.querySelectorAll('pre,input,textarea').forEach(node => node.remove()); return copy.textContent; }));
+  throw error;
 } finally {
   await browser.close();
 }

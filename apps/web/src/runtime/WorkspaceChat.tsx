@@ -3,6 +3,8 @@ import { ArrowUp, X } from "lucide-react"
 import type { ChatCandidate } from "./workspace-chat"
 import type { WorkspaceChatController } from "./useWorkspaceChat"
 import { R1Dialog } from "./R1Dialog"
+import type { Command, Session } from "./api"
+import { ModelSwitcher } from "./ModelSwitcher"
 
 const labels = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "task.create": "建立任务", "task.update": "修改任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
@@ -21,7 +23,7 @@ function CandidateContent({ value }: { value: ChatCandidate }) {
 export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatController }) {
   const end = useRef<HTMLDivElement>(null), [clear, setClear] = useState(false)
   const latest = s.history?.turns.at(-1)
-  useEffect(() => { if (latest) end.current?.scrollIntoView({ block: "nearest" }) }, [latest?.turn_id, latest?.state])
+  useEffect(() => { if (latest) end.current?.scrollIntoView({ block: "nearest", inline: "nearest" }) }, [latest?.turn_id, latest?.state])
   return <section aria-label="已保存的对话">
     <div className="r1-toolbar"><span className="r1-muted">{s.fresh ? "聊天由本机数据库保存，普通聊天无需班级" : "正在核对聊天保存状态…"}</span>
       <button disabled={s.working} onClick={s.refresh}>重新读取对话</button>
@@ -32,8 +34,8 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
     {s.history?.next_before && <button disabled={s.working} onClick={() => void s.moreHistory()}>加载更早消息</button>}
     <div className="r1-messages">
       {s.history?.turns.map(turn => <div key={turn.turn_id}>
-        {turn.user_text && <article className="user"><small>你</small><p>{turn.user_text}</p></article>}
-        {turn.assistant_text && <article className="assistant"><small>ClassMatter</small><p>{turn.assistant_text}</p></article>}
+        {turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
+        {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p></article>}
         {turn.state !== "completed" && <p className="r1-muted">{states[turn.state]}</p>}
         {turn.state === "queued" && <button disabled={s.working || !s.fresh} onClick={() => void s.startQueued(turn)}>继续已保存的本轮</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
@@ -52,12 +54,17 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
       <button disabled={s.working} onClick={() => { setClear(false); void s.control("clear") }}>确认清除正文</button><button onClick={() => setClear(false)}>保留聊天</button></R1Dialog>}
   </section>
 }
-export function WorkspaceChatComposer({ state: s }: { state: WorkspaceChatController }) {
+export function WorkspaceChatComposer({ state: s, session, modelRevision, onManageModels, onPreviewModel, onModelVerified, onError }: {
+  state: WorkspaceChatController; session: Session; modelRevision: number;
+  onManageModels: () => void; onPreviewModel: (command: Command) => Promise<void>;
+  onModelVerified: (verified: boolean) => void; onError: (error: unknown) => void;
+}) {
   return <form className="r1-composer" onSubmit={event => { event.preventDefault(); void s.send() }}>
     <textarea aria-label="输入消息" placeholder="随便聊聊，或告诉我你想创建、修改什么……" maxLength={2000} value={s.text}
       onChange={event => s.setText(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (s.canSend) void s.send() } }} />
     <div><span className="r1-muted">聊天已接入数据库 · 涉及班级时才使用班级工具</span>
-      <span className="r1-muted">{!s.model ? "正在核对模型…" : s.model.mode === "configured-api" ? `ClassMatter · ${s.model.configuration?.model}` : s.model.mode === "stale" ? "模型配置已变化 · 请到设置重新测试启用" : "未启用真实模型 · 当前为合成测试回答"}</span>
+      <ModelSwitcher session={session} state={s.model} revision={modelRevision} disabled={s.working || s.lastActive || !!s.pendingSend}
+        onManage={onManageModels} onPreview={onPreviewModel} onVerified={onModelVerified} onError={onError} />
       {s.lastActive ? <button type="button" aria-label="停止 Agent" onClick={() => void s.stop()}><X size={18} /></button>
         : <button aria-label="发送消息" disabled={!s.canSend || !s.text.trim()}><ArrowUp size={18} /></button>}
     </div>

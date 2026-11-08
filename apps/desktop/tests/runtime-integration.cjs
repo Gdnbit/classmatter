@@ -30,7 +30,8 @@ async function main(){
   fs.writeFileSync(sourceFile,JSON.stringify(config));
   try {
     let page=await launch();
-    await page.getByRole('button',{name:'建立班级与学期',exact:true}).click();
+    await page.getByRole('button',{name:'设置',exact:true}).click();
+      await page.getByRole('button',{name:'建立班级与学期',exact:true}).click();
     await page.getByLabel('班级名称',{exact:true}).fill('合成桌面验收班');
     await page.getByLabel('学期名称',{exact:true}).fill('合成学期');
     await page.getByLabel('学期开始').fill('2026-09-01');
@@ -158,6 +159,7 @@ async function main(){
     await page.getByRole('button',{name:'生成合成核心退出包',exact:true}).click();
     await page.getByRole('button',{name:'明确批准并提交',exact:true}).click();
     await page.getByRole('dialog').waitFor({state:'hidden'});
+    await page.getByRole('button',{name:'设置',exact:true}).click();
     await page.getByRole('link',{name:'下载已批准的核心包（30分钟内）',exact:true}).click();
     let downloadState;
     const downloadDeadline=Date.now()+8000;

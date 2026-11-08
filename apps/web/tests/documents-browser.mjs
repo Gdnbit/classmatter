@@ -24,6 +24,7 @@ try {
   await page.goto(base);
   await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
+  await page.getByLabel('更多功能', { exact: true }).click();
   await page.getByRole('button', { name: '数据与内容', exact: true }).click();
   await page.getByText('尚无已保存文档。', { exact: true }).waitFor();
   await page.getByRole('button', { name: '新建文档', exact: true }).click();
@@ -53,6 +54,7 @@ try {
   }
   await dialog.waitFor({ state: 'hidden' });
   await page.waitForURL('**/students');
+  await page.getByLabel('更多功能', { exact: true }).click();
   await page.getByRole('button', { name: '数据与内容', exact: true }).click();
   await page.waitForURL(/\/data\/documents\/[a-f0-9-]{36}$/);
   const documentId = new URL(page.url()).pathname.split('/').at(-1);
