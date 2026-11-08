@@ -4,6 +4,7 @@ import type { Student } from "./api"
 import type { DurableController } from "./useDurableConversation"
 import { AttributionLabel } from "./AttributionLabel"
 import { R1Dialog } from "./R1Dialog"
+import { userMessage } from "./user-facing"
 
 export function DurableHistory({ state: s, canWrite, onDraft }: { state: DurableController; canWrite: boolean; onDraft: (title: string) => void }) {
   const end = useRef<HTMLDivElement>(null)
@@ -12,9 +13,9 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
   const current = s.history
   if (s.workspaceChat) return <section className="r1-messages" aria-label="普通聊天">
     {s.chatMessages.map((message, index) => <article key={index} className={message.role}><small>{message.role === "user" ? "你" : "ClassMatter"}</small><p>{message.text}</p></article>)}
-    {s.status && <p role="status" className="r1-muted">{s.status}</p>}
+    {s.status && <p role="status" className="r1-muted">{userMessage(s.status)}</p>}
   </section>
-  return <section className="r1-durable" aria-label="已保存的对话">
+  return <section className="r1-durable" aria-label="已保存的对话" data-history-fresh={s.fresh}>
     <div className="r1-toolbar"><button disabled={s.blocked || s.needsClassroom} onClick={() => void s.refresh()}>重新读取对话</button>
       {!s.fresh && <span className="r1-muted">正在加载…</span>}</div>
     <details className="r1-card" open={!current}><summary>已保存的会话（{s.listing?.data.length || 0}）</summary>
@@ -39,20 +40,20 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
         return <article key={message.message_id} className={message.content.role}>
           <small>{message.content.role === "user" ? "你 · 已保存" : "ClassMatter · 已保存但未核验"}</small><p>{message.content.text}</p>
           <AttributionLabel value={author} />
-          {result?.result.sources.map(source => <details className="r1-muted" key={source.source_id}><summary>当时的查询来源 · {new Date(source.as_of).toLocaleString("zh-CN")}</summary>
+          {result?.result.sources.map(source => <details className="r1-muted" key={source.source_id} data-source-id={source.source_id}><summary>当时的查询来源 · {new Date(source.as_of).toLocaleString("zh-CN")}</summary>
             <p>内容可能已更新，请查看最新记录。</p></details>)}
           {result?.result.draft && <section className="r1-card"><h3>未提交的任务草稿</h3><p>{result.result.draft.title}</p>
-            <p className="r1-muted">历史草稿尚未成为业务任务；采纳后仍需核对当前表单并预览、提交。</p>
+            <p className="r1-muted">草稿尚未保存为任务，请核对后提交。</p>
             <button disabled={s.blocked || !canWrite} onClick={() => onDraft(result.result.draft!.title)}>打开任务草稿并核对</button></section>}
         </article>
       })}<div ref={end} /></div>
       {s.active && <div className="r1-toolbar">
-        {current.turns.at(-1)?.run.state === "queued" && <button disabled={s.blocked || !canWrite || !s.fresh} onClick={() => void s.startSaved(current.turns.at(-1)!)}>明确启动已保存的本轮</button>}
-        <button onClick={() => void s.stop()}>请求停止原运行</button>
-        <button disabled={s.blocked} onClick={() => void s.reconcile()}>核对过期运行（不重跑）</button>
+        {current.turns.at(-1)?.run.state === "queued" && <button disabled={s.blocked || !canWrite || !s.fresh} onClick={() => void s.startSaved(current.turns.at(-1)!)}>继续回复</button>}
+        <button onClick={() => void s.stop()}>请求停止</button>
+        <button disabled={s.blocked} onClick={() => void s.reconcile()}>刷新回复状态</button>
       </div>}
     </>}
-    {s.status && <p role="status" className="r1-muted">{s.status}</p>}
+    {s.status && <p role="status" className="r1-muted">{userMessage(s.status)}</p>}
     {s.pending && <R1Dialog titleId="d1-control-title" busy={s.working} onDismiss={s.dismissControl}>
       <h2 id="d1-control-title">{s.pending.preview.payload.command === "conversation.clear" ? "确认清除会话正文" : "确认归档会话"}</h2>
       <p>归档不是删除。清除会移除聊天正文/历史草稿，不删除已确认的学生事实或手工任务。清除需要最近 5 分钟内验证的身份；若过期，请先到设置重新验证。</p>
@@ -60,7 +61,7 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
       <button disabled={s.working} onClick={() => void s.commitControl()}>{s.pending.attempted ? "重试保存" : "明确批准并提交"}</button>
       <button disabled={s.working} onClick={() => void s.checkControl()}>核对原提交结果</button>
       {!s.pending.attempted && <button disabled={s.working} onClick={s.dismissControl}>取消预览</button>}
-      {s.status && <p role="status">{s.status}</p>}
+      {s.status && <p role="status">{userMessage(s.status)}</p>}
     </R1Dialog>}
   </section>
 }

@@ -15,7 +15,7 @@
       "sha256": "7c61e992b8cc45b10f8ce0b8c73ba2f37b0e6e152944ee7bd33f3c7c0bb052b8"
     },
     "apps/web/tests/durable-composer-browser.mjs": {
-      "sha256": "971f7ba4b30ba19e91e0dcc0625d3f5137b6d1fe2d9832a20e635747ce589a9b"
+      "sha256": "92c19bbe0c79fce4040147e7170fd293d28715991f4d68245cfb4afb17929a1d"
     },
     "apps/web/src/runtime/WorkSummary.tsx": {
       "sha256": "b720ffaf13f921919157497b02941d2d6b744c371d6c08e81e69f288198d4764"
@@ -33,7 +33,7 @@
       "sha256": "e801a015aa2b4a5ff13c7d1c154cff02fddba2fa48ec78ce6c400948813bc8ee"
     },
     "apps/desktop/tests/durable-integration.cjs": {
-      "sha256": "1a60d8cfbb6cd108d79a165ccdd6943b74f6a51afda49662a8f2f48c8596bdec"
+      "sha256": "b6ed617455ab1c366def9d1c5b5e7de1c0451ddcd46182040e1b47f4df609115"
     },
     "apps/web/scripts/generate-durable-conversation.mjs": {
       "sha256": "6abfc63b4ba31bf167d59056881c6abfca4e803c3727ad52be353154bed4c8a5"
@@ -42,10 +42,10 @@
       "sha256": "0d88b70e56f53999d95ccbd23ed434a6e48d14ecf6e2441de9670977b84cbd90"
     },
     "apps/web/src/runtime/DurableConversation.tsx": {
-      "sha256": "0fb9bdd5b8e82dbe02f8f53bfc4090ebecad7a515af181bf8c9e14089c05ec5c"
+      "sha256": "25931c4fc22fcfae479bffe49931a6f3c1fc9d1395611bca65554fafe980c699"
     },
     "apps/web/src/runtime/DurableExit.tsx": {
-      "sha256": "232f4468d4c3b36bd3500b1a9ad3f9d5140544921bd39c8da588b8c1de5b9c02"
+      "sha256": "2dfacba5611429a0c5136d84fef41a4c0da5a3d84207b7e06ca0024dfde730e6"
     },
     "apps/web/src/runtime/durable-conversation-validators.cjs": {
       "sha256": "176878c08eb690ea2973b42b928917feaff6225e361fa75f1437e051f12dd557"
@@ -57,22 +57,22 @@
       "sha256": "ca5b94f813aadf13b447d7ab5bcc99b12bfd52c643b20d09c1a167a2a713072b"
     },
     "apps/web/src/runtime/useDurableConversation.ts": {
-      "sha256": "52548ea727f3a7170c9fe32e36423da657ac937e53d87587ba88417518db16ce"
+      "sha256": "5c6605e43ca8448f8e5205d9b714dbea01717f98220ef6c358a003d6d18ccf30"
     },
     "apps/web/tests/durable-browser.mjs": {
-      "sha256": "8c9edb7dea5591475b4115f5d4affb070f38b935937717d78f95413ebc348e27"
+      "sha256": "6b7bced626563f7fc764a00c5e05a0c5c9ca5514e69d87b33ac53eac1abef9e2"
     },
     "apps/web/tests/durable-conversation.mjs": {
       "sha256": "a4289d4f5839d9e8e9518284c09eb77d95bd92845b6244671ab5ea391d9e3a67"
     },
     "apps/web/tests/durable-fault-browser.mjs": {
-      "sha256": "0e9b96c1dc0e051a381df4cf594ecd8af840b56a361dcc0c62c3c4117667a500"
+      "sha256": "d323f9e69a3fe1af411b533e505475e7b117ae885adafffd3e96aad74b38a04e"
     },
     "backend/src/class_os/infrastructure/durable_local_runtime.py": {
       "sha256": "d00883e52446a6ede5f6e4094a0e8e6ec5f392327a5e86b282bbd2c3efb7ea08"
     },
     "backend/tests/test_durable_desktop.py": {
-      "sha256": "ac8d0a1ce7dc410a17cf9982dc862b3d63871689ec7e9aec5eff5967d097213c"
+      "sha256": "51621289c32727de44eb9374bfe511c2750318b3daca80e114803c15a4b64304"
     },
     "backend/tests/test_durable_local_runtime.py": {
       "sha256": "0b69030d25d423c1843be25812bf0e8c01ea8347db7d6fb7c941e2749a082816"
@@ -468,7 +468,7 @@
       "sha256": "2da33440e1b1e1f98321acab0ad9ae9ff7543f8a63449b6afb95f98754cb1f8c"
     },
     "apps/desktop/tests/runtime-integration.cjs": {
-      "sha256": "b81c620cd832199718c4a031c738baf6d5d1bfa2f03dc055f1a18e4639b8a0f9"
+      "sha256": "56e3e0d36b900d73b0388d402bf82a3b338b507a4e6d984cea5d9ed9f17d5627"
     },
     "apps/desktop/tests/runtime-service.test.cjs": {
       "sha256": "81ccdd2f6b2d2104330bb5a0da6d73eafd7c68f4bd5a93d544593a0c82732821"
@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "6e0b15d2777ccea42bd30f2b8b5c4c736ce0d401d9fac95d771600de415c4d44"
+      "sha256": "245418d2c983807ee82e71099a0256e4c163aa13fb37c4323169cbb6466564bd"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"

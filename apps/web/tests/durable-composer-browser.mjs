@@ -58,7 +58,7 @@ try {
   assert.equal(await page.getByLabel('对话方式').inputValue(), 'chat');
   assert.equal(await page.getByRole('button', { name: '发送消息' }).isEnabled(), true);
   await page.locator('form').evaluate(form => { form.requestSubmit(); form.requestSubmit(); });
-  await page.getByRole('status').filter({ hasText: '已回复' }).waitFor({ timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify(await page.evaluate(() => ({ error: window.lastError, requests: window.requests, body: document.body.innerText }))), { cause: error }); });
+  await page.getByRole('status').filter({ hasText: '回复完成' }).waitFor({ timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify(await page.evaluate(() => ({ error: window.lastError, requests: window.requests, body: document.body.innerText }))), { cause: error }); });
   assert.equal(await page.locator('article.assistant p').innerText(), '合成普通聊天回复');
   assert.equal((await page.evaluate(() => window.requests)).length, 2);
   await input.fill('合成建班前草稿');

@@ -49,11 +49,14 @@ def test_d1_desktop_and_pg_restart_restore_source_then_clear_blocks_old_backup(t
         backup = SyntheticBackup(runtime, profile="conversation-d1")
         checkpoint = None
         for phase in ("create", "restore-clear"):
-            result = subprocess.run(["node", "tests/durable-integration.cjs"], cwd=desktop,
-                env=dict(os.environ, CLASSMATTER_TEST_RUNTIME_ROOT=str(runtime.root),
-                    CLASSMATTER_TEST_SERVICE_PORT=str(port), CLASSMATTER_TEST_D1_PHASE=phase),
-                capture_output=True, text=True, encoding="utf-8", timeout=130,
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            try:
+                result = subprocess.run(["node", "tests/durable-integration.cjs"], cwd=desktop,
+                    env=dict(os.environ, CLASSMATTER_TEST_RUNTIME_ROOT=str(runtime.root),
+                        CLASSMATTER_TEST_SERVICE_PORT=str(port), CLASSMATTER_TEST_D1_PHASE=phase),
+                    capture_output=True, text=True, encoding="utf-8", timeout=130,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            except subprocess.TimeoutExpired as error:
+                pytest.fail(f"Owned D1 phase {phase} timed out: {error.stdout!r} {error.stderr!r}")
             assert result.returncode == 0, result.stdout + result.stderr
             if phase == "create":
                 checkpoint = backup.create()

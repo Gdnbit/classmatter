@@ -12,8 +12,19 @@ const source=JSON.parse(original);
 assert.equal(source.profile,'conversation-d1');source.runtimeRoot=fixture;source.servicePort=port;
 const expectedFile=path.join(fixture,'synthetic-ui-evidence.json');
 const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
-let app;
+let app, page;
 const errors=[],external=[],writes=[];
+async function closeOwned(){
+  let timer;
+  try{await Promise.race([app.close(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('Owned D1 window did not close')),10000);})]);}
+  catch(error){
+    let exitTimer;
+    try{await Promise.race([app.evaluate(({app})=>app.exit(1)).catch(()=>{}),new Promise(resolve=>{exitTimer=setTimeout(resolve,3000);})]);}
+    finally{clearTimeout(exitTimer);if(app.process().exitCode===null)app.process().kill();}
+    throw error;
+  }
+  finally{clearTimeout(timer);}
+}
 async function noOwnedApi(){
   const deadline=Date.now()+8000;
   while(Date.now()<deadline){
@@ -33,7 +44,9 @@ async function main(){
   fs.writeFileSync(sourceFile,JSON.stringify(source));
   try{
     app=await electron.launch({executablePath:require('electron'),args:[stage],env});
-    const page=await app.firstWindow();
+    page=await app.firstWindow();
+    page.setDefaultTimeout(10000);
+    console.error('Owned D1 checkpoint',phase,'window-ready');
     assert.equal(await page.evaluate(()=>typeof window.classMatterDesktop?.enterDevelopment),'undefined');
     page.on('pageerror',error=>errors.push(error.message));
     page.on('request',request=>{
@@ -71,11 +84,12 @@ async function main(){
       await page.getByLabel('对话方式').selectOption('read');
       await page.getByLabel('输入消息').fill('合成D1桌面持久查询');
       await page.getByRole('button',{name:'发送消息',exact:true}).click();
-      await history.getByText('会话输出已保存 · 无业务写入',{exact:true}).waitFor();
+      await history.getByText('回复完成',{exact:true}).waitFor();
+      console.error('Owned D1 checkpoint',phase,'answer-saved');
       await page.getByLabel('会话名称').fill('合成D1桌面已保存');
       await page.getByRole('button',{name:'保存名称',exact:true}).click();
       await page.waitForFunction(()=>!Array.from(document.querySelectorAll('button')).find(item=>item.textContent.trim()==='保存名称')?.disabled);
-      const receipts=await history.getByText(/^查询回执：/).allTextContents();assert.equal(receipts.length,1);
+      const receipts=await history.locator('[data-source-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.sourceId));assert.equal(receipts.length,1);
       const savedPath=new URL(page.url()).pathname;
       const geometry=await page.locator('.r1-composer').evaluate(element=>{
         const rect=element.getBoundingClientRect();return {top:rect.top,bottom:rect.bottom,height:innerHeight};
@@ -85,16 +99,17 @@ async function main(){
       await page.screenshot({path:path.join(evidence,'unified-connected-workbench.png')});
       await page.reload();
       await history.getByText('合成D1桌面持久查询',{exact:true}).waitFor();
-      assert.deepEqual(await history.getByText(/^查询回执：/).allTextContents(),receipts);
+      assert.deepEqual(await history.locator('[data-source-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.sourceId)),receipts);
       assert.equal(writes.filter(item=>item.endsWith('/events')).length,1);
       fs.writeFileSync(expectedFile,JSON.stringify({savedPath,receipts}));
-      await app.close();app=null;await noOwnedApi();
+      console.error('Owned D1 checkpoint',phase,'reload-verified');
+      await closeOwned();app=null;await noOwnedApi();
     }else{
       const expected=JSON.parse(fs.readFileSync(expectedFile,'utf8'));
       await page.getByRole('region',{name:'聊天列表'}).getByRole('button',{name:'合成D1桌面已保存',exact:true}).click();
       await history.getByText('合成D1桌面持久查询',{exact:true}).waitFor();
       assert.equal(new URL(page.url()).pathname,expected.savedPath);
-      assert.deepEqual(await history.getByText(/^查询回执：/).allTextContents(),expected.receipts);
+      assert.deepEqual(await history.locator('[data-source-id]').evaluateAll(nodes=>nodes.map(node=>node.dataset.sourceId)),expected.receipts);
       assert.equal(writes.filter(item=>item.endsWith('/events')).length,0);
       await page.getByLabel('对话方式').selectOption('draft');
       await page.getByLabel('输入消息').fill('合成D1未提交任务草稿');
@@ -104,6 +119,7 @@ async function main(){
       await page.getByRole('dialog').getByRole('button',{name:'明确批准并提交',exact:true}).click();
       await page.getByRole('dialog').waitFor({state:'hidden'});
       await history.getByText('正文已清除；事实与手工任务不受影响。',{exact:true}).waitFor();
+      console.error('Owned D1 checkpoint',phase,'clear-verified');
       await page.reload();
       await history.getByText('正文已清除；事实与手工任务不受影响。',{exact:true}).waitFor();
       assert.equal(await history.getByText('合成D1桌面持久查询',{exact:true}).count(),0);
@@ -114,9 +130,12 @@ async function main(){
     }
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);
     console.log(JSON.stringify({synthetic:true,phase,pageErrors:errors,externalRequests:external,ownedApiStopped:true}));
+  }catch(error){
+    console.error('Owned D1 UI failed',phase,page?.url(),error);
+    throw error;
   }finally{
-    if(app)await app.close();
     fs.writeFileSync(sourceFile,original);
+    if(app)await closeOwned();
   }
 }
 main().catch(error=>{console.error(error);process.exitCode=1;});

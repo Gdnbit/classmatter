@@ -7,10 +7,10 @@ import { consumeEvents } from "./events"
 import { workspace } from "./api"
 
 const active = (turn?: Turn) => !!turn && ["queued", "running", "cancel_requested"].includes(turn.run.state)
-const stateText = (turn?: Turn) => turn ? ({ queued: "输入已保存，尚未启动模型", running: "运行中，尚无已保存结果",
-  cancel_requested: "已请求停止，尚不能认定取消成功", completed: "会话输出已保存 · 无业务写入",
-  failed: "运行失败，不自动重跑", cancelled: "已取消，不自动重跑", interrupted: "运行中断，不自动重跑",
-  unknown: "结果未知，不能据此认定模型未执行或未计费" }[turn.run.state]) : ""
+const stateText = (turn?: Turn) => turn ? ({ queued: "等待回复", running: "正在回复…",
+  cancel_requested: "正在停止回复…", completed: "回复完成",
+  failed: "回复失败，请稍后再试", cancelled: "已停止回复", interrupted: "回复中断，请重试",
+  unknown: "暂时无法确认回复结果" }[turn.run.state]) : ""
 
 type Props = {
   enabled: boolean; session: Session | null; classroom: Classroom | null; threadId: string
@@ -121,7 +121,7 @@ export function useDurableConversation(props: Props) {
       read: async () => { await refreshRef.current() },
       invalidate: () => {
         connectivity.current++; request.current?.abort(); setFresh(false)
-        setStatus("离线：当前可能是上次快照，恢复连接后重新核对。")
+        setStatus("连接已断开，恢复后请刷新对话。")
       },
       fail: report,
       available: () => navigator.onLine && document.visibilityState === "visible",
@@ -184,7 +184,7 @@ export function useDurableConversation(props: Props) {
           })
           if (controller.signal.aborted || generation !== epoch.current) return
           if (!completed || failed || !answer) throw new Error("本次回复未完成；没有自动重试。请检查模型配置或重新发送。")
-          setChatMessages(items => [...items, { role: "assistant", text: answer }]); setStatus("已回复 · 普通聊天未读写班级数据")
+          setChatMessages(items => [...items, { role: "assistant", text: answer }]); setStatus("回复完成")
         } catch (error) {
           if (generation === epoch.current && !controller.signal.aborted) throw error
         } finally { if (stream.current === controller) stream.current = null }
@@ -210,15 +210,15 @@ export function useDurableConversation(props: Props) {
           const state = await client.status(threadId, requestId, controller.signal)
           if (queued.status !== "committed" || !queued.receipt || queued.receipt.resource_id !== state.run_id) throw new Error("输入保存结果未知，请按原请求核对，不要重复发送。")
           if (generation !== epoch.current) return
-          setText(""); setStatus("输入已保存，正在启动本次运行…")
+          setText(""); setStatus("准备回复…")
           await refresh(threadId)
         }
         if (generation !== epoch.current || controller.signal.aborted || !navigator.onLine) return
         await client.start(threadId, requestId, controller.signal, kind => {
-          if (generation === epoch.current) setStatus(kind.startsWith("tool.") ? "正在通过受控工具处理…" : "正在运行；以数据库核对结果为准…")
+          if (generation === epoch.current) setStatus(kind.startsWith("tool.") ? "正在整理…" : "正在回复…")
         })
       } catch (error) {
-        if (generation === epoch.current) setStatus("运行或传输未完成，正在只读核对原请求；不会自动重跑。")
+        if (generation === epoch.current) setStatus("连接中断，请刷新对话核对结果。")
         if (!threadId) throw error
       } finally {
         if (stream.current === controller) stream.current = null
@@ -233,16 +233,16 @@ export function useDurableConversation(props: Props) {
   }
   async function stop() {
     const controller = stream.current
-    if (workspaceChat) { controller?.abort(); setStatus("已停止；不会自动重试，未完成回复不采纳。"); return }
+    if (workspaceChat) { controller?.abort(); setStatus("已停止回复。"); return }
     const target = running.current || (history && history.turns.at(-1) ? {
       threadId: history.history.thread_id, requestId: history.turns.at(-1)!.client_request_id } : null)
-    if (!target) { controller?.abort(); setStatus("已停止等待；创建/保存结果仍需核对，不自动重跑。"); return }
+    if (!target) { controller?.abort(); setStatus("等待已停止，请刷新对话核对结果。"); return }
     const generation = epoch.current, client = api()
     try {
       const current = await client.status(target.threadId, target.requestId)
       if (generation !== epoch.current) return
       if (["queued", "running"].includes(current.state)) await client.cancel(target.threadId, current)
-      if (generation === epoch.current) setStatus("已请求停止，尚不能认定取消成功。")
+      if (generation === epoch.current) setStatus("正在停止回复…。")
     } catch (error) { if (generation === epoch.current) report(error) }
     finally { controller?.abort(); if (generation === epoch.current) void refresh(target.threadId).catch(report) }
   }
@@ -319,7 +319,7 @@ export function useDurableConversation(props: Props) {
       const state = await api().commandState(pending.preview, pending.key)
       if (!current()) return
       if (state.status === "committed") { setPending(null); await refresh() }
-      else setStatus(state.status === "not_committed" ? "尚未查到提交；不代表在途请求已撤销，只能保留原预览/同键重试。" : "提交状态暂不可核对，请保留原请求。")
+      else setStatus(state.status === "not_committed" ? "尚未确认保存结果，请稍后核对。" : "暂时无法核对保存结果，请保留当前内容。")
     }),
   }
 }

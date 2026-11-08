@@ -58,7 +58,7 @@ async function main(){
     assert.equal(await page.getByLabel('按学生筛选任务').inputValue(),await page.getByLabel('按学生筛选任务').locator('option',{hasText:'合成桌面学生'}).getAttribute('value'));
     await page.getByRole('button',{name:'学生',exact:true}).click();
     await page.getByLabel('搜索学生').fill('不匹配的合成姓名');
-    await page.getByText(/没有匹配的学生/).waitFor();
+    await page.getByText('没有找到学生，请调整搜索条件。', { exact: true }).waitFor();
     assert.equal(await summary.count(),0);
     assert.equal(await page.getByText('合成桌面持久化事实',{exact:true}).count(),0);
     await page.getByRole('button',{name:'清空搜索',exact:true}).click();
@@ -91,6 +91,7 @@ async function main(){
     await page.goBack();
     await page.waitForURL(url=>url.pathname===`/students/${internalId}` && !url.search);
     await page.getByText('合成桌面持久化事实',{exact:true}).waitFor();
+    await page.getByLabel('更多功能', { exact: true }).click();
     await page.getByRole('complementary').getByRole('button',{name:'视图',exact:true}).click();
     await page.getByRole('region',{name:'学生表格'}).waitFor();
     await page.reload();
@@ -99,7 +100,8 @@ async function main(){
     await savedRow.waitFor();
     // The shared original roster combines both counts in its work cell.
     // Still bind the exact student ID and both numbers after navigation/reload.
-    assert.equal(await savedRow.locator(':scope > span').nth(1).innerText(),internalId);
+    assert.equal(await savedRow.getAttribute('data-student-id'),internalId);
+    assert.equal(await savedRow.locator(':scope > span').nth(1).innerText(),'未填写');
     assert.equal(await savedRow.locator(':scope > span').nth(2).innerText(),'1 条记录 · 1 项未结束跟进');
     await page.screenshot({path:path.join(evidence,'05-real-table-navigation.png')});
     await page.getByRole('button',{name:'学生',exact:true}).click();
@@ -113,7 +115,7 @@ async function main(){
     await assert.rejects(fetch('http://127.0.0.1:8000/health/live',{signal:AbortSignal.timeout(1000)}));
     page=await launch();
     await page.getByRole('button',{name:'工作',exact:true}).click();
-    await page.getByText('合成桌面持久化任务',{exact:true}).waitFor();
+    await page.getByRole('main').getByText('合成桌面持久化任务',{exact:true}).waitFor();
     await page.getByRole('button',{name:'学生',exact:true}).click();
     await page.getByRole('button',{name:/合成桌面学生.*在班/}).click();
     await page.getByText('合成桌面持久化事实',{exact:true}).waitFor();
@@ -175,6 +177,7 @@ async function main(){
     assert.equal(exitBundle.core.manual_task.length,1);
     assert.equal(exitBundle.core.record_revision.length,1);
     assert.ok(!JSON.stringify(exitBundle).includes('synthetic-test-passphrase-2026'));
+    await page.getByRole('button',{name:'关闭设置',exact:true}).click();
     await page.getByRole('button',{name:'对话',exact:true}).click();
     assert.equal(await page.locator('.r1-attention').getByRole('button',{name:/合成桌面持久化任务/}).count(),0);
     assert.equal(await page.getByLabel('对话方式').inputValue(),'chat');

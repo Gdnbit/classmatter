@@ -56,13 +56,13 @@ export function DurableExit({ session, classroom, disabled, onBusyChange, onErro
           throw error
         }
         if (current()) { setDownload(client.exitDownload(receipt.resource_id)); setPending(null); setNotice("已生成导出文件。") }
-      })}>{pending.attempted ? "使用原预览与同键重试导出" : "明确批准并生成证据包"}</button>
+      })}>{pending.attempted ? "重试导出" : "确认导出"}</button>
       <button disabled={working} onClick={() => void run(async current => {
         const result = await client.commandState(pending.preview, pending.key)
         if (!current()) return
         if (result.status === "committed" && result.receipt) { setDownload(client.exitDownload(result.receipt.resource_id)); setPending(null) }
         else setNotice("暂时无法确认导出结果，请稍后核对。")
-      })}>核对原导出结果</button>
+      })}>核对导出结果</button>
       {!pending.attempted && <button disabled={working} onClick={() => setPending(null)}>取消导出预览</button>}
       {notice && <p role="status">{notice}</p>}
     </R1Dialog>}
