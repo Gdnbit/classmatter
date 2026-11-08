@@ -41,6 +41,11 @@ export function parseRuntimeRoute(path: string): RuntimeRoute {
     return { ...runtimeRoute("documents"), documentId: document[1].toLowerCase() }
   }
   const conversation = url.pathname.match(/^\/conversations\/([^/]+)\/([^/]+)\/([^/]+)$/)
+  const workspaceChat = url.pathname.match(/^\/chats\/([^/]+)$/)
+  if (workspaceChat) {
+    if (url.search || url.hash || !uuid.test(workspaceChat[1])) return unavailable()
+    return { ...runtimeRoute(), conversationId: workspaceChat[1].toLowerCase() }
+  }
   if (conversation) {
     if (url.search || url.hash || !conversation.slice(1).every(value => uuid.test(value))) return unavailable()
     return { ...runtimeRoute(), conversationClassId: conversation[1].toLowerCase(),
@@ -73,6 +78,7 @@ export function runtimePath(route: RuntimeRoute): string {
   if (route.page === "documents") return !route.documentId ? "/data"
     : route.documentId === "new" || uuid.test(route.documentId) ? `/data/documents/${route.documentId}` : "/unavailable"
   if (route.page === "conversation" && route.conversationId) {
+    if (!route.conversationClassId && !route.conversationTermId) return uuid.test(route.conversationId) ? `/chats/${route.conversationId}` : "/unavailable"
     return [route.conversationClassId, route.conversationTermId, route.conversationId].every(value => uuid.test(value))
       ? `/conversations/${route.conversationClassId}/${route.conversationTermId}/${route.conversationId}` : "/unavailable"
   }

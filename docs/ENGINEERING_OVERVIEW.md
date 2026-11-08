@@ -12,13 +12,17 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 ## 事实、记忆和开放世界
 
+2026-11-08 后续工作区聊天采用显式`workspace-chat-d3`配置：普通聊天归Owner/workspace，不要求班级，thread/turn/状态/正文由本机PostgreSQL保存；刷新与启动只读取，绝不自动重跑。模型上下文只从有界的已完成历史文本重建，聊天不是业务事实。原D1临时普通聊天及原班级耐久历史协议保留兼容，不混装新Schema。
+
+对话需要班级数据时才调用固定QG工具；缺必要名称/日期或目标不唯一时对话追问。固定七个read/prepare工具可准备班级/学期、学生、任务、工作文档的九类命令候选；模型没有BCG、批准、提交、SQL或DDL句柄。原界面候选→原预览/批准→原BCG幂等提交→同事务审计→回读原学生/工作/文档视图，保存状态只认业务回执。代码地图与逐项验收见[聊天设计](design/workspace-chat-and-actions.md)。这不是任意CRUD、正式发布或所有未来模块已经完成。
+
 事实与 Observation/Claim/Derived Signal/AI inference 有权威边界；学生显示名不是身份键。Person、组织与角色、关系、分组、Assignment、Evidence/Provenance、Capture/Entity Resolution、Case/Commitment/Temporal 是长期语义，不代表所有对象已实现。Conversation Memory 是短期上下文，Knowledge/RAG 是检索依据，都不是正式业务事实源。Harness、OCR、ASR、RAG、渲染与求解器是可替换能力，不进入 Stable Kernel。
 
 扩展顺序是复用 Ontology → Domain Pack → 受控 Custom Extension → 验证后 Promotion。禁止万能 JSON/Fact 表和 Agent 任意 DDL。Capture 仅产 Draft/Candidate，仍经过领域校验与 BCG。Workflow、Scheduling、Attention、Conflict 不因长期愿景扩张 R1。任何学校多角色权限必须显式限定 responsibility/authority/scope，而非按称谓自动授予访问。
 
 ## 当前技术与限制
 
-`apps/desktop/` 是Electron独立Windows宿主。当前候选开发入口默认连接自有D1实例并托管已有API子进程，先验证进程proof/readiness，再开放该loopback同源；按用户要求免输密码，只对显式本机合成开发使用DPAPI开发身份，普通API仍经ISB/QG/BCG。不会自动初始化、迁移、清空或接管个人实例。原离线资源协议构建保留为显式fixture回归。运行入口及边界以[桌面说明](../apps/desktop/README.md)为准；[早期桌面设计](desktop-demo.md)记录原离线宿主。候选分支不代表完整原型、正式R1或发行准入。
+`apps/desktop/` 是Electron独立Windows宿主。当前候选开发入口默认连接显式升级后的自有D3实例并托管已有API子进程，先验证进程proof/readiness，再开放该loopback同源；按用户要求免输密码，普通API仍经ISB/QG/BCG。不会在启动时初始化、迁移、清空或接管实例。原离线资源协议构建保留为显式fixture回归。运行入口及升级步骤以[桌面说明](../apps/desktop/README.md)为准；[早期桌面设计](desktop-demo.md)记录原离线宿主。候选分支不代表完整原型、正式R1或发行准入。
 
 2026-10-22 W2-01新增独立的源码开发runtime入口，复用已有R1页面和后端，托管固定自有API进程，先验证每次启动的进程proof与readiness，再开放该loopback同源。它不改变离线Demo、不初始化/迁移/启动用户数据库、不代设owner；不是全部冻结Demo页面绑定完成。临时SCRAM数据库+真实Electron已验证事实/任务经原BCG持久化及应用重启后复用，Agent fake只读/草稿不自动写入；正式发布、真实模型、完整退出仍未完成。代码与剩余项见[实现台账](implementation-ledger.md)。
 
@@ -37,6 +41,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 文档页面后续由`runtime/DocumentsWorkspace.tsx`在原三栏/页签中连接固定client，配套局部CSS；R1App只装配范围/状态/入口，`navigation.ts`/`useRuntimeNavigation.ts`保留原/data文档深链和安全导航。本文档模块不扩充Agent工具或API写引擎；本地编辑与可提交状态分离，离线草稿不丢、提交需范围重新核对。预览/批准/幂等提交/未知回执/版本CAS/归档恢复和不可变历史均沿用原QG/BCG。`backend/tests/test_documents_web.py`及`apps/web/tests/documents-browser.mjs`验证真实PG/HTTP/浏览器与回复丢失/并发/跨范围矩阵；截图留本机忽略目录。小结一键转文档、完整退出及默认桌面启用尚未完成。
 
 小结转文档由既有`runtime/WorkSummary.tsx`、R1App范围绑定和DocumentsWorkspace的一次性typed初始草稿承载。只转移本人编辑的title/body/format，不新建Memory/Workflow层、不增加API或命令；来源失效/离线不转入，转入本身不保存，仍需原BCG预览批准。`backend/tests/test_summary_document_web.py`与`apps/web/tests/summary-document-browser.mjs`以真实PG/HTTP/浏览器验证来源摘录保留、零自动写入、明确保存/刷新、一次性消费及原事实任务不变；D1原复制路径继续工作。完整世界退出和默认桌面仍待后续，旧会话批准失效后的长草稿恢复也需专项验收。
+
+包含文档的归档组件先由`domain/workbench_export.py`固定包/列/版本链/审计/大小校验及`WorkbenchTransaction._workbench_data_bundle`全量串行收集承载；原私有v6组件验证保留，文档全版本附于独立闭集根，工作草稿不变成事实。`backend/tests/test_workbench_export.py`覆盖重算哈希后的篡改，`test_workbench_export_projection.py`在真实ISB/PG/SDK验证历史与当前班级、全部修订/聊天/审计及fence拒绝。当前没有新的用户QG/HTTP/Tool或持久化导出命令，export_job旧约束和默认运行未更改；后续需新增迁移、兼容0027 checkpoint/升级、原Risk-X BCG和固定UI协议，不得绕过约束启用。
 
 Agent 复用 Pydantic AI loop 和 OpenAI-compatible adapter。原有查询/任务草稿和受控原文记录候选不包含 business-write/approve 工具；运行状态、来源回执、短期 memory 不授权业务事实。真实模型质量与 teacher research 未通过不能被 fake tests 替代。
 

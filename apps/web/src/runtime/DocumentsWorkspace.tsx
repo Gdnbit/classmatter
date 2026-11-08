@@ -5,6 +5,7 @@ import { documentClient, type DocumentCommand, type DocumentMetadata, type Docum
   type DocumentPreview, type DocumentView, type Revision, type RevisionMetadata } from "./documents"
 import { R1Dialog } from "./R1Dialog"
 import "./documents-workspace.css"
+import { userMessage } from "./user-facing"
 
 export type DocumentDraftContent = Readonly<{ title: string; body: string; format: "plain-text" | "markdown" }>
 type Props = {
@@ -91,7 +92,7 @@ export function DocumentsWorkspace(props: Props) {
       setLoading(false); candidate.current = crypto.randomUUID()
       if (fresh && props.initialDraft) {
         setTitle(props.initialDraft.title); setBody(props.initialDraft.body); setFormat(props.initialDraft.format)
-        setEdited(true); setNotice("已转入小结草稿，尚未保存。正文保留当时来源标识，不代表当前事实保证。")
+        setEdited(true); setNotice("已转入草稿，请核对后保存。")
         props.onInitialDraftUsed?.()
       }
       return () => controller.abort()
@@ -135,9 +136,9 @@ export function DocumentsWorkspace(props: Props) {
     if (!lifetime.current.signal.aborted && selection.current === documentId)
       setPending({ proposal, key: crypto.randomUUID(), approval: null, unknown: false })
   }
-  function saved(id: string, receipt: string) {
+  function saved(id: string, _receipt: string) {
     if (lifetime.current.signal.aborted || selection.current !== documentId) return
-    setNotice(`已收到保存回执 ${receipt}，正在重新读取已保存内容。`)
+    setNotice("已保存，正在刷新。")
     setPending(null); setEdited(false); setRefresh(value => value + 1); props.onSaved(id)
   }
   async function commit() {
@@ -154,8 +155,8 @@ export function DocumentsWorkspace(props: Props) {
     const state = await api.status(pending.proposal, pending.key, lifetime.current.signal)
     if (state.receipt) saved(state.receipt.resource_id, state.receipt.receipt_id)
     else if (state.status === "not_committed") {
-      setPending({ ...pending, unknown: false }); setNotice("原请求尚未提交。可按原请求明确重试，或放弃预览；没有自动重放。")
-    } else setNotice("原请求状态暂不可核对。请保留此页，稍后再次核对，不重复新建。")
+      setPending({ ...pending, unknown: false }); setNotice("尚未保存，可重试或放弃本次修改。")
+    } else setNotice("暂时无法确认保存结果，请稍后核对。")
   }
   async function reject() {
     if (!pending || pending.unknown) return
@@ -165,9 +166,9 @@ export function DocumentsWorkspace(props: Props) {
   const present = fresh || current !== null
   return <div className="surface connected-documents">
     <div className="surface-title"><span className="surface-icon"><FileText size={22} /></span><div>
-      <p className="eyebrow">工作空间</p><h1>文档</h1><p>同一班级与学期的工作草稿 · 保存前预览，保留版本。</p>
+      <p className="eyebrow">工作空间</p><h1>文档</h1><p>班级文档与工作草稿</p>
     </div></div>
-    {error && <p role="alert" className="r1-error">{error}</p>}
+    {error && <p role="alert" className="r1-error">{userMessage(error)}</p>}
     {notice && !pending && <p role="status" className="r1-muted">{notice}</p>}
     <div className="r1-toolbar">
       <button disabled={!props.canEdit || dirty || busy || loading} onClick={() => props.onSelect("new")}>新建文档</button>
@@ -190,10 +191,10 @@ export function DocumentsWorkspace(props: Props) {
         })}>更多文档</button>}
         {present && <><strong>文档结构</strong><button disabled={busy} onClick={() => { setTab("修改后"); setAnchor({ title: "全文", offset: 0, length: 0 }) }}>全文</button>
           {outline.map(item => <button key={item.offset} disabled={busy} onClick={() => { setTab("修改后"); setAnchor(item) }}>{item.title}</button>)}
-          <p>显示正文中前100个、80字以内的 Markdown 标题，不需要另行维护。</p></>}
+          <p></p></>}
       </aside>
       <article>
-        {loading && <p role="status">正在读取已保存正文与版本…</p>}
+        {loading && <p role="status">正在加载文档…</p>}
         {!documentId && <p>从左侧选择文档，或新建工作草稿。</p>}
         {present && <>
           <div className="doc-tabs" aria-label="文档视图">{["原文", "修改后", "修订记录"].map(value => <button key={value}
@@ -207,7 +208,7 @@ export function DocumentsWorkspace(props: Props) {
               <option value="plain-text">纯文本</option><option value="markdown">Markdown 文本</option></select></label>
             <label>文档正文<textarea ref={textEditor} aria-label="文档正文" value={body} maxLength={100000} readOnly={!writable}
               onChange={event => { setBody(event.target.value); setAnchor(null); setEdited(true) }} /></label>
-            <p className="r1-muted">{body.length} / 100000 字符 · 未保存内容仅在当前页面；不会自动成为事实或对外发送。</p>
+            <p className="r1-muted">{body.length} / 100000 字符 · 离开前请保存。</p>
             <button className="document-save" disabled={!props.canWrite || !writable || !title.trim() || (!fresh && !edited)}
               onClick={() => void run(() => preview(fresh ? "document.create" : "document.revise"))}>保存草稿</button>
           </>}
@@ -227,26 +228,24 @@ export function DocumentsWorkspace(props: Props) {
           </section>}
         </>}
       </article>
-      <aside aria-label="文档版本与来源"><strong>版本与来源</strong><p>工作草稿，不是正式业务事实。</p>
+      <aside aria-label="文档版本与来源"><strong>版本与来源</strong><p>工作草稿</p>
         {current && <><p>版本 {current.version} · {current.status === "archived" ? "已归档，只读" : "可审阅草稿"}</p>
-          <p>保存时间：{time(current.created_at)}</p><p>作者标识：{current.created_by}</p>
+          <p>保存时间：{time(current.created_at)}</p>
           <button disabled={busy || dirty || !props.canWrite} onClick={() => void run(() => preview(current.status === "archived" ? "document.restore" : "document.archive"))}>
             {current.status === "archived" ? "恢复文档" : "归档文档"}</button></>}
-        <p>评论与材料引用尚未接入；此处不展示样例评论或伪造来源。</p>
         {error && <button disabled={busy || pending?.unknown} onClick={() => { setPending(null); props.onReauthenticate() }}>重新验证身份（预览失效）</button>}
       </aside>
     </div>
     {pending && <R1Dialog titleId="document-preview-title" busy={busy} onDismiss={pending.unknown ? undefined : () => void run(reject)}>
       <h2 id="document-preview-title">确认文档变更</h2>
-      <p>{operations[pending.proposal.payload.command]} · 需要你明确批准后提交。正文仍是工作草稿。</p>
-      {error && <p role="alert" className="r1-error">{error}</p>}
+      <p>{operations[pending.proposal.payload.command]} · 请核对后保存。</p>
+      {error && <p role="alert" className="r1-error">{userMessage(error)}</p>}
       {notice && <p role="status">{notice}</p>}
-      {pending.unknown && <p role="status">提交结果尚未核对。请核对原请求，不要重复新建或关闭此页。</p>}
+      {pending.unknown && <p role="status">保存结果尚未确认，请先核对，避免重复保存。</p>}
       <p>有效至 {time(pending.proposal.expires_at)}</p>
       <h3>已保存内容</h3><pre className="document-text">{current ? `${current.title}\n${current.body}` : "尚无已保存原文。"}</pre>
       <h3>拟保存内容</h3><pre className="document-text">{"body" in pending.proposal.payload
         ? `${pending.proposal.payload.title}\n${pending.proposal.payload.body}` : `${current?.title} · ${operations[pending.proposal.payload.command]}`}</pre>
-      <details><summary>完整性摘要</summary>{pending.proposal.payload_hash}</details>
       <div className="r1-toolbar"><button disabled={busy || pending.unknown} onClick={() => void run(reject)}>放弃文档预览</button>
         <button disabled={busy} onClick={() => void run(check)}>核对原文档提交</button>
         <button disabled={busy || pending.unknown || !props.canWrite} onClick={() => void run(commit)}>明确批准并保存</button></div>

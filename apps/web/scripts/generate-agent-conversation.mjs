@@ -9,11 +9,12 @@ ajv.addFormat('uuid', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]
 // Calendar validity is additionally checked with native Date round-trip in the decoder.
 ajv.addFormat('date-time', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|\+00:00)$/);
 for (const [name, file] of [['body', 'agent-conversation-body.v2'], ['reply', 'agent-conversation.v2'],
+  ['workspaceBody', 'workspace-conversation-body.v1'], ['workspaceReply', 'workspace-conversation.v1'],
   ['recordNoteCandidate', 'agent-record-note-candidate.v1']]) {
   ajv.addSchema(JSON.parse(await readFile(new URL(`../../../contracts/http/${file}.schema.json`, import.meta.url), 'utf8')), name);
 }
 const code = '// Generated from frozen Agent wire schemas by Ajv. Do not edit.\n' +
-  standaloneCode(ajv, { body: 'body', reply: 'reply', recordNoteCandidate: 'recordNoteCandidate' }) + '\n';
+  standaloneCode(ajv, { body: 'body', reply: 'reply', workspaceBody: 'workspaceBody', workspaceReply: 'workspaceReply', recordNoteCandidate: 'recordNoteCandidate' }) + '\n';
 const target = new URL('../src/runtime/agent-conversation-validators.cjs', import.meta.url);
 if (process.argv.includes('--check')) {
   if (await readFile(target, 'utf8') !== code) throw new Error('Agent conversation validator drift');

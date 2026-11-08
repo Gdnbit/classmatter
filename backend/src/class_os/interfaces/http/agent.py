@@ -9,13 +9,25 @@ from fastapi import APIRouter, HTTPException, Request
 from pydantic import Field
 from starlette.responses import StreamingResponse
 
-from class_os.application.agent import AgentRequest, Mode, DraftKind
+from class_os.application.agent import AgentRequest, AgentRejected, Mode, DraftKind
 from .contracts import WireModel
 from .roster import credentials
 
 
 class ConversationBody(WireModel):
     pass
+
+
+class WorkspaceConversationBody(WireModel):
+    schema_version: Literal["classmatter.workspace-conversation-request.v1"]
+
+
+class WorkspaceConversationResponse(WireModel):
+    schema_version: Literal["classmatter.workspace-conversation.v1"] = "classmatter.workspace-conversation.v1"
+    conversation_id: UUID
+    expires_at: datetime
+    memory: Literal["ephemeral-not-fact"] = "ephemeral-not-fact"
+    scope: Literal["workspace"] = "workspace"
 
 
 class ScopedConversationBody(WireModel):
@@ -69,11 +81,18 @@ class QueryReceiptReference(WireModel):
     as_of: datetime
 
 
-def router(runtime):
+def router(runtime, *, workspace_only=False):
     routes = APIRouter(prefix="/api/workspaces/{workspace_id}/agent")
+
+    @routes.post("/workspace-conversations", response_model=WorkspaceConversationResponse)
+    async def workspace_conversation(workspace_id: UUID, request: Request, body: WorkspaceConversationBody):
+        item = runtime.workspace_conversation(credentials(request, workspace_id, write=True))
+        return WorkspaceConversationResponse(conversation_id=item.conversation_id, expires_at=item.expires_at)
 
     @routes.post("/conversations", response_model=ConversationResponse | ScopedConversationResponse)
     async def conversation(workspace_id: UUID, request: Request, body: ConversationBody | ScopedConversationBody):
+        if workspace_only:
+            raise HTTPException(404)
         auth = credentials(request, workspace_id, write=True)
         if isinstance(body, ScopedConversationBody):
             item = runtime.conversation(auth, student_id=body.student_id)
@@ -84,7 +103,9 @@ def router(runtime):
                 "expires_at": item.expires_at.isoformat(), "memory": "ephemeral-not-fact"}
 
     def event_response(auth, turn):
-        runtime.prepare(auth, turn)
+        item = runtime.prepare(auth, turn)
+        if workspace_only and (turn.mode is not Mode.CHAT or item.class_id is not None or item.term_id is not None):
+            raise AgentRejected()
 
         async def stream():
             async with aclosing(runtime.stream(auth, turn)) as source:
@@ -101,6 +122,8 @@ def router(runtime):
 
     @routes.post("/record-note/events")
     async def record_note_events(workspace_id: UUID, request: Request, body: RecordNoteTurnBody):
+        if workspace_only:
+            raise HTTPException(404)
         if request.headers.get("last-event-id"):
             raise HTTPException(400)
         return event_response(credentials(request, workspace_id, write=True),
@@ -108,6 +131,11 @@ def router(runtime):
 
     @routes.post("/conversations/{conversation_id}/forget")
     async def forget(workspace_id: UUID, conversation_id: UUID, request: Request, body: ConversationBody):
-        runtime.forget(credentials(request, workspace_id, write=True), conversation_id)
+        auth = credentials(request, workspace_id, write=True)
+        if workspace_only:
+            item = runtime.prepare(auth, AgentRequest(conversation_id, "forget", Mode.CHAT))
+            if item.class_id is not None or item.term_id is not None:
+                raise AgentRejected()
+        runtime.forget(auth, conversation_id)
         return {"schema_version": "class-os.agent.v1", "status": "forgotten"}
     return routes

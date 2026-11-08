@@ -6,11 +6,11 @@ const {parseLaunchArguments,electronArguments}=require('../model-network.cjs');
 const args=process.argv.slice(2),development=args.includes('--development-no-password');
 if(args.filter(value=>value==='--development-no-password').length>1)throw new Error('Duplicate development switch');
 const options=parseLaunchArguments(args.filter(value=>value!=='--development-no-password'));
-const d1=options.profile==='conversation-d1';
+const d1=options.profile!=='r1';
 if(development&&!d1)throw new Error('Development identity requires the synthetic D1 profile');
-const stage=path.resolve(__dirname,d1?'../.build/runtime-d1':'../.build/runtime');
+const stage=path.resolve(__dirname,options.profile==='workspace-chat-d3'?'../.build/runtime-d3':d1?'../.build/runtime-d1':'../.build/runtime');
 const repositoryRoot=path.resolve(__dirname,'../../..');
-const report=prerequisites(repositoryRoot,process.platform,d1?'conversation-d1':'r1');
+const report=prerequisites(repositoryRoot,process.platform,options.profile);
 if(!report.prerequisites_present) {
   console.error(JSON.stringify(report));
   console.error('真实桌面前置条件未齐。请按桌面 README 的 next_steps 对照表处理；未初始化、迁移、启动数据库或设置 Owner，也不会退回 Demo。');

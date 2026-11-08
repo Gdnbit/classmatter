@@ -1,4 +1,7 @@
-"""Explicit non-durable provider activation. SDK owns all model/tool loops."""
+"""Explicit provider activation with optional local-only restart continuity.
+
+SDK owns all model/tool loops. A saved Key alone never enables invocation.
+"""
 import asyncio
 from contextlib import asynccontextmanager, suppress
 from functools import partial
@@ -15,7 +18,7 @@ from .agent import fake_model
 
 class ModelController:
     def __init__(self, query, secrets, runtime, *, allowed_bases=(), client_factory=configured_client,
-                 clock=lambda: datetime.now(timezone.utc), proxy=None):
+                 clock=lambda: datetime.now(timezone.utc), proxy=None, activation=None):
         self.query, self.secrets, self.runtime = query, secrets, runtime
         from class_os.domain.model_configuration import validate_model_proxy
         validate_model_proxy(proxy)
@@ -23,6 +26,18 @@ class ModelController:
             partial(client_factory, proxy=proxy) if proxy is not None else client_factory), clock
         self._proofs, self._enabled, self._attempts = {}, {}, {}
         self._testing = False
+        self.activation, self._activation_loaded = activation, False
+
+    def _restore_activation(self, credentials):
+        if self.activation is None or self._activation_loaded:
+            return
+        if self.activation.workspace_id != credentials[3]:
+            raise ConfigurationRejected()
+        saved = self.activation.read()
+        if saved is not None:
+            from uuid import UUID
+            self._enabled[credentials[3]] = (UUID(saved['candidate_id']), saved['version'])
+        self._activation_loaded = True
 
     async def _row(self, credentials, action="model.config.read"):
         return await anyio.to_thread.run_sync(lambda: self.query.model_configuration(credentials, action=action))
@@ -52,6 +67,7 @@ class ModelController:
 
     async def status(self, credentials):
         row = await self._row(credentials)
+        self._restore_activation(credentials)
         enabled = self._enabled.get(credentials[3])
         return {"schema_version": "class-os.model-status.v1", "storage_available": True,
                 "version": row["version"] if row else 0,
@@ -59,13 +75,25 @@ class ModelController:
                 "configuration": {"protocol": row["protocol"], "model": row["model"], "base_url": row["base_url"]} if row and row["sealed"] else None,
                 "key_configured": bool(row and row["sealed"]), "network_permitted": self.permitted(row),
                 "test_passed": self.tested(credentials, row),
-                "mode": "offline" if enabled is None else "configured-api" if enabled == self.signature(row) and row["sealed"] else "stale"}
+                "mode": "offline" if enabled is None else "configured-api" if enabled == self.signature(row) and self.permitted(row) else "stale"}
 
     async def stage(self, credentials, profile, key, version):
         row = await self._row(credentials)
         if version != (row["version"] if row else 0):
             raise ConfigurationRejected()
         return self.secrets.stage(credentials, profile, key, version)
+
+    async def stage_model(self, credentials, source, version, model):
+        """Reuse the current provider credential, returning only an original BCG candidate."""
+        row = await self._row(credentials)
+        if self.runtime.active or self._testing or self.signature(row) != (source, version) or not self.permitted(row):
+            raise ConfigurationRejected()
+        previous = self.profile(row)
+        target = ModelConfiguration(previous.protocol, model, previous.base_url)
+        if target == previous:
+            raise ConfigurationRejected()
+        key = self.secrets.open(credentials[3], source, version, previous, bytes(row['sealed']))
+        return self.secrets.stage(credentials, target, key.get_secret_value(), version)
 
     async def test(self, credentials, candidate, version, request_id):
         row = await self._row(credentials)
@@ -100,7 +128,11 @@ class ModelController:
                     raise ConfigurationRejected()
                 called = True
                 return "class-os-synthetic-probe-ok"
-            async with asyncio.timeout(10):
+            # Native Gemini needs two bounded round trips for the tool probe.
+            # Keep request/token limits and cancellation; never retry silently.
+            from .model_provider import GOOGLE_COMPAT_BASE
+            probe_timeout = 35 if profile.base_url.rstrip("/") == GOOGLE_COMPAT_BASE.rstrip("/") else 10
+            async with asyncio.timeout(probe_timeout):
                 async with self.client_factory(profile, key) as client:
                     probe = Agent(model_for_configuration(profile, client), tools=[class_os_probe], retries=0,
                                   model_settings={"max_tokens": 1024})
@@ -137,6 +169,11 @@ class ModelController:
         if credentials[3] not in self._enabled and len(self._enabled) >= 32:
             raise ConfigurationRejected()
         self.runtime.memory.clear()
+        if self.activation is not None:
+            if self.activation.workspace_id != credentials[3]:
+                raise ConfigurationRejected()
+            await anyio.to_thread.run_sync(lambda: self.activation.write(current))
+            self._activation_loaded = True
         self._enabled[credentials[3]] = self.signature(current)
 
     async def disable(self, credentials):
@@ -144,10 +181,16 @@ class ModelController:
         if self.runtime.active or self._testing:
             raise ConfigurationRejected()
         self.runtime.memory.clear()
+        if self.activation is not None:
+            if self.activation.workspace_id != credentials[3]:
+                raise ConfigurationRejected()
+            await anyio.to_thread.run_sync(lambda: self.activation.write(None))
+            self._activation_loaded = True
         self._enabled.pop(credentials[3], None)
 
     @asynccontextmanager
     async def context(self, credentials, request):
+        self._restore_activation(credentials)
         selected = self._enabled.get(credentials[3])
         if selected is None:
             yield fake_model(request)

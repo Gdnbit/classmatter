@@ -31,13 +31,13 @@ export function useDemoTaskDetails() {
   return (task: DemoTask) => openDetail({
     eyebrow: "演示事项 · 注意力状态",
     title: task.title,
-    description: "仅展示当前演示事项；不会自动判断、确认或转移任何人的实际职责。",
-    status: task.state === "done" ? "当前演示事项已完成；未写入业务数据库" : "当前演示事项未完成；未修改正式数据",
+    description: "当前事项详情",
+    status: task.state === "done" ? "示例事项已完成" : "示例事项待处理",
     sections: [{ label: "时限 / 等待", value: task.due }, { label: "来源样例", value: task.source }, { label: "责任", value: "职责与分工待确认，不默认认定班主任最终负责" }],
     timeline: ["合成样例，未提供真实履职、审核或接手记录"],
     actions: task.state === "done" ? [{ label: "关闭", tone: "primary" }] : [
-      { label: "稍后提醒", onSelect: () => notify("仅演示提醒入口；未创建真实定时任务") },
-      { label: "标记完成", tone: "primary", onSelect: () => { complete(task.id); notify("已标记当前演示事项完成；未写入业务数据库") } },
+      { label: "稍后提醒", onSelect: () => notify("提醒暂不可用。") },
+      { label: "标记完成", tone: "primary", onSelect: () => { complete(task.id); notify("已完成示例事项") } },
     ],
   })
 }

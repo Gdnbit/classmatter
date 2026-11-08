@@ -11,6 +11,7 @@ from class_os.interfaces.http.identity_contracts import IdentityLogoutBody, Iden
 from class_os.interfaces.http.identity_contracts import IdentityOperationReceipt
 from class_os.interfaces.http.agent import TurnBody, ConversationResponse, QueryReceiptReference
 from class_os.interfaces.http.agent import ScopedConversationBody, ScopedConversationResponse
+from class_os.interfaces.http.agent import WorkspaceConversationBody, WorkspaceConversationResponse
 from class_os.interfaces.http.agent import RecordNoteTurnBody, RecordNoteCandidateResponse
 from class_os.application.agent_tool_contracts import catalog
 from class_os.interfaces.http.durable_conversation import (ListingResponse as DurableListing, HistoryResponse as DurableHistory,
@@ -23,6 +24,8 @@ from class_os.interfaces.http.durable_views import (ActivityResponse as DurableA
 from class_os.interfaces.http.documents import (DocumentCreate, DocumentRevise, DocumentState, DocumentPreview,
     DocumentReceipt, DocumentApproval, DocumentRejection, DocumentResponse, RevisionResponse, DocumentPage, RevisionPage)
 from class_os.interfaces.http.workbench import WorkbenchCapabilities, WorkbenchAuditResponse
+from class_os.interfaces.http.workspace_chat import (ChatCapabilities, ChatListing, ChatHistory, ChatSend, ChatTurnResponse,
+    ChatVersion, ChatClear, ChatThreadResponse, CandidatePreviewBody, CandidatePreview)
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
 from class_os.interfaces.http.roster import (ApprovalBody, ClassBody, CommitBody, ContextResponse,
@@ -50,6 +53,7 @@ def main():
                         ("identifier-list.v1", IdentifierResponse), ("duplicate-list.v1", DuplicateResponse),
                         ("agent-turn.v1", TurnBody), ("agent-conversation.v1", ConversationResponse),
                         ("agent-conversation-body.v2", ScopedConversationBody), ("agent-conversation.v2", ScopedConversationResponse),
+                        ("workspace-conversation-body.v1", WorkspaceConversationBody), ("workspace-conversation.v1", WorkspaceConversationResponse),
                         ("agent-record-note-turn.v1", RecordNoteTurnBody), ("agent-record-note-candidate.v1", RecordNoteCandidateResponse),
                         ("model-configuration-body.v1", ModelConfigurationBody), ("model-configuration.v1", ModelConfigurationResponse),
                         ("model-status.v1", ModelStatus), ("model-staged.v1", ModelStaged), ("model-stage-body.v1", ModelStageBody),
@@ -79,7 +83,23 @@ def main():
         else:
             root.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8", newline="\n")
+    for name, model in [("workspace-chat-capabilities.v1", ChatCapabilities), ("workspace-chat-list.v1", ChatListing),
+                        ("workspace-chat-history.v1", ChatHistory), ("workspace-chat-send.v1", ChatSend),
+                        ("workspace-chat-turn.v1", ChatTurnResponse), ("workspace-chat-version.v1", ChatVersion),
+                        ("workspace-chat-clear.v1", ChatClear), ("workspace-chat-thread.v1", ChatThreadResponse),
+                        ("workspace-chat-preview-body.v1", CandidatePreviewBody), ("workspace-chat-preview.v1", CandidatePreview)]:
+        target = root / f"{name}.schema.json"
+        content = json.dumps(model.model_json_schema(), indent=2, ensure_ascii=False) + "\n"
+        if args.check:
+            if not target.exists() or target.read_text(encoding="utf-8") != content:
+                raise SystemExit(f"Contract drift: {target.name}")
+        else:
+            target.write_text(content, encoding="utf-8", newline="\n")
     tools_root = root.parent / "tools"
+    # Keep the separately scoped workspace tools under the existing CI drift check.
+    import subprocess
+    subprocess.run([sys.executable, str(Path(__file__).with_name('export_workspace_tools.py')),
+                    *(['--check'] if args.check else [])], check=True)
     support_target = root.parent / "operator" / "support.v1.schema.json"
     support_content = json.dumps(SupportReport.model_json_schema(), indent=2, ensure_ascii=False) + "\n"
     if args.check:

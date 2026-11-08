@@ -15,7 +15,7 @@ page.on('request', request => {
 });
 try {
   await page.goto(base);
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByLabel('输入消息').waitFor();
   await page.getByRole('button', { name: '学生', exact: true }).click();
@@ -24,10 +24,11 @@ try {
   await page.reload();
   await page.getByRole('heading', { name: '学生', exact: true }).waitFor();
   await page.getByRole('button', { name: '设置', exact: true }).click();
-  await page.getByRole('button', { name: '查看班级业务审计', exact: true }).click();
-  await page.getByRole('dialog').getByText('document.read · 允许', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '查看操作记录', exact: true }).click();
+  await page.getByRole('dialog').getByText('查看文档 · 已通过', { exact: true }).waitFor();
   await page.keyboard.press('Escape');
-  await page.getByText('完整数据退出尚未接通。', { exact: false }).waitFor();
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByText('完整导出暂不可用。', { exact: false }).waitFor();
   assert.equal(await page.getByRole('button', { name: /生成.*退出包/ }).count(), 0);
   assert(discovery.some(path => path.endsWith('/workbench-d2/capabilities')));
   assert.equal(writes.filter(path => !path.startsWith('/api/identity/')).length, 0);

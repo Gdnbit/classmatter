@@ -13,7 +13,7 @@ page.on('request', request => {
 });
 try {
   await page.goto(base);
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByRole('button', { name: '总览', exact: true }).click();
   const generate = page.getByRole('button', { name: '整理班级工作小结', exact: true });
@@ -24,11 +24,11 @@ try {
   const editor = page.getByLabel('可编辑小结（未保存）');
   const original = await editor.inputValue();
   assert(original.includes('synthetic summary fact'));
-  assert(original.includes('教师观察字段（不等于事实）：synthetic summary observation'));
+  assert(original.includes('教师观察：synthetic summary observation'));
   assert(original.includes('synthetic summary task'));
-  assert.match(original, /\[record:[a-f0-9-]{36}@1\]/);
-  assert.match(original, /\[task:[a-f0-9-]{36}@1\]/);
-  assert(original.includes('来源作者：'));
+  assert(!/\[(?:record|task):/.test(original));
+  assert(!/[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/.test(original));
+  assert(original.includes('来源：已登记内容'));
   await editor.fill(original + '\n人工补充：仍为未核对草稿。');
   const beforeLogout = writes.length;
   const logout = page.getByRole('button', { name: '退出登录', exact: true });
@@ -53,21 +53,21 @@ try {
   assert.equal(await editor.inputValue(), original + '\n人工补充：仍为未核对草稿。');
   await page.screenshot({ path: '../../test-results/work-summary.png', fullPage: true });
   await page.getByRole('button', { name: '复制已核对草稿', exact: true }).click();
-  await page.getByText('已按本人操作复制；未保存或发送。', { exact: true }).waitFor();
+  await page.getByText('已复制', { exact: true }).waitFor();
   // Windows clipboard normalizes LF to CRLF; compare all text after only EOL normalization.
   assert.equal((await page.evaluate(() => navigator.clipboard.readText())).replaceAll('\r\n', '\n'), original + '\n人工补充：仍为未核对草稿。');
   await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true,
     value: { writeText: async () => { throw new Error('synthetic clipboard denied'); } } }));
   await page.getByRole('button', { name: '复制已核对草稿', exact: true }).click();
-  await page.getByText('系统未允许剪贴板写入；可在文本框全选后手动复制。', { exact: true }).waitFor();
+  await page.getByText('复制失败，请选择文字复制。', { exact: true }).waitFor();
   assert((await editor.inputValue()).includes('人工补充'));
   await page.evaluate(() => { delete navigator.clipboard; });
   await context.setOffline(true);
-  await page.getByText('来源已变化或尚未重新核对；不能标作当前小结复制。', { exact: false }).waitFor();
+  await page.getByText('记录已更新，请重新整理后再复制。', { exact: true }).waitFor();
   assert(await page.getByRole('button', { name: '复制已核对草稿', exact: true }).isDisabled());
   assert((await editor.inputValue()).includes('人工补充'));
   await context.setOffline(false);
-  await page.getByText('来源版本与当前查询一致；编辑文字仍需本人核对。', { exact: true }).waitFor();
+  await page.getByText('请核对内容后使用。', { exact: true }).waitFor();
   // Independent authorized client adds a task via the original BCG, never a mocked read.
   const session = await (await context.request.get(base + '/api/identity/session')).json();
   const workspace = `${base}/api/workspaces/${session.subject.workspace_id}`;
@@ -81,8 +81,8 @@ try {
     data: { proposal_id: preview.proposal_id, idempotency_key: crypto.randomUUID() } });
   assert.equal(committed.status(), 200);
   await page.getByRole('button', { name: '刷新数据', exact: true }).click();
-  await page.getByText('来源已变化或尚未重新核对；不能标作当前小结复制。', { exact: false }).waitFor();
-  await page.getByRole('button', { name: /synthetic independent new task/ }).waitFor();
+  await page.getByText('记录已更新，请重新整理后再复制。', { exact: true }).waitFor();
+  await page.locator('.r1-attention-item').filter({ hasText: 'synthetic independent new task' }).waitFor();
   assert(await page.getByRole('button', { name: '复制已核对草稿', exact: true }).isDisabled());
   assert((await editor.inputValue()).includes('人工补充'));
   await page.getByRole('button', { name: '学生', exact: true }).click();
@@ -108,9 +108,9 @@ try {
   await editor.fill('合成未保存小结：明确丢弃后退出。');
   await logout.click();
   await confirmLogout.getByRole('button', { name: '丢弃草稿并退出', exact: true }).click();
-  await page.getByLabel('Owner 密码').waitFor();
+  await page.getByLabel('密码', { exact: true }).waitFor();
   assert.equal(await editor.count(), 0);
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByRole('button', { name: '总览', exact: true }).click();
   await generate.waitFor();
@@ -124,7 +124,7 @@ try {
   assert.equal(await unsent.inputValue(), '合成未发送文字：取消退出后仍在。');
   await unsent.fill('');
   await logout.click(); // No draft: original immediate logout remains.
-  await page.getByLabel('Owner 密码').waitFor();
+  await page.getByLabel('密码', { exact: true }).waitFor();
   assert.deepEqual(writes.slice(writeCount), ['/api/identity/logout', '/api/identity/login', '/api/identity/logout']);
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   console.log(JSON.stringify({ summary: 'actual QG/PG, editable/copy/offline/navigation/discard', writes: 0, errors, external }));

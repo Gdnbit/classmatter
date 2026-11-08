@@ -76,7 +76,7 @@ async function main() {
     await page.locator('.persistent-workspace').getByRole('button', { name: '座位与分组调整', exact: true }).click();
     await page.waitForURL('**/spaces/seating');
     await page.getByRole('heading', { name: '座位与分组调整', exact: true }).waitFor();
-    await page.getByText('此范围暂无该类演示事项。未自动创建任务或修改其他工作空间。').waitFor();
+    await page.getByText('暂无此类事项').waitFor();
     checks.push('A04: named workspaces have distinct stable IDs, scopes and empty states');
 
     await fresh();
@@ -150,9 +150,9 @@ async function main() {
     if (await page.getByRole('button', { name: '打开检查器' }).count()) await page.getByRole('button', { name: '打开检查器' }).click();
     await page.getByRole('button', { name: '应用变更', exact: true }).click();
     await page.getByRole('button', { name: '确认应用', exact: true }).waitFor();
-    assert.equal(await page.getByText('已应用到当前演示内存；未写入业务数据库').count(), 0);
+    assert.equal(await page.getByText('已更新示例座位').count(), 0);
     await page.getByRole('button', { name: '确认应用', exact: true }).click();
-    await page.getByText('已应用到当前演示内存；未写入业务数据库').waitFor();
+    await page.getByText('已更新示例座位').waitFor();
     assert.equal(new Set(await page.locator('.seat-grid .seat strong').allTextContents()).size, 36);
     await nav().getByRole('button', { name: '学生', exact: true }).click();
     await page.getByRole('tab', { name: '清单', exact: true }).click();
@@ -164,12 +164,12 @@ async function main() {
     await page.getByRole('button', { name: '演示：提交状态待确认', exact: true }).click();
     assert.equal(await page.getByRole('button', { name: '应用变更', exact: true }).isDisabled(), true);
     await page.getByRole('button', { name: '检查状态', exact: true }).click();
-    assert.equal(await page.getByText('已应用到当前演示内存；未写入业务数据库').count(), 0);
+    assert.equal(await page.getByText('已更新示例座位').count(), 0);
     checks.push('A09: unknown-state demonstration never fabricates an applied result');
 
     await page.goto('classmatter://app/settings/user');
     await page.getByRole('button', { name: '测试连接', exact: true }).click();
-    await page.getByText(/仅模拟界面反馈；未发起网络请求/).waitFor();
+    await page.getByText(/示例模式，未连接模型/).waitFor();
     assert.equal(await page.getByLabel('API Key', { exact: true }).getAttribute('type'), 'password');
     await page.goto('classmatter://app/students/unknown');
     await page.getByRole('heading', { name: '未知学生', exact: true }).waitFor();
@@ -188,7 +188,7 @@ async function main() {
     checks.push('A10: honest connection/file states, masked secret input and no unknown-identity fallback');
 
     await page.getByRole('button', { name: '语音转文字', exact: true }).click();
-    await page.getByText('模拟录音 · 未开启麦克风', {exact:true}).waitFor();
+    await page.getByText('语音示例 · 未录音', {exact:true}).waitFor();
     await page.getByRole('button', { name: '停止', exact: true }).click();
     await fresh();
     await page.waitForTimeout(900); // Prove the old 700ms synthetic timer cannot affect the new conversation.
@@ -235,7 +235,7 @@ async function main() {
       await page.getByRole('heading',{name:section,exact:true}).waitFor();
       const learn = page.locator('.settings-controls button').first();
       await learn.click();
-      await page.getByRole('dialog').getByText('未接入',{exact:true}).waitFor();
+      await page.getByRole('dialog').getByText('暂不可用',{exact:true}).waitFor();
       await page.keyboard.press('Escape');
       assert.equal(await learn.evaluate(el=>document.activeElement===el),true);
     }
@@ -269,7 +269,7 @@ async function main() {
     await page.goto('classmatter://app/students?view=group');
     await page.getByRole('heading',{name:'小队与画布',exact:true}).waitFor();
     await page.getByRole('button',{name:'自动排布',exact:true}).click();
-    await page.getByRole('alertdialog').getByText(/当前没有接入分组求解器/).waitFor();
+    await page.getByRole('alertdialog').getByText('自动分组暂不可用。', {exact:true}).waitFor();
     await page.keyboard.press('Escape');
     await page.goto('classmatter://app/');
     await send('打开名单');
@@ -284,7 +284,7 @@ async function main() {
     await page.getByRole('button',{name:'图片 / OCR',exact:true}).click();
     await page.locator('.content-list').getByRole('button').first().click();
     await page.getByRole('dialog').getByRole('button',{name:'延后处理',exact:true}).click();
-    await page.getByText('延后处理尚未接入；未移动文件或创建提醒',{exact:true}).waitFor();
+    await page.getByText('延后处理暂不可用',{exact:true}).waitFor();
     await page.keyboard.press('Escape');
     await page.goto('classmatter://app/data/spreadsheets/score-001');
     await page.getByRole('button',{name:'字段映射',exact:true}).click();
@@ -296,7 +296,7 @@ async function main() {
     await page.getByRole('menu',{name:'选择工作表'}).waitFor();
     await page.keyboard.press('Escape');
     assert.equal(await sheetButton.evaluate(el=>document.activeElement===el),true);
-    await page.getByRole('button',{name:'查看 Diff',exact:true}).click();
+    await page.getByRole('button',{name:'查看修改预览',exact:true}).click();
     await page.getByRole('alertdialog').getByRole('button',{name:'取消',exact:true}).click();
     assert.equal(await page.getByRole('alertdialog').count(),0);
     await page.goto('classmatter://app/data/documents/parents-001');
@@ -340,7 +340,7 @@ async function main() {
     await page.goto('classmatter://app/automation');
     await page.getByRole('button',{name:/午休前确认迟到后续/}).click();
     await page.getByRole('dialog').getByRole('button',{name:'暂停计划',exact:true}).click();
-    await page.getByText('仅修改当前演示暂停标记；未暂停实际后台计划',{exact:true}).waitFor();
+    await page.getByText('已暂停示例',{exact:true}).waitFor();
     await page.getByRole('button',{name:'运行记录',exact:true}).click();
     await page.getByRole('button',{name:/迟到后续检查/}).click();
     await page.getByRole('dialog').getByText('样例步骤：检查触发条件（未执行）',{exact:true}).waitFor();

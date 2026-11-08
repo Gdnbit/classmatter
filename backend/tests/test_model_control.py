@@ -192,6 +192,42 @@ async def test_model_controls_default_no_egress_and_http_secret_never_returned(r
 
 
 @pytest.mark.db
+async def test_switch_model_reuses_only_current_provider_key_and_original_bcg(roster, controlled):
+    controller, vault, runtime, calls, _, _ = controlled
+    business, query, _, auth, boundary, _, _ = roster
+    source, _ = save(roster, vault)
+    app = create_app(Settings(), identity=boundary, business=business, query=query, agent=runtime, model_controller=controller)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://127.0.0.1:8000") as client:
+        headers, workspace = await login(client)
+        base = f"/api/workspaces/{workspace}"
+        body = {"source_candidate_id": str(source.candidate_id), "expected_version": 1, "model": "synthetic-switched"}
+        assert (await client.post(base + "/agent/configuration/stage-model", json=body)).status_code == 403
+        for invalid in ({**body, "base_url": "https://other.invalid/v1"}, {**body, "api_key": KEY}):
+            assert (await client.post(base + "/agent/configuration/stage-model", json=invalid, headers=headers)).status_code == 400
+        for invalid in ({**body, "expected_version": 2}, {**body, "source_candidate_id": str(uuid4())}, {**body, "model": MODEL}):
+            assert (await client.post(base + "/agent/configuration/stage-model", json=invalid, headers=headers)).status_code == 400
+        runtime.active = 1
+        try:
+            assert (await client.post(base + "/agent/configuration/stage-model", json=body, headers=headers)).status_code == 400
+        finally:
+            runtime.active = 0
+        staged = await client.post(base + "/agent/configuration/stage-model", json=body, headers=headers)
+        assert staged.status_code == 200 and KEY not in staged.text
+        command = staged.json()["command"]
+        assert command['base_url'] == URL and command['protocol'] == 'chat-completions'
+        assert query.model_configuration(auth)['model'] == MODEL and calls == []
+        preview = await client.post(base + "/commands/preview", json=command, headers=headers)
+        assert preview.status_code == 200
+        value = preview.json()
+        approved = (await client.post(base + "/commands/approve", json={"proposal_id": value['proposal_id'], "payload_hash": value['payload_hash']}, headers=headers)).json()
+        receipt = await client.post(base + "/commands/commit", json={"proposal_id": value['proposal_id'], "idempotency_key": str(uuid4()), "approval": approved['approval']}, headers=headers)
+        assert receipt.status_code == 200 and calls == []
+        assert query.model_configuration(auth)['model'] == 'synthetic-switched'
+        status = (await client.get(base + "/agent/configuration/status")).json()
+        assert status['version'] == 2 and status['mode'] == 'offline' and KEY not in str(status)
+
+
+@pytest.mark.db
 @pytest.mark.parametrize("fault", ("http-error", "unknown-tool", "truncated"))
 async def test_failed_protocol_probe_cannot_enable_or_retry_same_request(roster, controlled, fault):
     controller, vault, runtime, calls, clients, faults = controlled

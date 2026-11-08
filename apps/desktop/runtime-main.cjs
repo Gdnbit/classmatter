@@ -3,8 +3,8 @@ const {app,BrowserWindow,Menu,session,ipcMain,dialog}=require('electron');
 const fs=require('node:fs');
 const path=require('node:path');
 const {desktopService}=require('./runtime-service.cjs');
-const {allowed,CSP,exitDownload}=require('./runtime-policy.cjs');
-const {networkFromSwitches}=require('./model-network.cjs');
+const {allowed,CSP,exitDownload,clipboardWrite}=require('./runtime-policy.cjs');
+const {networkFromSwitches,validateNetwork}=require('./model-network.cjs');
 let source,d1=false,sourceInvalid=false;
 let modelNetwork;
 try {
@@ -15,7 +15,7 @@ try {
 try {
   source=JSON.parse(fs.readFileSync(path.join(__dirname,'runtime-source.json'),'utf8'));
   const keys=Object.keys(source).sort().join(',');
-  d1=source.schema_version===2 && source.profile==='conversation-d1' && keys==='profile,repositoryRoot,runtimeRoot,schema_version,servicePort'
+  d1=source.schema_version===2 && ['conversation-d1','workspace-chat-d3'].includes(source.profile) && keys==='profile,repositoryRoot,runtimeRoot,schema_version,servicePort'
     && Number.isInteger(source.servicePort) && source.servicePort>=1024 && source.servicePort<=65535;
   if(!d1 && (source.schema_version!==1 || keys!=='repositoryRoot,runtimeRoot,schema_version'))sourceInvalid=true;
 } catch {sourceInvalid=true;}
@@ -48,14 +48,20 @@ else {
     if(sourceInvalid) throw new Error('Invalid runtime source');
     let developerCookies;
     if(development){
-      const pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true);
-      try{developerCookies=(await pipe.request({operation:'development_access'})).cookies;}finally{pipe.stop();}
+      const pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true,source.profile);
+      try{
+        const opened=await pipe.request({operation:'development_access'});
+        developerCookies=opened.cookies;
+        // Only the current local workspace may restore the previously tested
+        // and explicitly enabled transport. Explicit operator flags win.
+        if(source.profile==='workspace-chat-d3'&&!modelNetwork.bases.length&&opened.model_network!==undefined)modelNetwork=validateNetwork(opened.model_network);
+      }finally{pipe.stop();}
     }else if(d1)setupWindow=await require('./setup-window.cjs').prepareWorkspace({BrowserWindow,ipcMain,session},source);
     service=desktopService(source.repositoryRoot,path.join(__dirname,'ui'),()=>{
       if(window) window.close();
       // No automatic replay or reattachment after a service crash.
       app.quit();
-    },source.runtimeRoot,d1?'conversation-d1':'r1',d1?source.servicePort:8000,modelNetwork);
+    },source.runtimeRoot,d1?source.profile:'r1',d1?source.servicePort:8000,modelNetwork,development&&source.profile==='workspace-chat-d3');
     origin=await service.start();
     const isolated=session.fromPartition(d1?'classmatter-synthetic-d1':'classmatter-synthetic-runtime');
     const installDeveloperCookies=async cookies=>{
@@ -66,8 +72,8 @@ else {
       }
     };
     if(developerCookies){await installDeveloperCookies(developerCookies);developerCookies=null;}
-    isolated.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
-    isolated.setPermissionCheckHandler(()=>false);
+    isolated.setPermissionRequestHandler((contents,permission,callback,details)=>callback(!!window && contents===window.webContents && clipboardWrite(origin,permission,details)));
+    isolated.setPermissionCheckHandler((contents,permission,_requestingOrigin,details)=>!!window && contents===window.webContents && clipboardWrite(origin,permission,details));
     isolated.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!allowed(origin,details.url)}));
     isolated.webRequest.onHeadersReceived((details,callback)=>callback({responseHeaders:{...details.responseHeaders,'Content-Security-Policy':[CSP],'X-Content-Type-Options':['nosniff']}}));
     isolated.on('will-download',(event,item,contents)=>{
@@ -76,7 +82,7 @@ else {
       // leaves the destination to the user. Never set an arbitrary save path.
       item.setSaveDialogOptions({title:d1?'保存已批准的合成证据退出包':'保存已批准的合成核心退出包',defaultPath:d1?'ClassMatter-synthetic-conversation-v6.json':'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});
     });
-    window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · ClassMatter',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),additionalArguments:development?['--classmatter-development-no-password']:[],session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
+    window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · ClassMatter',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),additionalArguments:development?['--classmatter-development-no-password',...(source.profile==='workspace-chat-d3'?['--classmatter-local-only']:[])]:[],session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
     let developmentBusy=false;
     ipcMain.handle('desktop:development-session',async(event,action)=>{
       if(!development||developmentBusy||!window||event.sender!==window.webContents||event.senderFrame!==window.webContents.mainFrame||!allowed(origin,event.senderFrame.url)||!['enter','reauthenticate'].includes(action))throw new Error('开发会话不可用');
@@ -92,7 +98,7 @@ else {
             request[name]=matches[0].value;
           }
         }
-        pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true);
+        pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true,source.profile);
         const result=await pipe.request(request);
         if(!window||window.isDestroyed())throw new Error('Window closed');
         await installDeveloperCookies(result.cookies);return true;

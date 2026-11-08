@@ -134,11 +134,10 @@ flowchart LR
 The supported persistent local runtime currently targets **Windows** with PowerShell 7, Node.js 22–24, pnpm 11.19.0, Python 3.13, uv 0.11.7 and PostgreSQL 18.6 binaries. Local credentials use DPAPI.
 
 ```powershell
-# Prepare dependencies and a new owned synthetic database (skip init if it exists)
+# Prepare dependencies and a fresh developer instance (skip prepare-chat if it exists)
 cd backend
 uv sync --frozen
-uv run --frozen python local.py init --profile conversation-d1 --pg-root '<PostgreSQL18 installation directory>'
-uv run --frozen python local.py start --profile conversation-d1
+uv run --frozen python local.py prepare-chat --profile conversation-d1 --pg-root '<PostgreSQL18 installation directory>'
 
 # Build and open the standalone development workbench
 cd ../apps/web
@@ -149,7 +148,7 @@ pnpm build
 pnpm start
 ```
 
-The local development entry opens directly without a password prompt. Random developer credentials remain protected by current-user DPAPI; the original ISB and QG/BCG boundaries remain active. Existing personal accounts are not adopted or reset. Only synthetic data is admitted. Closing the app preserves the database; stop it from backend with `uv run --frozen python local.py stop --profile conversation-d1`. See the [desktop guide](apps/desktop/README.md) for prerequisites and compatibility entries. Keep runtime files and credentials outside Git.
+`prepare-chat` is an explicit fresh-development operation: prepare the original D1 instance and passwordless developer identity, verify checkpoints, then upgrade to D3. It refuses an existing directory. Existing D1/D2 instances use the [desktop upgrade guide](apps/desktop/README.md). The app keeps its original UI and opens without a password prompt. Workspace chats persist without requiring a class; class actions become reviewed candidates using the original QG/BCG. Configure and test a provider in Settings for actual AI capabilities. Closing the app preserves its database; stop it from backend with `uv run --frozen python local.py stop --profile workspace-chat-d3`, and use the same profile's `start` command before the next launch. Only synthetic development data is currently admitted.
 
 <details>
 <summary><strong>Verification, mock mode and supported boundaries</strong></summary>

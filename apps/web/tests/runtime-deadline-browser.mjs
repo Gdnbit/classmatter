@@ -21,7 +21,7 @@ const ready = () => page.waitForFunction(() => Array.from(document.querySelector
 try {
   await page.clock.setFixedTime(new Date('2035-01-01T00:00:00Z')) // Timers still run normally; host wall clock is intentionally wrong.
   await page.goto(base + '/work')
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026')
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026')
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await ready()
   assert.equal(snapshots.length, 1)

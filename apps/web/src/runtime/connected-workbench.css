@@ -2,7 +2,7 @@
 .connected-runtime{display:contents}
 .connected-runtime .app-shell{height:100dvh;min-height:0}
 .desktop-host .connected-runtime .app-shell{height:calc(100dvh - var(--desktop-bar-height))}
-.connected-runtime .app-shell>.sidebar{width:auto;min-height:0}
+.connected-runtime .app-shell>.sidebar{width:auto;min-width:0;min-height:0;padding:0}
 .connected-runtime .sidebar .scope{display:flex;flex-direction:column;gap:7px}
 .connected-runtime .sidebar .scope span{font-size:11px;color:var(--muted)}
 .connected-runtime .workspace.r1-main{border-radius:0;min-height:0}
@@ -14,6 +14,62 @@
 .connected-runtime .chat-history{margin-top:22px}
 .connected-runtime .sidebar-empty{font-size:12px;color:var(--muted);padding:8px}
 .connected-runtime .r1-composer{border-radius:23px;flex-shrink:0}
+.connected-runtime .r1-composer textarea:focus,
+.connected-runtime .r1-composer textarea:focus-visible{outline:none;box-shadow:none;border:0}
+.connected-runtime .r1-composer:focus-within{border-color:#9fb6ae}
+.connected-runtime .sidebar-scroll{display:flex;flex-direction:column;min-width:0;width:100%;overflow:visible;padding:18px 12px 0;gap:0}
+.connected-runtime .workspace-nav{flex:none;margin:0!important;display:grid;gap:3px}
+.connected-runtime .workspace-nav>button,.connected-runtime .r1-sidebar-more>summary{height:41px;border:0;background:transparent;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:10px;font-size:14px;cursor:pointer}
+.connected-runtime .r1-sidebar-more{position:relative}
+.connected-runtime .r1-sidebar-more>summary{list-style:none;width:48px}
+.connected-runtime .r1-sidebar-more>summary::-webkit-details-marker{display:none}
+.connected-runtime .r1-sidebar-more[open]>summary{background:var(--sidebar-active,#dfe7e2)}
+.connected-runtime .r1-sidebar-more-menu{position:absolute;top:100%;left:0;width:100%;z-index:25;padding:8px;background:white;border:1px solid #e0e6e2;border-radius:13px;box-shadow:0 8px 28px #1f302018;display:grid}
+.connected-runtime .r1-sidebar-more-menu button{display:flex;align-items:center;gap:12px;border:0;text-align:left}
+.connected-runtime .r1-sidebar-events{border-top:1px solid #dce3de;border-bottom:1px solid #dce3de;margin-top:18px;padding:15px 2px;display:flex;flex-direction:column;min-height:0;max-height:32vh;flex:0 1 auto}
+.connected-runtime .side-kicker{margin:0 6px 12px;font-size:12px;color:#7a857e}
+.connected-runtime .r1-sidebar-event-list{overflow-y:auto;min-height:0;scrollbar-width:thin}
+.connected-runtime .r1-sidebar-event{width:100%;display:flex;gap:12px;padding:10px 8px;border:0;background:transparent;text-align:left;align-items:flex-start}
+.connected-runtime .r1-sidebar-event>span:last-child{min-width:0}
+.connected-runtime .r1-sidebar-event strong{font-size:13px;font-weight:500;overflow-wrap:anywhere}
+.connected-runtime .r1-sidebar-event small{display:block;color:#7a857e;font-size:11px;line-height:1.6;margin-top:4px}
+.connected-runtime .r1-event-dot{width:8px;height:8px;margin-top:6px;border-radius:50%;background:#a4b6a7;flex:none}
+.connected-runtime .r1-event-dot.in-progress{background:#597c65}
+.connected-runtime .sidebar .chat-history{display:flex;flex-direction:column;min-height:0;flex:1;overflow-y:auto;scrollbar-width:thin;padding:18px 0 8px;margin:0;gap:3px}
+.connected-runtime .chat-history .new-chat{flex:none;border:0;background:transparent;justify-content:flex-start;padding:9px 10px;gap:12px;min-height:40px}
+.connected-runtime .chat-history .conversation-item{flex:none;border:0;background:transparent;padding:9px 12px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:38px;border-radius:9px}
+.connected-runtime .chat-history .conversation-item.active{background:var(--sidebar-active,#dfe7e2)}
+.connected-runtime .r1-workspace-footer{display:flex;align-items:center;justify-content:space-between;flex:none;min-width:0;width:100%;border-top:1px solid #dce3de;padding:10px 12px;gap:8px}
+.connected-runtime .r1-workspace-footer .user-area{border:0;padding:4px;background:transparent;flex:1;min-width:0;width:auto;font-size:13px}
+.connected-runtime .r1-workspace-footer .r1-settings-trigger{border:0;background:transparent;padding:8px;display:flex}
+.connected-runtime .r1-conversation-scroll{padding:28px 34px 36px}
+.connected-runtime .r1-messages{max-width:none;margin:18px 0 24px;gap:18px}
+.connected-runtime .r1-messages article.user{width:fit-content;max-width:min(76%,76ch);margin:0 0 26px auto;padding:12px 18px;overflow-wrap:anywhere}
+.connected-runtime .r1-messages article.assistant{max-width:92ch;margin:0 auto 30px 0;overflow-wrap:anywhere}
+.connected-runtime .r1-messages article p{margin:0}
+.connected-runtime .r1-answer-actions{display:flex;align-items:center;gap:14px;margin-top:14px;color:#7a857e;font-size:12px;white-space:normal}
+.connected-runtime .r1-answer-actions button{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:inherit;padding:4px 0;font-size:12px}
+.connected-runtime .r1-answer-actions button:hover{color:#356f60;background:transparent}
+.connected-runtime .r1-composer{width:min(1180px,calc(100% - 64px));min-height:120px;padding:16px 20px 12px;margin-bottom:22px}
+.connected-runtime .r1-welcome{display:grid;grid-template-rows:1fr;opacity:1;transform:translateY(0);visibility:visible;transition:grid-template-rows .24s ease,opacity .20s ease,transform .24s ease,visibility 0s}
+.connected-runtime .r1-welcome-inner{min-height:0;overflow:hidden;padding-inline:clamp(0px,3vw,50px)}
+.connected-runtime .r1-welcome-hidden{grid-template-rows:0fr;opacity:0;transform:translateY(-24px);visibility:hidden;transition:grid-template-rows .24s ease,opacity .18s ease,transform .24s ease,visibility 0s .24s}
+.connected-runtime .r1-model-picker{position:relative;flex:none;margin-left:auto;min-width:0}
+.connected-runtime .r1-model-picker button{border-radius:9px;background:transparent;color:var(--ink,#1f2923);border:0;display:flex;align-items:center;gap:8px;text-align:left;font-size:12px}
+.connected-runtime .r1-model-picker .r1-model-trigger{border:1px solid #e0e6e2;border-radius:22px;padding:8px 12px;max-width:290px}
+.connected-runtime .r1-model-trigger span{display:block!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px!important;margin:0!important}
+.connected-runtime .r1-model-menu{position:absolute;right:0;bottom:calc(100% + 14px);width:min(330px,calc(100vw - 40px));padding:14px;background:white;border:1px solid #dfe5e1;border-radius:17px;box-shadow:0 8px 30px #1f30201c;z-index:40;max-height:min(530px,65vh);overflow-y:auto;font-size:12px}
+.connected-runtime .r1-model-menu h3{font-size:14px;margin:0 0 12px}
+.connected-runtime .r1-model-menu .r1-current-model{display:flex;align-items:center;justify-content:space-between;background:#edf3ef;border-radius:10px;padding:12px;gap:8px}
+.connected-runtime .r1-current-model small{display:block;color:#7a857e;margin-top:5px}
+.connected-runtime .r1-model-menu label{display:block;margin-top:14px;line-height:1.7}
+.connected-runtime .r1-model-menu input{width:100%;margin:6px 0 8px;min-width:0}
+.connected-runtime .r1-model-menu>button{width:100%;padding:10px;border-radius:8px}
+.connected-runtime .r1-recent-models button{width:100%;overflow-wrap:anywhere;padding:8px}
+.r1-settings-heading{display:flex;justify-content:space-between;align-items:center;gap:20px}
+.r1-settings-heading button{display:flex;border:0;background:transparent;padding:8px;cursor:pointer}
+.r1-settings-content{display:grid;gap:12px;min-width:0}
+@media(prefers-reduced-motion:reduce){.connected-runtime .r1-welcome,.connected-runtime .r1-welcome-hidden{transition:none;transform:none}}
 @media(max-width:720px){
   .connected-runtime .app-shell{display:flex;flex-direction:column}
   .connected-runtime .app-shell>.sidebar{display:flex;height:auto;max-height:170px;flex-shrink:0}
@@ -24,4 +80,14 @@
   .connected-runtime .shell-main{min-height:0;padding-bottom:0;flex:1}
   .connected-runtime .shell-main>.body-grid{height:auto;min-height:0;display:flex}
   .connected-runtime .workspace{height:auto;flex:1}
+  .connected-runtime .r1-sidebar-events,.connected-runtime .chat-history{display:none!important}
+  .connected-runtime .r1-workspace-footer{padding:0 8px;justify-content:flex-end}
+  .connected-runtime .r1-workspace-footer .user-area{display:none}
+  .connected-runtime .workspace-nav{display:flex;align-items:center}
+  .connected-runtime .r1-sidebar-more-menu{position:fixed;top:90px;left:16px;width:220px}
+  .connected-runtime .r1-conversation-scroll{padding:20px 18px}
+  .connected-runtime .r1-composer{width:calc(100% - 24px);min-height:110px;padding:12px 14px}
+  .connected-runtime .r1-composer>div>.r1-muted{max-width:100%;font-size:10px}
+  .connected-runtime .r1-model-picker{margin-left:auto}
+  .connected-runtime .r1-model-menu{position:fixed;right:16px;bottom:150px;width:min(330px,calc(100vw - 32px));max-height:calc(100dvh - 200px)}
 }

@@ -13,6 +13,8 @@ function target(command: Command): { id: string; version: number } {
     case "student.create": field = "student_id"; break
     case "record.create": field = "record_id"; break
     case "task.create": field = "task_id"; break
+    case "document.create": field = "document_id"; break
+    case "document.revise": field = "document_id"; changed = true; break
     case "exit_export.create": field = "export_id"; break
     case "class.update": case "class.archive": field = "class_id"; changed = true; break
     case "term.update": field = "term_id"; changed = true; break

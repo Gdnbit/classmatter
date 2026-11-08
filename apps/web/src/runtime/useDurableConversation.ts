@@ -1,17 +1,20 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { ApiError, type Session, type Classroom } from "./api"
 import { d1Client, type History, type Listing, type Mode, type Preview, type Turn } from "./durable-conversation"
 import { createQueryRefresh } from "./query-refresh"
+import { createWorkspaceConversation } from "./agent-conversation"
+import { consumeEvents } from "./events"
+import { workspace } from "./api"
 
 const active = (turn?: Turn) => !!turn && ["queued", "running", "cancel_requested"].includes(turn.run.state)
-const stateText = (turn?: Turn) => turn ? ({ queued: "输入已保存，尚未启动模型", running: "运行中，尚无已保存结果",
-  cancel_requested: "已请求停止，尚不能认定取消成功", completed: "会话输出已保存 · 无业务写入",
-  failed: "运行失败，不自动重跑", cancelled: "已取消，不自动重跑", interrupted: "运行中断，不自动重跑",
-  unknown: "结果未知，不能据此认定模型未执行或未计费" }[turn.run.state]) : ""
+const stateText = (turn?: Turn) => turn ? ({ queued: "等待回复", running: "正在回复…",
+  cancel_requested: "正在停止回复…", completed: "回复完成",
+  failed: "回复失败，请稍后再试", cancelled: "已停止回复", interrupted: "回复中断，请重试",
+  unknown: "暂时无法确认回复结果" }[turn.run.state]) : ""
 
 type Props = {
   enabled: boolean; session: Session | null; classroom: Classroom | null; threadId: string
-  readable: boolean; canWrite: boolean
+  readable: boolean; canWrite: boolean; canChat: boolean
   onSelect: (id: string) => void; onBusyChange: (value: boolean) => void
   onDraftChange: (value: boolean) => void; onError: (error: unknown) => void
 }
@@ -22,13 +25,20 @@ export function useDurableConversation(props: Props) {
   const operation = useRef<symbol | null>(null)
   const running = useRef<{ threadId: string; requestId: string } | null>(null)
   const [history, setHistory] = useState<History | null>(null), [listing, setListing] = useState<Listing | null>(null)
-  const [text, setText] = useState(""), [mode, setMode] = useState<Mode>("read"), [student, setStudent] = useState("")
+  const [text, setText] = useState(""), [mode, setMode] = useState<Mode>("chat"), [student, setStudent] = useState("")
+  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([])
+  const workspaceConversation = useRef("")
+  const [classChat, setClassChat] = useState(false)
   const [status, setStatus] = useState(""), [working, setWorking] = useState(false), [fresh, setFresh] = useState(false)
   const [inputReady, setInputReady] = useState(false)
+  const [readyKey, setReadyKey] = useState("")
   const [pending, setPending] = useState<{ preview: Preview; key: string; approval: string | null; attempted: boolean } | null>(null)
   const [title, setTitle] = useState("")
-  const key = props.enabled && props.session && props.classroom
-    ? `${props.session.subject.owner_id}/${props.session.subject.workspace_id}/${props.session.csrf_token}/${props.classroom.class_id}/${props.classroom.term_id}/${props.threadId}` : ""
+  const identity = props.enabled && props.session
+    ? `${props.session.subject.owner_id}/${props.session.subject.workspace_id}/${props.session.csrf_token}` : ""
+  const workspaceChat = !props.threadId && mode === "chat" && !classChat
+  const key = identity ? `${identity}/${workspaceChat ? "workspace" : props.classroom ? `${props.classroom.class_id}/${props.classroom.term_id}` : "unassigned"}/${props.threadId}` : ""
+  const previousScope = useRef({ identity: "", classId: "", threadId: "" })
   const api = () => {
     const p = latest.current
     if (!p.enabled || !p.session || !p.classroom) throw new Error("请先确认当前班级与身份。")
@@ -41,33 +51,59 @@ export function useDurableConversation(props: Props) {
     latest.current.onError(error)
   }
   useEffect(() => { latest.current.onBusyChange(working || !!pending) }, [working, pending])
-  useEffect(() => { latest.current.onDraftChange(!!text.trim()) }, [text])
+  useEffect(() => { latest.current.onDraftChange(!!text.trim()) }, [text, key])
   useEffect(() => {
+    const previous = previousScope.current
+    if (previous.identity !== identity) { workspaceConversation.current = ""; setChatMessages([]) }
+    const keepUnassignedDraft = !!identity && previous.identity === identity && previous.threadId === props.threadId
+      && (previous.classId === (props.classroom?.class_id || "") || (!previous.classId && !previous.threadId && !!props.classroom))
+    previousScope.current = { identity, classId: props.classroom?.class_id || "", threadId: props.threadId }
     const generation = ++epoch.current, connection = connectivity.current
     request.current?.abort(); stream.current?.abort(); running.current = null
     operation.current = null
     setHistory(null); setListing(null); setPending(null); setWorking(false); setFresh(false); setInputReady(false); setStatus(""); setTitle("")
-    setText(""); setStudent("")
-    if (!key) return
+    if (!keepUnassignedDraft) setText("")
+    setStudent("")
+    const dispose = () => { epoch.current++; request.current?.abort(); stream.current?.abort(); latest.current.onBusyChange(false); latest.current.onDraftChange(false) }
+    if (!key) return dispose
+    // Local composition does not require a business scope. Sending still does.
+    if (workspaceChat || !latest.current.classroom) { setInputReady(true); setReadyKey(key); return dispose }
     const controller = new AbortController(); request.current = controller
     const client = api(), selected = latest.current.threadId
     Promise.all([client.list(controller.signal), selected ? client.history(selected, controller.signal) : Promise.resolve(null)])
       .then(([list, saved]) => {
         if (generation !== epoch.current || connection !== connectivity.current || !navigator.onLine || controller.signal.aborted) return
-        setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true)
+        setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true); setReadyKey(key)
         if (saved) { setStudent(saved.student_id || ""); setStatus(stateText(saved.turns.at(-1))) }
       }).catch(error => { if (generation === epoch.current && !controller.signal.aborted) report(error) })
-    return () => { epoch.current++; controller.abort(); stream.current?.abort(); latest.current.onBusyChange(false); latest.current.onDraftChange(false) }
+    return dispose
   }, [key])
 
+  // History discovery is a UI read, not the scope of an ordinary model chat.
+  // Keep old class conversations reachable without forcing chat into a class.
+  useLayoutEffect(() => {
+    if (!identity || !workspaceChat) return
+    setListing(null)
+  }, [identity, workspaceChat, props.classroom?.class_id, props.classroom?.term_id])
+  useEffect(() => {
+    if (!identity || !workspaceChat) return
+    if (!props.classroom) return
+    const generation = epoch.current, controller = new AbortController()
+    void api().list(controller.signal).then(list => {
+      if (!controller.signal.aborted && generation === epoch.current) setListing(list)
+    }).catch(error => { if (!controller.signal.aborted && generation === epoch.current) report(error) })
+    return () => controller.abort()
+  }, [identity, workspaceChat, props.classroom?.class_id, props.classroom?.term_id])
+
   async function refresh(threadId = latest.current.threadId) {
+    if (workspaceChat) return null
     const generation = epoch.current, connection = connectivity.current, client = api()
     request.current?.abort()
     const controller = new AbortController(); request.current = controller; setFresh(false)
     try {
       const [list, saved] = await Promise.all([client.list(controller.signal), threadId ? client.history(threadId, controller.signal) : Promise.resolve(null)])
       if (generation !== epoch.current || connection !== connectivity.current || !navigator.onLine || controller.signal.aborted) return null
-      setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true)
+      setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true); setReadyKey(key)
       if (saved) setStatus(stateText(saved.turns.at(-1)))
       return saved
     } catch (error) {
@@ -80,12 +116,12 @@ export function useDurableConversation(props: Props) {
   refreshIdle.current = !working && !pending && title === (history?.history.title || "")
   const foreground = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
   useEffect(() => {
-    if (!key) return
+    if (!key || workspaceChat || !props.classroom) return
     const controller = createQueryRefresh({
       read: async () => { await refreshRef.current() },
       invalidate: () => {
         connectivity.current++; request.current?.abort(); setFresh(false)
-        setStatus("离线：当前可能是上次快照，恢复连接后重新核对。")
+        setStatus("连接已断开，恢复后请刷新对话。")
       },
       fail: report,
       available: () => navigator.onLine && document.visibilityState === "visible",
@@ -118,7 +154,44 @@ export function useDurableConversation(props: Props) {
   }
   async function send(saved?: Turn) {
     const p = latest.current
-    if (working || pending || !fresh || !navigator.onLine || !p.readable || !p.canWrite || !p.classroom || (!saved && (!text.trim() || active(history?.turns.at(-1))))) return
+    if (workspaceChat && !saved) {
+      if (!p.enabled || !p.session || !p.canChat || working || operation.current || pending || !navigator.onLine || !text.trim()) return
+      const session = p.session, input = text.trim(), generation = epoch.current
+      await operate(async () => {
+        const controller = new AbortController(); stream.current = controller
+        setText(""); setChatMessages(items => [...items, { role: "user", text: input }]); setStatus("正在回复…")
+        try {
+          let conversation = workspaceConversation.current
+          if (!conversation) {
+            const created = await createWorkspaceConversation(session, controller.signal)
+            if (generation !== epoch.current || controller.signal.aborted) return
+            conversation = created.conversation_id; workspaceConversation.current = conversation
+          }
+          const response = await fetch(`${workspace(session)}/agent/events`, { method: "POST", credentials: "same-origin", signal: controller.signal,
+            headers: { "content-type": "application/json", "x-class-os-csrf": session.csrf_token },
+            body: JSON.stringify({ conversation_id: conversation, text: input, mode: "chat" }) })
+          if (!response.ok) { if (response.status === 409) workspaceConversation.current = ""; throw new ApiError(response.status, response.headers.get("x-request-id") || "") }
+          let answer = "", completed = false, failed = false
+          await consumeEvents(response, event => {
+            if (event.type.startsWith("tool.") || event.type === "draft.available") throw new Error("普通聊天不允许执行班级工具。")
+            if (event.type === "message.delta") {
+              if (typeof event.payload.text !== "string" || !event.payload.text.trim() || event.payload.text.length > 4000
+                  || !Array.isArray(event.payload.source_refs) || event.payload.source_refs.length) throw new Error("普通聊天响应不匹配。")
+              answer = event.payload.text
+            }
+            if (event.type === "run.completed") completed = true
+            if (event.type === "run.failed") failed = true
+          })
+          if (controller.signal.aborted || generation !== epoch.current) return
+          if (!completed || failed || !answer) throw new Error("本次回复未完成；没有自动重试。请检查模型配置或重新发送。")
+          setChatMessages(items => [...items, { role: "assistant", text: answer }]); setStatus("回复完成")
+        } catch (error) {
+          if (generation === epoch.current && !controller.signal.aborted) throw error
+        } finally { if (stream.current === controller) stream.current = null }
+      })
+      return
+    }
+    if (working || pending || !fresh || readyKey !== key || !navigator.onLine || !p.readable || !p.canWrite || !p.classroom || (!saved && (!text.trim() || active(history?.turns.at(-1))))) return
     const client = api(), generation = epoch.current, input = text.trim(), selected = p.threadId
     let threadId = selected
     await operate(async () => {
@@ -137,15 +210,15 @@ export function useDurableConversation(props: Props) {
           const state = await client.status(threadId, requestId, controller.signal)
           if (queued.status !== "committed" || !queued.receipt || queued.receipt.resource_id !== state.run_id) throw new Error("输入保存结果未知，请按原请求核对，不要重复发送。")
           if (generation !== epoch.current) return
-          setText(""); setStatus("输入已保存，正在启动本次运行…")
+          setText(""); setStatus("准备回复…")
           await refresh(threadId)
         }
         if (generation !== epoch.current || controller.signal.aborted || !navigator.onLine) return
         await client.start(threadId, requestId, controller.signal, kind => {
-          if (generation === epoch.current) setStatus(kind.startsWith("tool.") ? "正在通过受控工具处理…" : "正在运行；以数据库核对结果为准…")
+          if (generation === epoch.current) setStatus(kind.startsWith("tool.") ? "正在整理…" : "正在回复…")
         })
       } catch (error) {
-        if (generation === epoch.current) setStatus("运行或传输未完成，正在只读核对原请求；不会自动重跑。")
+        if (generation === epoch.current) setStatus("连接中断，请刷新对话核对结果。")
         if (!threadId) throw error
       } finally {
         if (stream.current === controller) stream.current = null
@@ -160,15 +233,16 @@ export function useDurableConversation(props: Props) {
   }
   async function stop() {
     const controller = stream.current
+    if (workspaceChat) { controller?.abort(); setStatus("已停止回复。"); return }
     const target = running.current || (history && history.turns.at(-1) ? {
       threadId: history.history.thread_id, requestId: history.turns.at(-1)!.client_request_id } : null)
-    if (!target) { controller?.abort(); setStatus("已停止等待；创建/保存结果仍需核对，不自动重跑。"); return }
+    if (!target) { controller?.abort(); setStatus("等待已停止，请刷新对话核对结果。"); return }
     const generation = epoch.current, client = api()
     try {
       const current = await client.status(target.threadId, target.requestId)
       if (generation !== epoch.current) return
       if (["queued", "running"].includes(current.state)) await client.cancel(target.threadId, current)
-      if (generation === epoch.current) setStatus("已请求停止，尚不能认定取消成功。")
+      if (generation === epoch.current) setStatus("正在停止回复…。")
     } catch (error) { if (generation === epoch.current) report(error) }
     finally { controller?.abort(); if (generation === epoch.current) void refresh(target.threadId).catch(report) }
   }
@@ -204,7 +278,10 @@ export function useDurableConversation(props: Props) {
       setPending(null); await refresh()
     })
   }
-  return { history, listing, text, setText, mode, setMode, student, setStudent, title, setTitle, status, working, fresh, inputReady, pending,
+  return { history, listing, text, setText, mode, setMode: (value: Mode | "class-chat") => { if (working || pending) return; setClassChat(value === "class-chat"); setMode(value === "class-chat" ? "chat" : value) }, student, setStudent, title, setTitle, status, working, fresh: fresh && readyKey === key, inputReady: inputReady && readyKey === key, pending,
+    workspaceChat, chatMessages, canChat: props.canChat,
+    newChat: () => { if (!working && !pending && !text.trim()) { workspaceConversation.current = ""; setChatMessages([]); setStatus(""); setClassChat(false); setMode("chat") } },
+    needsClassroom: !props.classroom,
     blocked: working || !!pending, active: active(history?.turns.at(-1)), isStreaming: !!stream.current,
     send: () => send(), startSaved: (turn: Turn) => send(turn), stop,
     refresh: () => operate(async () => { await refresh() }),
@@ -242,7 +319,7 @@ export function useDurableConversation(props: Props) {
       const state = await api().commandState(pending.preview, pending.key)
       if (!current()) return
       if (state.status === "committed") { setPending(null); await refresh() }
-      else setStatus(state.status === "not_committed" ? "尚未查到提交；不代表在途请求已撤销，只能保留原预览/同键重试。" : "提交状态暂不可核对，请保留原请求。")
+      else setStatus(state.status === "not_committed" ? "尚未确认保存结果，请稍后核对。" : "暂时无法核对保存结果，请保留当前内容。")
     }),
   }
 }

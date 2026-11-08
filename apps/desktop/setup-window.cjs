@@ -3,7 +3,7 @@ const {pathToFileURL}=require('node:url');
 const {setupService,validRequest}=require('./setup-service.cjs');
 
 async function prepareWorkspace({BrowserWindow,ipcMain,session},source) {
-  const pipe=setupService(source.repositoryRoot,source.runtimeRoot);
+  const pipe=setupService(source.repositoryRoot,source.runtimeRoot,false,source.profile);
   try {
     if((await pipe.request({operation:'status'})).ready){pipe.stop();return null;}
   } catch {pipe.stop();throw new Error('setup_unavailable');}

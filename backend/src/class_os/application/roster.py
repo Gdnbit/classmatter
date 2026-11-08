@@ -310,11 +310,13 @@ class QueryGateway(GatewayBase):
             return artifact
         return self._run((token, client, csrf, workspace_id), "exit.download", query, resource_id=export_id)
 
-    def agent_audit(self, credentials, run_id, status, class_id, term_id, *, student_id=None):
+    def agent_audit(self, credentials, run_id, status, class_id, term_id, *, student_id=None, workspace_only=False):
         if type(run_id) is not UUID or status not in ("started", "completed", "failed", "cancelled"):
             raise CommandRejected()
+        if type(workspace_only) is not bool or (workspace_only and any(value is not None for value in (class_id, term_id, student_id))):
+            raise CommandRejected()
         def query(tx, binding, now):
-            if status in ("started", "completed"):
+            if status in ("started", "completed") and not workspace_only:
                 if any(type(value) is not UUID for value in (class_id, term_id)):
                     raise CommandRejected()
                 context = tx.class_context(binding["workspace_id"], class_id, term_id)
@@ -360,6 +362,11 @@ class QueryGateway(GatewayBase):
         def query(tx, binding, now):
             return tx.current_context(binding["workspace_id"])
         return self._run((token, client, csrf, workspace_id), "class.context", query)
+
+    def agent_workspace_context(self, token, client, csrf, workspace_id):
+        # Revalidate identity and native instance fences without selecting or
+        # fetching a class. Existing class.context metadata audit is retained.
+        return self._run((token, client, csrf, workspace_id), "class.context", lambda tx, binding, now: None)
 
     def roster(self, token, client, csrf, workspace_id, class_id, term_id):
         def query(tx, binding, now):

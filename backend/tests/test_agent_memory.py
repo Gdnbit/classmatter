@@ -7,6 +7,19 @@ from class_os.application.agent import AgentRejected
 from class_os.infrastructure.agent_memory import ConversationMemory
 
 
+def test_workspace_scope_is_explicit_and_cannot_mix_class_or_student():
+    credentials = ("synthetic-token", "synthetic-client", "synthetic-csrf", uuid4())
+    memory = ConversationMemory()
+    item = memory.create(credentials, None, None, workspace_only=True)
+    assert memory.get(credentials, item.conversation_id) is item
+    for options in ({}, {"workspace_only": 1}, {"workspace_only": True, "student_id": uuid4()}):
+        with pytest.raises(AgentRejected):
+            memory.create(credentials, None, None, **options)
+    for class_id, term_id in ((uuid4(), None), (None, uuid4()), (uuid4(), uuid4())):
+        with pytest.raises(AgentRejected):
+            memory.create(credentials, class_id, term_id, workspace_only=True)
+
+
 def test_memory_ttl_binding_capacity_turn_budget_and_forget():
     clock = [datetime.now(timezone.utc)]
     memory = ConversationMemory(clock=lambda: clock[0])

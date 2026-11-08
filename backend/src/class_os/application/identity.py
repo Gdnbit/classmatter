@@ -180,6 +180,8 @@ class IdentityBoundary:
             self._client(client)
             self._password(password)
             owner = tx.owner()
+            if owner is not None and owner.password_hash.startswith("!"):
+                raise IdentityDenied()
             valid = self.hasher.verify(password, owner.password_hash if owner else self._dummy_hash)
             if not owner or not valid:
                 raise IdentityDenied()
@@ -192,6 +194,7 @@ class IdentityBoundary:
         session = tx.session(digest(token))
         owner = tx.owner()
         if (not session or not owner or session.owner_id != owner.owner_id or session.revoked_at is not None
+                or owner.password_hash.startswith("!")
                 or session.purpose != purpose or session.credential_version != owner.credential_version
                 or now >= session.expires_at or now >= session.last_seen_at + timedelta(minutes=15)
                 or not hmac.compare_digest(session.client_digest, self._client(client))

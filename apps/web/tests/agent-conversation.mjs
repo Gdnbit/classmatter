@@ -13,6 +13,25 @@ const context = { class_id: randomUUID(), term_id: randomUUID() };
 const frame = student => ({ schema_version: 'class-os.agent-conversation.v2', conversation_id: randomUUID(),
   expires_at: new Date().toISOString(), memory: 'ephemeral-not-fact', ...context, student_id: student });
 
+test('workspace conversation needs no class and validates the exact unscoped response', async () => {
+  const original = globalThis.fetch;
+  const reply = { schema_version: 'classmatter.workspace-conversation.v1', conversation_id: randomUUID(), expires_at: new Date().toISOString(), memory: 'ephemeral-not-fact', scope: 'workspace' };
+  try {
+    const calls = [];
+    globalThis.fetch = async (url, options) => { calls.push({ url, options }); return new Response(JSON.stringify(reply), { headers: { 'content-type': 'application/json' } }); };
+    assert.equal((await api.createWorkspaceConversation(session)).conversation_id, reply.conversation_id);
+    assert.equal(calls.length, 1);
+    assert.match(calls[0].url, /\/agent\/workspace-conversations$/);
+    assert.deepEqual(JSON.parse(calls[0].options.body), { schema_version: 'classmatter.workspace-conversation-request.v1' });
+    for (const invalid of [{ ...reply, class_id: randomUUID() }, { ...reply, scope: 'class' }, { ...reply, conversation_id: 'invalid' }, { ...reply, expires_at: 'invalid' }]) {
+      globalThis.fetch = async () => new Response(JSON.stringify(invalid), { headers: { 'content-type': 'application/json' } });
+      await assert.rejects(api.createWorkspaceConversation(session));
+    }
+    globalThis.fetch = async () => new Response(' '.repeat(4097), { headers: { 'content-type': 'application/json' } });
+    await assert.rejects(api.createWorkspaceConversation(session));
+  } finally { globalThis.fetch = original; }
+});
+
 test('explicit class/student scope is validated and echoed, one private request only', async () => {
   const original = globalThis.fetch;
   try {

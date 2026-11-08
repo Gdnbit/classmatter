@@ -52,11 +52,13 @@ class SetupPipe {
   }
 }
 
-function setupService(repositoryRoot,runtimeRoot,development=false) {
+function setupService(repositoryRoot,runtimeRoot,development=false,profile='conversation-d1') {
+  if(!['conversation-d1','workspace-chat-d3'].includes(profile))throw new Error('unsupported_setup');
   if(process.platform!=='win32'||!path.isAbsolute(repositoryRoot)||!path.isAbsolute(runtimeRoot))throw new Error('unsupported_setup');
   const key=randomBytes(32).toString('hex');
   const env={...process.env,CLASSMATTER_SETUP_PROCESS_KEY:key};delete env.PYTHONPATH;delete env.PYTHONHOME;
   const args=['-I',path.join(repositoryRoot,'backend/desktop_setup.py'),'--runtime-root',runtimeRoot];
+  if(profile!=='conversation-d1')args.push('--profile',profile);
   if(development===true)args.push('--development-no-password');
   const child=spawn(path.join(repositoryRoot,'backend/.venv/Scripts/python.exe'),args,{cwd:repositoryRoot,env,shell:false,windowsHide:true,stdio:['pipe','pipe','ignore']});
   return new SetupPipe(child,key);

@@ -11,8 +11,8 @@ from class_os.application.identity import digest
 class Conversation:
     conversation_id: UUID
     binding: tuple
-    class_id: UUID
-    term_id: UUID
+    class_id: UUID | None
+    term_id: UUID | None
     expires_at: datetime
     history: list = field(default_factory=list)
     active: bool = False
@@ -37,9 +37,14 @@ class ConversationMemory:
                 item.history.clear()
                 del self._items[key]
 
-    def create(self, credentials, class_id, term_id, *, student_id=None):
+    def is_workspace(self, conversation_id):
+        item = self._items.get(conversation_id)
+        return item is not None and item.class_id is None and item.term_id is None
+
+    def create(self, credentials, class_id, term_id, *, student_id=None, workspace_only=False):
         self._expire()
-        if (len(self._items) >= 32 or type(class_id) is not UUID or type(term_id) is not UUID
+        valid_scope = (class_id is None and term_id is None and student_id is None) if workspace_only is True else (type(class_id) is UUID and type(term_id) is UUID)
+        if (type(workspace_only) is not bool or len(self._items) >= 32 or not valid_scope
                 or (student_id is not None and type(student_id) is not UUID)):
             raise AgentRejected()
         item = Conversation(uuid4(), (*self.binding(credentials), class_id, term_id, student_id),

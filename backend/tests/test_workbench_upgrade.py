@@ -123,7 +123,7 @@ def owned_upgrade(tmp_path, request):
             services.close()
         setup.close()
         marker = json.loads(runtime.manifest.read_text(encoding='utf-8'))['profile']
-        profile = 'workbench-d2' if marker == PROFILES['workbench-d2'][0] else 'conversation-d1'
+        profile = next(name for name in ('conversation-d1', 'workbench-d2', 'workspace-chat-d3') if marker == PROFILES[name][0])
         LocalRuntime(runtime.root, profile=profile).stop()
 
 

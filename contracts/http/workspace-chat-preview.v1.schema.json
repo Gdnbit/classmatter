@@ -1,0 +1,626 @@
+{
+  "$defs": {
+    "ClassBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "class.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "term_name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Term Name",
+          "type": "string"
+        },
+        "start_date": {
+          "format": "date",
+          "title": "Start Date",
+          "type": "string"
+        },
+        "end_date": {
+          "format": "date",
+          "title": "End Date",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "class_id",
+        "term_id",
+        "name",
+        "term_name",
+        "start_date",
+        "end_date"
+      ],
+      "title": "ClassBody",
+      "type": "object"
+    },
+    "ClassEditCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "class.update",
+          "title": "Command",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "name"
+      ],
+      "title": "ClassEditCandidate",
+      "type": "object"
+    },
+    "DocumentCreate": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "document.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 100000,
+          "title": "Body",
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "plain-text",
+            "markdown"
+          ],
+          "title": "Format",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "document_id",
+        "class_id",
+        "term_id",
+        "title",
+        "body",
+        "format"
+      ],
+      "title": "DocumentCreate",
+      "type": "object"
+    },
+    "DocumentRevise": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "document.revise",
+          "title": "Command",
+          "type": "string"
+        },
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 100000,
+          "title": "Body",
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "plain-text",
+            "markdown"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "command",
+        "document_id",
+        "class_id",
+        "term_id",
+        "title",
+        "body",
+        "format",
+        "expected_version"
+      ],
+      "title": "DocumentRevise",
+      "type": "object"
+    },
+    "StudentBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "student.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_class_version": {
+          "minimum": 1,
+          "title": "Expected Class Version",
+          "type": "integer"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "student_id",
+        "class_id",
+        "term_id",
+        "expected_class_version",
+        "name"
+      ],
+      "title": "StudentBody",
+      "type": "object"
+    },
+    "StudentNameBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "student.update_name",
+          "title": "Command",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "previous_name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Previous Name",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "student_id",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "previous_name",
+        "name"
+      ],
+      "title": "StudentNameBody",
+      "type": "object"
+    },
+    "TaskBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "task.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "student_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Student Id"
+        },
+        "source_record_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Source Record Id"
+        }
+      },
+      "required": [
+        "command",
+        "task_id",
+        "class_id",
+        "term_id",
+        "title"
+      ],
+      "title": "TaskBody",
+      "type": "object"
+    },
+    "TaskEditCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "task.update",
+          "title": "Command",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "not-started",
+            "in-progress",
+            "waiting",
+            "done",
+            "cancelled"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "evidence": {
+          "default": "",
+          "maxLength": 500,
+          "title": "Evidence",
+          "type": "string"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "due_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Due At"
+        },
+        "change_due_date": {
+          "default": false,
+          "title": "Change Due Date",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "command",
+        "task_id",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "status"
+      ],
+      "title": "TaskEditCandidate",
+      "type": "object"
+    },
+    "TermBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "term.update",
+          "title": "Command",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "previous_name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Previous Name",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "previous_start_date": {
+          "format": "date",
+          "title": "Previous Start Date",
+          "type": "string"
+        },
+        "start_date": {
+          "format": "date",
+          "title": "Start Date",
+          "type": "string"
+        },
+        "previous_end_date": {
+          "format": "date",
+          "title": "Previous End Date",
+          "type": "string"
+        },
+        "end_date": {
+          "format": "date",
+          "title": "End Date",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command",
+        "class_id",
+        "term_id",
+        "expected_version",
+        "previous_name",
+        "name",
+        "previous_start_date",
+        "start_date",
+        "previous_end_date",
+        "end_date"
+      ],
+      "title": "TermBody",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.workspace-chat-preview.v1",
+      "default": "classmatter.workspace-chat-preview.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "proposal_id": {
+      "format": "uuid",
+      "title": "Proposal Id",
+      "type": "string"
+    },
+    "payload_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Payload Hash",
+      "type": "string"
+    },
+    "risk": {
+      "enum": [
+        "W1",
+        "W2"
+      ],
+      "title": "Risk",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "payload": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ClassBody"
+        },
+        {
+          "$ref": "#/$defs/ClassEditCandidate"
+        },
+        {
+          "$ref": "#/$defs/TermBody"
+        },
+        {
+          "$ref": "#/$defs/StudentBody"
+        },
+        {
+          "$ref": "#/$defs/StudentNameBody"
+        },
+        {
+          "$ref": "#/$defs/TaskBody"
+        },
+        {
+          "$ref": "#/$defs/TaskEditCandidate"
+        },
+        {
+          "$ref": "#/$defs/DocumentCreate"
+        },
+        {
+          "$ref": "#/$defs/DocumentRevise"
+        }
+      ],
+      "title": "Payload"
+    }
+  },
+  "required": [
+    "proposal_id",
+    "payload_hash",
+    "risk",
+    "expires_at",
+    "payload"
+  ],
+  "title": "CandidatePreview",
+  "type": "object"
+}

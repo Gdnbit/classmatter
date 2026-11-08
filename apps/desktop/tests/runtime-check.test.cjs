@@ -9,8 +9,8 @@ const { prerequisites } = require('../runtime-check.cjs');
 function fixture(t, profile = 'r1') {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'classmatter-prerequisites-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true })); // Only this test's fresh owned directory.
-  const d1=profile==='conversation-d1';
-  const stageName=d1?'apps/desktop/.build/runtime-d1':'apps/desktop/.build/runtime';
+  const d1=profile!=='r1';
+  const stageName=profile==='workspace-chat-d3'?'apps/desktop/.build/runtime-d3':d1?'apps/desktop/.build/runtime-d1':'apps/desktop/.build/runtime';
   const runtimeName=d1?'.local-runtime/synthetic-conversation-d1':'.local-runtime/synthetic-v1';
   const stage = path.join(root, stageName);
   const runtime = path.join(root, runtimeName);
@@ -20,7 +20,7 @@ function fixture(t, profile = 'r1') {
   };
   const source = d1?{ schema_version: 2, repositoryRoot: root, runtimeRoot: runtime, profile, servicePort:8001 }
     :{ schema_version: 1, repositoryRoot: root, runtimeRoot: runtime };
-  const config = { profile: d1?'classmatter-owned-synthetic-conversation-d1':'class-os-owned-synthetic-v1',
+  const config = { profile: d1?`classmatter-owned-synthetic-${profile}`:'class-os-owned-synthetic-v1',
     database: d1?'class_os_synthetic_conversation_local':'class_os_synthetic_local', port: 15432, pg_bin: path.join(root, 'pg') };
   function ready() {
     for (const file of ['backend/.venv/Scripts/python.exe', 'backend/desktop.py', ...(d1?['backend/desktop_setup.py']:[]), 'apps/desktop/node_modules/electron/index.js',
@@ -28,7 +28,7 @@ function fixture(t, profile = 'r1') {
       ...['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs',
         ...(d1?['setup-service.cjs','setup-window.cjs','setup-preload.cjs','setup.html','setup.css','setup-ui.js']:[])].map(name=>stageName+'/'+name)]) put(file);
     put(stageName+'/runtime-source.json', JSON.stringify(source));
-    put(stageName+'/ui/desktop-runtime.json', JSON.stringify({ mode: d1?'synthetic-conversation-d1':'synthetic-runtime' }));
+    put(stageName+'/ui/desktop-runtime.json', JSON.stringify({ mode: d1?`synthetic-${profile}`:'synthetic-runtime' }));
     put(runtimeName+'/runtime.json', JSON.stringify(config));
     for (const role of ['root', 'migrator', 'identity', 'runtime']) put(runtimeName+`/${role}.dpapi`, 'synthetic-not-a-credential');
   }
@@ -43,13 +43,13 @@ test('empty checkout reports fixed missing steps without modifying or leaking pa
   assert(!JSON.stringify(result).includes(f.root));
 });
 
-for(const profile of ['r1','conversation-d1']) test(`missing ${profile} staged dependency rejects before loading Electron`,t=>{
+for(const profile of ['r1','conversation-d1','workspace-chat-d3']) test(`missing ${profile} staged dependency rejects before loading Electron`,t=>{
   const f=fixture(t,profile);f.ready();
   f.put('apps/desktop/scripts/runtime-launch.cjs',fs.readFileSync(path.join(__dirname,'../scripts/runtime-launch.cjs')));
   f.put('apps/desktop/runtime-check.cjs',fs.readFileSync(path.join(__dirname,'../runtime-check.cjs')));
   f.put('apps/desktop/model-network.cjs',fs.readFileSync(path.join(__dirname,'../model-network.cjs')));
   for(const name of ['runtime-service.cjs','runtime-policy.cjs','model-network.cjs','preload.cjs',
-    ...(profile==='conversation-d1'?['setup-service.cjs','setup-window.cjs','setup-preload.cjs','setup.html','setup.css','setup-ui.js']:[])]) {
+    ...(profile!=='r1'?['setup-service.cjs','setup-window.cjs','setup-preload.cjs','setup.html','setup.css','setup-ui.js']:[])]) {
     f.ready();f.put('apps/desktop/node_modules/electron/index.js','throw new Error("should-not-load-electron")');
     const missing=path.join(f.stage,name);fs.unlinkSync(missing);
     const report=prerequisites(f.root,'win32',profile);

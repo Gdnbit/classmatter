@@ -50,8 +50,9 @@ async def test_native_tool_roundtrip_preserves_signature_and_closes_without_busi
         assert request.url.host == "generativelanguage.googleapis.com"
         assert request.url.path == "/v1beta/models/gemini-3.1-flash-lite:generateContent"
         assert request.headers["x-goog-api-key"] == KEY
-        assert request.headers["x-server-timeout"] == "10"
+        assert request.headers["x-server-timeout"] == "30"
         body = json.loads(request.content)
+        assert body["generationConfig"]["thinkingConfig"] == {"thinking_level": "MINIMAL"}
         requests.append(body)
         if len(requests) == 1:
             return httpx.Response(200, json=packet([{"functionCall": {"name": "synthetic_probe", "args": {}},
@@ -74,7 +75,7 @@ async def test_native_tool_roundtrip_preserves_signature_and_closes_without_busi
         assert result.output == "OK" and result.usage.requests == 2
     assert len(calls) == 1 and len(requests) == 2
     assert clients[0].is_closed and session.closed
-    assert options == [{"trust_env": False, "follow_redirects": False, "timeout": 10}]
+    assert options == [{"trust_env": False, "follow_redirects": False, "timeout": 30}]
     assert KEY not in caplog.text
     with pytest.raises(ConfigurationRejected):
         model_provider.model_for_configuration(CONFIG, session)

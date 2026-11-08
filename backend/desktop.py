@@ -14,11 +14,14 @@ def main():
     parser = argparse.ArgumentParser(description="ClassMatter synthetic desktop service")
     parser.add_argument("--ui-root", required=True, type=Path)
     parser.add_argument("--runtime-root", type=Path)
-    parser.add_argument("--profile", choices=("r1", "conversation-d1"), default="r1")
+    parser.add_argument("--profile", choices=("r1", "conversation-d1", "workspace-chat-d3"), default="r1")
     parser.add_argument("--parent-pipe", action="store_true")
+    parser.add_argument("--local-development", action="store_true")
     parser.add_argument("--model-api-base-url", action="append", default=[])
     parser.add_argument("--model-api-proxy")
     args = parser.parse_args()
+    if args.local_development and args.profile != "workspace-chat-d3":
+        raise ValueError("Local development requires current native workspace")
     key = os.environ.pop("CLASSMATTER_DESKTOP_PROCESS_KEY", "")
     if not re.fullmatch(r"[a-f0-9]{64}", key):
         raise ValueError("Desktop process proof required")
@@ -34,7 +37,10 @@ def main():
     if len(set(args.model_api_base_url)) != len(args.model_api_base_url) or (args.model_api_proxy is not None and not args.model_api_base_url):
         raise ValueError("Invalid model transport options")
     runtime = LocalRuntime(args.runtime_root, profile=args.profile)
-    if args.profile == "conversation-d1":
+    if args.profile == "workspace-chat-d3":
+        from class_os.infrastructure.workspace_local_runtime import compose as compose_chat
+        app = compose_chat(settings, runtime, local_development=args.local_development)
+    elif args.profile == "conversation-d1":
         from class_os.infrastructure.durable_local_runtime import compose as compose_d1
         app = compose_d1(settings, runtime)
     else:

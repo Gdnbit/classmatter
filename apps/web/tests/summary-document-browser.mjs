@@ -13,16 +13,17 @@ page.on('request', request => {
 });
 try {
   await page.goto(base);
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByRole('button', { name: '总览', exact: true }).click();
   await page.getByRole('button', { name: '整理班级工作小结', exact: true }).click();
   const editor = page.getByLabel('可编辑小结（未保存）', { exact: true });
   const original = await editor.inputValue();
-  assert(original.includes(`[record:${process.env.CLASS_OS_TEST_RECORD}@1]`));
-  assert(original.includes(`[task:${process.env.CLASS_OS_TEST_TASK}@1]`));
-  assert(original.includes('事实字段：synthetic sourced document fact'));
-  assert(original.includes('教师观察字段（不等于事实）：synthetic observation is not a fact'));
+  assert(!original.includes(process.env.CLASS_OS_TEST_RECORD));
+  assert(!original.includes(process.env.CLASS_OS_TEST_TASK));
+  assert(original.includes('学生记录') && original.includes('工作跟进'));
+  assert(original.includes('事实：synthetic sourced document fact'));
+  assert(original.includes('教师观察：synthetic observation is not a fact'));
   const edited = original + '\n本人补充，仍为工作草稿。';
   await editor.fill(edited);
   await context.setOffline(true);
