@@ -10,7 +10,7 @@ try {
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => { if (r.method() === 'POST' && r.url().endsWith('/events')) starts.push(r.url()) });
   await page.goto(base);
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   const input = page.getByLabel('输入消息'); await input.fill('切换期间保留的未发送草稿');
   await page.getByRole('button', { name: '切换模型', exact: true }).click();

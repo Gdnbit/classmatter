@@ -17,7 +17,7 @@ async function main(){
       const page=await app.firstWindow();page.on('pageerror',error=>errors.push(error.message));
       page.on('request',request=>{if(/^https?:/.test(request.url())&&!request.url().startsWith(`http://127.0.0.1:${port}/`))external.push(request.url());});
       await page.locator('.app-shell > .sidebar .new-chat').waitFor();
-      assert.equal(await page.getByLabel('Owner 密码').count(),0);
+      assert.equal(await page.getByLabel('密码', { exact: true }).count(),0);
       assert.equal(await page.evaluate(()=>typeof window.classMatterSetup),'undefined');
       assert.equal(await page.evaluate(()=>document.cookie.includes('class_os_')),false);
       // Electron uses an isolated BrowserWindow session, not Playwright's
@@ -67,7 +67,7 @@ async function main(){
         await page.locator('.app-shell > .sidebar .new-chat').waitFor();
       }
       await page.reload();await page.locator('.app-shell > .sidebar .new-chat').waitFor();
-      assert.equal(await page.getByLabel('Owner 密码').count(),0);
+      assert.equal(await page.getByLabel('密码', { exact: true }).count(),0);
       await app.close();app=null;
     }
     assert.deepEqual(errors,[]);assert.deepEqual(external,[]);

@@ -332,7 +332,7 @@ function AppShell() {
       ...prev,
       {
         role: "assistant",
-        text: "已按明确指定的两名学生生成演示预览；未修改原名单或业务数据库。请核对姓名、学号及前后座位。",
+        text: "已生成座位预览，请核对两名学生及前后位置。",
       },
     ])
   }
@@ -798,7 +798,7 @@ function Composer({
           {voice === "recording" ? (
             <>
               <span className="wave">▁▃▅▂▆▃▂</span>
-              <strong>模拟录音 · 未开启麦克风</strong>
+              <strong>语音示例 · 未录音</strong>
               <button
                 onClick={() => {
                   setVoice("transcribing")
@@ -830,7 +830,7 @@ function Composer({
             <span className="voice-orb"><AudioLines size={18} /></span>
             <div>
               <strong>语音工作区</strong>
-              <small>前端交互演示 · 当前不会保存或上传音频</small>
+              <small>语音功能暂不可用</small>
             </div>
             <button
               className="panel-close"
@@ -964,7 +964,7 @@ function Composer({
           >
             <Plus size={19} />
           </button>
-          <span className="tool-policy">受控工具</span>
+          <span className="tool-policy">工具</span>
           </div>
           <div className="composer-actions">
             <button
@@ -1145,14 +1145,14 @@ function DashboardWorkspace() {
     ["演示截止信息", `${tasks.filter(t => t.state !== "done" && /今天|明天|已逾期/.test(t.due)).length} 项`, "样例时间标签，不是实际日历调度结果"],
     ["等待别人", `${tasks.filter(t => t.state === "waiting").length} 项`, "分工待确认，不默认判断最终责任"],
     ["可能遗漏", `${tasks.filter(t => t.state === "possible").length} 项`, "来源：同一份演示事项列表"],
-    ["请假 / 缺勤", "未接入", "当前桌面演示未连接考勤数据"],
-    ["作业待跟进", "样例", "未接入真实作业数据"],
-    ["学生近期动态", "演示", "学生、名单与座位来自同一内存状态"],
+    ["请假 / 缺勤", "暂不可用", "当前桌面演示未连接考勤数据"],
+    ["作业待跟进", "样例", "作业示例"],
+    ["学生近期动态", "演示", "学生动态示例"],
     ["成绩摘要", "未解析", "只有表格样例，未导入真实成绩"],
-    ["AI 待处理", "样例", "未运行真实模型或解析服务"],
-    ["自动化运行", "未接入", "未创建真实提醒或定时任务"],
+    ["AI 待处理", "样例", "待处理内容示例"],
+    ["自动化运行", "暂不可用", "未创建真实提醒或定时任务"],
     ["最近文件", "3 份样例", "未实际上传或解析"],
-    ["班级位置", "演示内存", "名单与座位同源，宿舍/小组仍为样例"],
+    ["班级位置", "示例", "座位、宿舍和分组示例"],
     ["最近活动", plan ? "演示草稿" : "暂无草稿", plan ? `当前对话演示状态：${phase}` : "尚未生成座位候选"],
   ]
   const visible = cards.filter(([title]) => !hidden.includes(title))
@@ -1178,7 +1178,7 @@ function DashboardWorkspace() {
           className="primary"
           onClick={() => {
             setEditing(!editing)
-            if (editing) notify("总览布局仅在当前页面内存中生效，刷新会重置")
+            if (editing) notify("布局调整未保存，刷新后还原。")
           }}
         >
           {editing ? "完成编辑" : "编辑总览"}
@@ -1253,7 +1253,7 @@ function WorkWorkspace(_: any) {
     <WorkTabs items={["需要我处理", "等待别人", "可能遗漏", "即将截止", "已闭环", "全部"].map(label => ({ id: label, label }))} current={tab} onSelect={setTab} />
     <div className="work-list">
       {rows.map(task => <WorkItemButton key={task.id} onSelect={() => open(task)} title={task.title} due={task.due} status={task.state === "done" ? "演示已完成" : task.source} />)}
-      {!rows.length && <p className="demo-capability-note">此范围暂无该类演示事项。未自动创建任务或修改其他工作空间。</p>}
+      {!rows.length && <p className="demo-capability-note">暂无此类事项</p>}
     </div>
   </div>
 }
@@ -1291,11 +1291,11 @@ function DataWorkspace({ setWorkspace }: any) {
           value:
             item.includes("OCR") || item.includes("图片")
               ? "OCR 候选提取"
-              : "本地前端演示数据",
+              : "示例内容",
         },
       ],
       actions: [
-        { label: "延后处理", onSelect: () => notify("延后处理尚未接入；未移动文件或创建提醒") },
+        { label: "延后处理", onSelect: () => notify("延后处理暂不可用") },
         {
           label: "标记已核对",
           tone: "primary",
@@ -1470,16 +1470,16 @@ function SpreadsheetWorkspace() {
           onClick={() =>
             requestConfirm({
               title: "确认生成成绩导入提案？",
-              description: "这一步只生成可审阅 Diff，不会写入正式成绩。",
-              confirmLabel: "生成 Diff",
+              description: "请核对修改预览，确认前不保存。",
+              confirmLabel: "生成预览",
               onConfirm: () => {
-                notify("当前展示固定字段映射样例，未生成真实导入 Diff")
+                notify("导入暂不可用，尚未保存。")
                 showMapping()
               },
             })
           }
         >
-          查看 Diff
+          查看修改预览
         </button>
       </div>
     </WorkspaceShell>
@@ -1492,7 +1492,7 @@ function DocumentWorkspace() {
   return (
     <WorkspaceShell
       title="文档"
-      description="家长会方案 · 所有修改都保留来源、版本与可审阅 Diff。"
+      description="家长会方案"
       icon={FileText}
     >
       <div className="document-layout">
@@ -1568,7 +1568,7 @@ function DocumentWorkspace() {
               openDetail({
                 eyebrow: "来源证据",
                 title: "班会材料 · 9月3日",
-                description: "仅演示段落来源的展示方式；没有接入真实材料或验证引用关系。",
+                description: "示例引用",
                 status: "合成来源样例 · 未验证",
               })
             }
@@ -1597,10 +1597,10 @@ function DormWorkspace({ activeStudentId, selectStudent }: any) {
   return (
     <WorkspaceShell
       title="宿舍"
-      description={`${building} · ${floor} · 同一学生身份可在座位和小队中持续定位。`}
+      description={`${building} · ${floor}`}
       icon={BedDouble}
     >
-      <p className="demo-capability-note">宿舍布局是静态合成样例；尚未接入床位管理或学校宿管系统。</p>
+      <p className="demo-capability-note">宿舍示例，暂不能调整床位。</p>
       <div className="dorm-tools">
         <button
           onClick={() => setBuilding(building === "1号楼" ? "2号楼" : "1号楼")}
@@ -1616,7 +1616,7 @@ function DormWorkspace({ activeStudentId, selectStudent }: any) {
         >
           仅看有空位
         </button>
-        <button onClick={() => notify("宿舍调整尚未接入；未生成草稿或修改床位")}>
+        <button onClick={() => notify("宿舍调整暂不可用")}>
           发起调整
         </button>
       </div>
@@ -1671,7 +1671,7 @@ function GroupWorkspace({ activeStudentId, selectStudent }: any) {
   return (
     <WorkspaceShell
       title="小队与画布"
-      description="静态合成分组样例；布局编辑、自动求解与保存服务尚未接入。"
+      description="分组示例，暂不能编辑。"
       icon={Network}
     >
       <div className="group-tools">
@@ -1690,9 +1690,9 @@ function GroupWorkspace({ activeStudentId, selectStudent }: any) {
           onClick={() =>
             requestConfirm({
               title: "生成自动分组候选？",
-              description: "当前没有接入分组求解器；确认只查看演示反馈，不会生成候选或覆盖分组。",
+              description: "自动分组暂不可用。",
               confirmLabel: "生成候选",
-              onConfirm: () => notify("当前仅展示分组样例；未执行均衡求解或生成候选"),
+              onConfirm: () => notify("自动分组暂不可用。"),
             })
           }
         >
@@ -1755,7 +1755,7 @@ function InboxWorkspace() {
       openDetail({
         eyebrow: "编辑候选",
         title: item,
-        description: "编辑后的内容仍然是草稿，需要在 Preview 中再次确认。",
+        description: "请核对后保存。",
         actions: [
           {
             label: "保存编辑",
@@ -1767,7 +1767,7 @@ function InboxWorkspace() {
     else if (action === "接受")
       requestConfirm({
         title: "接受这条 AI 候选？",
-        description: "接受后只生成业务草稿，仍需在预览页确认后才能提交。",
+        description: "确认后打开草稿。",
         confirmLabel: "接受为草稿",
         onConfirm: () => {
           setItems(items.filter((x) => x !== item))
@@ -1779,13 +1779,13 @@ function InboxWorkspace() {
       notify("仅移除当前演示候选；没有实际来源文件或保留策略执行")
     } else {
       setDeferred([...deferred, item])
-      notify("仅在当前演示中标记延后；未设置明天提醒或后台任务")
+      notify("已延后示例事项，未设置提醒。")
     }
   }
   return (
     <WorkspaceShell
       title="AI 待处理"
-      description="候选内容仅供审核；接受后仍须进入 Preview Before Commit。"
+      description="请核对待处理内容。"
       icon={Bot}
     >
       {items.length === 0 ? (
@@ -1858,7 +1858,7 @@ function AutomationWorkspace() {
   return (
     <WorkspaceShell
       title="自动化"
-      description="计划、触发器与运行记录均为合成样例；没有后台调度或实际运行。"
+      description="自动化示例，暂不运行。"
       icon={CalendarClock}
     >
       <div className="tabbar">
@@ -1882,7 +1882,7 @@ function AutomationWorkspace() {
                 title: row[0],
                 description:
                   "仅展示自动化交互；没有实际检查条件、生成提醒、草稿或业务写入。",
-                status: enabled.includes(row[0]) ? "样例启用标记 · 无后台任务" : "样例暂停标记 · 无后台任务",
+                status: enabled.includes(row[0]) ? "示例已启用，暂不运行" : "示例已暂停",
                 sections: [
                   { label: "计划", value: row[1] },
                   { label: "结果", value: row[2] },
@@ -1909,8 +1909,8 @@ function AutomationWorkspace() {
                             )
                             notify(
                               enabled.includes(row[0])
-                                ? "仅修改当前演示暂停标记；未暂停实际后台计划"
-                                : "仅修改当前演示启用标记；未启动实际后台计划",
+                                ? "已暂停示例"
+                                : "已启用示例，暂不运行",
                             )
                           },
                         },
@@ -1942,7 +1942,7 @@ function KnowledgeWorkspace() {
   return (
     <WorkspaceShell
       title="知识库"
-      description="知识样例与正式学生事实分离；尚未接入知识存储、RAG或引用检索。"
+      description="知识库示例"
       icon={Archive}
     >
       <div className="library-toolbar">
@@ -1990,7 +1990,7 @@ function KnowledgeWorkspace() {
                 openDetail({
                   eyebrow: "知识条目",
                   title: a,
-                  description: "仅展示版本与引用结构；本演示没有实际保存知识、索引或Agent引用。",
+                  description: "此示例暂不能保存。",
                   status: b,
                   sections: [
                     {
@@ -2042,9 +2042,9 @@ function ReportsWorkspace() {
       title: item,
       description:
         mode === "编辑"
-          ? "当前仅展示编辑入口；未保存Artifact或修改底层业务事实。"
-          : "合成材料样例；未读取真实业务数据或生成产物。",
-      status: item === "数据退出包" ? "需要强确认" : "Artifact Draft · 版本 1",
+          ? "此示例暂不能保存。"
+          : "报告示例",
+      status: item === "数据退出包" ? "需要强确认" : "报告草稿",
       sections: [
         { label: "范围", value: "合成演示班 · 当前学期" },
         { label: "来源", value: "任务、事件与已确认记录" },
@@ -2069,7 +2069,7 @@ function ReportsWorkspace() {
   return (
     <WorkspaceShell
       title="报告与导出"
-      description="报告将先生成 Artifact Draft；数据退出包需要单独确认。"
+      description="先预览报告，再选择导出。"
       icon={FolderOpen}
     >
       <div className="report-list">
@@ -2080,7 +2080,7 @@ function ReportsWorkspace() {
               <span>
                 {item === "数据退出包"
                   ? "强确认后导出"
-                  : "Artifact Draft · 版本 1"}
+                  : "报告草稿"}
               </span>
             </div>
             <div>
@@ -2103,7 +2103,7 @@ function StudentDetailWorkspace({ studentId, activeTab, onBack, onDiscuss }: any
   const { notify, openDetail } = useUiFeedback()
   const { tasks } = useDemoWork()
   const student = students.find((item) => item.id === studentId)
-  if (!student) return <WorkspaceShell title="未知学生" description="未找到此身份；没有回退到其他学生。" icon={Users}><button onClick={onBack}>返回学生列表</button></WorkspaceShell>
+  if (!student) return <WorkspaceShell title="未知学生" description="未找到学生，请返回名单重新选择。" icon={Users}><button onClick={onBack}>返回学生列表</button></WorkspaceShell>
   const relatedTasks = tasks.filter(t => t.studentId === student.id)
   const tabs = [
     ["概览", undefined],
@@ -2224,7 +2224,7 @@ function StudentWorkspace({
   const [query, setQuery] = useState("")
   return (
     <div className="surface student-surface">
-      <StudentPageTitle title={title} description="同一学生、范围、筛选与选中状态在所有视图中持续保留。" />
+      <StudentPageTitle title={title} description="" />
       <StudentViewSwitcher current={view} onSelect={setView} />
       {(view === "清单" || view === "表格") && <div className="student-search">
         <label htmlFor="demo-student-search">搜索学生</label>
@@ -2281,7 +2281,7 @@ function RepresentativeContent({ workspace }: { workspace: Workspace }) {
     ],
     group: [
       "小队协作",
-      "六个小队共享同一班级身份集合",
+      "六个小队",
       ["晨星小队 · 6人", "远航小队 · 5人", "待分组 · 2人"],
     ],
     inbox: [
@@ -2490,7 +2490,7 @@ function SettingsWorkspace() {
                   测试连接状态：{connection} · 密钥仅作为本地配置草稿。
                 </small>
               </div>
-              <button onClick={() => setConnection("仅模拟界面反馈；未发起网络请求，不能证明连接正常")}>
+              <button onClick={() => setConnection("示例模式，未连接模型，不能证明连接正常")}>
                 测试连接
               </button>
             </div>
@@ -2535,7 +2535,7 @@ function SettingsWorkspace() {
               </section>
               <section>
                 <strong>数据策略</strong>
-                <span>仅发送已授权上下文</span>
+                <span>选择可使用的内容</span>
               </section>
               <section>
                 <strong>处理方</strong>
@@ -2581,10 +2581,10 @@ function SettingsSection({ section }: { section: string }) {
         <section key={item}>
           <div>
             <strong>{item}</strong>
-            <span>未接入 · 仅说明规划边界，不修改配置</span>
+            <span>暂不可用</span>
           </div>
           <button
-            onClick={() => openDetail({ title: item, eyebrow: `设置 / ${section}`, description: "此能力尚未接入当前演示。本次只查看说明，没有保存偏好、改变权限、连接服务或创建后台任务。", status: "未接入", actions: [{ label: "关闭", tone: "primary" }] })}
+            onClick={() => openDetail({ title: item, eyebrow: `设置 / ${section}`, description: "此功能暂不可用。", status: "暂不可用", actions: [{ label: "关闭", tone: "primary" }] })}
             aria-label={`了解${item}`}
           >
             了解

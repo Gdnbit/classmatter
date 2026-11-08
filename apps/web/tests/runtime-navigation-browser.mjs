@@ -26,7 +26,7 @@ async function commit(approved = false) {
 }
 try {
   await page.goto(base + '/students?view=table')
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026')
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026')
   await page.getByRole('button', { name: '登录', exact: true }).click()
   await page.getByRole('heading', { name: '学生', exact: true }).waitFor()
   await page.getByRole('button', { name: '设置', exact: true }).click()
@@ -38,7 +38,7 @@ try {
   await commit(true)
   for (const name of ['合成导航学生甲', '合成导航学生乙']) {
     await page.getByRole('button', { name: '添加学生', exact: true }).click()
-    await page.getByLabel('学生姓名（允许同名，内部 ID 区分）').fill(name)
+    await page.getByLabel('学生姓名').fill(name)
     await commit()
   }
   const views = page.getByRole('tablist', { name: '学生视图切换' })
@@ -160,7 +160,7 @@ try {
   await page.keyboard.press('Escape')
   await page.goto(base + `/work?task=00000000-0000-0000-0000-000000000099`)
   await page.waitForFunction(() => Array.from(document.querySelectorAll('button')).some(button => button.textContent.trim() === '新建任务' && !button.disabled))
-  await page.getByText('所选任务不在当前已授权查询中', { exact: false }).waitFor()
+  await page.getByText('未找到所选任务', { exact: false }).waitFor()
   assert.equal(await page.getByRole('button', { name: '编辑标题与截止时间', exact: true }).count(), 0)
   writesBeforeNavigation = mutations.length
 
@@ -168,12 +168,12 @@ try {
   await page.getByRole('button', { name: '总览', exact: true }).click()
   await page.getByRole('button', { name: '学生', exact: true }).click()
   const draftBackPath = path()
-  await page.getByRole('button', { name: /合成导航学生甲.*版本/ }).click()
+  await page.getByRole('button', { name: /合成导航学生甲.*在班/ }).click()
   await page.getByRole('button', { name: '记录事实', exact: true }).click()
   await page.getByLabel('事实原文（观察类型请留空）').fill('合成尚未提交的导航草稿')
   const historyLength = await page.evaluate(() => history.length)
   await page.goBack()
-  await page.getByText('页面切换已延后。', { exact: false }).waitFor()
+  await page.getByText('请先完成或取消当前操作，再切换页面。', { exact: false }).waitFor()
   assert.equal(await page.getByLabel('事实原文（观察类型请留空）').inputValue(), '合成尚未提交的导航草稿')
   await page.goBack(); await page.goForward()
   assert.equal(await page.evaluate(() => history.length), historyLength)
@@ -187,7 +187,7 @@ try {
   await page.getByRole('button', { name: '学生', exact: true }).click()
   // The restored dashboard URL has no student hint. Explicitly select the
   // identity again; do not expect an invisible previous-student fallback.
-  await page.getByRole('button', { name: /合成导航学生甲.*版本/ }).click()
+  await page.getByRole('button', { name: /合成导航学生甲.*在班/ }).click()
   await page.getByRole('button', { name: '记录事实', exact: true }).click()
   await page.getByLabel('发生时间（本机时区）').fill('2026-10-08T08:00')
   await page.getByLabel('事实原文（观察类型请留空）').fill('合成待确认导航草稿')
@@ -195,7 +195,7 @@ try {
   await page.getByRole('heading', { name: '确认这次变更', exact: true }).waitFor()
   const writesBeforeBack = mutations.length
   await page.goBack()
-  await page.getByText('页面切换已延后。', { exact: false }).waitFor()
+  await page.getByText('请先完成或取消当前操作，再切换页面。', { exact: false }).waitFor()
   assert((await page.getByRole('dialog').innerText()).includes('合成待确认导航草稿'))
   assert.equal(mutations.length, writesBeforeBack)
   await page.keyboard.press('Escape') // Explicitly reject the proposal, not a navigation side effect.
@@ -204,13 +204,13 @@ try {
 
   const unknown = '00000000-0000-0000-0000-000000000099'
   await page.goto(base + `/students/${unknown}`); await waitEditable()
-  await page.getByText('此学生不在当前已授权班级查询中。', { exact: false }).waitFor()
+  await page.getByText('未找到所选学生', { exact: false }).waitFor()
   assert.equal(await page.getByText('合成导航数据库事实', { exact: true }).count(), 0)
   await page.goto(base + `/students/${idA}?tab=grades`); await waitEditable()
-  await page.getByRole('heading', { name: '此学生视图尚未接入', exact: true }).waitFor()
+  await page.getByRole('heading', { name: '此视图暂不可用', exact: true }).waitFor()
   assert.equal(await page.getByText('合成导航数据库事实', { exact: true }).count(), 0)
   await page.goto(base + '/data/spreadsheets/score-001')
-  await page.getByRole('heading', { name: '此功能尚未接通', exact: true }).waitFor()
+  await page.getByRole('heading', { name: '此功能暂不可用', exact: true }).waitFor()
   await page.goto(base + `/students/${idA}?tab=records`); await waitEditable()
   await page.evaluate(other => history.replaceState({ studentId: other, draft: 'synthetic-untrusted-history', authority: 'owner' }, '', location.href), idB)
   await page.reload(); await waitEditable()
@@ -249,12 +249,12 @@ try {
       assert.equal(await page.getByLabel('设置中切换班级', { exact: true }).isDisabled(), true)
       await page.getByRole('button', { name: '关闭设置', exact: true }).click()
       await page.locator('.r1-logout').click()
-      await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026')
+      await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026')
       await page.getByRole('button', { name: '登录', exact: true }).click()
       await page.getByRole('heading', { name: '今天想处理什么？', exact: true }).waitFor()
       await page.getByRole('button', { name: '学生', exact: true }).click()
       await waitEditable()
-      await page.getByText('页面切换已延后。', { exact: false }).waitFor({ state: 'hidden' })
+      await page.getByText('请先完成或取消当前操作，再切换页面。', { exact: false }).waitFor({ state: 'hidden' })
       if (switchScope) {
         await page.getByRole('button', { name: '设置', exact: true }).click()
         await page.getByRole('button', { name: '预览归档（历史仍可查看）', exact: true }).click()
@@ -283,19 +283,19 @@ try {
       release(); await done
       assert.equal(deliveryError, undefined)
       await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
-      assert.equal(await page.getByLabel('Owner 密码').count(), 0)
+      assert.equal(await page.getByLabel('密码', { exact: true }).count(), 0)
       assert.equal(await page.getByText('合成导航数据库事实', { exact: true }).count(), expectedFacts)
       assert.equal(await page.locator('.r1-topbar > span').innerText(), currentScope)
       // Complete another actual authorized read after the late delivery.
       await page.getByRole('button', { name: '刷新数据', exact: true }).click()
       await waitEditable()
       assert.equal(path(), '/students')
-      assert.equal(await page.getByLabel('Owner 密码').count(), 0)
+      assert.equal(await page.getByLabel('密码', { exact: true }).count(), 0)
       assert.equal(await page.getByText('合成导航数据库事实', { exact: true }).count(), expectedFacts)
-      await page.getByText('页面切换已延后。', { exact: false }).waitFor({ state: 'hidden' })
+      await page.getByText('请先完成或取消当前操作，再切换页面。', { exact: false }).waitFor({ state: 'hidden' })
       assert.equal(await page.locator('.r1-topbar > span').innerText(), currentScope)
-      if (switchScope) assert.equal(await page.getByRole('button', { name: /合成导航学生甲.*版本/ }).count(), 0)
-      else await page.getByRole('button', { name: /合成导航学生甲.*版本/ }).waitFor()
+      if (switchScope) assert.equal(await page.getByRole('button', { name: /合成导航学生甲.*在班/ }).count(), 0)
+      else await page.getByRole('button', { name: /合成导航学生甲.*在班/ }).waitFor()
     } finally { release(); await done; await page.unroute(activityRoute, oldDelivery) }
   }
   await page.getByRole('button', { name: '设置', exact: true }).click()

@@ -15,7 +15,7 @@ async function launch() {
   // Private workspace connection (15s) precedes the API's bounded startup (30s).
   const page = await app.firstWindow({ timeout: 60000 });
   await page.getByLabel('输入消息').waitFor();
-  assert.equal(await page.getByLabel('Owner 密码').count(), 0);
+  assert.equal(await page.getByLabel('密码', { exact: true }).count(), 0);
   assert.equal(await page.getByRole('button', { name: '退出登录', exact: true }).count(), 0);
   assert.equal(await page.getByRole('button', { name: '进入本机开发', exact: true }).count(), 0);
   assert.equal(await page.evaluate(() => window.classMatterDesktop.localOnly), true);

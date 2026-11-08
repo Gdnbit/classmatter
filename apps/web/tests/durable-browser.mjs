@@ -15,9 +15,9 @@ page.on('request', request => {
 const history = page.getByRole('region', { name: '已保存的对话' });
 try {
   await page.goto(base + '/');
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
-  await page.getByLabel('Agent 交互模式').selectOption('read');
+  await page.getByLabel('对话方式').selectOption('read');
   await page.getByText('已发送文字和完成结果由数据库保存。', { exact: false }).waitFor();
   await page.getByLabel('输入消息').fill('合成耐久浏览器查询');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
@@ -102,7 +102,7 @@ try {
   await page.goto(base+firstPath);
   await history.getByText('合成耐久浏览器查询',{exact:true}).waitFor();
   assert.equal(await page.getByLabel('输入消息').inputValue(),'');
-  await page.getByLabel('Agent 交互模式').selectOption('draft');
+  await page.getByLabel('对话方式').selectOption('draft');
   await page.getByLabel('输入消息').fill('合成耐久任务草稿');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   await history.getByRole('heading', { name: '未提交的任务草稿', exact: true }).waitFor();
@@ -111,7 +111,7 @@ try {
   await page.getByRole('dialog').getByRole('button', { name: '关闭表单', exact: true }).click();
   assert.equal(starts(), 2);
   await page.getByRole('button',{name:'设置',exact:true}).click();
-  await page.getByRole('button',{name:'生成耐久会话退出预览',exact:true}).click();
+  await page.getByRole('button',{name:'预览导出',exact:true}).click();
   let exitDialog=page.getByRole('dialog');
   const refusal=page.waitForResponse(response=>new URL(response.url()).pathname.endsWith('/commands/'+process.env.CLASS_OS_D1_REAUTH_PHASE));
   await exitDialog.getByRole('button',{name:'明确批准并生成证据包',exact:true}).click();
@@ -123,7 +123,7 @@ try {
   await page.getByLabel('当前密码（身份验证）').fill('synthetic-test-passphrase-2026');
   await page.getByRole('button',{name:'明确执行身份操作',exact:true}).click();
   await page.getByRole('dialog').waitFor({state:'hidden'});
-  await page.getByRole('button',{name:'生成耐久会话退出预览',exact:true}).click();
+  await page.getByRole('button',{name:'预览导出',exact:true}).click();
   exitDialog=page.getByRole('dialog');
   // Drop one REAL commit reply after the database has responded. The UI must
   // retain the same proposal/key and resolve by GET, never submit a new export.
@@ -142,7 +142,7 @@ try {
   assert.equal(await exitDialog.getByRole('button',{name:'取消导出预览',exact:true}).count(),0);
   await exitDialog.getByRole('button',{name:'核对原导出结果',exact:true}).click();
   await exitDialog.waitFor({state:'hidden'});
-  const downloadLink=page.getByRole('link',{name:'下载已批准的合成 v6 证据包（30分钟内）',exact:true});
+  const downloadLink=page.getByRole('link',{name:'下载工作记录（30分钟内有效）',exact:true});
   const downloadPath=await downloadLink.getAttribute('href');
   const downloaded=page.waitForEvent('download');await downloadLink.click();
   const artifact=await downloaded,stream=await artifact.createReadStream(),chunks=[];
@@ -158,9 +158,9 @@ try {
   const clearRefusal=page.waitForResponse(response=>new URL(response.url()).pathname.endsWith('/commands/commit'));
   await confirm.getByRole('button', { name: '明确批准并提交', exact: true }).click();
   assert.equal((await clearRefusal).status(),409);
-  await confirm.getByRole('button',{name:'使用原预览与同键重试提交',exact:true}).waitFor();
+  await confirm.getByRole('button',{name:'重试保存',exact:true}).waitFor();
   assert.equal(await confirm.getByRole('button',{name:'取消预览',exact:true}).count(),0);
-  await confirm.getByRole('button',{name:'使用原预览与同键重试提交',exact:true}).click();
+  await confirm.getByRole('button',{name:'重试保存',exact:true}).click();
   await confirm.waitFor({ state: 'hidden' });
   await history.getByText('正文已清除；事实与手工任务不受影响。', { exact: true }).waitFor();
   assert.equal(await history.locator('.r1-messages article').count(), 0);

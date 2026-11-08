@@ -64,6 +64,7 @@ import { AttentionColumns } from "@/shell/AttentionColumns"
 import { StudentPageTitle, StudentViewSwitcher, StudentProfileHeader } from "@/shell/StudentPresentation"
 import { WorkHeading, WorkTabs, WorkItemButton } from "@/shell/WorkPresentation"
 import "./connected-workbench.css"
+import { actionName, userMessage } from "./user-facing"
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -560,7 +561,7 @@ export default function R1App() {
     setRecord(null)
     navigation.clearTask()
     setReplacingIdentifier(null)
-    setNotice(`已保存，版本 ${receipt.version}；回执 ${receipt.receipt_id}`)
+    setNotice("已保存")
     await reload()
   }
   async function checkCommit() {
@@ -798,7 +799,7 @@ export default function R1App() {
     runningAgent.current = controller
     const text = message.trim()
     followingConversation.current = true; setNewReply(false)
-    setMessage(""); setError(""); setAgentDraft(null); setAgentRecordNote(null); setAgentStatus("连接 Agent…")
+    setMessage(""); setError(""); setAgentDraft(null); setAgentRecordNote(null); setAgentStatus("正在连接…")
     setMessages(previous => [...previous, { role: "user", text }])
     let answer = "", draft: string | null = null, failed = false
     let noteDraft: unknown = null
@@ -822,7 +823,7 @@ export default function R1App() {
       await consumeEvents(response, event => {
         if (controller.signal.aborted) return
         if (agentMode === "chat" && (event.type.startsWith("tool.") || event.type === "draft.available")) throw new Error("普通聊天不允许执行班级工具。")
-        if (event.type === "run.started") setAgentStatus(event.payload.provider === "configured-api" ? "Agent 已开始（已配置 API）" : "Agent 已开始（离线合成或协议测试）")
+        if (event.type === "run.started") setAgentStatus(event.payload.provider === "configured-api" ? "正在回复…" : "正在回复示例内容…")
         if (event.type === "tool.started") setAgentStatus(event.payload.tool === "attention_list" ? "正在查询当前工作…" : "正在整理未提交草稿…")
         if (event.type === "draft.available") {
           const candidate = event.payload.draft
@@ -849,9 +850,9 @@ export default function R1App() {
       const recordNote = recordNoteMode ? await parseRecordNoteCandidate(noteDraft, text, controller.signal) : null
       if (controller.signal.aborted) return
       setMessages(previous => [...previous, { role: "assistant", text: answer, sources }]); setAgentDraft(draft); setAgentRecordNote(recordNote)
-      setAgentStatus("已完成 · 无业务写入")
+      setAgentStatus("回复完成")
     } catch (reason) {
-      if (controller.signal.aborted) setAgentStatus("已停止 · 未采纳未完成结果")
+      if (controller.signal.aborted) setAgentStatus("已停止回复")
       else { fail(reason); setAgentStatus("运行未完成"); if (reason instanceof ApiError && reason.status === 409) setConversationId("") }
     } finally { if (runningAgent.current === controller) runningAgent.current = null }
   }
@@ -894,7 +895,7 @@ export default function R1App() {
   </section></div>
 
   if (runtimeProfile === "r1" && navigation.route.conversationId) return <div className="r1-auth"><section>
-    <p role="status">当前 R1 实例未启用耐久会话，不能读取此 D1 链接；未回退临时对话。</p>
+    <p role="status">暂时无法打开这段对话，请从聊天列表重新选择。</p>
     <button onClick={() => navigation.setConversation("", "", "")}>返回当前实例</button>
   </section></div>
 
@@ -1024,7 +1025,7 @@ export default function R1App() {
         <header className="topbar r1-topbar">
           <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "documents" ? "数据与内容" : page === "settings" ? "设置" : "班事有谱"}</strong>
           <span role={refreshing ? "status" : undefined}>
-            {page === "conversation" ? "" : refreshing ? "正在加载…" : classroom?.term_name || ""}
+            {refreshing ? "正在加载…" : page === "conversation" ? "" : classroom?.term_name || ""}
             {classroom?.status === "archived" && " · 历史只读"}
           </span>
           <button
@@ -1038,7 +1039,7 @@ export default function R1App() {
       }>
         {error && !form && !pending && (
           <div className="r1-error" role="alert">
-            {error}
+            {userMessage(error)}
             <button onClick={() => setError("")} aria-label="关闭错误">
               <X size={14} />
             </button>
@@ -1049,10 +1050,10 @@ export default function R1App() {
             {notice}
           </div>
         )}
-        {navigation.deferred && <div className="r1-warning" role="status">页面切换已延后。当前表单、批准和对象保持不变；完成或取消当前操作后再切换，不会自动提交。</div>}
+        {navigation.deferred && <div className="r1-warning" role="status">请先完成或取消当前操作，再切换页面。</div>}
         {!refreshing && !queryFresh && (
           <div className="r1-warning" role="status">
-            <strong>当前列表尚未刷新。</strong>这里只保留上次成功读取的快照（若有），不是最新数据；新业务预览已暂停。成功回执不因读取失败而失效，结果未知的提交仍须核对原请求。
+            <strong>当前列表尚未刷新。</strong>请刷新后再继续编辑；若刚才正在保存，请先核对结果。
             <button disabled={busy || documentBusy} onClick={() => void action(() => reload(documentDraft ? classroom : undefined))}>重新读取数据</button>
           </div>
         )}
@@ -1069,8 +1070,8 @@ export default function R1App() {
           if (followingConversation.current) setNewReply(false)
         }}>
           {page === "unavailable" && <section className="r1-card">
-            <h1>此功能尚未接通</h1>
-            <p>文件、成绩、排座、专题、知识库和自动化等原型能力不属于当前 R1 数据链路。这里不会加载演示数据或声称已保存。</p>
+            <h1>此功能暂不可用</h1>
+            <p>请使用左侧已开放的功能。</p>
             <button onClick={() => setPage("conversation")}>返回对话</button>
             <button onClick={() => { setSelectedStudent(""); setPage("students") }}>查看已接入的学生</button>
           </section>}
@@ -1127,7 +1128,7 @@ export default function R1App() {
                   <article key={i} className={item.role}>
                     <small>{item.role === "user" ? "你" : "ClassMatter"}</small>
                     <p>{item.text}</p>
-                    {item.sources?.map(source => <details key={source.id} className="r1-muted"><summary>已审计的当前工作快照 · {displayTime(source.as_of)}</summary><p>查询回执：{source.id}</p><p>完整来源版本摘要：{source.projection_hash}</p><small>这是一轮只读查询的来源证明，不是记忆中的事实或写入批准。</small></details>)}
+                    {item.sources?.map(source => <details key={source.id} className="r1-muted"><summary>查看回答依据 · {displayTime(source.as_of)}</summary><p>内容可能已更新，请查看最新记录。</p></details>)}
                   </article>
                 ))}
                 {agentStatus && <p role="status" className="r1-muted">{agentStatus}</p>}
@@ -1141,7 +1142,7 @@ export default function R1App() {
               <div className="r1-heading">
                 <h1>今天的班级工作</h1>
                 <p>
-                  来自同一数据世界 · 查询时间{" "}
+                  更新于{" "}
                   {activity ? displayTime(activity.as_of) : "尚无数据"}
                 </p>
               </div>
@@ -1194,17 +1195,17 @@ export default function R1App() {
           {page === "students" && (
             <>
               {selected ? <StudentProfileHeader name={selected.name}
-                identity={`${selected.student_id} · ${classroom?.name || ""} · ${selected.status === "inactive" ? "已停用" : "在班"}`}
-                description="当前班级与学期的已查询数据；事实、观察与草稿保持区分。"
+                identity={`${classroom?.name || ""} · ${selected.status === "inactive" ? "已停用" : "在班"}`}
+                description=""
                 onBack={() => { setSelectedStudent(""); setRecord(null); setTask(null) }}
                 actions={<button className="primary" disabled={!canEditStudent || busy} onClick={() => { setRecord(null); open("record") }}>添加记录</button>} />
-                : <StudentPageTitle title="学生" description="同一学生、范围、筛选与选中状态在清单和表格中持续保留。" />}
+                : <StudentPageTitle title="学生" description="" />}
               {!selected && <StudentViewSwitcher current={studentView === "list" ? "清单" : "表格"} connected
                 onSelect={view => setStudentView(view === "表格" ? "table" : "list")} />}
               {!selected && <div className="r1-toolbar student-search">
                 <input
                   aria-label="搜索学生"
-                  placeholder="搜索姓名或内部 ID"
+                  placeholder="搜索学生"
                   value={search}
                   onChange={(event) => {
                     setSearch(event.target.value)
@@ -1227,28 +1228,26 @@ export default function R1App() {
                 <div className={`r1-student-layout${studentView === "table" ? " r1-student-table-layout" : ""}`}>
                   {!selected && <div className="r1-student-list">
                     <p className="r1-muted" role="status">显示 {matchingStudents.length} / {students.length} 位学生</p>
-                    <StudentDirectory students={matchingStudents} activity={activity} selectedId={selectedStudent} view={studentView} disabled={navigationBlocked}
+                    <StudentDirectory students={matchingStudents} activity={activity} identifiers={identifiers} selectedId={selectedStudent} view={studentView} disabled={navigationBlocked}
                       onSelect={id => { setSelectedStudent(id); setRecord(null); setTask(null) }} />
                     {!students.length && (
                       <p className="r1-muted">尚无学生，添加后即可记录事实。</p>
                     )}
                     {!!students.length && !matchingStudents.length && (
-                      <p className="r1-muted">没有匹配的学生。请清空搜索或核对内部 ID；不会自动匹配其他人。</p>
+                      <p className="r1-muted">没有找到学生，请调整搜索条件。</p>
                     )}
                   </div>}
                   <section>
-                    {selectedStudent && !selected && <p className="r1-warning" role="status">{queryFresh ? "此学生不在当前已授权班级查询中。请明确选择名单中的学生；不会自动替换为其他人。" : "正在核对所选学生；当前快照不能确认此对象。"}</p>}
+                    {selectedStudent && !selected && <p className="r1-warning" role="status">{queryFresh ? "未找到所选学生，请从名单中重新选择。" : "正在查找学生…"}</p>}
                     {selected && <nav className="view-switcher" aria-label="学生详情视图">
                       {([["overview", "概览"], ["timeline", "时间线"], ["tasks", "跟进"], ["records", "记录"]] as const).map(([tab, label]) =>
                         <button key={tab} className={studentTab === tab ? "active" : undefined} aria-pressed={studentTab === tab} onClick={() => setStudentTab(tab)}>{label}</button>)}
                     </nav>}
-                    {selected && studentTab === "unavailable" && <section className="r1-card"><h2>此学生视图尚未接入</h2><p>成绩、文件和关系不是当前查询字段；不展示样例画像。</p><button onClick={() => setStudentTab("overview")}>返回学生概览</button></section>}
+                    {selected && studentTab === "unavailable" && <section className="r1-card"><h2>此视图暂不可用</h2><p>请返回概览查看学生记录和跟进。</p><button onClick={() => setStudentTab("overview")}>返回学生概览</button></section>}
                     {selected && (studentTab === "overview" || studentTab === "tasks") && (
                       <section className="r1-card" aria-label="学生详情摘要">
                         <h2>学生详情</h2>
-                        <p>内部 ID：{selected.student_id}</p>
                         <p>{selected.status === "inactive" ? "已停用（历史可查）" : "在班"} · {records.length} 条当前记录 · {selectedFollowUps.filter(isOpenTask).length} 项未结束跟进</p>
-                        <p className="r1-muted">只展示当前班级、学期内已查询的数据，不代表完整人物画像。成绩、文件、关系图谱尚未接入。</p>
                         <h3>关联跟进</h3>
                         {selectedFollowUps.length ? selectedFollowUps.map(item => (
                           <button className="r1-attention-item" key={item.task_id} onClick={() => { setWorkFilter("all"); setTask(item); setPage("work") }}>
@@ -1358,11 +1357,11 @@ export default function R1App() {
           )}
           {page === "work" && (
             <>
-              <WorkHeading title="工作与跟进" description="个人工作状态不代表学校授权或他人已接受交接。" />
+              <WorkHeading title="工作与跟进" description="" />
               <WorkTabs current={workFilter} onSelect={id => { setWorkFilter(id as WorkFilter); setTask(null) }} items={[
                 { id: "mine", label: "需要我处理" }, { id: "waiting", label: "等待别人" },
-                { id: "possible", label: "可能遗漏", disabled: true, explanation: "通知责任候选尚未接入" },
-                { id: "due", label: "即将截止", disabled: true, explanation: "提醒规则尚未接入；任务仍展示已查询的截止时间" },
+                { id: "possible", label: "可能遗漏", disabled: true, explanation: "暂不可用" },
+                { id: "due", label: "即将截止", disabled: true, explanation: "暂不可用" },
                 { id: "closed", label: "已结束（完成 / 取消）" }, { id: "all", label: "全部" },
               ]} />
               <div className="r1-toolbar">
@@ -1397,7 +1396,7 @@ export default function R1App() {
                 </select>
                 {(selectedStudent || workFilter !== "all") && <button onClick={() => { setSelectedStudent(""); setWorkFilter("all"); setTask(null) }}>清空任务筛选</button>}
               </div>
-              {navigation.route.taskId && !task && <p className="r1-warning" role="status">所选任务不在当前已授权查询中；不会替换为其他任务。请重新读取或明确选择。</p>}
+              {navigation.route.taskId && !task && <p className="r1-warning" role="status">未找到所选任务，请刷新或重新选择。</p>}
               {task && !tasks.some(item => item.task_id === task.task_id) && <p className="r1-warning" role="status">所选任务不符合当前筛选，不会替换为其他任务。<button onClick={() => { setSelectedStudent(""); setWorkFilter("all"); setTask(task) }}>显示所选任务</button></p>}
               <p className="r1-muted" role="status">显示 {tasks.length} / {activity?.tasks.length || 0} 项任务 · 全班未结束 {openTasks.length} 项</p>
               {!tasks.length && <p className="r1-muted">{selectedStudent || workFilter !== "all" ? "当前筛选下没有任务，可清空筛选查看全部。" : "尚无任务。"}</p>}
@@ -1408,16 +1407,16 @@ export default function R1App() {
                     onSelect={() => setTask(task?.task_id === item.task_id ? null : item)} />
                   <p>
                     {studentName(item.student_id)} · {displayTime(item.due_at)}{" "}
-                    · v{item.version}
+
                   </p>
                   {item.source_record_id && (
                     <details>
                       <summary>查看来源事实与历史</summary>
-                      <p className="r1-muted">关联记录，不锁定建立任务时的版本；以下显示当前事实及历史更正。</p>
+                      <p className="r1-muted">查看关联记录及更正历史。</p>
                       {(activity?.records || []).some(source => source.record_id === item.source_record_id) ?
                         (activity?.records || []).filter(source => source.record_id === item.source_record_id).map(source => (
                           <article className="r1-card" key={`${source.record_id}-${source.version}`}>
-                            <strong>{studentName(source.student_id)} · {kinds[source.kind] || source.kind} · v{source.version}</strong>
+                            <strong>{studentName(source.student_id)} · {kinds[source.kind] || source.kind}</strong>
                             {source.fact_text && <p>事实：{source.fact_text}</p>}
                             {source.observation_text && <p>教师观察：{source.observation_text}</p>}
                             <small>发生 {displayTime(source.occurred_at)} · 记录 {displayTime(source.recorded_at)}</small>
@@ -1521,13 +1520,13 @@ export default function R1App() {
               <span className="r1-muted">
                 附件 / 语音：后续版本 · 当前仅文字
               </span>
-              <label>班级助理<select aria-label="Agent 交互模式" value={agentMode} disabled={busy || refreshing || !!runningAgent.current} onChange={event => void changeAgentContext("", event.target.value as AgentInteraction)}><option value="read">查询当前工作</option><option value="draft">仅生成任务草稿</option><option value="record-note">整理记录原文草稿</option><option value="chat">讨论，不调用工具</option></select></label>
+              <label>班级助理<select aria-label="对话方式" value={agentMode} disabled={busy || refreshing || !!runningAgent.current} onChange={event => void changeAgentContext("", event.target.value as AgentInteraction)}><option value="read">查询当前工作</option><option value="draft">仅生成任务草稿</option><option value="record-note">整理记录原文草稿</option><option value="chat">讨论，不调用工具</option></select></label>
               {agentMode === "read" && <label className="r1-agent-scope">查询范围<select aria-label="助理查询范围" value={agentStudent} disabled={busy || refreshing || !!runningAgent.current} onChange={event => void changeAgentContext(event.target.value)}>
                 <option value="">全班当前工作</option>
                 {agentScopeUnavailable && <option value={agentStudent} disabled>已选学生不可用，请重新选择</option>}
                 {students.filter(item => item.status === "active").map(item => <option key={item.student_id} value={item.student_id}>{item.name} · 个人跟进</option>)}
               </select></label>}
-              {runningAgent.current ? <button type="button" aria-label="停止 Agent" onClick={() => runningAgent.current?.abort()}><X size={18} /></button> : <button aria-label="发送消息" disabled={!message.trim() || busy || modelUncertain || (agentMode !== "chat" && (refreshing || !classroom || !editable || agentScopeUnavailable))}>
+              {runningAgent.current ? <button type="button" aria-label="停止回复" onClick={() => runningAgent.current?.abort()}><X size={18} /></button> : <button aria-label="发送消息" disabled={!message.trim() || busy || modelUncertain || (agentMode !== "chat" && (refreshing || !classroom || !editable || agentScopeUnavailable))}>
                 <ArrowUp size={18} />
               </button>}
             </div>
@@ -1549,7 +1548,7 @@ export default function R1App() {
                   } catch (reason) {
                     if (generation === loading.current && alive.current) throw reason
                   }
-                }) }}>查看班级业务审计</button>
+                }) }}>查看操作记录</button>
                 {!classes.some(item => item.status === "active") && <button disabled={busy || refreshing || !queryFresh} onClick={() => open("class")}>建立班级与学期</button>}
                 <label>切换查看班级<select aria-label="设置中切换班级" disabled={navigationBlocked} value={classroom?.class_id || ""} onChange={event => {
                   const target = classes.find(item => item.class_id === event.target.value)
@@ -1587,32 +1586,32 @@ export default function R1App() {
                 )}
               </section>
               <section className="r1-card">
-                <h2>可替换 AI 能力</h2>
+                <h2>AI 助手</h2>
                 <p>
-                  默认使用离线合成模型。仅在显式允许地址、测试通过并启用后调用配置 API；模型不会直接拥有数据库写入或批准权限。
+                  选择并连接你要使用的模型。
                 </p>
                 <ModelConfigurationForm key={`${session.csrf_token}/${modelRevision}`} session={session} disabled={busy} onError={fail}
                   onPreview={command => { setSettingsOpen(false); return action(() => preview(command)) }} onModeChanged={verified => {
                     setModelUncertain(!verified)
                     runningAgent.current?.abort(); setConversationId(""); setMessages([]); setMessage(""); setAgentDraft(null); setAgentRecordNote(null); setRecordNoteQuote(""); setAgentStatus("")
-                    setNotice(verified ? "模型运行状态已核对，旧对话视图已清理；业务数据未变。" : "模型状态待核对，暂不发送新的 Agent 消息；直接业务 UI 仍可使用。")
+                    setNotice(verified ? "模型状态已更新。" : "模型状态待确认，请刷新模型状态后再试。")
                   }} />
                 <p className="r1-muted">
-                  文件、语音、微信、长记忆和自动化均不在 R1 实现范围。
+
                 </p>
               </section>
-              {window.classMatterDesktop?.localOnly !== true && <section className="r1-card"><h2>身份与恢复</h2><p>{localDevelopment ? "本机合成开发会话无需输入密码。重新验证将旋转当前会话，旧草稿与批准失效；不会提交业务变更。" : "这些操作需要当前密码，不经 Agent。重新签发会撤销旧恢复码和全部旧会话；全部设备退出不改变密码。"}</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button>{!localDevelopment && <><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></>}</div></section>}
-              {workbenchProfile ? <section className="r1-card"><h2>退出导出</h2><p>完整数据退出尚未接通。不会生成遗漏文档或工作区聊天的旧退出包；已保存内容仍保留在本机数据库中。</p></section> : runtimeProfile === "conversation-d1" ? (classroom
+              {window.classMatterDesktop?.localOnly !== true && <section className="r1-card"><h2>身份与恢复</h2><p>{localDevelopment ? "确认后重新连接，尚未保存的内容需要重新核对。" : "重新签发恢复码后，旧码失效，其他设备会退出。"}</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button>{!localDevelopment && <><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></>}</div></section>}
+              {workbenchProfile ? <section className="r1-card"><h2>退出导出</h2><p>完整导出暂不可用。</p></section> : runtimeProfile === "conversation-d1" ? (classroom
                 ? <DurableExit key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`} session={session} classroom={classroom}
                     disabled={busy || !queryFresh || refreshing || !!pending || !!form} onBusyChange={setExitBusy} onError={fail} />
-                : <p>先建立班级与学期，再使用耐久会话退出导出。</p>) : <section className="r1-card">
+                : <p>请先选择班级与学期。</p>) : <section className="r1-card">
                 <h2>退出导出</h2>
-                <p>当前可导出完整合成核心数据与历史版本；不含密码、会话和批准凭据。生命周期台账、退役证明与干净恢复仍在开发，不能将本包当作正式完整退出证明。</p>
+                <p>导出班级、学生、记录和任务；不包含聊天、文档或模型配置。</p>
                 <button disabled={busy} onClick={() => void action(async () => {
                   const summary = await request<{ core_hash: string }>(`${workspace(session)}/exit/summary`)
                   await preview({ command: "exit_export.create", export_id: crypto.randomUUID(), expected_core_hash: summary.core_hash })
-                })}>生成合成核心退出包</button>
-                {exportId && <p><a href={`${workspace(session)}/exit/${exportId}/download`} download>下载已批准的核心包（30分钟内）</a></p>}
+                })}>导出班级数据</button>
+                {exportId && <p><a href={`${workspace(session)}/exit/${exportId}/download`} download>下载班级数据（30分钟内有效）</a></p>}
               </section>}
               {window.classMatterDesktop?.localOnly !== true && <button disabled={busy} onClick={requestLogout}>注销当前会话</button>}
 
@@ -1625,19 +1624,18 @@ export default function R1App() {
         <button className="r1-primary" onClick={logoutCurrentSession}>丢弃草稿并退出</button>
       </R1Dialog>}
       {auditPage && <R1Dialog titleId="r1-audit-title" returnFocusTo={auditOpener.current} onDismiss={() => setAuditPage(null)}>
-        <h2 id="r1-audit-title">班级业务审计 · 只读摘要</h2>
-        <p>当前 owner / 班级 / 学期范围的最近100条登记。较早未登记范围的操作不在此视图，不代表没有发生。</p>
-        <p className="r1-muted">查询时间 {displayTime(auditPage.as_of)}；{auditPage.truncated ? "还有更早登记未展示。" : "本次范围内登记已展示。"}不含会话、密码或事实原文。</p>
-        <button onClick={() => setAuditPage(null)}>关闭审计摘要</button>
+        <h2 id="r1-audit-title">班级操作记录</h2>
+        <p>最近100条操作记录。</p>
+        <p className="r1-muted">查询时间 {displayTime(auditPage.as_of)}；{auditPage.truncated ? "还有更早登记未展示。" : "本次范围内登记已展示。"}</p>
+        <button onClick={() => setAuditPage(null)}>关闭操作记录</button>
         {auditPage.entries.map(entry => <article className="r1-card" key={entry.event_id}>
-          <strong>{entry.action} · {entry.outcome === "allowed" ? "允许" : "拒绝"}</strong>
-          <p>{displayTime(entry.occurred_at)}{entry.resource_version !== null ? ` · 资源版本 ${entry.resource_version}` : ""}</p>
-          <details><summary>查看回执与摘要</summary><pre>{JSON.stringify({event_id: entry.event_id, proposal_id: entry.proposal_id, payload_hash: entry.payload_hash, receipt_id: entry.receipt_id, resource_id: entry.resource_id}, null, 2)}</pre></details>
+          <strong>{actionName(entry.action)} · {entry.outcome === "allowed" ? "已通过" : "未通过"}</strong>
+          <p>{displayTime(entry.occurred_at)}</p>
         </article>)}
       </R1Dialog>}
       {form && (
         <R1Dialog titleId="r1-form-title" busy={busy} onDismiss={() => { setForm(null); setRecordNoteQuote("") }}>
-          {error && <p className="r1-error" role="alert">{error}</p>}
+          {error && <p className="r1-error" role="alert">{userMessage(error)}</p>}
           <header>
               <h2 id="r1-form-title">
                 {
@@ -1685,7 +1683,7 @@ export default function R1App() {
               )}
               {form === "student" && (
                 <Field
-                  label="学生姓名（允许同名，内部 ID 区分）"
+                  label="学生姓名"
                   name="name"
                   maxLength={80}
                 />
@@ -1697,7 +1695,7 @@ export default function R1App() {
                   <p className="r1-muted">旧值和学期版本已自动带入。仅更正名称和日期，不改写学生、事实、任务或历史归属，不自动切换学期。核对 W2 预览后明确确认。</p></>
               )}
               {form === "class-edit" && (
-                <><Field label="班级名称" name="name" defaultValue={classroom?.name} maxLength={80} /><p className="r1-muted">仅修改当前班级名称；学期、学生、事实和任务仍属于同一数据世界。先核对服务端预览再明确提交。</p></>
+                <><Field label="班级名称" name="name" defaultValue={classroom?.name} maxLength={80} /><p className="r1-muted">修改班级名称，不影响已有记录。</p></>
               )}
               {form === "student-name" && selected && (
                 <><p className="r1-muted">当前姓名：{selected.name} · 学生 ID：{selected.student_id}。仅更正显示姓名，不合并同名学生，不改写历史事实和任务。</p><Field label="更正后的学生姓名" name="name" defaultValue={selected.name} maxLength={80} /><p className="r1-muted">旧姓名和当前版本由名单自动带入。请核对服务端 W2 预览后明确确认。</p></>
@@ -1791,7 +1789,7 @@ export default function R1App() {
                       {latest.map((item) => (
                         <option value={item.record_id} key={item.record_id}>
                           {studentName(item.student_id)} · {kinds[item.kind]} ·
-                          v{item.version}
+                          {displayTime(item.occurred_at)}
                         </option>
                       ))}
                     </select>
@@ -1850,12 +1848,12 @@ export default function R1App() {
                   </label>
                   {editable && <Field label="更正理由" name="reason" maxLength={500} />}
                   <details>
-                    <summary>原版本与留史</summary>
+                    <summary>历史记录</summary>
                     {activity?.records
                       .filter((item) => item.record_id === record.record_id)
                       .map((item) => (
                         <p key={item.version}>
-                          v{item.version} ·{" "}
+                          {displayTime(item.occurred_at)} ·{" "}
                           {item.fact_text || item.observation_text} ·{" "}
                           {displayTime(item.recorded_at)}
                         </p>
@@ -1873,7 +1871,7 @@ export default function R1App() {
                 />
               )}
               {!(["reauth", "reissue", "logout-all"] as Form[]).includes(form) && <p className="r1-muted">
-                下一步只生成预览，不会立即写入正式业务事实。
+                下一步预览，确认后保存。
               </p>}
               <button className="r1-primary" disabled={busy || (!editable && !(["class", "reauth", "reissue", "logout-all"] as Form[]).includes(form))}>
                 {(["reauth", "reissue", "logout-all"] as Form[]).includes(form) ? "明确执行身份操作" : "生成预览"}
@@ -1882,12 +1880,16 @@ export default function R1App() {
         </R1Dialog>
       )}
       {pending && <CommandPreview proposal={pending.proposal} error={error} busy={busy}
+        names={{ ...(classroom ? { [classroom.class_id]: classroom.name, [classroom.term_id]: classroom.term_name } : {}),
+          ...Object.fromEntries(students.map(item => [item.student_id, item.name])),
+          ...Object.fromEntries((activity?.tasks || []).map(item => [item.task_id, item.title])),
+          ...Object.fromEntries((activity?.records || []).map(item => [item.record_id, `${studentName(item.student_id)} · ${kinds[item.kind] || "记录"}`])) }}
         onReject={() => void action(async () => {
           await request(`${workspace(session)}/commands/reject`, { proposal_id: pending.proposal.proposal_id }, session.csrf_token)
           setPending(null)
         })}
         onCheck={() => void action(checkCommit)} onCommit={() => void action(commit)} />}
-      {issuedCodes && <R1Dialog titleId="r1-kit-title"><h2 id="r1-kit-title">离线恢复码 · 仅显示一次</h2><p>旧恢复码和旧会话已撤销。请离线保存；不会写入本地缓存、模型或支持包。</p><pre>{issuedCodes.join("\n")}</pre><button className="r1-primary" onClick={() => setIssuedCodes(null)}>我已离线保存新的恢复码</button></R1Dialog>}
+      {issuedCodes && <R1Dialog titleId="r1-kit-title"><h2 id="r1-kit-title">离线恢复码 · 仅显示一次</h2><p>旧恢复码已失效，请妥善保存新恢复码。</p><pre>{issuedCodes.join("\n")}</pre><button className="r1-primary" onClick={() => setIssuedCodes(null)}>我已离线保存新的恢复码</button></R1Dialog>}
     </div>
   )
 }
@@ -1934,14 +1936,13 @@ function RecordCard({
         <strong>
           {name} · {kinds[item.kind] || item.kind}
         </strong>
-        <small>v{item.version}</small>
       </header>
       <p>{item.fact_text}</p>
       {item.observation_text && <p>教师观察：{item.observation_text}</p>}
       <AttributionLabel value={item.attribution} />
       <small className="r1-muted">
         发生 {displayTime(item.occurred_at)} · 记录{" "}
-        {displayTime(item.recorded_at)} · 来源：教师确认 / 合成
+        {displayTime(item.recorded_at)}
       </small>
       {item.revision_reason && <p>更正理由：{item.revision_reason}</p>}
       <div className="r1-toolbar">
@@ -2033,9 +2034,9 @@ function Login({
   }
   if (window.classMatterDesktop?.localOnly === true) return <LocalConnection onSession={onSession} />
   if (window.classMatterDesktop?.development === true) return <main className="r1-auth"><section>
-    <small>班事有谱 · CLASSMATTER</small><h1>回到本机开发工作台</h1>
-    <p>开发会话已暂停或过期。点击继续即可进入，不需要密码；不会自动提交之前的操作。</p>
-    {error && <p role="alert" className="r1-error">{error}</p>}
+    <small>班事有谱 · CLASSMATTER</small><h1>继续使用班事有谱</h1>
+    <p>连接已暂停，请重新进入。</p>
+    {error && <p role="alert" className="r1-error">{userMessage(error)}</p>}
     <button disabled={pending || busy} onClick={() => {
       if (pending || busy) return
       setPending(true)
@@ -2075,7 +2076,7 @@ function Login({
               <Field label="离线恢复码" name="code" maxLength={160} />
             ) : (
               <Field
-                label={mode === "reset" ? "新密码（至少16字符）" : "Owner 密码"}
+                label={mode === "reset" ? "新密码（至少16字符）" : "密码"}
                 name="password"
                 type="password"
                 maxLength={256}
@@ -2112,13 +2113,11 @@ function Login({
         <details>
           <summary>首次使用</summary>
           <p>
-            首次打开桌面应用时，按应用内引导设置本机密码、保存恢复码并确认初始化。
-            浏览器页面只提供登录，不提供身份初始化权限；已有实例请使用原密码。
+            请使用已有密码登录。
+            忘记密码可使用恢复码。
           </p>
         </details>
-        <p className="r1-muted">
-          数据保存在本机。当前仅使用合成数据，尚未开放真实师生数据。
-        </p>
+
       </section>
     </main>
   )

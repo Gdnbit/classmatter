@@ -110,14 +110,14 @@ export class ApiError extends Error {
       status === 401
         ? "登录已失效，请重新登录；未提交的草稿不会写入。"
         : status === 409
-          ? "数据版本或操作状态已变化，请刷新后重新预览。"
+          ? "内容已更新，请刷新后重新确认。"
           : status === 403
-            ? "请求未通过本机来源/确认校验。"
+            ? "暂时无法执行，请刷新后重新确认。"
             : status === 503
-              ? "服务暂时不可用。若正在保存，请先核对原请求结果，不要重复新建。"
+              ? "服务暂时不可用。若正在保存，请先核对结果，避免重复保存。"
               : status >= 500 && status < 600
-                ? "请求未完成。若正在保存，请先核对原请求结果，不要重复新建。"
-                : "请求未完成，请检查服务后重试。",
+                ? "操作未完成。若正在保存，请先核对结果，避免重复保存。"
+                : "操作未完成，请稍后重试。",
     )
   }
 }
@@ -151,7 +151,7 @@ export async function request<T>(
     typeof result.schema_version !== "string" ||
     !result.schema_version.startsWith("class-os.")
   ) {
-    throw new Error("服务响应契约不匹配，未使用演示数据回退。")
+    throw new Error("暂时无法加载内容，请刷新后重试。")
   }
   return result as T
 }

@@ -13,7 +13,7 @@ try {
     if (request.method() === 'POST' && request.url().endsWith('/events')) starts.push(request.url());
   });
   await page.goto(base);
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   const input = page.getByLabel('输入消息'), history = page.getByRole('region', { name: '已保存的对话' });
   await input.waitFor();
@@ -54,7 +54,7 @@ try {
   assert(leftInset >= 20 && leftInset <= 44);
   assert.deepEqual(await page.evaluate(() => ({ x: scrollX, overflow: document.documentElement.scrollWidth > innerWidth, sidebar: document.querySelector('.sidebar').scrollLeft })), { x: 0, overflow: false, sidebar: 0 });
   await page.screenshot({ path: nodePath.resolve('../../test-results/ui-v3-conversation.png') });
-  assert.equal(await page.getByLabel('Agent 交互模式').count(), 0);
+  assert.equal(await page.getByLabel('对话方式').count(), 0);
   const path = new URL(page.url()).pathname;
   await page.reload();
   await history.getByText('合成普通聊天已回复，不需要班级。', { exact: true }).waitFor();
@@ -64,9 +64,9 @@ try {
   await input.fill('合成发送响应丢失');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   // The final read recovers a committed input even when the POST reply was lost.
-  await history.getByRole('button', { name: '继续已保存的本轮', exact: true }).waitFor();
+  await history.getByRole('button', { name: '继续回复', exact: true }).waitFor();
   assert.equal(starts.length, 1);
-  await history.getByRole('button', { name: '继续已保存的本轮', exact: true }).click();
+  await history.getByRole('button', { name: '继续回复', exact: true }).click();
   await history.getByText('合成普通聊天已回复，不需要班级。', { exact: true }).nth(1).waitFor();
   assert.equal(starts.length, 2);
   const messages = [
@@ -91,6 +91,7 @@ try {
     await card.getByRole('button', { name: '预览这项操作', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: /^(确认提交|明确批准并提交)$/ }).waitFor();
+    assert(!/payload_hash|expected_version|schema_version|[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/.test(await dialog.innerText()));
     assert.equal(await dialog.locator('input,textarea,select').count(), 0);
     await dialog.getByRole('button', { name: /^(确认提交|明确批准并提交)$/ }).click();
     await dialog.waitFor({ state: 'hidden', timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify({ message, dialog: await dialog.innerText(), errors }), { cause: error }); });
@@ -99,6 +100,10 @@ try {
   }
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('region', { name: '学生清单', exact: true }).getByRole('button', { name: /合成学生乙/ }).waitFor();
+  assert(!/内部 ID|状态 \/ 版本|共享实体/.test(await page.getByRole('main').innerText()));
+  await page.getByRole('region', { name: '学生清单', exact: true }).getByRole('button', { name: /合成学生乙/ }).click();
+  assert(!/[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/.test(await page.getByRole('main').innerText()));
+  await page.getByRole('button', { name: '返回学生列表', exact: true }).click();
   await page.getByRole('button', { name: '工作', exact: true }).click();
   await page.getByRole('main').getByRole('button', { name: /合成收集签字回执/ }).waitFor();
   await page.getByLabel('按状态筛选任务').selectOption('closed');
@@ -110,6 +115,11 @@ try {
   await page.getByRole('button', { name: /合成班级小结/ }).first().click();
   await page.getByRole('button', { name: '原文', exact: true }).click();
   await page.locator('.document-text').filter({ hasText: '合成补充段落' }).waitFor();
+  assert(!/作者标识|完整性摘要|不展示样例|未接入|同一数据世界/.test(await page.getByRole('main').innerText()));
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  const settings = page.getByRole('dialog', { name: '设置', exact: true });
+  assert(!/可替换 AI|R1 实现|数据库|原型|后台调度/.test(await settings.innerText()));
+  await settings.getByRole('button', { name: '关闭设置', exact: true }).click();
   await page.goto(base + path);
   await history.getByText('合成普通聊天已回复，不需要班级。', { exact: true }).first().waitFor();
   assert.equal(starts.length, messages.length + 2);

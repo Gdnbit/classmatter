@@ -15,6 +15,10 @@ Prioritize current official normative texts by applicable legal hierarchy and ju
 
 Emergency response must not depend on ClassMatter availability. Never diagnose students, assign legal liability, claim guaranteed prevention or legal immunity, create school-authorized handoffs without verified acknowledgement, or silently collect D4 health/mental-health data. All such capabilities are Discovery/Future and require a separate release, data-processing authorization, safeguarding and professional review. The present R1 remains unchanged.
 
+## User-facing language
+
+All user-visible pages, dialogs, tooltips, errors and notifications must be concise and written for teachers. Show the task, result and next action; avoid developer notes, internal field names, IDs, hashes, framework names and release-stage explanations. Keep only necessary consequences, unsaved-change warnings and cost information. Preserve honest unavailable/preview/example states; never replace an unavailable action with a success claim. Technical contracts, diagnostics and implementation detail belong in developer documentation, not customer flows. Apply this rule to all future page and feature work and verify it in UI regression tests.
+
 ## Work and verification
 
 Plan before multi-file work. Map changes to requirements/evals/tasks, preserve task scopes and dependencies, reuse existing contracts, and keep diffs reviewable. Run the relevant `scripts/verify.ps1` suites and update documentation when status changes. Keep legacy protocol/import/environment/migration names stable; see the naming matrix. Do not rewrite migration history or Gate hashes.

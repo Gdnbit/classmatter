@@ -40,10 +40,10 @@ async function main(){
       if(/^https?:/.test(request.url()) && !request.url().startsWith(origin+'/'))external.push(request.url());
       if(!['GET','HEAD'].includes(request.method()))writes.push(new URL(request.url()).pathname);
     });
-    await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+    await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
     await page.getByRole('button',{name:'登录',exact:true}).click();
     await page.getByRole('heading',{name:'今天想处理什么？',exact:true}).waitFor();
-    assert.equal(await page.getByLabel('Agent 交互模式').inputValue(),'chat');
+    assert.equal(await page.getByLabel('对话方式').inputValue(),'chat');
     assert.equal(await page.locator('.app-shell > .sidebar .new-chat').count(),1);
     assert.equal(await page.locator('.shell-main > .body-grid > .workspace').count(),1);
     assert.equal(await page.locator('.r1-sidebar').count(),0);
@@ -58,7 +58,7 @@ async function main(){
       await commit(page,true);
       await page.getByRole('button',{name:'学生',exact:true}).click();
       await page.getByRole('button',{name:'添加学生',exact:true}).click();
-      await page.getByLabel('学生姓名（允许同名，内部 ID 区分）').fill('合成D1学生');
+      await page.getByLabel('学生姓名').fill('合成D1学生');
       await commit(page);
       await page.getByRole('button',{name:/合成D1学生/}).click();
       await page.getByRole('button',{name:'记录事实',exact:true}).click();
@@ -68,7 +68,7 @@ async function main(){
       await page.getByLabel('跟进标题').fill('合成D1重启保留任务');
       await commit(page);
       await page.getByRole('button',{name:'对话',exact:true}).click();
-      await page.getByLabel('Agent 交互模式').selectOption('read');
+      await page.getByLabel('对话方式').selectOption('read');
       await page.getByLabel('输入消息').fill('合成D1桌面持久查询');
       await page.getByRole('button',{name:'发送消息',exact:true}).click();
       await history.getByText('会话输出已保存 · 无业务写入',{exact:true}).waitFor();
@@ -96,7 +96,7 @@ async function main(){
       assert.equal(new URL(page.url()).pathname,expected.savedPath);
       assert.deepEqual(await history.getByText(/^查询回执：/).allTextContents(),expected.receipts);
       assert.equal(writes.filter(item=>item.endsWith('/events')).length,0);
-      await page.getByLabel('Agent 交互模式').selectOption('draft');
+      await page.getByLabel('对话方式').selectOption('draft');
       await page.getByLabel('输入消息').fill('合成D1未提交任务草稿');
       await page.getByRole('button',{name:'发送消息',exact:true}).click();
       await history.getByRole('heading',{name:'未提交的任务草稿',exact:true}).waitFor();

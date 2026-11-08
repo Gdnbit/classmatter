@@ -55,7 +55,7 @@ export function useWorkspaceChat(props: Props) {
   useEffect(() => {
     if (!identity) return
     const controller = createQueryRefresh({ read: async () => { await refreshRef.current() },
-      invalidate: () => { reader.current?.abort(); setFresh(false); setStatus("离线：已显示内容可能是上次快照；恢复后重新核对。") },
+      invalidate: () => { reader.current?.abort(); setFresh(false); setStatus("连接已断开，恢复后请刷新对话。") },
       fail: report, available: () => navigator.onLine && document.visibilityState === "visible", idle: () => idle.current,
       now: () => performance.now(), schedule: (callback, delay) => window.setTimeout(callback, delay), cancel: timer => window.clearTimeout(timer as number) })
     foreground.current = controller
@@ -81,7 +81,7 @@ export function useWorkspaceChat(props: Props) {
         if (generation === epoch.current) setStatus(kind.startsWith("tool.") ? "正在整理…" : "正在回复…")
       })
     } catch (error) {
-      if (generation === epoch.current && !controller.signal.aborted) setStatus("运行或连接未完成，正在核对保存状态；不会自动重跑。")
+      if (generation === epoch.current && !controller.signal.aborted) setStatus("连接中断，请刷新对话查看结果。")
     } finally { if (stream.current === controller) stream.current = null }
   }
   async function send() {
@@ -98,7 +98,7 @@ export function useWorkspaceChat(props: Props) {
         latest.current.onSaved(target.thread); await refreshRef.current(target.thread)
         if (generation === epoch.current && navigator.onLine) await runSaved(target.thread, result.turn, generation)
       } catch (error) {
-        if (generation === epoch.current) setStatus("发送结果需要核对；请核对原请求，不要重复发送相同内容。")
+        if (generation === epoch.current) setStatus("暂时无法确认发送结果，请先刷新对话。")
         throw error
       } finally {
         if (generation === epoch.current) {
@@ -124,7 +124,7 @@ export function useWorkspaceChat(props: Props) {
       if (!current) throw new Error("原运行未找到，未取消其他运行")
       if (active(current)) await api.cancel(thread, current)
       if (generation !== epoch.current) return
-      stream.current?.abort(); setStatus(active(current) ? "取消状态已保存；迟到输出不会被采纳，模型费用状态不由此认定。" : "本轮已结束，已重新读取保存状态。")
+      stream.current?.abort(); setStatus(active(current) ? "已停止回复。" : "回复已结束。")
       await refreshRef.current(thread)
     }
     catch (error) { if (generation === epoch.current) report(error) }
@@ -144,7 +144,7 @@ export function useWorkspaceChat(props: Props) {
       const saved = await refreshRef.current(pendingSend.thread)
       if (generation !== epoch.current) return
       const turn = saved?.turns.find(row => row.request_id === pendingSend.request)
-      if (turn && turn.user_text === pendingSend.text) { setPendingSend(null); setText(current => current === pendingSend.text ? "" : current); latest.current.onSaved(pendingSend.thread); setStatus("原输入已保存；核对不会启动模型。") }
+      if (turn && turn.user_text === pendingSend.text) { setPendingSend(null); setText(current => current === pendingSend.text ? "" : current); latest.current.onSaved(pendingSend.thread); setStatus("消息已保存，可以继续回复。") }
     }),
     startQueued: (turn: ChatTurn) => operate(async generation => { if (props.canInteract && freshScope && turn.state === "queued" && history?.thread.status === "active") { await runSaved(history.thread.thread_id, turn, generation); await refreshRef.current() } }),
     preview: (turn: ChatTurn) => operate(async generation => { if (props.canInteract && freshScope && history?.thread.status === "active" && turn.candidate && !turn.action_receipt) {

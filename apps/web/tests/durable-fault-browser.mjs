@@ -12,9 +12,9 @@ page.on('request',request=>{
 });
 try{
   await page.goto(base+'/');
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button',{name:'登录',exact:true}).click();
-  await page.getByLabel('Agent 交互模式').selectOption('class-chat');
+  await page.getByLabel('对话方式').selectOption('class-chat');
   await page.getByLabel('输入消息').fill('synthetic '+fault+' user input');
   // Scope selection now performs a real class reread. Double-submit only
   // after the actual send control is eligible; never bypass its boundary.
@@ -25,7 +25,7 @@ try{
   if(fault==='cancel'){
     await page.getByRole('status').filter({hasText:'正在运行；以数据库核对结果为准'}).waitFor();
     const cancelled=page.waitForResponse(response=>new URL(response.url()).pathname.endsWith('/cancel'));
-    await page.getByRole('button',{name:'停止 Agent',exact:true}).click();
+    await page.getByRole('button',{name:'停止回复',exact:true}).click();
     assert.equal((await cancelled).status(),200);
   }
   await history.getByText('synthetic '+fault+' user input',{exact:true}).waitFor();

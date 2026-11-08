@@ -21,30 +21,29 @@ export function WorkSummary({ classroom, activity, students, fresh, onDraftChang
   const stale = !fresh || !current || draft?.basis !== current.basis
   return <section className="r1-card" aria-label="班级工作小结">
     <h2>班级工作小结</h2>
-    <p>复用当前查询的记录与任务，无需重复录入。{onDocumentDraft
-      ? "可转入原文档页面继续编辑，预览并明确批准后保存。转入前仍仅在本页临时编辑，不保存到聊天或浏览器缓存。"
-      : "仅在本页临时编辑；离开、刷新、退出即丢失，请先手动复制到受信文档。不保存到聊天、数据库或浏览器缓存。"}</p>
+    <p>根据已有记录和任务整理小结。{onDocumentDraft
+      ? "请转入文档后保存，离开前保留草稿。"
+      : "草稿尚未保存，离开前请复制。"}</p>
     <button disabled={!fresh || !current || !!draft} onClick={() => {
       if (current) { setDraft({ basis: current.basis, text: current.text, original: current.text }); setNotice("") }
     }}>整理班级工作小结</button>
     {failure && <p role="alert">{failure}</p>}
     {draft && <>
-      <p role="status">{stale ? "来源已变化或尚未重新核对；不能标作当前小结复制。保留编辑供人工核对，可丢弃后重新整理。" : "来源版本与当前查询一致；编辑文字仍需本人核对。"}</p>
+      <p role="status">{stale ? "记录已更新，请重新整理后再复制。" : "请核对内容后使用。"}</p>
       <label style={{ display: "grid", gap: 8 }}>可编辑小结（未保存）<textarea aria-label="可编辑小结（未保存）"
         style={{ width: "100%", boxSizing: "border-box", minHeight: 320, font: "inherit", lineHeight: 1.6 }} rows={16} maxLength={100000} value={draft.text}
         onChange={event => { setDraft({ ...draft, text: event.target.value }); setNotice("") }} /></label>
-      <details><summary>生成时的只读来源摘录（不是当前事实保证）</summary><pre style={{ whiteSpace: "pre-wrap" }}>{draft.original}</pre></details>
+      <details><summary>查看整理依据</summary><pre style={{ whiteSpace: "pre-wrap" }}>{draft.original}</pre></details>
       <button disabled={stale || !draft.text.trim()} onClick={async () => {
         // No external destination, native file path or generic download privilege.
-        try { await navigator.clipboard.writeText(draft.text); setNotice("已按本人操作复制；未保存或发送。") }
-        catch { setNotice("系统未允许剪贴板写入；可在文本框全选后手动复制。") }
+        try { await navigator.clipboard.writeText(draft.text); setNotice("已复制") }
+        catch { setNotice("复制失败，请选择文字复制。") }
       }}>复制已核对草稿</button>
       {onDocumentDraft && <button disabled={stale || !draft.text.trim()} onClick={() => {
         if (onDocumentDraft(draft.text)) { setDraft(null); onDraftChange(false) }
-        else setNotice("文档入口或当前范围尚不可用，草稿仍在此页，没有自动保存。")
+        else setNotice("暂时无法打开文档，请先复制草稿。")
       }}>转入文档草稿</button>}
-      {onDocumentDraft && <p className="r1-muted">保留生成时的来源标识与版本；不是持续同步的事实保证，保存后仍为独立工作草稿。</p>}
-      <button onClick={() => { setDraft(null); setNotice("已丢弃本页草稿，未更改任何业务数据。") }}>丢弃小结草稿</button>
+      <button onClick={() => { setDraft(null); setNotice("已丢弃草稿。") }}>丢弃小结草稿</button>
     </>}
     {notice && <p role="status">{notice}</p>}
   </section>

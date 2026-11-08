@@ -22,7 +22,7 @@ async function confirm() {
 }
 try {
   await page.goto(base);
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByLabel('更多功能', { exact: true }).click();
   await page.getByRole('button', { name: '数据与内容', exact: true }).click();
@@ -36,7 +36,7 @@ try {
   assert.equal(await editor.evaluate(node => node.selectionStart), 0);
   assert.equal(await editor.evaluate(node => node.selectionEnd), '# 合成工作小结'.length);
   await page.getByRole('button', { name: '学生', exact: true }).click();
-  await page.getByText('页面切换已延后。', { exact: false }).waitFor();
+  await page.getByText('请先完成或取消当前操作，再切换页面。', { exact: false }).waitFor();
   assert.equal(await editor.inputValue(), body);
   await page.getByRole('button', { name: '保存草稿', exact: true }).click();
   await dialog.waitFor();
@@ -47,7 +47,7 @@ try {
   assert.equal((await (await context.request.get(base + collection, { headers })).json()).data.length, 0);
   await dialog.getByRole('button', { name: '明确批准并保存', exact: true }).click();
   if (process.env.CLASS_OS_TEST_LOST_REPLY === '1') {
-    await dialog.getByText('提交结果尚未核对。', { exact: false }).waitFor();
+    await dialog.getByText('保存结果尚未确认，请先核对，避免重复保存。', { exact: true }).waitFor();
     assert.equal(commits.length, 1);
     assert(await dialog.getByRole('button', { name: '明确批准并保存', exact: true }).isDisabled());
     await dialog.getByRole('button', { name: '核对原文档提交', exact: true }).click();
@@ -92,7 +92,7 @@ try {
   await dialog.getByRole('button', { name: '明确批准并保存', exact: true }).click();
   await dialog.getByText('文档版本或列表已变化。', { exact: false }).waitFor();
   await dialog.getByRole('button', { name: '核对原文档提交', exact: true }).click();
-  await page.getByText('原请求尚未提交。', { exact: false }).waitFor();
+  await page.getByText('尚未保存，可重试或放弃本次修改。', { exact: false }).waitFor();
   await dialog.getByRole('button', { name: '放弃文档预览', exact: true }).click();
   await page.getByRole('button', { name: '放弃本地编辑并重新读取', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('[aria-label="文档正文"]')?.value === '由第二个授权客户端保存');

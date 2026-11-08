@@ -21,7 +21,7 @@ test('5xx means delivery unknown, never proof of rollback or permission to dupli
       };
       await assert.rejects(api.request('/api/synthetic', body, 'synthetic-csrf'), error => {
         assert(error instanceof api.ApiError && error.status === status);
-        assert(error.message.includes('先核对原请求结果，不要重复新建'));
+        assert(error.message.includes('先核对结果，避免重复保存'));
         assert(!/已回滚|未提交|synthetic-private-error-canary/.test(error.message));
         return true;
       });
@@ -37,8 +37,8 @@ test('5xx means delivery unknown, never proof of rollback or permission to dupli
 
 test('existing identity, conflict and ordinary internal-failure messages remain distinct', () => {
   assert.match(new api.ApiError(401, '').message, /登录已失效/);
-  assert.match(new api.ApiError(403, '').message, /本机来源/);
-  assert.match(new api.ApiError(409, '').message, /重新预览/);
-  assert.match(new api.ApiError(500, '').message, /^请求未完成/);
+  assert.match(new api.ApiError(403, '').message, /暂时无法执行/);
+  assert.match(new api.ApiError(409, '').message, /内容已更新/);
+  assert.match(new api.ApiError(500, '').message, /^操作未完成/);
   assert.match(new api.ApiError(503, '').message, /^服务暂时不可用/);
 });

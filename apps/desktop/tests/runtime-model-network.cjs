@@ -13,7 +13,7 @@ let app,phase='prepare';
 async function launch(network){
   app=await electron.launch({executablePath:require('electron'),args:[stage,...electronArguments(network)],env});
   const page=await app.firstWindow();
-  await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button',{name:'登录',exact:true}).click();
   await page.getByRole('heading',{name:'今天想处理什么？',exact:true}).waitFor();
   return page;

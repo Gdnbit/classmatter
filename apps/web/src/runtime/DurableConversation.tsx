@@ -40,8 +40,7 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
           <small>{message.content.role === "user" ? "你 · 已保存" : "ClassMatter · 已保存但未核验"}</small><p>{message.content.text}</p>
           <AttributionLabel value={author} />
           {result?.result.sources.map(source => <details className="r1-muted" key={source.source_id}><summary>当时的查询来源 · {new Date(source.as_of).toLocaleString("zh-CN")}</summary>
-            <p>查询回执：{source.receipt_id}</p><p>来源工作区：{source.source_workspace_id} · 原拥有者：{source.source_owner_id}</p>
-            <p>版本摘要：{source.projection_hash}</p><p>历史证明，不代表当前统计、正式事实或写入批准。</p></details>)}
+            <p>内容可能已更新，请查看最新记录。</p></details>)}
           {result?.result.draft && <section className="r1-card"><h3>未提交的任务草稿</h3><p>{result.result.draft.title}</p>
             <p className="r1-muted">历史草稿尚未成为业务任务；采纳后仍需核对当前表单并预览、提交。</p>
             <button disabled={s.blocked || !canWrite} onClick={() => onDraft(result.result.draft!.title)}>打开任务草稿并核对</button></section>}
@@ -57,9 +56,8 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
     {s.pending && <R1Dialog titleId="d1-control-title" busy={s.working} onDismiss={s.dismissControl}>
       <h2 id="d1-control-title">{s.pending.preview.payload.command === "conversation.clear" ? "确认清除会话正文" : "确认归档会话"}</h2>
       <p>归档不是删除。清除会移除聊天正文/历史草稿，不删除已确认的学生事实或手工任务。清除需要最近 5 分钟内验证的身份；若过期，请先到设置重新验证。</p>
-      <pre>{JSON.stringify(s.pending.preview.payload, null, 2)}</pre><p>风险 {s.pending.preview.risk} · 版本 {s.pending.preview.payload.expected_version}</p>
-      <p className="r1-muted">摘要 {s.pending.preview.payload_hash}</p>
-      <button disabled={s.working} onClick={() => void s.commitControl()}>{s.pending.attempted ? "使用原预览与同键重试提交" : "明确批准并提交"}</button>
+      <p>请确认是否继续。</p>
+      <button disabled={s.working} onClick={() => void s.commitControl()}>{s.pending.attempted ? "重试保存" : "明确批准并提交"}</button>
       <button disabled={s.working} onClick={() => void s.checkControl()}>核对原提交结果</button>
       {!s.pending.attempted && <button disabled={s.working} onClick={s.dismissControl}>取消预览</button>}
       {s.status && <p role="status">{s.status}</p>}
@@ -77,11 +75,11 @@ export function DurableComposer({ state: s, students, canWrite }: { state: Durab
         if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (allowed) void s.send() }
       }} />
     <div>
-      <label>助理<select aria-label="Agent 交互模式" value={s.mode === "chat" && !s.workspaceChat ? "class-chat" : s.mode} disabled={s.blocked} onChange={event => s.setMode(event.target.value as typeof s.mode | "class-chat")}>
+      <label>助理<select aria-label="对话方式" value={s.mode === "chat" && !s.workspaceChat ? "class-chat" : s.mode} disabled={s.blocked} onChange={event => s.setMode(event.target.value as typeof s.mode | "class-chat")}>
         <option value="chat">聊天</option><option value="read">查询班级工作</option><option value="draft">准备班级任务草稿</option><option value="class-chat">关联班级讨论</option></select></label>
       {!fixed && s.mode === "read" && <label className="r1-agent-scope">查询范围<select aria-label="助理查询范围" value={s.student} disabled={s.blocked} onChange={event => s.setStudent(event.target.value)}>
         <option value="">全班当前工作</option>{unavailableStudent && <option value={s.student}>原学生已不可用，请重新选择</option>}{students.filter(item => item.status === "active").map(item => <option key={item.student_id} value={item.student_id}>{item.name} · 个人跟进</option>)}</select></label>}
-      {s.working && s.isStreaming ? <button type="button" aria-label="停止 Agent" onClick={() => void s.stop()}><X size={18} /></button>
+      {s.working && s.isStreaming ? <button type="button" aria-label="停止回复" onClick={() => void s.stop()}><X size={18} /></button>
         : <button aria-label="发送消息" disabled={!allowed || !s.text.trim()}><ArrowUp size={18} /></button>}
     </div>
   </form>

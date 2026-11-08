@@ -57,7 +57,8 @@ def test_original_summary_transfers_without_write_then_persists_only_as_document
                 assert connection.execute(text(f'SELECT count(*) FROM class_os.{table}')).scalar_one() == count
             assert connection.execute(text('SELECT version FROM class_os.manual_task')).scalar_one() == 1
             body = connection.execute(text('SELECT body FROM class_os.working_document_revision')).scalar_one()
-            assert f'[record:{record.record_id}@1]' in body and f'[task:{task.task_id}@1]' in body
+            assert str(record.record_id) not in body and str(task.task_id) not in body
+            assert 'synthetic sourced document fact' in body and 'synthetic observation is not a fact' in body
     finally:
         server.should_exit = True; thread.join(timeout=8)
         assert not thread.is_alive()

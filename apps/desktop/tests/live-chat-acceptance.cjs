@@ -23,7 +23,7 @@ async function turn(text,expected){
    const last=saved.turns?.find(row=>row.request_id===target.request);
    return last&&!['queued','running'].includes(last.state);
  },{id,request},{timeout:60000,polling:500});
- await page.waitForFunction(()=>!document.querySelector('[aria-label="停止 Agent"]'),null,{timeout:60000});
+ await page.waitForFunction(()=>!document.querySelector('[aria-label="停止回复"]'),null,{timeout:60000});
  await page.waitForURL(url=>/^\/chats\/[a-f0-9-]{36}$/.test(url.pathname));
  const thread=await page.evaluate(()=>location.pathname.split('/').at(-1));
  const saved=await page.evaluate(async id=>{const session=await(await fetch('/api/identity/session')).json();return await(await fetch(`/api/workspaces/${session.subject.workspace_id}/workspace-chat/threads/${id}`)).json()},thread);

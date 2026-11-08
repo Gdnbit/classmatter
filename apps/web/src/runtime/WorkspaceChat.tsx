@@ -5,6 +5,7 @@ import type { WorkspaceChatController } from "./useWorkspaceChat"
 import { R1Dialog } from "./R1Dialog"
 import type { Command, Session } from "./api"
 import { ModelSwitcher } from "./ModelSwitcher"
+import { userMessage } from "./user-facing"
 
 const labels = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "task.create": "建立任务", "task.update": "修改任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
@@ -54,7 +55,7 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
         {turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
         {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
         {turn.state !== "completed" && <p className="r1-muted">{states[turn.state]}</p>}
-        {turn.state === "queued" && <button disabled={s.working || !s.fresh} onClick={() => void s.startQueued(turn)}>继续已保存的本轮</button>}
+        {turn.state === "queued" && <button disabled={s.working || !s.fresh} onClick={() => void s.startQueued(turn)}>继续回复</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{labels[turn.candidate.command]}</h2><CandidateContent value={turn.candidate} />
           {turn.action_receipt ? <p role="status">已保存</p>
@@ -62,8 +63,8 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
         </section>}
       </div>)}
     </div>
-    {s.status && <p role="status" className="r1-muted">{s.status}</p>}
-    {s.pendingSend && <button disabled={s.working} onClick={() => void s.recoverSend()}>核对并恢复原输入（不重跑模型）</button>}
+    {s.status && <p role="status" className="r1-muted">{userMessage(s.status)}</p>}
+    {s.pendingSend && <button disabled={s.working} onClick={() => void s.recoverSend()}>恢复消息</button>}
     <div ref={end} />
     {clear && <R1Dialog titleId="workspace-chat-clear" onDismiss={() => setClear(false)}><h2 id="workspace-chat-clear">清除这段聊天正文？</h2>
       <p>仅清除这段本机聊天的消息和未提交候选；已保存的班级、学生、任务和文档不受影响。既有备份不会自动删除。</p>
@@ -81,7 +82,7 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
     <div>
       <ModelSwitcher session={session} state={s.model} revision={modelRevision} disabled={s.working || s.lastActive || !!s.pendingSend}
         onManage={onManageModels} onPreview={onPreviewModel} onVerified={onModelVerified} onError={onError} />
-      {s.lastActive ? <button type="button" aria-label="停止 Agent" onClick={() => void s.stop()}><X size={18} /></button>
+      {s.lastActive ? <button type="button" aria-label="停止回复" onClick={() => void s.stop()}><X size={18} /></button>
         : <button aria-label="发送消息" disabled={!s.canSend || !s.text.trim()}><ArrowUp size={18} /></button>}
     </div>
   </form>

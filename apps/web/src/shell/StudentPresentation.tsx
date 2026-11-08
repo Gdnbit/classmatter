@@ -6,7 +6,7 @@ import { ChevronLeft, Users } from "lucide-react"
 export function StudentPageTitle({ title, description }: { title: string; description: string }) {
   return <div className="surface-title">
     <span className="surface-icon"><Users size={22} /></span>
-    <div><p className="eyebrow">共享实体 · 多视图</p><h1>{title}</h1><p>{description}</p></div>
+    <div><p className="eyebrow">班级学生</p><h1>{title}</h1>{description && <p>{description}</p>}</div>
   </div>
 }
 
@@ -17,7 +17,7 @@ export function StudentViewSwitcher({ current, onSelect, connected = false }: {
     {["清单", "表格", "座位", "宿舍", "小队", "画布"].map(view => <button key={view}
       role="tab" aria-selected={current === view} className={current === view ? "active" : ""}
       disabled={connected && !["清单", "表格"].includes(view)}
-      title={connected && !["清单", "表格"].includes(view) ? "尚未接入数据" : undefined}
+      title={connected && !["清单", "表格"].includes(view) ? "暂不可用" : undefined}
       onClick={() => onSelect(view)}>{view}</button>)}
   </div>
 }
@@ -29,7 +29,7 @@ export function StudentRosterTable({ rows, columns, selectedId, onSelect, disabl
 }) {
   return <div className="data-table">
     <div className="table-head">{columns.map(column => <span key={column}>{column}</span>)}</div>
-    {rows.map(row => <button key={row.id} disabled={disabled} aria-pressed={selectedId === row.id}
+    {rows.map(row => <button key={row.id} data-student-id={row.id} disabled={disabled} aria-pressed={selectedId === row.id}
       className={`table-row${selectedId === row.id ? " selected" : ""}`} onClick={() => onSelect(row.id)}>
       <span><i className="avatar">{row.name[0]}</i>{row.name}</span>
       {row.cells.map((cell, index) => <span key={index}>{cell}</span>)}

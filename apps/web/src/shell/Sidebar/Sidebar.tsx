@@ -104,7 +104,7 @@ export default function Sidebar({
             openDetail({
               eyebrow: "当前工作范围",
               title: "合成演示学校 · 合成演示班",
-              description: "切换范围时，页面、对话和工具上下文会同步更新。",
+              description: "选择要查看的班级与学期。",
               sections: [
                 { label: "学期", value: "2026–2027学年上学期" },
                 { label: "我的角色", value: "班主任" },

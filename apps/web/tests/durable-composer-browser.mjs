@@ -55,7 +55,7 @@ try {
   const input = page.getByLabel('输入消息');
   await input.fill('合成建班前草稿');
   assert.equal(await input.inputValue(), '合成建班前草稿');
-  assert.equal(await page.getByLabel('Agent 交互模式').inputValue(), 'chat');
+  assert.equal(await page.getByLabel('对话方式').inputValue(), 'chat');
   assert.equal(await page.getByRole('button', { name: '发送消息' }).isEnabled(), true);
   await page.locator('form').evaluate(form => { form.requestSubmit(); form.requestSubmit(); });
   await page.getByRole('status').filter({ hasText: '已回复' }).waitFor({ timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify(await page.evaluate(() => ({ error: window.lastError, requests: window.requests, body: document.body.innerText }))), { cause: error }); });
@@ -78,13 +78,13 @@ try {
   await page.waitForFunction(() => document.querySelector('textarea').value === '' && document.querySelectorAll('article').length === 0);
   await page.evaluate(() => window.scope({ classroom: null }));
   await page.waitForFunction(() => window.legacyTitles.length === 0);
-  await page.getByLabel('Agent 交互模式').selectOption('read');
+  await page.getByLabel('对话方式').selectOption('read');
   await input.fill('没有班级不能查询');
   assert.equal(await page.getByRole('button', { name: '发送消息' }).isDisabled(), true);
-  await page.getByLabel('Agent 交互模式').selectOption('chat');
+  await page.getByLabel('对话方式').selectOption('chat');
   await page.evaluate(() => { window.slow = true; });
   await input.fill('取消普通聊天'); await input.press('Enter');
-  await page.getByRole('button', { name: '停止 Agent' }).click();
+  await page.getByRole('button', { name: '停止回复' }).click();
   await page.getByRole('status').filter({ hasText: '已停止' }).waitFor();
   await page.waitForFunction(() => !document.querySelector('textarea').disabled);
   // Startup discovers the compatible class history after enabling the hook.
