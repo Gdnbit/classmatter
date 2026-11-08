@@ -1,5 +1,5 @@
 import * as validators from "./agent-conversation-validators.cjs"
-import { request, workspace, type Session, type Classroom } from "./api"
+import { ApiError, request, workspace, type Session, type Classroom } from "./api"
 
 export type ScopedConversation = {
   schema_version: "class-os.agent-conversation.v2"
@@ -13,6 +13,29 @@ export type ScopedConversation = {
 
 export class ConversationScopeInvalid extends Error {
   constructor() { super("对话范围响应不匹配，未回落到全班或采纳旧上下文。请核对当前班级与学生。") }
+}
+
+export async function createWorkspaceConversation(session: Session, signal?: AbortSignal): Promise<{ conversation_id: string }> {
+  const body = { schema_version: "classmatter.workspace-conversation-request.v1" }
+  const response = await fetch(`${workspace(session)}/agent/workspace-conversations`, { method: "POST", credentials: "same-origin", signal,
+    headers: { "content-type": "application/json", "x-class-os-csrf": session.csrf_token }, body: JSON.stringify(body) })
+  if (!response.ok) throw new ApiError(response.status, response.headers.get("x-request-id") || "")
+  if (!response.headers.get("content-type")?.startsWith("application/json") || !response.body) throw new ConversationScopeInvalid()
+  const reader = response.body.getReader(), decoder = new TextDecoder("utf-8", { fatal: true })
+  let raw = "", bytes = 0
+  try {
+    while (true) { const item = await reader.read(); signal?.throwIfAborted(); if (item.done) break
+      bytes += item.value.byteLength; if (bytes > 4096) throw new ConversationScopeInvalid(); raw += decoder.decode(item.value, { stream: true }) }
+    raw += decoder.decode()
+  } finally { await reader.cancel().catch(() => {}); reader.releaseLock() }
+  const data: unknown = JSON.parse(raw)
+  signal?.throwIfAborted()
+  const valid = validators.workspaceReply(data); validators.workspaceReply.errors = null
+  if (!valid) throw new ConversationScopeInvalid()
+  const value = data as { conversation_id: string; expires_at: string }
+  const expiry = Date.parse(value.expires_at)
+  if (!Number.isFinite(expiry) || new Date(expiry).toISOString().slice(0, 19) !== value.expires_at.slice(0, 19)) throw new ConversationScopeInvalid()
+  return value
 }
 
 export type RecordNoteCandidate = Readonly<{

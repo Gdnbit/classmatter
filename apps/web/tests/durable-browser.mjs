@@ -17,6 +17,7 @@ try {
   await page.goto(base + '/');
   await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
+  await page.getByLabel('Agent 交互模式').selectOption('read');
   await page.getByText('已发送文字和完成结果由数据库保存。', { exact: false }).waitFor();
   await page.getByLabel('输入消息').fill('合成耐久浏览器查询');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();

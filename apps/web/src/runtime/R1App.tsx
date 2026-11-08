@@ -39,7 +39,7 @@ import { consumeEvents } from "./events"
 import { identityRequest, IdentityOutcomeUnknown, logoutIdentity } from "./identity"
 import { R1Dialog } from "./R1Dialog"
 import { ModelConfigurationForm } from "./ModelConfiguration"
-import { createScopedConversation, parseRecordNoteCandidate, type RecordNoteCandidate } from "./agent-conversation"
+import { createScopedConversation, createWorkspaceConversation, parseRecordNoteCandidate, type RecordNoteCandidate } from "./agent-conversation"
 import { decodeApproval, decodeCommandReceipt, decodeCommandState } from "./command-receipts"
 import { decodeTermMetadata } from "./term-metadata"
 import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
@@ -162,7 +162,7 @@ export default function R1App() {
   const [auditPage, setAuditPage] = useState<AuditPage | null>(null)
   const auditOpener = useRef<HTMLElement | null>(null)
   const [message, setMessage] = useState("")
-  const [agentMode, setAgentMode] = useState<AgentInteraction>("read")
+  const [agentMode, setAgentMode] = useState<AgentInteraction>("chat")
   const [agentStudent, setAgentStudent] = useState("")
   const [conversationId, setConversationId] = useState("")
   const [agentStatus, setAgentStatus] = useState("")
@@ -227,8 +227,8 @@ export default function R1App() {
     runningAgent.current?.abort()
     setConversationId(""); setMessages([]); setAgentDraft(null); setAgentRecordNote(null); setRecordNoteQuote(""); setAgentStatus("")
     setAgentStudent("")
-    setDocumentSeed(null)
-  }, [session?.csrf_token, session?.subject.workspace_id, classroom?.class_id, classroom?.term_id])
+  }, [session?.csrf_token, session?.subject.workspace_id, agentMode === "chat" ? "workspace" : classroom?.class_id, agentMode === "chat" ? "workspace" : classroom?.term_id])
+  useEffect(() => { setDocumentSeed(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   useEffect(() => () => { runningAgent.current?.abort() }, [])
   useEffect(() => { setAuditPage(null) }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
   useEffect(() => { setSearch("") }, [session?.csrf_token, classroom?.class_id, classroom?.term_id])
@@ -771,7 +771,8 @@ export default function R1App() {
     })
   }
   async function sendMessage() {
-    if (!session || !classroom || !editable || busy || refreshing || !message.trim() || runningAgent.current || modelUncertain || agentScopeUnavailable) return
+    if (!session || busy || !navigator.onLine || !message.trim() || runningAgent.current || modelUncertain
+        || (agentMode !== "chat" && (!classroom || !editable || refreshing || agentScopeUnavailable))) return
     const controller = new AbortController()
     runningAgent.current = controller
     const text = message.trim()
@@ -784,7 +785,8 @@ export default function R1App() {
     try {
       let conversation = conversationId
       if (!conversation) {
-        const created = await createScopedConversation(session, classroom, agentStudent || null, controller.signal)
+        const created = agentMode === "chat" ? await createWorkspaceConversation(session, controller.signal)
+          : await createScopedConversation(session, classroom!, agentStudent || null, controller.signal)
         if (controller.signal.aborted) return
         conversation = created.conversation_id; setConversationId(conversation)
       }
@@ -798,6 +800,7 @@ export default function R1App() {
       if (!response.ok) throw new ApiError(response.status, response.headers.get("x-request-id") || "")
       await consumeEvents(response, event => {
         if (controller.signal.aborted) return
+        if (agentMode === "chat" && (event.type.startsWith("tool.") || event.type === "draft.available")) throw new Error("普通聊天不允许执行班级工具。")
         if (event.type === "run.started") setAgentStatus(event.payload.provider === "configured-api" ? "Agent 已开始（已配置 API）" : "Agent 已开始（离线合成或协议测试）")
         if (event.type === "tool.started") setAgentStatus(event.payload.tool === "attention_list" ? "正在查询当前工作…" : "正在整理未提交草稿…")
         if (event.type === "draft.available") {
@@ -817,6 +820,7 @@ export default function R1App() {
             return item as QuerySource
           })
           if (agentMode === "read" && sources.length !== 1) throw new Error("当前工作答案缺少真实查询回执")
+          if (agentMode === "chat" && sources.length) throw new Error("普通聊天不应包含班级查询回执。")
         }
         if (event.type === "run.failed") failed = true
       })
@@ -838,6 +842,7 @@ export default function R1App() {
     session, classroom, threadId: navigation.route.conversationId,
     readable: queryFresh && !refreshing,
     canWrite: editable && !busy && !form && !pending && !modelUncertain,
+    canChat: !!session && !busy && !form && !pending && !modelUncertain,
     onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
     onBusyChange: setDurableBusy, onDraftChange: setDurableDraft, onError: fail,
   })
@@ -901,7 +906,7 @@ export default function R1App() {
           className="new-chat"
           disabled={busy || durableBusy || !!runningAgent.current || (durableProfile && !!durable.text.trim())}
           onClick={() => void action(async () => {
-            if (durableProfile) { navigation.setConversation("", "", ""); setPage("conversation"); return }
+            if (durableProfile) { durable.newChat(); navigation.setConversation("", "", ""); setPage("conversation"); return }
             const generation = loading.current
             if (conversationId) {
               try { await request(`${workspace(session)}/agent/conversations/${conversationId}/forget`, {}, session.csrf_token) }
@@ -997,7 +1002,7 @@ export default function R1App() {
         <header className="topbar r1-topbar">
           <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "documents" ? "数据与内容" : page === "settings" ? "设置" : "班事有谱"}</strong>
           <span role={refreshing ? "status" : undefined}>
-            {refreshing ? "正在读取当前班级与学期…" : classroom?.term_name || "先建立班级与学期"}
+            {page === "conversation" && (durableProfile ? durable.workspaceChat : agentMode === "chat") ? "普通聊天 · 无需关联班级" : refreshing ? "正在读取当前班级与学期…" : classroom?.term_name || "先建立班级与学期"}
             {classroom?.status === "archived" && " · 历史只读"}
           </span>
           <button
@@ -1053,7 +1058,7 @@ export default function R1App() {
                 <small>CLASSMATTER · 对话</small>
                 <h1>今天想处理什么？</h1>
                 <p>少记、少追、少重复。事实由你确认，系统帮你复用。</p>
-                <p className="r1-muted">{durableProfile
+                <p className="r1-muted">{durableProfile && durable.workspaceChat ? "直接聊天，无需先建班。普通聊天使用临时上下文，刷新不恢复；班级查询与操作才需要关联班级。" : durableProfile
                   ? "已发送文字和完成结果由数据库保存。历史 AI 内容不是正式事实；不会因刷新而重新调用模型。"
                   : "对话仅为临时上下文，刷新或重启不保证恢复；已确认的事实与任务另由数据库保存。"}</p>
               </div>
@@ -1582,7 +1587,7 @@ export default function R1App() {
                 {agentScopeUnavailable && <option value={agentStudent} disabled>已选学生不可用，请重新选择</option>}
                 {students.filter(item => item.status === "active").map(item => <option key={item.student_id} value={item.student_id}>{item.name} · 个人跟进</option>)}
               </select></label>}
-              {runningAgent.current ? <button type="button" aria-label="停止 Agent" onClick={() => runningAgent.current?.abort()}><X size={18} /></button> : <button aria-label="发送消息" disabled={!message.trim() || busy || refreshing || !classroom || !editable || modelUncertain || agentScopeUnavailable}>
+              {runningAgent.current ? <button type="button" aria-label="停止 Agent" onClick={() => runningAgent.current?.abort()}><X size={18} /></button> : <button aria-label="发送消息" disabled={!message.trim() || busy || modelUncertain || (agentMode !== "chat" && (refreshing || !classroom || !editable || agentScopeUnavailable))}>
                 <ArrowUp size={18} />
               </button>}
             </div>

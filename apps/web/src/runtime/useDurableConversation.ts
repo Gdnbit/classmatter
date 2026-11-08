@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react"
 import { ApiError, type Session, type Classroom } from "./api"
 import { d1Client, type History, type Listing, type Mode, type Preview, type Turn } from "./durable-conversation"
 import { createQueryRefresh } from "./query-refresh"
+import { createWorkspaceConversation } from "./agent-conversation"
+import { consumeEvents } from "./events"
+import { workspace } from "./api"
 
 const active = (turn?: Turn) => !!turn && ["queued", "running", "cancel_requested"].includes(turn.run.state)
 const stateText = (turn?: Turn) => turn ? ({ queued: "输入已保存，尚未启动模型", running: "运行中，尚无已保存结果",
@@ -11,7 +14,7 @@ const stateText = (turn?: Turn) => turn ? ({ queued: "输入已保存，尚未�
 
 type Props = {
   enabled: boolean; session: Session | null; classroom: Classroom | null; threadId: string
-  readable: boolean; canWrite: boolean
+  readable: boolean; canWrite: boolean; canChat: boolean
   onSelect: (id: string) => void; onBusyChange: (value: boolean) => void
   onDraftChange: (value: boolean) => void; onError: (error: unknown) => void
 }
@@ -22,14 +25,19 @@ export function useDurableConversation(props: Props) {
   const operation = useRef<symbol | null>(null)
   const running = useRef<{ threadId: string; requestId: string } | null>(null)
   const [history, setHistory] = useState<History | null>(null), [listing, setListing] = useState<Listing | null>(null)
-  const [text, setText] = useState(""), [mode, setMode] = useState<Mode>("read"), [student, setStudent] = useState("")
+  const [text, setText] = useState(""), [mode, setMode] = useState<Mode>("chat"), [student, setStudent] = useState("")
+  const [chatMessages, setChatMessages] = useState<{ role: "user" | "assistant"; text: string }[]>([])
+  const workspaceConversation = useRef("")
+  const [classChat, setClassChat] = useState(false)
   const [status, setStatus] = useState(""), [working, setWorking] = useState(false), [fresh, setFresh] = useState(false)
   const [inputReady, setInputReady] = useState(false)
+  const [readyKey, setReadyKey] = useState("")
   const [pending, setPending] = useState<{ preview: Preview; key: string; approval: string | null; attempted: boolean } | null>(null)
   const [title, setTitle] = useState("")
   const identity = props.enabled && props.session
     ? `${props.session.subject.owner_id}/${props.session.subject.workspace_id}/${props.session.csrf_token}` : ""
-  const key = identity ? `${identity}/${props.classroom ? `${props.classroom.class_id}/${props.classroom.term_id}` : "unassigned"}/${props.threadId}` : ""
+  const workspaceChat = !props.threadId && mode === "chat" && !classChat
+  const key = identity ? `${identity}/${workspaceChat ? "workspace" : props.classroom ? `${props.classroom.class_id}/${props.classroom.term_id}` : "unassigned"}/${props.threadId}` : ""
   const previousScope = useRef({ identity: "", classId: "", threadId: "" })
   const api = () => {
     const p = latest.current
@@ -46,7 +54,9 @@ export function useDurableConversation(props: Props) {
   useEffect(() => { latest.current.onDraftChange(!!text.trim()) }, [text, key])
   useEffect(() => {
     const previous = previousScope.current
-    const keepUnassignedDraft = !!identity && previous.identity === identity && !previous.classId && !previous.threadId && !!props.classroom && !props.threadId
+    if (previous.identity !== identity) { workspaceConversation.current = ""; setChatMessages([]) }
+    const keepUnassignedDraft = !!identity && previous.identity === identity && previous.threadId === props.threadId
+      && (previous.classId === (props.classroom?.class_id || "") || (!previous.classId && !previous.threadId && !!props.classroom))
     previousScope.current = { identity, classId: props.classroom?.class_id || "", threadId: props.threadId }
     const generation = ++epoch.current, connection = connectivity.current
     request.current?.abort(); stream.current?.abort(); running.current = null
@@ -54,28 +64,30 @@ export function useDurableConversation(props: Props) {
     setHistory(null); setListing(null); setPending(null); setWorking(false); setFresh(false); setInputReady(false); setStatus(""); setTitle("")
     if (!keepUnassignedDraft) setText("")
     setStudent("")
-    if (!key) return
+    const dispose = () => { epoch.current++; request.current?.abort(); stream.current?.abort(); latest.current.onBusyChange(false); latest.current.onDraftChange(false) }
+    if (!key) return dispose
     // Local composition does not require a business scope. Sending still does.
-    if (!latest.current.classroom) { setInputReady(true); return }
+    if (workspaceChat || !latest.current.classroom) { setInputReady(true); setReadyKey(key); return dispose }
     const controller = new AbortController(); request.current = controller
     const client = api(), selected = latest.current.threadId
     Promise.all([client.list(controller.signal), selected ? client.history(selected, controller.signal) : Promise.resolve(null)])
       .then(([list, saved]) => {
         if (generation !== epoch.current || connection !== connectivity.current || !navigator.onLine || controller.signal.aborted) return
-        setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true)
+        setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true); setReadyKey(key)
         if (saved) { setStudent(saved.student_id || ""); setStatus(stateText(saved.turns.at(-1))) }
       }).catch(error => { if (generation === epoch.current && !controller.signal.aborted) report(error) })
-    return () => { epoch.current++; controller.abort(); stream.current?.abort(); latest.current.onBusyChange(false); latest.current.onDraftChange(false) }
+    return dispose
   }, [key])
 
   async function refresh(threadId = latest.current.threadId) {
+    if (workspaceChat) return null
     const generation = epoch.current, connection = connectivity.current, client = api()
     request.current?.abort()
     const controller = new AbortController(); request.current = controller; setFresh(false)
     try {
       const [list, saved] = await Promise.all([client.list(controller.signal), threadId ? client.history(threadId, controller.signal) : Promise.resolve(null)])
       if (generation !== epoch.current || connection !== connectivity.current || !navigator.onLine || controller.signal.aborted) return null
-      setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true)
+      setListing(list); setHistory(saved); setTitle(saved?.history.title || ""); setFresh(true); setInputReady(true); setReadyKey(key)
       if (saved) setStatus(stateText(saved.turns.at(-1)))
       return saved
     } catch (error) {
@@ -88,7 +100,7 @@ export function useDurableConversation(props: Props) {
   refreshIdle.current = !working && !pending && title === (history?.history.title || "")
   const foreground = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
   useEffect(() => {
-    if (!key || !props.classroom) return
+    if (!key || workspaceChat || !props.classroom) return
     const controller = createQueryRefresh({
       read: async () => { await refreshRef.current() },
       invalidate: () => {
@@ -126,7 +138,44 @@ export function useDurableConversation(props: Props) {
   }
   async function send(saved?: Turn) {
     const p = latest.current
-    if (working || pending || !fresh || !navigator.onLine || !p.readable || !p.canWrite || !p.classroom || (!saved && (!text.trim() || active(history?.turns.at(-1))))) return
+    if (workspaceChat && !saved) {
+      if (!p.enabled || !p.session || !p.canChat || working || operation.current || pending || !navigator.onLine || !text.trim()) return
+      const session = p.session, input = text.trim(), generation = epoch.current
+      await operate(async () => {
+        const controller = new AbortController(); stream.current = controller
+        setText(""); setChatMessages(items => [...items, { role: "user", text: input }]); setStatus("正在回复…")
+        try {
+          let conversation = workspaceConversation.current
+          if (!conversation) {
+            const created = await createWorkspaceConversation(session, controller.signal)
+            if (generation !== epoch.current || controller.signal.aborted) return
+            conversation = created.conversation_id; workspaceConversation.current = conversation
+          }
+          const response = await fetch(`${workspace(session)}/agent/events`, { method: "POST", credentials: "same-origin", signal: controller.signal,
+            headers: { "content-type": "application/json", "x-class-os-csrf": session.csrf_token },
+            body: JSON.stringify({ conversation_id: conversation, text: input, mode: "chat" }) })
+          if (!response.ok) { if (response.status === 409) workspaceConversation.current = ""; throw new ApiError(response.status, response.headers.get("x-request-id") || "") }
+          let answer = "", completed = false, failed = false
+          await consumeEvents(response, event => {
+            if (event.type.startsWith("tool.") || event.type === "draft.available") throw new Error("普通聊天不允许执行班级工具。")
+            if (event.type === "message.delta") {
+              if (typeof event.payload.text !== "string" || !event.payload.text.trim() || event.payload.text.length > 4000
+                  || !Array.isArray(event.payload.source_refs) || event.payload.source_refs.length) throw new Error("普通聊天响应不匹配。")
+              answer = event.payload.text
+            }
+            if (event.type === "run.completed") completed = true
+            if (event.type === "run.failed") failed = true
+          })
+          if (controller.signal.aborted || generation !== epoch.current) return
+          if (!completed || failed || !answer) throw new Error("本次回复未完成；没有自动重试。请检查模型配置或重新发送。")
+          setChatMessages(items => [...items, { role: "assistant", text: answer }]); setStatus("已回复 · 普通聊天未读写班级数据")
+        } catch (error) {
+          if (generation === epoch.current && !controller.signal.aborted) throw error
+        } finally { if (stream.current === controller) stream.current = null }
+      })
+      return
+    }
+    if (working || pending || !fresh || readyKey !== key || !navigator.onLine || !p.readable || !p.canWrite || !p.classroom || (!saved && (!text.trim() || active(history?.turns.at(-1))))) return
     const client = api(), generation = epoch.current, input = text.trim(), selected = p.threadId
     let threadId = selected
     await operate(async () => {
@@ -168,6 +217,7 @@ export function useDurableConversation(props: Props) {
   }
   async function stop() {
     const controller = stream.current
+    if (workspaceChat) { controller?.abort(); setStatus("已停止；不会自动重试，未完成回复不采纳。"); return }
     const target = running.current || (history && history.turns.at(-1) ? {
       threadId: history.history.thread_id, requestId: history.turns.at(-1)!.client_request_id } : null)
     if (!target) { controller?.abort(); setStatus("已停止等待；创建/保存结果仍需核对，不自动重跑。"); return }
@@ -212,7 +262,9 @@ export function useDurableConversation(props: Props) {
       setPending(null); await refresh()
     })
   }
-  return { history, listing, text, setText, mode, setMode, student, setStudent, title, setTitle, status, working, fresh, inputReady, pending,
+  return { history, listing, text, setText, mode, setMode: (value: Mode | "class-chat") => { if (working || pending) return; setClassChat(value === "class-chat"); setMode(value === "class-chat" ? "chat" : value) }, student, setStudent, title, setTitle, status, working, fresh: fresh && readyKey === key, inputReady: inputReady && readyKey === key, pending,
+    workspaceChat, chatMessages, canChat: props.canChat,
+    newChat: () => { if (!working && !pending && !text.trim()) { workspaceConversation.current = ""; setChatMessages([]); setStatus(""); setClassChat(false); setMode("chat") } },
     needsClassroom: !props.classroom,
     blocked: working || !!pending, active: active(history?.turns.at(-1)), isStreaming: !!stream.current,
     send: () => send(), startSaved: (turn: Turn) => send(turn), stop,

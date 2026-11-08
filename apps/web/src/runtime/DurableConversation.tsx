@@ -10,6 +10,10 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
   const last = s.history?.history.messages.at(-1)?.message_id
   useEffect(() => { if (last) end.current?.scrollIntoView({ block: "nearest" }) }, [last])
   const current = s.history
+  if (s.workspaceChat) return <section className="r1-messages" aria-label="普通聊天">
+    {s.chatMessages.map((message, index) => <article key={index} className={message.role}><small>{message.role === "user" ? "你" : "ClassMatter"}</small><p>{message.text}</p></article>)}
+    {s.status && <p role="status" className="r1-muted">{s.status}</p>}
+  </section>
   return <section className="r1-durable" aria-label="已保存的对话">
     <div className="r1-toolbar"><button disabled={s.blocked || s.needsClassroom} onClick={() => void s.refresh()}>重新读取对话</button>
       <span className="r1-muted">{s.needsClassroom ? "建立班级与学期后可保存和读取对话" : s.fresh ? "来自当前授权数据库" : "正在核对；上次快照不能用于提交"}</span></div>
@@ -66,15 +70,15 @@ export function DurableHistory({ state: s, canWrite, onDraft }: { state: Durable
 export function DurableComposer({ state: s, students, canWrite }: { state: DurableController; students: Student[]; canWrite: boolean }) {
   const fixed = !!s.history
   const unavailableStudent = !fixed && !!s.student && !students.some(item => item.student_id === s.student && item.status === "active")
-  const allowed = canWrite && s.fresh && !s.blocked && !s.active && !unavailableStudent && (!fixed || s.history?.history.status === "active")
+  const allowed = s.workspaceChat ? s.canChat && !s.blocked && navigator.onLine : canWrite && s.fresh && !s.blocked && !s.active && !unavailableStudent && (!fixed || s.history?.history.status === "active")
   return <form className="r1-composer" onSubmit={event => { event.preventDefault(); void s.send() }}>
-    <textarea aria-label="输入消息" placeholder="输入、查询或整理班级工作……" maxLength={2000} value={s.text} disabled={s.blocked || !s.inputReady}
+    <textarea aria-label="输入消息" placeholder={s.workspaceChat ? "随便聊聊，或告诉我你想处理什么……" : "输入、查询或整理班级工作……"} maxLength={2000} value={s.text} disabled={s.blocked || !s.inputReady}
       onChange={event => s.setText(event.target.value)} onKeyDown={event => {
         if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (allowed) void s.send() }
       }} />
-    <div><span className="r1-muted" role="status">{s.needsClassroom ? "可以先输入草稿；发送前请在左侧建立班级与学期。草稿尚未保存。" : "耐久会话 · 附件/语音仍未接入"}</span>
-      <label>班级助理<select aria-label="Agent 交互模式" value={s.mode} disabled={s.blocked} onChange={event => s.setMode(event.target.value as typeof s.mode)}>
-        <option value="read">查询当前工作</option><option value="draft">仅生成任务草稿</option><option value="chat">讨论，不调用工具</option></select></label>
+    <div><span className="r1-muted">{s.workspaceChat ? "普通聊天 · 无需班级 · 临时上下文" : s.needsClassroom ? "此操作需要关联班级与学期，普通聊天不需要。" : "班级会话 · 已发送消息会保存"}</span>
+      <label>助理<select aria-label="Agent 交互模式" value={s.mode === "chat" && !s.workspaceChat ? "class-chat" : s.mode} disabled={s.blocked} onChange={event => s.setMode(event.target.value as typeof s.mode | "class-chat")}>
+        <option value="chat">普通聊天</option><option value="read">查询班级工作</option><option value="draft">准备班级任务草稿</option><option value="class-chat">关联班级讨论</option></select></label>
       {!fixed && s.mode === "read" && <label className="r1-agent-scope">查询范围<select aria-label="助理查询范围" value={s.student} disabled={s.blocked} onChange={event => s.setStudent(event.target.value)}>
         <option value="">全班当前工作</option>{unavailableStudent && <option value={s.student}>原学生已不可用，请重新选择</option>}{students.filter(item => item.status === "active").map(item => <option key={item.student_id} value={item.student_id}>{item.name} · 个人跟进</option>)}</select></label>}
       {s.working && s.isStreaming ? <button type="button" aria-label="停止 Agent" onClick={() => void s.stop()}><X size={18} /></button>

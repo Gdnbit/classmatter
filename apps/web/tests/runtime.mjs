@@ -443,6 +443,7 @@ try {
   await page.getByText('结果：合成浏览器验收完成', { exact: true }).waitFor();
   await page.getByRole('button', { name: '对话', exact: true }).click();
   await page.getByLabel('输入消息').fill('合成查询当前工作');
+  await page.getByLabel('Agent 交互模式').selectOption('read');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   await page.locator('.r1-messages').getByText(/来源已重新查询/).waitFor();
   await page.locator('.r1-messages').getByText(/已审计的当前工作快照/).waitFor();

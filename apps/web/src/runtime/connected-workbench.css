@@ -14,6 +14,9 @@
 .connected-runtime .chat-history{margin-top:22px}
 .connected-runtime .sidebar-empty{font-size:12px;color:var(--muted);padding:8px}
 .connected-runtime .r1-composer{border-radius:23px;flex-shrink:0}
+.connected-runtime .r1-composer textarea:focus,
+.connected-runtime .r1-composer textarea:focus-visible{outline:none;box-shadow:none;border:0}
+.connected-runtime .r1-composer:focus-within{border-color:#9fb6ae}
 @media(max-width:720px){
   .connected-runtime .app-shell{display:flex;flex-direction:column}
   .connected-runtime .app-shell>.sidebar{display:flex;height:auto;max-height:170px;flex-shrink:0}

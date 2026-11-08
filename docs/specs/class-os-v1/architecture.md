@@ -1,5 +1,7 @@
 # Architecture: ClassMatter v1
 
+2026-11-08 交互语义澄清：普通聊天属于Owner/workspace范围，不以班级或学期存在为前置条件；只有班级数据查询和业务操作才绑定class/term及相应权限。Conversation-first不等于默认获取业务数据或授权模型写库。当前合成实现复用原有界临时会话/SDK/ISB与QG审计，未新增表或放宽D1耐久会话范围；工作区聊天持久化及完整对话驱动创建/编辑尚未验收，正式R1与Requirement/Eval/Task/Gate批准状态不变。
+
 2026-10-15 原R1实现增量（FR-CLS-001、T-RDOM-011/T-RWEB-006）：当前学期元数据更正保持roster所有权，term.update以Term自身版本/旧name/start/end做CAS，经现有BCG预览/批准/提交/W2/幂等/事务审计。独立QG metadata投影复用class.context审计并绑定class/term/resource/version；不扩context.v1、不加Agent写Tool。只更正元数据，不重分配历史事实/Enrollment、不按日期切学期或改变授权；多班级/多学期/Calendar仍不进入R1。显式变化为risk r1.3、固定迁移0016与runtime三列授权，22表不变；不是Task/Eval/Gate晋升。详见 [开发登记](../../changes/2026-10-08-synthetic-development-admission.md)。
 
 > 文档状态（2026-10-08）：现行规格/规划/规则；设计存在；实现/批准须另凭目标版本证据。项目完成度见 [公开工程边界说明](../../ENGINEERING_OVERVIEW.md)；本标识不提升批准、测试或任务状态。

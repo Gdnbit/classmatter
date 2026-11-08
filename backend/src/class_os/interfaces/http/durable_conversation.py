@@ -218,7 +218,7 @@ def create_durable_app(settings, *, worker, query, sdk, readiness=None, model_co
         sdk.model_context = model_controller.context
         sdk.provider_label = "managed-model"
         sdk.provider_state = model_controller.label
-    app = create_app(settings, identity=worker.identity, business=worker, query=query, readiness=readiness,
+    app = create_app(settings, identity=worker.identity, business=worker, query=query, agent=sdk, agent_workspace_only=True, readiness=readiness,
                      model_controller=model_controller,
                      document_business=worker if _workbench else None, document_query=query if _workbench else None)
     from class_os.application.conversation_control import ControlReauthenticationRequired

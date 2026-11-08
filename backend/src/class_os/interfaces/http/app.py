@@ -126,7 +126,7 @@ class LocalBoundary:
 
 
 def create_app(settings: Settings, *, identity=None, business=None, query=None, readiness=None, agent=None,
-               model_controller=None, document_business=None, document_query=None):
+               model_controller=None, document_business=None, document_query=None, agent_workspace_only=False):
     app = FastAPI(debug=False, docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(LocalBoundary, settings=settings)
 
@@ -180,7 +180,7 @@ def create_app(settings: Settings, *, identity=None, business=None, query=None, 
             raise ValueError("Agent requires identity and Query Gateway")
         from .agent import router as agent_router
         from class_os.application.agent import AgentRejected
-        app.include_router(agent_router(agent))
+        app.include_router(agent_router(agent, workspace_only=agent_workspace_only))
 
         @app.exception_handler(AgentRejected)
         async def agent_error(request: Request, exc: AgentRejected):

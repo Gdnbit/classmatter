@@ -1,0 +1,39 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.workspace-conversation.v1",
+      "default": "classmatter.workspace-conversation.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "conversation_id": {
+      "format": "uuid",
+      "title": "Conversation Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "memory": {
+      "const": "ephemeral-not-fact",
+      "default": "ephemeral-not-fact",
+      "title": "Memory",
+      "type": "string"
+    },
+    "scope": {
+      "const": "workspace",
+      "default": "workspace",
+      "title": "Scope",
+      "type": "string"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "expires_at"
+  ],
+  "title": "WorkspaceConversationResponse",
+  "type": "object"
+}

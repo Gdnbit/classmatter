@@ -12,6 +12,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 ## 事实、记忆和开放世界
 
+2026-11-08 会话前置条件校准：普通聊天以已认证Owner/workspace为范围，不要求先建班/学期，不向模型注册班级读写工具；同一会话可多轮讨论，班级选择不改变其授权。原Pydantic AI、受控模型配置、限额/超时/取消和ISB/QG审计复用。普通聊天仍是15分钟/10轮有界临时上下文，刷新不恢复，不冒充D1入库历史；需要关联班级的查询、任务草稿与既有耐久记录继续走原范围契约。以聊天驱动创建/编辑是产品方向，当前仅已有任务/记录草稿入口，不代表任意CRUD或Agent后台写入已实现；持久业务变更仍需BCG预览/必要确认/幂等提交。
+
 事实与 Observation/Claim/Derived Signal/AI inference 有权威边界；学生显示名不是身份键。Person、组织与角色、关系、分组、Assignment、Evidence/Provenance、Capture/Entity Resolution、Case/Commitment/Temporal 是长期语义，不代表所有对象已实现。Conversation Memory 是短期上下文，Knowledge/RAG 是检索依据，都不是正式业务事实源。Harness、OCR、ASR、RAG、渲染与求解器是可替换能力，不进入 Stable Kernel。
 
 扩展顺序是复用 Ontology → Domain Pack → 受控 Custom Extension → 验证后 Promotion。禁止万能 JSON/Fact 表和 Agent 任意 DDL。Capture 仅产 Draft/Candidate，仍经过领域校验与 BCG。Workflow、Scheduling、Attention、Conflict 不因长期愿景扩张 R1。任何学校多角色权限必须显式限定 responsibility/authority/scope，而非按称谓自动授予访问。

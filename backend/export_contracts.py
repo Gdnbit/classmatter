@@ -11,6 +11,7 @@ from class_os.interfaces.http.identity_contracts import IdentityLogoutBody, Iden
 from class_os.interfaces.http.identity_contracts import IdentityOperationReceipt
 from class_os.interfaces.http.agent import TurnBody, ConversationResponse, QueryReceiptReference
 from class_os.interfaces.http.agent import ScopedConversationBody, ScopedConversationResponse
+from class_os.interfaces.http.agent import WorkspaceConversationBody, WorkspaceConversationResponse
 from class_os.interfaces.http.agent import RecordNoteTurnBody, RecordNoteCandidateResponse
 from class_os.application.agent_tool_contracts import catalog
 from class_os.interfaces.http.durable_conversation import (ListingResponse as DurableListing, HistoryResponse as DurableHistory,
@@ -50,6 +51,7 @@ def main():
                         ("identifier-list.v1", IdentifierResponse), ("duplicate-list.v1", DuplicateResponse),
                         ("agent-turn.v1", TurnBody), ("agent-conversation.v1", ConversationResponse),
                         ("agent-conversation-body.v2", ScopedConversationBody), ("agent-conversation.v2", ScopedConversationResponse),
+                        ("workspace-conversation-body.v1", WorkspaceConversationBody), ("workspace-conversation.v1", WorkspaceConversationResponse),
                         ("agent-record-note-turn.v1", RecordNoteTurnBody), ("agent-record-note-candidate.v1", RecordNoteCandidateResponse),
                         ("model-configuration-body.v1", ModelConfigurationBody), ("model-configuration.v1", ModelConfigurationResponse),
                         ("model-status.v1", ModelStatus), ("model-staged.v1", ModelStaged), ("model-stage-body.v1", ModelStageBody),

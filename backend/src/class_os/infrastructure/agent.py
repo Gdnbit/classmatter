@@ -69,6 +69,12 @@ class PydanticAgentRuntime:
             self.query.student_scope(*credentials, context.class_id, context.term_id, student_id)
         return self.memory.create(credentials, context.class_id, context.term_id, student_id=student_id)
 
+    def workspace_conversation(self, credentials):
+        # QG still authenticates the workspace. No class is selected or copied
+        # into this conversation, even when a class happens to exist.
+        self.query.context(*credentials)
+        return self.memory.create(credentials, None, None, workspace_only=True)
+
     def prepare(self, credentials, request):
         if (type(request) is not AgentRequest or type(request.mode) is not Mode
                 or type(request.draft_kind) is not DraftKind
@@ -77,8 +83,13 @@ class PydanticAgentRuntime:
             raise AgentRejected()
         context = self.query.context(*credentials)  # reauthenticate/revalidate current scope every turn
         conversation = self.memory.get(credentials, request.conversation_id)
-        if (not context or conversation.class_id != context.class_id or conversation.term_id != context.term_id
-                or conversation.active or self.active >= 4):
+        workspace_only = conversation.class_id is None and conversation.term_id is None
+        if workspace_only:
+            if request.mode is not Mode.CHAT or request.draft_kind is not DraftKind.TASK or conversation.student_id is not None:
+                raise AgentRejected()
+        elif not context or conversation.class_id != context.class_id or conversation.term_id != context.term_id:
+            raise AgentRejected()
+        if conversation.active or self.active >= 4:
             raise AgentRejected()
         if conversation.student_id is not None:
             if request.mode is not Mode.READ:
@@ -118,6 +129,8 @@ class PydanticAgentRuntime:
 
         async def audit(status):
             options = {"student_id": conversation.student_id} if conversation.student_id is not None else {}
+            if conversation.class_id is None and conversation.term_id is None:
+                options["workspace_only"] = True
             await anyio.to_thread.run_sync(lambda: self.query.agent_audit(credentials, run_id, status, conversation.class_id, conversation.term_id, **options))
 
         async def produce():
