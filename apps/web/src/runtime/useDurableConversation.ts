@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { ApiError, type Session, type Classroom } from "./api"
 import { d1Client, type History, type Listing, type Mode, type Preview, type Turn } from "./durable-conversation"
 import { createQueryRefresh } from "./query-refresh"
@@ -78,6 +78,22 @@ export function useDurableConversation(props: Props) {
       }).catch(error => { if (generation === epoch.current && !controller.signal.aborted) report(error) })
     return dispose
   }, [key])
+
+  // History discovery is a UI read, not the scope of an ordinary model chat.
+  // Keep old class conversations reachable without forcing chat into a class.
+  useLayoutEffect(() => {
+    if (!identity || !workspaceChat) return
+    setListing(null)
+  }, [identity, workspaceChat, props.classroom?.class_id, props.classroom?.term_id])
+  useEffect(() => {
+    if (!identity || !workspaceChat) return
+    if (!props.classroom) return
+    const generation = epoch.current, controller = new AbortController()
+    void api().list(controller.signal).then(list => {
+      if (!controller.signal.aborted && generation === epoch.current) setListing(list)
+    }).catch(error => { if (!controller.signal.aborted && generation === epoch.current) report(error) })
+    return () => controller.abort()
+  }, [identity, workspaceChat, props.classroom?.class_id, props.classroom?.term_id])
 
   async function refresh(threadId = latest.current.threadId) {
     if (workspaceChat) return null

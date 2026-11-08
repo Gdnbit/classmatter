@@ -12,6 +12,7 @@ from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
 from class_os.infrastructure.agent import PydanticAgentRuntime
 from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
 from test_workbench_upgrade import owned_upgrade
+from class_os.infrastructure.local_runtime import LocalRuntime
 
 
 @pytest.mark.db
@@ -80,3 +81,22 @@ def test_d3_descriptor_failure_resumes_forward(owned_upgrade, monkeypatch):
         assert services.owner_id == owned_upgrade.owner_id
     finally:
         services.close()
+
+
+@pytest.mark.db
+@pytest.mark.skipif(os.name != 'nt', reason='Owned Windows DPAPI runtime')
+def test_fresh_developer_preparation_is_one_explicit_non_overwriting_operation(tmp_path, request):
+    runtime = LocalRuntime(tmp_path / 'fresh-workspace-chat', profile='conversation-d1')
+    current = upgrade.prepare_workspace_chat(runtime, request.config.getoption('--pg-root'))
+    try:
+        assert current.profile == 'workspace-chat-d3'
+        assert (current.root / 'developer-identity.dpapi').is_file()
+        setup = NativeSetup(current, development=True)
+        try:
+            assert setup.status() == {'owner_present': True, 'ready': True}
+        finally:
+            setup.close()
+        with pytest.raises(upgrade.UpgradeRejected):
+            upgrade.prepare_workspace_chat(runtime, request.config.getoption('--pg-root'))
+    finally:
+        current.stop()

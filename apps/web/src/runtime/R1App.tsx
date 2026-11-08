@@ -842,11 +842,11 @@ export default function R1App() {
     (navigation.route.conversationClassId === classroom?.class_id && navigation.route.conversationTermId === classroom?.term_id)
   const workspaceMode = runtimeProfile === "workspace-chat-d3" && !navigation.route.conversationClassId
   const durable = useDurableConversation({
-    enabled: durableProfile && !workspaceMode && durableScopeMatches,
-    session, classroom, threadId: navigation.route.conversationId,
+    enabled: durableProfile && (workspaceMode ? !!classroom : durableScopeMatches),
+    session, classroom, threadId: workspaceMode ? "" : navigation.route.conversationId,
     readable: queryFresh && !refreshing,
-    canWrite: editable && !busy && !form && !pending && !modelUncertain,
-    canChat: !!session && !busy && !form && !pending && !modelUncertain,
+    canWrite: !workspaceMode && editable && !busy && !form && !pending && !modelUncertain,
+    canChat: !workspaceMode && !!session && !busy && !form && !pending && !modelUncertain,
     onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
     onBusyChange: value => { if (!workspaceMode) setDurableBusy(value) }, onDraftChange: value => { if (!workspaceMode) setDurableDraft(value) }, onError: fail,
   })
@@ -1007,7 +1007,11 @@ export default function R1App() {
             onClick={() => { durable.select(item.thread_id); setPage("conversation") }}>
             {item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}
           </button>)}
-          {!(workspaceMode ? workspaceConversation.listing?.data.length : durable.listing?.data.length) && <p className="sidebar-empty">尚无已保存对话</p>}
+          {workspaceMode && !!durable.listing?.data.length && <><p className="side-kicker">当前班级的旧对话</p>{durable.listing.data.map(item => <button
+            className="conversation-item" key={`class-${item.thread_id}`} disabled={durable.blocked || workspaceConversation.working || !!workspaceConversation.text.trim() || !!workspaceConversation.pendingSend}
+            onClick={() => durable.select(item.thread_id)}>{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
+            {durable.listing.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多班级旧对话</button>}</>}
+          {!(workspaceMode ? workspaceConversation.listing?.data.length || durable.listing?.data.length : durable.listing?.data.length) && <p className="sidebar-empty">尚无已保存对话</p>}
           {workspaceMode ? workspaceConversation.listing?.next_offset && <button disabled={workspaceConversation.working} onClick={() => void workspaceConversation.moreThreads()}>更多会话</button>
             : durable.listing?.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多会话</button>}
         </section>

@@ -21,11 +21,19 @@ window.fetch = async (url, options) => {
     const events = [{ type: 'run.started', payload: {} }, { type: 'message.delta', payload: { text: '合成普通聊天回复', source_refs: [] } }, { type: 'run.completed', payload: {} }];
     return new Response(events.map((event,index)=>'id: '+(index+1)+'\\nevent: '+event.type+'\\ndata: '+JSON.stringify({ ...event, cursor: index+1, run_id: 'synthetic-run' })+'\\n\\n').join(''), { headers: { 'content-type':'text/event-stream' } });
   }
+  if (String(url).endsWith('/conversations') && (!options?.method || options.method === 'GET')) {
+    return new Response(JSON.stringify({ schema_version: 'classmatter.conversation-list.v1', snapshot: 'a'.repeat(64), next_offset: null,
+      data: [{ thread_id: '77777777-7777-4777-8777-777777777777', title: '合成旧对话-' + props.classroom.class_id, status: 'active', version: 1,
+        student_id: null, updated_at: '2026-11-08T00:00:00Z', attribution: { origin: 'local-owner', created_by: props.session.subject.owner_id,
+          last_modified_by: props.session.subject.owner_id, source_workspace_id: null, source_owner_id: null, source_version: null, content_authority: 'domain-data' } }] }), { headers: { 'content-type':'application/json' } });
+  }
   return new Promise(() => {});
 };
 const root = createRoot(document.getElementById('root'));
 function App() {
   const state = useDurableConversation(props);
+  window.legacyTitles = state.listing?.data.map(item => item.title) || [];
+  window.chatIsWorkspace = state.workspaceChat;
   window.send = () => state.send();
   return React.createElement(React.Fragment, null, React.createElement(DurableHistory, { state, canWrite: props.canWrite, onDraft() {} }), React.createElement(DurableComposer, { state, students: [], canWrite: props.canWrite }));
 }
@@ -57,8 +65,11 @@ try {
   await page.evaluate(() => window.scope({ classroom: { class_id: '33333333-3333-4333-8333-333333333333', term_id: '44444444-4444-4444-8444-444444444444' } }));
   assert.equal(await input.inputValue(), '合成建班前草稿');
   assert.equal(await page.evaluate(() => window.hasDraft), true);
+  await page.waitForFunction(() => window.legacyTitles[0] === '合成旧对话-33333333-3333-4333-8333-333333333333');
+  assert.equal(await page.evaluate(() => window.chatIsWorkspace), true);
   await page.evaluate(() => window.scope({ classroom: { class_id: '55555555-5555-4555-8555-555555555555', term_id: '44444444-4444-4444-8444-444444444444' } }));
   assert.equal(await input.inputValue(), '合成建班前草稿');
+  await page.waitForFunction(() => window.legacyTitles[0] === '合成旧对话-55555555-5555-4555-8555-555555555555');
   await input.press('Enter');
   await page.waitForFunction(() => document.querySelectorAll('article.assistant').length === 2);
   assert.equal((await page.evaluate(() => window.requests)).filter(item => item.url.endsWith('/workspace-conversations')).length, 1);
@@ -66,6 +77,7 @@ try {
   await page.evaluate(() => window.scope({ session: { csrf_token: 'synthetic-session-b', subject: { owner_id: '11111111-1111-4111-8111-111111111111', workspace_id: '22222222-2222-4222-8222-222222222222' } } }));
   await page.waitForFunction(() => document.querySelector('textarea').value === '' && document.querySelectorAll('article').length === 0);
   await page.evaluate(() => window.scope({ classroom: null }));
+  await page.waitForFunction(() => window.legacyTitles.length === 0);
   await page.getByLabel('Agent 交互模式').selectOption('read');
   await input.fill('没有班级不能查询');
   assert.equal(await page.getByRole('button', { name: '发送消息' }).isDisabled(), true);
@@ -75,7 +87,15 @@ try {
   await page.getByRole('button', { name: '停止 Agent' }).click();
   await page.getByRole('status').filter({ hasText: '已停止' }).waitFor();
   await page.waitForFunction(() => !document.querySelector('textarea').disabled);
-  assert((await page.evaluate(() => window.requests)).every(item => /\/agent\/(workspace-conversations|events)$/.test(item.url)));
+  // Startup discovers the compatible class history after enabling the hook.
+  // Its list must survive the initial identity/epoch reset as well as switches.
+  await page.evaluate(() => window.scope({ enabled: false }));
+  await page.waitForFunction(() => window.legacyTitles.length === 0 && document.querySelectorAll('article').length === 0);
+  await page.evaluate(() => window.scope({ enabled: true, classroom: { class_id: '33333333-3333-4333-8333-333333333333', term_id: '44444444-4444-4444-8444-444444444444' } }));
+  await page.waitForFunction(() => window.legacyTitles[0] === '合成旧对话-33333333-3333-4333-8333-333333333333');
+  assert.equal(await page.evaluate(() => window.chatIsWorkspace), true);
+  assert((await page.evaluate(() => window.requests)).every(item => /\/agent\/(workspace-conversations|events)$/.test(item.url)
+    || item.method === 'GET' && item.url.endsWith('/conversations') && item.body === undefined));
   assert.deepEqual(errors, []);
   console.log('PASS ordinary chat without class; double-submit once; multi-turn and class independence; identity isolation; cancel; class query refused; no business writes/Provider');
 } finally { await browser.close(); }

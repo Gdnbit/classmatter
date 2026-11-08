@@ -13,7 +13,7 @@ from class_os.interfaces.http.settings import Settings
 
 def main():
     parser = argparse.ArgumentParser(description="ClassMatter owned synthetic Windows runtime; no real data")
-    parser.add_argument("command", choices=("init", "start", "stop", "migrate", "upgrade-workbench", "upgrade-chat", "serve", "bootstrap", "initialize-control", "doctor", "support", "backup", "backup-list", "backup-check"))
+    parser.add_argument("command", choices=("init", "prepare-chat", "start", "stop", "migrate", "upgrade-workbench", "upgrade-chat", "serve", "bootstrap", "initialize-control", "doctor", "support", "backup", "backup-list", "backup-check"))
     parser.add_argument("--profile", choices=("r1", "conversation-d1", "workbench-d2", "workspace-chat-d3"), default="r1",
                         help="Explicit isolated runtime; never upgrades the other profile")
     parser.add_argument("--pg-root")
@@ -22,6 +22,8 @@ def main():
                         help="Explicit trusted endpoint for synthetic model testing; does not enable a model or load keys")
     parser.add_argument("--model-api-proxy", help="Explicit http://127.0.0.1:PORT proxy for model calls only")
     args = parser.parse_args()
+    if args.command == 'prepare-chat' and (args.profile != 'conversation-d1' or not args.pg_root):
+        parser.error('prepare-chat requires conversation-d1 and --pg-root for a fresh local developer instance')
     if args.command == 'upgrade-workbench' and args.profile not in ('conversation-d1', 'workbench-d2'):
         parser.error('upgrade-workbench requires the existing owned D1/D2 profile')
     if args.command == 'upgrade-chat' and args.profile not in ('conversation-d1', 'workbench-d2', 'workspace-chat-d3'):
@@ -55,7 +57,13 @@ def main():
     # Keep their startup bounded independently of optional SDK import costs.
     from class_os.infrastructure.local_runtime import LocalRuntime, compose
     runtime = LocalRuntime(profile=args.profile)
-    if args.command == "init":
+    if args.command == 'prepare-chat':
+        from class_os.infrastructure.workspace_upgrade import prepare_workspace_chat
+        current = prepare_workspace_chat(runtime, args.pg_root)
+        print(json.dumps({'schema_version': 'classmatter.workspace-chat-prepared.v1', 'profile': current.profile,
+                          'development_no_password': True, 'data_mode': 'synthetic-only'}))
+        return 0
+    elif args.command == "init":
         if not args.pg_root:
             parser.error("init requires --pg-root")
         runtime.initialize(args.pg_root)

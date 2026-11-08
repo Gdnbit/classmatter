@@ -94,8 +94,12 @@ async function main(){
     await page.getByRole('region',{name:'学生表格'}).waitFor();
     await page.reload();
     await page.getByRole('region',{name:'学生表格'}).waitFor();
-    const savedRow=page.getByRole('row').filter({hasText:'合成桌面学生'});
-    assert.deepEqual((await savedRow.getByRole('cell').allTextContents()).slice(-2),['1','1']);
+    const savedRow=page.getByRole('region',{name:'学生表格'}).getByRole('button',{name:/合成桌面学生.*版本/});
+    await savedRow.waitFor();
+    // The shared original roster combines both counts in its work cell.
+    // Still bind the exact student ID and both numbers after navigation/reload.
+    assert.equal(await savedRow.locator(':scope > span').nth(1).innerText(),internalId);
+    assert.equal(await savedRow.locator(':scope > span').nth(2).innerText(),'1 条记录 · 1 项未结束跟进');
     await page.screenshot({path:path.join(evidence,'05-real-table-navigation.png')});
     await page.getByRole('button',{name:'学生',exact:true}).click();
     await page.getByLabel('搜索学生').fill(` ${internalId.toUpperCase()} `);
@@ -171,6 +175,8 @@ async function main(){
     assert.ok(!JSON.stringify(exitBundle).includes('synthetic-test-passphrase-2026'));
     await page.getByRole('button',{name:'对话',exact:true}).click();
     assert.equal(await page.locator('.r1-attention').getByRole('button',{name:/合成桌面持久化任务/}).count(),0);
+    assert.equal(await page.getByLabel('Agent 交互模式').inputValue(),'chat');
+    await page.getByLabel('Agent 交互模式').selectOption('read');
     await page.getByLabel('输入消息').fill('合成查询当前工作');
     await page.getByRole('button',{name:'发送消息',exact:true}).click();
     await page.locator('.r1-messages').getByText(/来源已重新查询/).waitFor();

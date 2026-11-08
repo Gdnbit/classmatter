@@ -42,7 +42,8 @@ async function main(){
     });
     await page.getByLabel('Owner 密码').fill('synthetic-test-passphrase-2026');
     await page.getByRole('button',{name:'登录',exact:true}).click();
-    await page.getByText('已发送文字和完成结果由数据库保存。',{exact:false}).waitFor();
+    await page.getByRole('heading',{name:'今天想处理什么？',exact:true}).waitFor();
+    assert.equal(await page.getByLabel('Agent 交互模式').inputValue(),'chat');
     assert.equal(await page.locator('.app-shell > .sidebar .new-chat').count(),1);
     assert.equal(await page.locator('.shell-main > .body-grid > .workspace').count(),1);
     assert.equal(await page.locator('.r1-sidebar').count(),0);
@@ -66,6 +67,7 @@ async function main(){
       await page.getByLabel('跟进标题').fill('合成D1重启保留任务');
       await commit(page);
       await page.getByRole('button',{name:'对话',exact:true}).click();
+      await page.getByLabel('Agent 交互模式').selectOption('read');
       await page.getByLabel('输入消息').fill('合成D1桌面持久查询');
       await page.getByRole('button',{name:'发送消息',exact:true}).click();
       await history.getByText('会话输出已保存 · 无业务写入',{exact:true}).waitFor();
@@ -88,7 +90,7 @@ async function main(){
       await app.close();app=null;await noOwnedApi();
     }else{
       const expected=JSON.parse(fs.readFileSync(expectedFile,'utf8'));
-      await history.getByRole('button',{name:'合成D1桌面已保存 · 有效',exact:true}).click();
+      await page.getByRole('region',{name:'聊天列表'}).getByRole('button',{name:'合成D1桌面已保存',exact:true}).click();
       await history.getByText('合成D1桌面持久查询',{exact:true}).waitFor();
       assert.equal(new URL(page.url()).pathname,expected.savedPath);
       assert.deepEqual(await history.getByText(/^查询回执：/).allTextContents(),expected.receipts);

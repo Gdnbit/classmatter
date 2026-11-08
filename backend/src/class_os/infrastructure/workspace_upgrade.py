@@ -14,6 +14,26 @@ JOURNAL = "workspace-chat-upgrade.dpapi"
 KIND = "classmatter.owned-workspace-chat-upgrade.v1"
 
 
+def prepare_workspace_chat(runtime, pg_root):
+    """Explicit fresh developer setup, never called by desktop/API startup.
+
+    Uses the original D1 initialization and private development identity, then
+    the same checkpointed upgrade. Refuses every existing directory; failure
+    preserves the partially prepared instance for explicit operator recovery.
+    """
+    if os.name != 'nt' or type(runtime) is not LocalRuntime or runtime.profile != 'conversation-d1' or runtime.root.exists():
+        raise UpgradeRejected()
+    runtime.initialize(pg_root)
+    runtime.start()
+    from .native_setup import NativeSetup
+    setup = NativeSetup(runtime, development=True)
+    try:
+        setup.handle({'operation': 'development_access'})
+    finally:
+        setup.close()
+    return upgrade_workspace_chat(runtime)
+
+
 def described(runtime):
     return descriptor(runtime, source_profile="workbench-d2", target_profile="workspace-chat-d3")
 

@@ -20,6 +20,11 @@ async function launch() {
 (async () => { try {
   fs.writeFileSync(file, JSON.stringify(source));
   let page = await launch();
+  await page.getByRole('button', { name: '合成原对话', exact: true }).click();
+  await page.getByRole('region', { name: '已保存的对话' }).getByText('合成升级前消息', { exact: true }).waitFor();
+  await page.getByRole('button', { name: '新对话', exact: true }).click();
+  await page.waitForURL(url => url.pathname === '/');
+  await page.getByText('聊天由本机数据库保存，普通聊天无需班级', { exact: true }).waitFor();
   await page.getByLabel('输入消息').fill('合成桌面重启持久聊天');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   const history = page.getByRole('region', { name: '已保存的对话' });

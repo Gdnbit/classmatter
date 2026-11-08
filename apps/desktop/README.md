@@ -6,6 +6,8 @@ Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷�
 
 默认`pnpm build` / `pnpm start`现在使用显式`workspace-chat-d3`，仍是同一个原型界面和同一个自有本机数据库，开发免密码不变。普通聊天无需先建班，聊天列表/正文可跨刷新和应用重启恢复。需要班级数据时才查询或追问；AI准备班级/学期、学生、任务、文档的受控候选，用户在原预览确认后由原BCG保存。不是模型任意操作数据库。
 
+全新克隆的开发实例，在`backend`执行`.venv/Scripts/python.exe local.py prepare-chat --profile conversation-d1 --pg-root '<PostgreSQL18安装目录>'`。它只在目录完全不存在时，复用原D1初始化与免密码开发身份，再执行同一套备份升级；不需要先临时打开D1应用或填写Owner表单。已有目录一律拒绝覆盖，部分准备失败时保留实例，按实际profile显式恢复升级，不重复初始化。
+
 旧D1/D2实例须先停止本项目API和桌面，再在`backend`中显式执行`.venv/Scripts/python.exe local.py upgrade-chat --profile conversation-d1`（D2使用`workbench-d2`）。升级保留同根Owner、既有数据与开发身份，每步先完整checkpoint并隔离恢复校验，SQL提交后才发布新profile描述符；失败保留证据、支持向前恢复，不自动DROP/重建。**启动命令不做迁移**，不能把旧库直接声明为D3。`pnpm check:runtime:d3`只检查前置文件，不能代替API readiness或恢复验收。D1构建命令继续保留作兼容回归，不可用旧代码直接打开已升级新库。
 
 原设置中的模型接入、连通性测试和启用流程继续使用。本轮当前用户实例只读核验无模型配置；默认无外部调用，合成回答不代表真实模型质量已通过。D3已支持完整本机checkpoint及隔离恢复，包含文档与新聊天表；完整跨机退出/迁移仍不开放。详见[聊天设计和使用检查](../../docs/design/workspace-chat-and-actions.md)。下方2026-11-03等段落为历史实现记录，D1默认入口已被本节取代。

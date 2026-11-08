@@ -57,7 +57,7 @@ export function WorkspaceChatComposer({ state: s }: { state: WorkspaceChatContro
     <textarea aria-label="输入消息" placeholder="随便聊聊，或告诉我你想创建、修改什么……" maxLength={2000} value={s.text}
       onChange={event => s.setText(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (s.canSend) void s.send() } }} />
     <div><span className="r1-muted">聊天已接入数据库 · 涉及班级时才使用班级工具</span>
-      <span className="r1-muted">{!s.model ? "正在核对模型…" : s.model.mode === "configured-api" ? `ClassMatter · ${s.model.configuration?.model}` : "未启用真实模型 · 当前为合成测试回答"}</span>
+      <span className="r1-muted">{!s.model ? "正在核对模型…" : s.model.mode === "configured-api" ? `ClassMatter · ${s.model.configuration?.model}` : s.model.mode === "stale" ? "模型配置已变化 · 请到设置重新测试启用" : "未启用真实模型 · 当前为合成测试回答"}</span>
       {s.lastActive ? <button type="button" aria-label="停止 Agent" onClick={() => void s.stop()}><X size={18} /></button>
         : <button aria-label="发送消息" disabled={!s.canSend || !s.text.trim()}><ArrowUp size={18} /></button>}
     </div>
