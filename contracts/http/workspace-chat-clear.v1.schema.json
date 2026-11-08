@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "expected_version": {
+      "exclusiveMaximum": 2147483647,
+      "minimum": 1,
+      "title": "Expected Version",
+      "type": "integer"
+    },
+    "confirm_clear": {
+      "const": true,
+      "title": "Confirm Clear",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "expected_version",
+    "confirm_clear"
+  ],
+  "title": "ChatClear",
+  "type": "object"
+}

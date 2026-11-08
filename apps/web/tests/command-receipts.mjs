@@ -22,6 +22,7 @@ test('all18 registered commands bind exact receipt target and result version, no
   const cases = [
     ['class.create', 'class_id', 1], ['student.create', 'student_id', 1], ['record.create', 'record_id', 1],
     ['task.create', 'task_id', 1], ['exit_export.create', 'export_id', 1],
+    ['document.create', 'document_id', 1], ['document.revise', 'document_id', 3],
     ...['class.update', 'class.archive'].map(name => [name, 'class_id', 3]),
     ['term.update', 'term_id', 3],
     ...['student.update_name', 'student.update_identifier', 'student.deactivate'].map(name => [name, 'student_id', 3]),

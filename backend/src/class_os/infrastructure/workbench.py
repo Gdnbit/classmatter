@@ -16,6 +16,11 @@ class WorkbenchStore(DocumentStore):
         self.retirement = None  # D2 import/transfer has no admission yet.
 
     def _transaction(self, connection):
+        if self.database.profile == 'workspace-chat-d3':
+            if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0028':
+                raise RuntimeError('Explicit workspace chat schema required')
+            from .workspace_chat import WorkspaceChatTransaction
+            return WorkspaceChatTransaction(connection, self)
         if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0027':
             raise RuntimeError('Explicit workbench schema required')
         return WorkbenchTransaction(connection, self)
@@ -73,6 +78,8 @@ class WorkbenchTransaction(DocumentTransaction, AdmissionTransaction):
         return bundle, document_audit, budget
 
     def _workbench_data_bundle(self, binding, now):
+        if self._store.database.profile != 'workbench-d2':
+            raise CommandRejected()  # Old document archive cannot omit D3 chat.
         # Internal only: no Query Gateway/HTTP/tool export permission added.
         # Reuse the original serialized business transaction and fixed SQL
         # collector; no arbitrary table names, JSON rows or truncated pages.

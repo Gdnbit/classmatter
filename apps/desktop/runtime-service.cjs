@@ -113,9 +113,9 @@ class OwnedService {
   }
 }
 
-function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, profile = 'r1', servicePort = profile === 'conversation-d1' ? 8001 : 8000, modelNetwork) {
+function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, profile = 'r1', servicePort = profile !== 'r1' ? 8001 : 8000, modelNetwork) {
   const network=validateNetwork(modelNetwork);
-  if (!['r1', 'conversation-d1'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
+  if (!['r1', 'conversation-d1', 'workspace-chat-d3'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
   if (!Number.isInteger(servicePort) || servicePort < 1024 || servicePort > 65535 || (profile === 'r1' && servicePort !== 8000)) throw new Error('Invalid owned service port');
   if (process.platform !== 'win32' || !path.isAbsolute(repositoryRoot) || !path.isAbsolute(uiRoot)) throw new Error('Unsupported desktop runtime');
   const root = fs.realpathSync(repositoryRoot), ui = fs.realpathSync(uiRoot);
@@ -124,7 +124,7 @@ function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, p
   const executable = path.join(root, 'backend/.venv/Scripts/python.exe');
   const entry = path.join(root, 'backend/desktop.py');
   const marker = JSON.parse(fs.readFileSync(path.join(ui, 'desktop-runtime.json'), 'utf8'));
-  if (!fs.existsSync(executable) || !fs.existsSync(entry) || marker.mode !== (profile === 'r1' ? 'synthetic-runtime' : 'synthetic-conversation-d1') || !fs.existsSync(path.join(ui,'index.html'))) throw new Error('Build the synthetic desktop runtime and sync backend dependencies first');
+  if (!fs.existsSync(executable) || !fs.existsSync(entry) || marker.mode !== (profile === 'r1' ? 'synthetic-runtime' : `synthetic-${profile}`) || !fs.existsSync(path.join(ui,'index.html'))) throw new Error('Build the synthetic desktop runtime and sync backend dependencies first');
   return new OwnedService({ origin: `http://127.0.0.1:${servicePort}`, onUnexpectedExit, spawnService: key => {
     const env = { ...process.env, CLASS_OS_MODE: 'synthetic-development', CLASS_OS_HOST: '127.0.0.1', CLASS_OS_PORT: String(servicePort), CLASS_OS_MODEL_PROVIDER: 'fake', CLASSMATTER_DESKTOP_PROCESS_KEY: key };
     delete env.PYTHONPATH; delete env.PYTHONHOME;

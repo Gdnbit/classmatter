@@ -1,0 +1,43 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.workspace-chat-capabilities.v1",
+      "default": "classmatter.workspace-chat-capabilities.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "profile": {
+      "const": "workspace-chat-d3",
+      "default": "workspace-chat-d3",
+      "title": "Profile",
+      "type": "string"
+    },
+    "memory": {
+      "const": "persisted-not-fact",
+      "default": "persisted-not-fact",
+      "title": "Memory",
+      "type": "string"
+    },
+    "class_required": {
+      "const": false,
+      "default": false,
+      "title": "Class Required",
+      "type": "boolean"
+    },
+    "agent_business_write": {
+      "const": false,
+      "default": false,
+      "title": "Agent Business Write",
+      "type": "boolean"
+    },
+    "complete_exit": {
+      "const": false,
+      "default": false,
+      "title": "Complete Exit",
+      "type": "boolean"
+    }
+  },
+  "title": "ChatCapabilities",
+  "type": "object"
+}

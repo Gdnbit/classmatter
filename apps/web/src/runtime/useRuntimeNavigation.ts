@@ -63,6 +63,13 @@ export function useRuntimeNavigation(blocked: boolean) {
     setPage: (page: RuntimeRoute["page"]) => change({ page }),
     setConversation: (classId: string, termId: string, conversationId: string) =>
       change({ page: "conversation", conversationClassId: classId, conversationTermId: termId, conversationId }),
+    adoptWorkspaceConversation: (conversationId: string) => {
+      mode.current = "replace"
+      const next = { ...current.current, conversationId, conversationClassId: "", conversationTermId: "" }
+      if (pending.current && pending.current.route.conversationId === current.current.conversationId)
+        pending.current = { ...pending.current, route: { ...pending.current.route, conversationId, conversationClassId: "", conversationTermId: "" } }
+      current.current = next; setRoute(next)
+    },
     setSelectedStudent: (studentId: string) => change({ studentId, taskId: "", studentTab: "overview" }),
     setTaskId: (taskId: string) => change({ taskId }),
     setWorkFilter: (workFilter: RuntimeRoute["workFilter"]) => change({ workFilter }),
@@ -80,6 +87,6 @@ export function useRuntimeNavigation(blocked: boolean) {
     reset: () => apply(runtimeRoute(), "replace"),
     clearTask,
     clearSelection: () => apply({ ...current.current, studentId: "", taskId: "", documentId: "", workFilter: "all", studentTab: "overview",
-      conversationId: "", conversationClassId: "", conversationTermId: "" }, "replace"),
+      conversationId: !current.current.conversationClassId && !current.current.conversationTermId ? current.current.conversationId : "", conversationClassId: "", conversationTermId: "" }, "replace"),
   }
 }

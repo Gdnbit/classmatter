@@ -35,9 +35,16 @@ D2_COLUMNS = MappingProxyType({
         "body", "format", "operation", "created_by", "created_at"}),
 })
 D2_TABLES = frozenset(D2_COLUMNS)
+D3_COLUMNS = MappingProxyType({
+    "workspace_chat_thread": frozenset({"workspace_id", "thread_id", "owner_id", "title", "status", "version", "created_at", "updated_at", "cleared_at"}),
+    "workspace_chat_turn": frozenset({"workspace_id", "thread_id", "turn_id", "request_id", "ordinal", "input_hash", "user_text", "assistant_text",
+        "candidate", "candidate_hash", "state", "version", "generation", "created_at", "started_at", "lease_until", "ended_at", "input_tokens", "output_tokens", "duration_ms"}),
+    "workspace_chat_audit": frozenset({"workspace_id", "event_id", "owner_id", "action", "outcome", "resource_id", "resource_version", "occurred_at"}),
+})
 SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
                                    "conversation-d1": ("0026", REGISTERED_TABLES | D1_TABLES),
-                                   "workbench-d2": ("0027", REGISTERED_TABLES | D1_TABLES | D2_TABLES)})
+                                   "workbench-d2": ("0027", REGISTERED_TABLES | D1_TABLES | D2_TABLES),
+                                   "workspace-chat-d3": ("0028", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS))})
 
 
 def schema_profile(value="r1"):

@@ -85,7 +85,7 @@ export type Command = {
   [field: string]: string | number | boolean | null | undefined
 }
 export type Proposal = {
-  schema_version: "class-os.roster.v1"
+  schema_version: "class-os.roster.v1" | "classmatter.workspace-chat-preview.v1"
   proposal_id: string
   payload_hash: string
   risk: "W1" | "W2"

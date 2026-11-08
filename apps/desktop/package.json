@@ -9,8 +9,8 @@
   "packageManager": "pnpm@11.19.0",
   "engines": { "node": ">=22 <25" },
   "scripts": {
-    "build": "node scripts/runtime-build.cjs --profile conversation-d1",
-    "start": "node scripts/runtime-launch.cjs --profile conversation-d1 --development-no-password",
+    "build": "node scripts/runtime-build.cjs --profile workspace-chat-d3",
+    "start": "node scripts/runtime-launch.cjs --profile workspace-chat-d3 --development-no-password",
     "build:fixture": "node scripts/build.cjs",
     "start:fixture": "node scripts/launch.cjs",
     "build:runtime": "node scripts/runtime-build.cjs",
@@ -19,6 +19,7 @@
     "open:runtime": "node scripts/runtime-build.cjs && node scripts/runtime-launch.cjs",
     "build:runtime:d1": "node scripts/runtime-build.cjs --profile conversation-d1",
     "check:runtime:d1": "node runtime-check.cjs --profile conversation-d1",
+    "check:runtime:d3": "node runtime-check.cjs --profile workspace-chat-d3",
     "open:runtime:d1": "node scripts/runtime-build.cjs --profile conversation-d1 && node scripts/runtime-launch.cjs --profile conversation-d1",
     "package": "node scripts/package.cjs",
     "test": "node --test tests/policy.test.cjs tests/runtime-service.test.cjs tests/runtime-check.test.cjs tests/model-network.test.cjs tests/setup-service.test.cjs",

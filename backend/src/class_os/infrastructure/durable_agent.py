@@ -21,9 +21,9 @@ class DurableChatRuntime:
         from class_os.application.workbench import WorkbenchBusinessGateway, WorkbenchQueryGateway
         from .workbench import WorkbenchStore
         legacy = (type(worker) is ConversationWorkerGateway and type(query) is ConversationInteractionQuery
-                  and getattr(getattr(worker.store, 'database', None), 'profile', None) != 'workbench-d2')
+                  and getattr(getattr(worker.store, 'database', None), 'profile', None) == 'conversation-d1')
         workbench = (type(worker) is WorkbenchBusinessGateway and type(query) is WorkbenchQueryGateway
-                     and type(worker.store) is WorkbenchStore and worker.store.database.profile == 'workbench-d2')
+                     and type(worker.store) is WorkbenchStore and worker.store.database.profile in ('workbench-d2', 'workspace-chat-d3'))
         if (not (legacy or workbench)
                 or type(runtime) is not PydanticAgentRuntime or runtime.query is not query
                 or worker.store is not query.store or worker.identity is not query.identity):

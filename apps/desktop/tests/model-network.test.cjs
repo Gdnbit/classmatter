@@ -8,6 +8,12 @@ test('default launch is offline and has no credentials, model or provider activa
   assert.deepEqual(electronArguments(result.network),[]);
   assert.deepEqual(networkFromSwitches(undefined,undefined),result.network);
 });
+
+test('workspace chat profile preserves offline defaults and explicit identity',()=>{
+  const result=parseLaunchArguments(['--profile','workspace-chat-d3']);
+  assert.equal(result.profile,'workspace-chat-d3');
+  assert.deepEqual(result.network,{bases:[],proxy:null});
+});
 test('explicit R1/D1 options roundtrip through bounded Electron switches',()=>{
   const result=parseLaunchArguments(['--profile','conversation-d1','--model-api-base-url',google,'--model-api-base-url',zhipu,'--model-api-proxy','http://127.0.0.1:7890']);
   assert.equal(result.profile,'conversation-d1');

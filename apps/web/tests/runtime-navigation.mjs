@@ -27,6 +27,14 @@ test('document routes preserve only validated identity and reject mock IDs or se
   }
 })
 
+test('workspace chat links require only a thread ID and contain no class or draft', () => {
+  const path = `/chats/${id}`;
+  assert.equal(runtimePath(parseRuntimeRoute(path)), path);
+  assert.equal(parseRuntimeRoute(path).conversationClassId, '');
+  assert.equal(parseRuntimeRoute(path).conversationTermId, '');
+  for (const invalid of [path + '?text=private', path + '#approval', path + '/events', '/chats/mock-chat']) assert.equal(parseRuntimeRoute(invalid).page, 'unavailable');
+});
+
 test('D1 deep link retains only exact class/term/thread identifiers, never a capability', () => {
   const path = `/conversations/${id}/${task}/00000000-0000-0000-0000-000000000003`
   assert.equal(runtimePath(parseRuntimeRoute(path)), path)

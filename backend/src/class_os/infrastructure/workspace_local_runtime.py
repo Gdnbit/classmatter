@@ -1,0 +1,85 @@
+"""Explicit D3 startup; never initializes, migrates, resets or adopts an Owner."""
+import os
+from contextlib import asynccontextmanager
+
+from pwdlib import PasswordHash
+from sqlalchemy import text
+
+from class_os.application.identity import IdentityBoundary
+from class_os.application.workbench import WorkbenchBusinessGateway, WorkbenchQueryGateway
+from .durable_local_runtime import OwnedD1Services
+from .identity import PostgresIdentityStore
+from .local_runtime import LocalRuntime, protect
+from .model_secrets import ModelSecrets
+from .conversation_restrictions import ProtectedConversationRestrictions
+from .persistence.schema_inventory import validate_surface
+from .persistence.role_guards import validate_role_guards
+from .documents import validate_document_integrity
+from .workspace_chat import validate_workspace_chat_integrity
+from .workbench import WorkbenchStore
+
+
+def surface(connection):
+    validate_surface(connection, complete=True, profile="workspace-chat-d3")
+    validate_role_guards(connection, profile="workspace-chat-d3")
+    if (connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0028"
+            or connection.execute(text("SELECT data_mode FROM class_os.database_state WHERE singleton=true")).scalar_one() != "synthetic-only"):
+        raise RuntimeError("Explicit current synthetic D3 schema required")
+    validate_document_integrity(connection); validate_workspace_chat_integrity(connection)
+
+
+class OwnedWorkspaceServices(OwnedD1Services):
+    def surface(self, connection):
+        surface(connection)
+
+
+def open_services(runtime):
+    if os.name != "nt" or type(runtime) is not LocalRuntime or runtime.profile != "workspace-chat-d3":
+        raise ValueError("Explicit owned Windows D3 runtime required")
+    runtime.configuration()
+    from .workspace_upgrade import verify_upgrade_receipt
+    receipt = verify_upgrade_receipt(runtime)
+    identity_database, business_database = runtime.database("identity"), None
+    try:
+        business_database = runtime.database("runtime")
+        with business_database.transaction(read_only=True) as connection:
+            surface(connection)
+        with identity_database.transaction(read_only=True) as connection:
+            owner = connection.execute(text("SELECT owner_id,workspace_id FROM class_os.owner_account")).one_or_none()
+        if owner is None or str(owner.owner_id) != receipt["owner_id"] or str(owner.workspace_id) != receipt["workspace_id"]:
+            raise RuntimeError("Existing owner binding required")
+        identity = IdentityBoundary(PostgresIdentityStore(identity_database), PasswordHash.recommended())
+        restrictions = ProtectedConversationRestrictions(runtime.root, owner.workspace_id)
+        store = WorkbenchStore(business_database, restrictions, model_secrets=ModelSecrets(protect))
+        result = OwnedWorkspaceServices(identity_database, business_database, identity,
+            WorkbenchBusinessGateway(identity, store), WorkbenchQueryGateway(identity, store), restrictions, owner.owner_id)
+        result.readiness()
+        return result
+    except Exception:
+        if business_database is not None:
+            business_database.close()
+        identity_database.close()
+        raise
+
+
+def compose(settings, runtime):
+    from .agent import PydanticAgentRuntime
+    from .model_control import ModelController
+    from class_os.interfaces.http.workspace_chat import create_workspace_chat_app
+    services = open_services(runtime)
+    try:
+        sdk = PydanticAgentRuntime(services.query, timeout=45)
+        controller = ModelController(services.query, services.worker.store.model_secrets, sdk,
+            allowed_bases=settings.model_api_bases, proxy=settings.model_api_proxy)
+        app = create_workspace_chat_app(settings, worker=services.worker, query=services.query, sdk=sdk,
+            readiness=services.readiness, model_controller=controller)
+    except Exception:
+        services.close(); raise
+    @asynccontextmanager
+    async def lifespan(app):
+        try:
+            yield
+        finally:
+            services.close()
+    app.router.lifespan_context = lifespan
+    return app

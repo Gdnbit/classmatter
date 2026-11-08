@@ -1,0 +1,103 @@
+{
+  "$defs": {
+    "ChatThread": {
+      "additionalProperties": false,
+      "properties": {
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "archived",
+            "cleared"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "cleared_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Cleared At"
+        }
+      },
+      "required": [
+        "thread_id",
+        "title",
+        "status",
+        "version",
+        "created_at",
+        "updated_at",
+        "cleared_at"
+      ],
+      "title": "ChatThread",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.workspace-chat-list.v1",
+      "default": "classmatter.workspace-chat-list.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "data": {
+      "items": {
+        "$ref": "#/$defs/ChatThread"
+      },
+      "maxItems": 50,
+      "title": "Data",
+      "type": "array"
+    },
+    "next_offset": {
+      "anyOf": [
+        {
+          "exclusiveMaximum": 10000,
+          "minimum": 50,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Next Offset"
+    }
+  },
+  "required": [
+    "data",
+    "next_offset"
+  ],
+  "title": "ChatListing",
+  "type": "object"
+}

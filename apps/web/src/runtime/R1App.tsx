@@ -40,6 +40,8 @@ import { identityRequest, IdentityOutcomeUnknown, logoutIdentity } from "./ident
 import { R1Dialog } from "./R1Dialog"
 import { ModelConfigurationForm } from "./ModelConfiguration"
 import { createScopedConversation, createWorkspaceConversation, parseRecordNoteCandidate, type RecordNoteCandidate } from "./agent-conversation"
+import { useWorkspaceChat } from "./useWorkspaceChat"
+import { WorkspaceChatHistory, WorkspaceChatComposer } from "./WorkspaceChat"
 import { decodeApproval, decodeCommandReceipt, decodeCommandState } from "./command-receipts"
 import { decodeTermMetadata } from "./term-metadata"
 import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
@@ -128,8 +130,9 @@ export default function R1App() {
   const [modelRevision, setModelRevision] = useState(0)
   const [modelUncertain, setModelUncertain] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
-  const [runtimeProfile, setRuntimeProfile] = useState<"loading" | "failed" | "r1" | "conversation-d1" | "workbench-d2">("loading")
-  const durableProfile = runtimeProfile === "conversation-d1" || runtimeProfile === "workbench-d2"
+  const [runtimeProfile, setRuntimeProfile] = useState<"loading" | "failed" | "r1" | "conversation-d1" | "workbench-d2" | "workspace-chat-d3">("loading")
+  const workbenchProfile = runtimeProfile === "workbench-d2" || runtimeProfile === "workspace-chat-d3"
+  const durableProfile = runtimeProfile === "conversation-d1" || workbenchProfile
   const [profileRetry, setProfileRetry] = useState(0)
   const [durableBusy, setDurableBusy] = useState(false)
   const [durableDraft, setDurableDraft] = useState(false)
@@ -837,15 +840,21 @@ export default function R1App() {
 
   const durableScopeMatches = !navigation.route.conversationId ||
     (navigation.route.conversationClassId === classroom?.class_id && navigation.route.conversationTermId === classroom?.term_id)
+  const workspaceMode = runtimeProfile === "workspace-chat-d3" && !navigation.route.conversationClassId
   const durable = useDurableConversation({
-    enabled: durableProfile && durableScopeMatches,
+    enabled: durableProfile && !workspaceMode && durableScopeMatches,
     session, classroom, threadId: navigation.route.conversationId,
     readable: queryFresh && !refreshing,
     canWrite: editable && !busy && !form && !pending && !modelUncertain,
     canChat: !!session && !busy && !form && !pending && !modelUncertain,
     onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
-    onBusyChange: setDurableBusy, onDraftChange: setDurableDraft, onError: fail,
+    onBusyChange: value => { if (!workspaceMode) setDurableBusy(value) }, onDraftChange: value => { if (!workspaceMode) setDurableDraft(value) }, onError: fail,
   })
+  const workspaceConversation = useWorkspaceChat({ enabled: workspaceMode, session, threadId: navigation.route.conversationId,
+    canInteract: !!session && !busy && !form && !pending && !modelUncertain, refreshSignal: activity,
+    onSelect: id => navigation.setConversation("", "", id), onSaved: navigation.adoptWorkspaceConversation,
+    onBusy: value => { if (workspaceMode) setDurableBusy(value) }, onDraft: value => { if (workspaceMode) setDurableDraft(value) }, onError: fail,
+    onPreview: proposal => setPending({ proposal, key: crypto.randomUUID() }) })
 
   if (checking)
     return (
@@ -904,8 +913,9 @@ export default function R1App() {
         <div className="scope"><strong>班事有谱 · ClassMatter</strong><span>{classroom ? `${classroom.name} · ${classroom.term_name}` : "尚未建立班级与学期"}</span></div>
         <button
           className="new-chat"
-          disabled={busy || durableBusy || !!runningAgent.current || (durableProfile && !!durable.text.trim())}
+          disabled={busy || durableBusy || !!runningAgent.current || (workspaceMode ? !!workspaceConversation.text.trim() || !!workspaceConversation.pendingSend : durableProfile && !!durable.text.trim())}
           onClick={() => void action(async () => {
+            if (workspaceMode) { workspaceConversation.newChat(); setPage("conversation"); return }
             if (durableProfile) { durable.newChat(); navigation.setConversation("", "", ""); setPage("conversation"); return }
             const generation = loading.current
             if (conversationId) {
@@ -988,21 +998,25 @@ export default function R1App() {
         </section>
         <section className="chat-history" aria-label="聊天列表">
           <p className="side-kicker">聊天</p>
-          {durableProfile && durable.listing?.data.map(item => <button
+          {workspaceMode && workspaceConversation.listing?.data.map(item => <button className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`} key={item.thread_id}
+            disabled={workspaceConversation.working || !!workspaceConversation.text.trim() || !!workspaceConversation.pendingSend}
+            onClick={() => { workspaceConversation.select(item.thread_id); setPage("conversation") }}>{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
+          {!workspaceMode && durableProfile && durable.listing?.data.map(item => <button
             className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`}
             key={item.thread_id} disabled={durable.blocked || !!durable.text.trim()}
             onClick={() => { durable.select(item.thread_id); setPage("conversation") }}>
             {item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}
           </button>)}
-          {!durable.listing?.data.length && <p className="sidebar-empty">尚无已保存对话</p>}
-          {durable.listing?.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多会话</button>}
+          {!(workspaceMode ? workspaceConversation.listing?.data.length : durable.listing?.data.length) && <p className="sidebar-empty">尚无已保存对话</p>}
+          {workspaceMode ? workspaceConversation.listing?.next_offset && <button disabled={workspaceConversation.working} onClick={() => void workspaceConversation.moreThreads()}>更多会话</button>
+            : durable.listing?.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多会话</button>}
         </section>
       </SidebarFrame>
       } header={
         <header className="topbar r1-topbar">
           <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "documents" ? "数据与内容" : page === "settings" ? "设置" : "班事有谱"}</strong>
           <span role={refreshing ? "status" : undefined}>
-            {page === "conversation" && (durableProfile ? durable.workspaceChat : agentMode === "chat") ? "普通聊天 · 无需关联班级" : refreshing ? "正在读取当前班级与学期…" : classroom?.term_name || "先建立班级与学期"}
+            {page === "conversation" && (workspaceMode || (durableProfile ? durable.workspaceChat : agentMode === "chat")) ? "聊天 · 涉及班级时再关联" : refreshing ? "正在读取当前班级与学期…" : classroom?.term_name || "先建立班级与学期"}
             {classroom?.status === "archived" && " · 历史只读"}
           </span>
           <button
@@ -1058,7 +1072,7 @@ export default function R1App() {
                 <small>CLASSMATTER · 对话</small>
                 <h1>今天想处理什么？</h1>
                 <p>少记、少追、少重复。事实由你确认，系统帮你复用。</p>
-                <p className="r1-muted">{durableProfile && durable.workspaceChat ? "直接聊天，无需先建班。普通聊天使用临时上下文，刷新不恢复；班级查询与操作才需要关联班级。" : durableProfile
+                <p className="r1-muted">{workspaceMode ? "直接聊、直接说想创建或修改什么。聊天保存在本机；涉及班级数据时才关联，业务变更由你核对确认。" : durableProfile && durable.workspaceChat ? "直接聊天，无需先建班。普通聊天使用临时上下文，刷新不恢复；班级查询与操作才需要关联班级。" : durableProfile
                   ? "已发送文字和完成结果由数据库保存。历史 AI 内容不是正式事实；不会因刷新而重新调用模型。"
                   : "对话仅为临时上下文，刷新或重启不保证恢复；已确认的事实与任务另由数据库保存。"}</p>
               </div>
@@ -1097,7 +1111,8 @@ export default function R1App() {
                 </button>
                 <button onClick={() => setPage("students")}>查看学生</button>
               </div>
-              {durableProfile && <DurableHistory state={durable} canWrite={editable && !busy && !form && !pending}
+              {workspaceMode && <WorkspaceChatHistory state={workspaceConversation} />}
+              {!workspaceMode && durableProfile && <DurableHistory state={durable} canWrite={editable && !busy && !form && !pending}
                 onDraft={title => { setDraftTitle(title); setRecord(null); open("task") }} />}
               {!durableProfile && <div ref={conversationContent} className="r1-messages">
                 {agentMode === "read" && <p className="r1-muted">助理查询范围：{agentStudent ? selectedAgentStudent?.name || "已选学生不可用，请重新选择；不会回落全班" : "全班当前工作"}。仅统计，不作评价。</p>}
@@ -1140,7 +1155,7 @@ export default function R1App() {
               {durableProfile && classroom && activity && <WorkSummary
                 key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`}
                 classroom={classroom} activity={activity} students={students} fresh={queryFresh && !refreshing} onDraftChange={setSummaryDraft}
-                onDocumentDraft={runtimeProfile === "workbench-d2" && classroom.status !== "archived" ? text => {
+                onDocumentDraft={workbenchProfile && classroom.status !== "archived" ? text => {
                   if (!queryFresh || refreshing || busy || form || pending) return false
                   setDocumentSeed({ scope: `${session.csrf_token}/${session.subject.owner_id}/${session.subject.workspace_id}/${classroom.class_id}/${classroom.term_id}`,
                     draft: { title: Array.from(`${classroom.name} · 班级工作小结`).slice(0, 80).join(""), body: text, format: "plain-text" } })
@@ -1446,7 +1461,7 @@ export default function R1App() {
               ))}
             </>
           )}
-          {page === "documents" && (runtimeProfile === "workbench-d2" && classroom
+          {page === "documents" && (workbenchProfile && classroom
             ? <DocumentsWorkspace key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`}
                 session={session} classroom={classroom} documentId={navigation.route.documentId}
                 canWrite={editable && !busy && !form && !pending && queryFresh && !refreshing}
@@ -1528,7 +1543,7 @@ export default function R1App() {
                 </p>
               </section>
               <section className="r1-card"><h2>身份与恢复</h2><p>{localDevelopment ? "本机合成开发会话无需输入密码。重新验证将旋转当前会话，旧草稿与批准失效；不会提交业务变更。" : "这些操作需要当前密码，不经 Agent。重新签发会撤销旧恢复码和全部旧会话；全部设备退出不改变密码。"}</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button>{!localDevelopment && <><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></>}</div></section>
-              {runtimeProfile === "workbench-d2" ? <section className="r1-card"><h2>退出导出</h2><p>完整数据退出尚未接通。不会生成遗漏文档的旧退出包；已保存内容仍保留在本机数据库中。</p></section> : runtimeProfile === "conversation-d1" ? (classroom
+              {workbenchProfile ? <section className="r1-card"><h2>退出导出</h2><p>完整数据退出尚未接通。不会生成遗漏文档或工作区聊天的旧退出包；已保存内容仍保留在本机数据库中。</p></section> : runtimeProfile === "conversation-d1" ? (classroom
                 ? <DurableExit key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`} session={session} classroom={classroom}
                     disabled={busy || !queryFresh || refreshing || !!pending || !!form} onBusyChange={setExitBusy} onError={fail} />
                 : <p>先建立班级与学期，再使用耐久会话退出导出。</p>) : <section className="r1-card">
@@ -1549,7 +1564,8 @@ export default function R1App() {
           scrollToLatest()
           messageInput.current?.focus({ preventScroll: true })
         }}>查看新回复</button>}
-        {page === "conversation" && durableProfile && <DurableComposer state={durable} students={students}
+        {page === "conversation" && workspaceMode && <WorkspaceChatComposer state={workspaceConversation} />}
+        {page === "conversation" && durableProfile && !workspaceMode && <DurableComposer state={durable} students={students}
           canWrite={editable && !busy && !form && !pending && !modelUncertain} />}
         {page === "conversation" && !durableProfile && (
           <form

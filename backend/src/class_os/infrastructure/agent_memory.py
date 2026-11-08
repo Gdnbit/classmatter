@@ -37,6 +37,10 @@ class ConversationMemory:
                 item.history.clear()
                 del self._items[key]
 
+    def is_workspace(self, conversation_id):
+        item = self._items.get(conversation_id)
+        return item is not None and item.class_id is None and item.term_id is None
+
     def create(self, credentials, class_id, term_id, *, student_id=None, workspace_only=False):
         self._expire()
         valid_scope = (class_id is None and term_id is None and student_id is None) if workspace_only is True else (type(class_id) is UUID and type(term_id) is UUID)

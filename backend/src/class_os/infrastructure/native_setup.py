@@ -19,10 +19,13 @@ from class_os.infrastructure.durable_local_runtime import _surface, open_service
 
 class NativeSetup:
     def __init__(self, runtime, *, development=False):
-        if type(runtime) is not LocalRuntime or runtime.profile not in ('conversation-d1', 'workbench-d2'):
+        if type(runtime) is not LocalRuntime or runtime.profile not in ('conversation-d1', 'workbench-d2', 'workspace-chat-d3'):
             raise ValueError('Owned D1/D2 runtime required')
         if runtime.profile == 'workbench-d2':
             from .workbench_upgrade import verify_upgrade_receipt
+            verify_upgrade_receipt(runtime)
+        elif runtime.profile == 'workspace-chat-d3':
+            from .workspace_upgrade import verify_upgrade_receipt
             verify_upgrade_receipt(runtime)
         self.runtime = runtime
         self.development = development is True
@@ -31,6 +34,9 @@ class NativeSetup:
         self.commit_key = uuid4()
 
     def _open_services(self):
+        if self.runtime.profile == 'workspace-chat-d3':
+            from .workspace_local_runtime import open_services as open_workspace
+            return open_workspace(self.runtime)
         if self.runtime.profile == 'workbench-d2':
             from .workbench_local_runtime import open_services as open_workbench
             return open_workbench(self.runtime)
@@ -51,7 +57,10 @@ class NativeSetup:
         business = self.runtime.database('runtime')
         try:
             with business.transaction(read_only=True) as connection:
-                if self.runtime.profile == 'workbench-d2':
+                if self.runtime.profile == 'workspace-chat-d3':
+                    from .workspace_local_runtime import surface
+                    surface(connection)
+                elif self.runtime.profile == 'workbench-d2':
                     from .workbench_local_runtime import surface
                     surface(connection)
                 else:
@@ -61,7 +70,7 @@ class NativeSetup:
                 owners = connection.execute(text('SELECT count(*) FROM class_os.owner_account')).scalar_one()
             if owners not in (0, 1) or controls not in (0, 1) or controls > owners:
                 raise ValueError('Setup requires review')
-            if self.runtime.profile == 'workbench-d2' and (owners != 1 or controls != 1):
+            if self.runtime.profile in ('workbench-d2', 'workspace-chat-d3') and (owners != 1 or controls != 1):
                 raise ValueError('Existing D2 identity and control required; no bootstrap')
             if controls:
                 services = self._open_services()

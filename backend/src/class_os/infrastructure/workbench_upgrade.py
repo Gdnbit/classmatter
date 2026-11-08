@@ -50,30 +50,32 @@ def read_bytes(path, limit=LIMIT):
     return value
 
 
-def descriptor(runtime):
+def descriptor(runtime, *, source_profile='conversation-d1', target_profile='workbench-d2'):
+    if (source_profile, target_profile) not in (('conversation-d1', 'workbench-d2'), ('workbench-d2', 'workspace-chat-d3')):
+        raise UpgradeRejected()
     raw = read_bytes(runtime.manifest, 16384)
     value = json.loads(raw, object_pairs_hook=unique)
     if type(value) is not dict:
         raise UpgradeRejected()
-    profiles = {PROFILES[name][0]: name for name in ('conversation-d1', 'workbench-d2')}
+    profiles = {PROFILES[name][0]: name for name in (source_profile, target_profile)}
     profile = profiles.get(value.get('profile'))
     if profile is None:
         raise UpgradeRejected()
     current = LocalRuntime(runtime.root, profile=profile)
     if current.configuration() != value:
         raise UpgradeRejected()
-    source_marker = json.dumps(PROFILES['conversation-d1'][0]).encode('ascii')
-    target_marker = json.dumps(PROFILES['workbench-d2'][0]).encode('ascii')
+    source_marker = json.dumps(PROFILES[source_profile][0]).encode('ascii')
+    target_marker = json.dumps(PROFILES[target_profile][0]).encode('ascii')
     # Patch exactly the profile value, preserving descriptor bytes/EOL/encoding.
-    pattern = rb'("profile"\s*:\s*)' + re.escape(source_marker if profile == 'conversation-d1' else target_marker)
-    alternate, count = re.subn(pattern, lambda match: match[1] + (target_marker if profile == 'conversation-d1' else source_marker), raw)
+    pattern = rb'("profile"\s*:\s*)' + re.escape(source_marker if profile == source_profile else target_marker)
+    alternate, count = re.subn(pattern, lambda match: match[1] + (target_marker if profile == source_profile else source_marker), raw)
     if count != 1:
         raise UpgradeRejected()
-    return current, (raw, alternate) if profile == 'conversation-d1' else (alternate, raw)
+    return current, (raw, alternate) if profile == source_profile else (alternate, raw)
 
 
-def load_plan(runtime, source, target):
-    path = runtime.root / JOURNAL
+def load_plan(runtime, source, target, *, journal=JOURNAL, kind=KIND):
+    path = runtime.root / journal
     if not path.exists() and not path.is_symlink():
         return None
     raw = protect(read_bytes(path), decrypt=True)
@@ -81,7 +83,7 @@ def load_plan(runtime, source, target):
         raise UpgradeRejected()
     plan = json.loads(raw, object_pairs_hook=unique)
     fields = {'kind', 'root', 'source', 'target', 'attempt_id', 'backup_id', 'business', 'owner_id', 'workspace_id'}
-    if type(plan) is not dict or set(plan) != fields or plan['kind'] != KIND:
+    if type(plan) is not dict or set(plan) != fields or plan['kind'] != kind:
         raise UpgradeRejected()
     for field in ('root', 'source', 'target', 'business'):
         if type(plan[field]) is not str or not re.fullmatch('[a-f0-9]{64}', plan[field]):
@@ -113,7 +115,7 @@ def publish_manifest(runtime, target):
     publish(runtime.manifest, target)
 
 
-def save_plan(runtime, plan, prior):
+def save_plan(runtime, plan, prior, *, journal=JOURNAL):
     if prior is not None:
         directory = runtime.root / 'upgrade-history'
         if directory.is_symlink() or directory.is_junction():
@@ -123,14 +125,14 @@ def save_plan(runtime, plan, prior):
             raise UpgradeRejected()
         archive = directory / (prior['attempt_id'] + '.dpapi')
         if archive.exists():
-            if read_bytes(archive) != read_bytes(runtime.root / JOURNAL):
+            if read_bytes(archive) != read_bytes(runtime.root / journal):
                 raise UpgradeRejected()
         else:
-            os.link(runtime.root / JOURNAL, archive)
+            os.link(runtime.root / journal, archive)
     sealed = protect(json.dumps(plan, sort_keys=True, separators=(',', ':')).encode('utf-8'))
     if type(sealed) is not bytes or not 1 <= len(sealed) <= LIMIT:
         raise UpgradeRejected()
-    publish(runtime.root / JOURNAL, sealed)
+    publish(runtime.root / journal, sealed)
 
 
 def business_digest(inventory):
@@ -142,7 +144,7 @@ def business_digest(inventory):
 
 def known_service_stopped(runtime):
     repository = Path(__file__).resolve().parents[4]
-    for stage in ('runtime-d1', 'runtime-d2'):
+    for stage in ('runtime-d1', 'runtime-d2', 'runtime-d3'):
         path = repository / 'apps/desktop/.build' / stage / 'runtime-source.json'
         if not path.is_file():
             continue

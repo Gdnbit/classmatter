@@ -63,8 +63,8 @@ test('only explicit missing capability means R1; rejection or outage never becom
       globalThis.fetch = async () => new Response('', { status });
       await assert.rejects(api.discoverD1(session));
     }
-    globalThis.fetch = async () => response({ schema_version: 'classmatter.runtime-capabilities.v1', profile: 'conversation-d1',
-      data_mode: 'synthetic-only', history_protocol: 'classmatter.conversation-history.v2' });
+    globalThis.fetch = async path => path.endsWith('/conversation-d1/capabilities') ? response({ schema_version: 'classmatter.runtime-capabilities.v1', profile: 'conversation-d1',
+      data_mode: 'synthetic-only', history_protocol: 'classmatter.conversation-history.v2' }) : new Response('', { status: 404 });
     assert.equal(await api.discoverD1(session), 'conversation-d1');
   } finally { globalThis.fetch = original; }
 });
@@ -78,7 +78,7 @@ test('D2 discovery is explicit, closed and never an outage fallback', async () =
     globalThis.fetch = async path => { calls.push(path); return path.endsWith('/workbench-d2/capabilities')
       ? response(capability) : new Response('', { status: 404 }); };
     assert.equal(await api.discoverD1(session), 'workbench-d2');
-    assert.equal(calls.length, 2);
+    assert.equal(calls.length, 3);
     assert.ok(calls.every(path => path.startsWith(`/api/workspaces/${session.subject.workspace_id}/`)));
     for (const value of [{ ...capability, complete_exit: true }, { ...capability, data_mode: 'production' },
       { ...capability, unexpected: true }, { ...capability, document_protocol: 'arbitrary' }]) {

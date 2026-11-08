@@ -15,7 +15,7 @@ try {
 try {
   source=JSON.parse(fs.readFileSync(path.join(__dirname,'runtime-source.json'),'utf8'));
   const keys=Object.keys(source).sort().join(',');
-  d1=source.schema_version===2 && source.profile==='conversation-d1' && keys==='profile,repositoryRoot,runtimeRoot,schema_version,servicePort'
+  d1=source.schema_version===2 && ['conversation-d1','workspace-chat-d3'].includes(source.profile) && keys==='profile,repositoryRoot,runtimeRoot,schema_version,servicePort'
     && Number.isInteger(source.servicePort) && source.servicePort>=1024 && source.servicePort<=65535;
   if(!d1 && (source.schema_version!==1 || keys!=='repositoryRoot,runtimeRoot,schema_version'))sourceInvalid=true;
 } catch {sourceInvalid=true;}
@@ -48,14 +48,14 @@ else {
     if(sourceInvalid) throw new Error('Invalid runtime source');
     let developerCookies;
     if(development){
-      const pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true);
+      const pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true,source.profile);
       try{developerCookies=(await pipe.request({operation:'development_access'})).cookies;}finally{pipe.stop();}
     }else if(d1)setupWindow=await require('./setup-window.cjs').prepareWorkspace({BrowserWindow,ipcMain,session},source);
     service=desktopService(source.repositoryRoot,path.join(__dirname,'ui'),()=>{
       if(window) window.close();
       // No automatic replay or reattachment after a service crash.
       app.quit();
-    },source.runtimeRoot,d1?'conversation-d1':'r1',d1?source.servicePort:8000,modelNetwork);
+    },source.runtimeRoot,d1?source.profile:'r1',d1?source.servicePort:8000,modelNetwork);
     origin=await service.start();
     const isolated=session.fromPartition(d1?'classmatter-synthetic-d1':'classmatter-synthetic-runtime');
     const installDeveloperCookies=async cookies=>{
@@ -92,7 +92,7 @@ else {
             request[name]=matches[0].value;
           }
         }
-        pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true);
+        pipe=require('./setup-service.cjs').setupService(source.repositoryRoot,source.runtimeRoot,true,source.profile);
         const result=await pipe.request(request);
         if(!window||window.isDestroyed())throw new Error('Window closed');
         await installDeveloperCookies(result.cookies);return true;

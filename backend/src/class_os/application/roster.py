@@ -363,6 +363,11 @@ class QueryGateway(GatewayBase):
             return tx.current_context(binding["workspace_id"])
         return self._run((token, client, csrf, workspace_id), "class.context", query)
 
+    def agent_workspace_context(self, token, client, csrf, workspace_id):
+        # Revalidate identity and native instance fences without selecting or
+        # fetching a class. Existing class.context metadata audit is retained.
+        return self._run((token, client, csrf, workspace_id), "class.context", lambda tx, binding, now: None)
+
     def roster(self, token, client, csrf, workspace_id, class_id, term_id):
         def query(tx, binding, now):
             if type(class_id) is not UUID or type(term_id) is not UUID:

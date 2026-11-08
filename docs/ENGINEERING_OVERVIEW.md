@@ -12,7 +12,9 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 ## 事实、记忆和开放世界
 
-2026-11-08 会话前置条件校准：普通聊天以已认证Owner/workspace为范围，不要求先建班/学期，不向模型注册班级读写工具；同一会话可多轮讨论，班级选择不改变其授权。原Pydantic AI、受控模型配置、限额/超时/取消和ISB/QG审计复用。普通聊天仍是15分钟/10轮有界临时上下文，刷新不恢复，不冒充D1入库历史；需要关联班级的查询、任务草稿与既有耐久记录继续走原范围契约。以聊天驱动创建/编辑是产品方向，当前仅已有任务/记录草稿入口，不代表任意CRUD或Agent后台写入已实现；持久业务变更仍需BCG预览/必要确认/幂等提交。
+2026-11-08 后续工作区聊天采用显式`workspace-chat-d3`配置：普通聊天归Owner/workspace，不要求班级，thread/turn/状态/正文由本机PostgreSQL保存；刷新与启动只读取，绝不自动重跑。模型上下文只从有界的已完成历史文本重建，聊天不是业务事实。原D1临时普通聊天及原班级耐久历史协议保留兼容，不混装新Schema。
+
+对话需要班级数据时才调用固定QG工具；缺必要名称/日期或目标不唯一时对话追问。固定七个read/prepare工具可准备班级/学期、学生、任务、工作文档的九类命令候选；模型没有BCG、批准、提交、SQL或DDL句柄。原界面候选→原预览/批准→原BCG幂等提交→同事务审计→回读原学生/工作/文档视图，保存状态只认业务回执。代码地图与逐项验收见[聊天设计](design/workspace-chat-and-actions.md)。这不是任意CRUD、正式发布或所有未来模块已经完成。
 
 事实与 Observation/Claim/Derived Signal/AI inference 有权威边界；学生显示名不是身份键。Person、组织与角色、关系、分组、Assignment、Evidence/Provenance、Capture/Entity Resolution、Case/Commitment/Temporal 是长期语义，不代表所有对象已实现。Conversation Memory 是短期上下文，Knowledge/RAG 是检索依据，都不是正式业务事实源。Harness、OCR、ASR、RAG、渲染与求解器是可替换能力，不进入 Stable Kernel。
 
@@ -20,7 +22,7 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 ## 当前技术与限制
 
-`apps/desktop/` 是Electron独立Windows宿主。当前候选开发入口默认连接自有D1实例并托管已有API子进程，先验证进程proof/readiness，再开放该loopback同源；按用户要求免输密码，只对显式本机合成开发使用DPAPI开发身份，普通API仍经ISB/QG/BCG。不会自动初始化、迁移、清空或接管个人实例。原离线资源协议构建保留为显式fixture回归。运行入口及边界以[桌面说明](../apps/desktop/README.md)为准；[早期桌面设计](desktop-demo.md)记录原离线宿主。候选分支不代表完整原型、正式R1或发行准入。
+`apps/desktop/` 是Electron独立Windows宿主。当前候选开发入口默认连接显式升级后的自有D3实例并托管已有API子进程，先验证进程proof/readiness，再开放该loopback同源；按用户要求免输密码，普通API仍经ISB/QG/BCG。不会在启动时初始化、迁移、清空或接管实例。原离线资源协议构建保留为显式fixture回归。运行入口及升级步骤以[桌面说明](../apps/desktop/README.md)为准；[早期桌面设计](desktop-demo.md)记录原离线宿主。候选分支不代表完整原型、正式R1或发行准入。
 
 2026-10-22 W2-01新增独立的源码开发runtime入口，复用已有R1页面和后端，托管固定自有API进程，先验证每次启动的进程proof与readiness，再开放该loopback同源。它不改变离线Demo、不初始化/迁移/启动用户数据库、不代设owner；不是全部冻结Demo页面绑定完成。临时SCRAM数据库+真实Electron已验证事实/任务经原BCG持久化及应用重启后复用，Agent fake只读/草稿不自动写入；正式发布、真实模型、完整退出仍未完成。代码与剩余项见[实现台账](implementation-ledger.md)。
 

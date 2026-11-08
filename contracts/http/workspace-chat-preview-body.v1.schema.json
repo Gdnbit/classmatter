@@ -1,0 +1,15 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "candidate_hash": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Candidate Hash",
+      "type": "string"
+    }
+  },
+  "required": [
+    "candidate_hash"
+  ],
+  "title": "CandidatePreviewBody",
+  "type": "object"
+}
