@@ -4,8 +4,9 @@ import { chromium } from '@playwright/test';
 const base = process.env.CLASS_OS_TEST_URL;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
 const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
+let page;
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = [], starts = [];
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => { if (r.method() === 'POST' && r.url().endsWith('/events')) starts.push(r.url()) });
@@ -34,4 +35,9 @@ try {
   assert.equal(starts.length, 1);
   assert.deepEqual(errors, []);
   console.log('PASS original composer: existing-key model switch via BCG, explicit probe+enable, draft preserved and subsequent SDK chat uses new model');
+} catch (error) {
+  console.error('Owned model-switch fixture failed', await page?.locator('body').evaluate(element => {
+    const copy = element.cloneNode(true); copy.querySelectorAll('input,textarea,pre').forEach(node => node.remove()); return copy.textContent;
+  }));
+  throw error;
 } finally { await browser.close() }

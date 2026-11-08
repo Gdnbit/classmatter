@@ -51,6 +51,7 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
     {s.history?.thread.status === "cleared" && <p>聊天正文已清除；原业务数据保持在各自页面中。</p>}
     {s.history?.next_before && <button disabled={s.working} onClick={() => void s.moreHistory()}>加载更早消息</button>}
     <div className="r1-messages">
+      {s.pendingSend && !s.history?.turns.some(turn => turn.request_id === s.pendingSend?.request) && <article className="user" aria-label="你的消息"><p>{s.pendingSend.text}</p></article>}
       {s.history?.turns.map(turn => <div key={turn.turn_id}>
         {turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
         {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
@@ -76,11 +77,11 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
   onManageModels: () => void; onPreviewModel: (command: Command) => Promise<void>;
   onModelVerified: (verified: boolean) => void; onError: (error: unknown) => void;
 }) {
-  return <form className="r1-composer" onSubmit={event => { event.preventDefault(); void s.send() }}>
+  return <form className="r1-composer" data-chat-fresh={s.fresh} data-chat-working={s.working} data-chat-pending={!!s.pendingSend} onSubmit={event => { event.preventDefault(); void s.send() }}>
     <textarea aria-label="输入消息" placeholder="随便聊聊，或告诉我你想创建、修改什么……" maxLength={2000} value={s.text}
       onChange={event => s.setText(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (s.canSend) void s.send() } }} />
     <div>
-      <ModelSwitcher session={session} state={s.model} revision={modelRevision} disabled={s.working || s.lastActive || !!s.pendingSend}
+      <ModelSwitcher session={session} state={s.model} revision={modelRevision} disabled={s.anyWorking || s.lastActive || !!s.pendingSend}
         onManage={onManageModels} onPreview={onPreviewModel} onVerified={onModelVerified} onError={onError} />
       {s.lastActive ? <button type="button" aria-label="停止回复" onClick={() => void s.stop()}><X size={18} /></button>
         : <button aria-label="发送消息" disabled={!s.canSend || !s.text.trim()}><ArrowUp size={18} /></button>}
