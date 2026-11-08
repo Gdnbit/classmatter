@@ -116,7 +116,8 @@ class IdentityTransaction:
     def replace_codes(self, codes):
         expected = self._connection.execute(text("SELECT count(*) FROM class_os.recovery_code")).scalar_one()
         self._mutate(text("DELETE FROM class_os.recovery_code"), expected=expected)
-        self._mutate(text("INSERT INTO class_os.recovery_code(code_id,owner_id,code_hash,credential_version,consumed_at) VALUES(:code_id,:owner_id,:code_hash,:credential_version,:consumed_at)"), [asdict(code) for code in codes], expected=len(codes))
+        if codes:
+            self._mutate(text("INSERT INTO class_os.recovery_code(code_id,owner_id,code_hash,credential_version,consumed_at) VALUES(:code_id,:owner_id,:code_hash,:credential_version,:consumed_at)"), [asdict(code) for code in codes], expected=len(codes))
 
     def consume_code(self, code_id, now):
         self._mutate(text("UPDATE class_os.recovery_code SET consumed_at=:now WHERE code_id=:id AND consumed_at IS NULL"), {"id": code_id, "now": now})

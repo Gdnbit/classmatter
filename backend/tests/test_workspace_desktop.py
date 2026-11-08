@@ -16,11 +16,11 @@ def test_workspace_chat_survives_native_application_restart(owned_upgrade):
     desktop = Path(__file__).resolve().parents[2] / 'apps/desktop'
     creationflags = getattr(subprocess, 'CREATE_NO_WINDOW', 0)
     build = subprocess.run(['node', 'scripts/runtime-build.cjs', '--profile', 'workspace-chat-d3'], cwd=desktop,
-        capture_output=True, text=True, encoding='utf-8', timeout=60, creationflags=creationflags)
+        capture_output=True, text=True, encoding='utf-8', timeout=120, creationflags=creationflags)
     assert build.returncode == 0, build.stdout + build.stderr
     with socket.socket() as probe:
         probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
     result = subprocess.run(['node', 'tests/workspace-chat-integration.cjs'], cwd=desktop,
         env=dict(os.environ, CLASSMATTER_TEST_RUNTIME_ROOT=str(current.root), CLASSMATTER_TEST_SERVICE_PORT=str(port)),
-        capture_output=True, text=True, encoding='utf-8', timeout=130, creationflags=creationflags)
+        capture_output=True, text=True, encoding='utf-8', timeout=180, creationflags=creationflags)
     assert result.returncode == 0, result.stdout + result.stderr

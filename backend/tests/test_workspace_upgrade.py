@@ -31,7 +31,7 @@ def test_d1_upgrade_and_workspace_chat_survive_restart(owned_upgrade):
         native.close()
     auth = (cookies['session'], cookies['client'], cookies['csrf'], value.workspace_id)
     thread, request = uuid4(), uuid4()
-    services = open_services(current)
+    services = open_services(current, local_development=True)
     try:
         assert services.owner_id == value.owner_id
         assert services.query.context(*auth).class_id == value.classroom.class_id
@@ -52,7 +52,7 @@ def test_d1_upgrade_and_workspace_chat_survive_restart(owned_upgrade):
         asyncio.run(run())
     finally:
         services.close()
-    services = open_services(current)
+    services = open_services(current, local_development=True)
     try:
         query = WorkspaceChatQueryGateway(services.identity, services.query.store)
         history = query.history(auth, thread)
@@ -90,7 +90,8 @@ def test_fresh_developer_preparation_is_one_explicit_non_overwriting_operation(t
     current = upgrade.prepare_workspace_chat(runtime, request.config.getoption('--pg-root'))
     try:
         assert current.profile == 'workspace-chat-d3'
-        assert (current.root / 'developer-identity.dpapi').is_file()
+        assert (current.root / 'local-development.dpapi').is_file()
+        assert not (current.root / 'developer-identity.dpapi').exists()
         setup = NativeSetup(current, development=True)
         try:
             assert setup.status() == {'owner_present': True, 'ready': True}

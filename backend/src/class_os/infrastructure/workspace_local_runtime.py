@@ -33,7 +33,7 @@ class OwnedWorkspaceServices(OwnedD1Services):
         surface(connection)
 
 
-def open_services(runtime):
+def open_services(runtime, *, local_development=False):
     if os.name != "nt" or type(runtime) is not LocalRuntime or runtime.profile != "workspace-chat-d3":
         raise ValueError("Explicit owned Windows D3 runtime required")
     runtime.configuration()
@@ -48,7 +48,15 @@ def open_services(runtime):
             owner = connection.execute(text("SELECT owner_id,workspace_id FROM class_os.owner_account")).one_or_none()
         if owner is None or str(owner.owner_id) != receipt["owner_id"] or str(owner.workspace_id) != receipt["workspace_id"]:
             raise RuntimeError("Existing owner binding required")
-        identity = IdentityBoundary(PostgresIdentityStore(identity_database), PasswordHash.recommended())
+        if local_development is True:
+            from .native_setup import local_binding
+            from class_os.application.local_identity import LocalIdentityBoundary
+            local_owner, local_workspace = local_binding(runtime)
+            if (local_owner, local_workspace) != (owner.owner_id, owner.workspace_id):
+                raise ValueError("Local workspace binding mismatch")
+            identity = LocalIdentityBoundary(PostgresIdentityStore(identity_database), local_owner, local_workspace)
+        else:
+            identity = IdentityBoundary(PostgresIdentityStore(identity_database), PasswordHash.recommended())
         restrictions = ProtectedConversationRestrictions(runtime.root, owner.workspace_id)
         store = WorkbenchStore(business_database, restrictions, model_secrets=ModelSecrets(protect))
         result = OwnedWorkspaceServices(identity_database, business_database, identity,
@@ -62,11 +70,11 @@ def open_services(runtime):
         raise
 
 
-def compose(settings, runtime):
+def compose(settings, runtime, *, local_development=False):
     from .agent import PydanticAgentRuntime
     from .model_control import ModelController
     from class_os.interfaces.http.workspace_chat import create_workspace_chat_app
-    services = open_services(runtime)
+    services = open_services(runtime, local_development=local_development)
     try:
         sdk = PydanticAgentRuntime(services.query, timeout=45)
         controller = ModelController(services.query, services.worker.store.model_secrets, sdk,

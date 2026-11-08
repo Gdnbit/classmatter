@@ -28,7 +28,7 @@ def prepare_workspace_chat(runtime, pg_root):
     from .native_setup import NativeSetup
     setup = NativeSetup(runtime, development=True)
     try:
-        setup.handle({'operation': 'development_access'})
+        setup.local_access()
     finally:
         setup.close()
     return upgrade_workspace_chat(runtime)

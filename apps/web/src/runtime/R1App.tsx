@@ -907,7 +907,7 @@ export default function R1App() {
   return (
     <div className="r1-shell connected-runtime">
       <WorkbenchFrame workspaceClassName="r1-main" sidebar={
-      <SidebarFrame footer={<button className="user-area r1-logout" aria-label="退出登录" disabled={busy} onClick={requestLogout}>
+      <SidebarFrame footer={window.classMatterDesktop?.localOnly === true ? <div className="user-area"><span className="avatar">班</span><span>本机工作区<small>直接使用 · 无需账号</small></span></div> : <button className="user-area r1-logout" aria-label="退出登录" disabled={busy} onClick={requestLogout}>
         <span className="avatar">班</span><span>本机工作台<small>退出登录</small></span><LogOut size={16} />
       </button>}>
         <div className="scope"><strong>班事有谱 · ClassMatter</strong><span>{classroom ? `${classroom.name} · ${classroom.term_name}` : "尚未建立班级与学期"}</span></div>
@@ -1546,7 +1546,7 @@ export default function R1App() {
                   文件、语音、微信、长记忆和自动化均不在 R1 实现范围。
                 </p>
               </section>
-              <section className="r1-card"><h2>身份与恢复</h2><p>{localDevelopment ? "本机合成开发会话无需输入密码。重新验证将旋转当前会话，旧草稿与批准失效；不会提交业务变更。" : "这些操作需要当前密码，不经 Agent。重新签发会撤销旧恢复码和全部旧会话；全部设备退出不改变密码。"}</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button>{!localDevelopment && <><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></>}</div></section>
+              {window.classMatterDesktop?.localOnly !== true && <section className="r1-card"><h2>身份与恢复</h2><p>{localDevelopment ? "本机合成开发会话无需输入密码。重新验证将旋转当前会话，旧草稿与批准失效；不会提交业务变更。" : "这些操作需要当前密码，不经 Agent。重新签发会撤销旧恢复码和全部旧会话；全部设备退出不改变密码。"}</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button>{!localDevelopment && <><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></>}</div></section>}
               {workbenchProfile ? <section className="r1-card"><h2>退出导出</h2><p>完整数据退出尚未接通。不会生成遗漏文档或工作区聊天的旧退出包；已保存内容仍保留在本机数据库中。</p></section> : runtimeProfile === "conversation-d1" ? (classroom
                 ? <DurableExit key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`} session={session} classroom={classroom}
                     disabled={busy || !queryFresh || refreshing || !!pending || !!form} onBusyChange={setExitBusy} onError={fail} />
@@ -1952,6 +1952,21 @@ function RecordCard({
   )
 }
 
+function LocalConnection({ onSession }: { onSession: (session: Session) => void }) {
+  const [failed, setFailed] = useState(false)
+  const started = useRef(false)
+  const connect = () => {
+    setFailed(false)
+    void developmentSession("enter").then(onSession).catch(() => setFailed(true))
+  }
+  useEffect(() => {
+    if (!started.current) { started.current = true; connect() }
+  }, [])
+  return <main className="r1-auth"><section><h1>{failed ? "本机连接未就绪" : "正在打开工作区…"}</h1>
+    {failed && <><p role="alert">未能连接本机服务。已保存的数据不受影响，请重试连接。</p><button onClick={connect}>重试连接</button></>}
+  </section></main>
+}
+
 function Login({
   error,
   busy,
@@ -2012,6 +2027,7 @@ function Login({
       setPending(false)
     }
   }
+  if (window.classMatterDesktop?.localOnly === true) return <LocalConnection onSession={onSession} />
   if (window.classMatterDesktop?.development === true) return <main className="r1-auth"><section>
     <small>班事有谱 · CLASSMATTER</small><h1>回到本机开发工作台</h1>
     <p>开发会话已暂停或过期。点击继续即可进入，不需要密码；不会自动提交之前的操作。</p>

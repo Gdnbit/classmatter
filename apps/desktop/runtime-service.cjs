@@ -113,7 +113,8 @@ class OwnedService {
   }
 }
 
-function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, profile = 'r1', servicePort = profile !== 'r1' ? 8001 : 8000, modelNetwork) {
+function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, profile = 'r1', servicePort = profile !== 'r1' ? 8001 : 8000, modelNetwork, localDevelopment = false) {
+  if (typeof localDevelopment !== 'boolean' || (localDevelopment && profile !== 'workspace-chat-d3')) throw new Error('Invalid local workspace mode');
   const network=validateNetwork(modelNetwork);
   if (!['r1', 'conversation-d1', 'workspace-chat-d3'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
   if (!Number.isInteger(servicePort) || servicePort < 1024 || servicePort > 65535 || (profile === 'r1' && servicePort !== 8000)) throw new Error('Invalid owned service port');
@@ -130,6 +131,7 @@ function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, p
     delete env.PYTHONPATH; delete env.PYTHONHOME;
     const args = ['-I', entry, '--ui-root', ui, '--runtime-root', runtime, '--parent-pipe'];
     if (profile !== 'r1') args.push('--profile', profile);
+    if (localDevelopment) args.push('--local-development');
     for(const base of network.bases)args.push('--model-api-base-url',base);
     if(network.proxy!==null)args.push('--model-api-proxy',network.proxy);
     return spawn(executable, args, { cwd: path.dirname(entry), env, shell: false, windowsHide: true, stdio: ['pipe', 'ignore', 'ignore'] });

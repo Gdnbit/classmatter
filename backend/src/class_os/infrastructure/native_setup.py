@@ -5,7 +5,7 @@ original ISB and control BCG; no database reset, default password or migration.
 """
 import secrets
 import json
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from pwdlib import PasswordHash
 from sqlalchemy import text
@@ -36,7 +36,7 @@ class NativeSetup:
     def _open_services(self):
         if self.runtime.profile == 'workspace-chat-d3':
             from .workspace_local_runtime import open_services as open_workspace
-            return open_workspace(self.runtime)
+            return open_workspace(self.runtime, local_development=self.development and (self.runtime.root / 'local-development.dpapi').exists())
         if self.runtime.profile == 'workbench-d2':
             from .workbench_local_runtime import open_services as open_workbench
             return open_workbench(self.runtime)
@@ -157,6 +157,8 @@ class NativeSetup:
         return credentials['password']
 
     def development_reauthenticate(self, client, token, csrf):
+        if self.runtime.profile == 'workspace-chat-d3':
+            return self.local_access()
         password = self._developer_password()
         services = self._open_services()
         try:
@@ -167,6 +169,8 @@ class NativeSetup:
             services.close()
 
     def development_access(self):
+        if self.runtime.profile == 'workspace-chat-d3':
+            return self.local_access()
         # Explicit trusted desktop flag only; never registered in HTTP/tools.
         # Refuse to adopt an existing personal Owner. No shared/default password.
         if not self.development:
@@ -199,3 +203,67 @@ class NativeSetup:
             return {'cookies': {'client': self.client, 'session': result.token, 'csrf': result.csrf}}
         finally:
             services.close()
+
+    def local_access(self):
+        """No password is created, stored or required in the current native app."""
+        from class_os.application.local_identity import LocalIdentityBoundary, DISABLED_PASSWORD
+        if not self.development:
+            raise ValueError('Explicit local development required')
+        state = self.status()
+        marker = self.runtime.root / 'local-development.dpapi'
+        legacy = self.runtime.root / 'developer-identity.dpapi'
+        database = self.runtime.database('identity')
+        try:
+            store = PostgresIdentityStore(database)
+            with database.transaction(read_only=True) as connection:
+                row = connection.execute(text('SELECT owner_id,workspace_id,password_hash FROM class_os.owner_account')).mappings().one_or_none()
+            previous_hash = None
+            if marker.exists():
+                owner_id, workspace_id = local_binding(self.runtime)
+            else:
+                if row is not None:
+                    # One-time conversion of the former generated developer
+                    # credential, preserving every workspace/business ID.
+                    if not PasswordHash.recommended().verify(self._developer_password(), row['password_hash']):
+                        raise ValueError('Existing identity does not match this developer instance')
+                    owner_id, workspace_id = row['owner_id'], row['workspace_id']
+                else:
+                    owner_id, workspace_id = uuid4(), uuid4()
+                payload = json.dumps({'kind': 'classmatter.local-development.v1',
+                    'owner_id': str(owner_id), 'workspace_id': str(workspace_id)}).encode('utf-8')
+                with marker.open('xb') as target:
+                    target.write(protect(payload))
+            if row is not None and row['password_hash'] != DISABLED_PASSWORD:
+                if not PasswordHash.recommended().verify(self._developer_password(), row['password_hash']):
+                    raise ValueError('Existing developer conversion requires review')
+                previous_hash = row['password_hash']
+            boundary = LocalIdentityBoundary(store, owner_id, workspace_id)
+            result = boundary.connect(self.client, previous_hash=previous_hash)
+            if legacy.exists():
+                if legacy.is_symlink():
+                    raise ValueError('Unexpected developer marker')
+                legacy.unlink()
+            if not state['ready']:
+                self.services = self._open_services()
+                self.services.identity = boundary
+                self.services.worker.identity = boundary
+                self.login = result
+                auth = (result.token, self.client, result.csrf, workspace_id)
+                self.proposal = self.services.worker.preview(*auth, InitializeConversationControl(uuid4()))
+                self.operation_id = str(uuid4())
+                self.approve_control(self.operation_id, self.proposal.payload_hash, True)
+                self.close()
+                result = boundary.connect(self.client)
+            return {'cookies': {'client': self.client, 'session': result.token, 'csrf': result.csrf}}
+        finally:
+            database.close()
+
+
+def local_binding(runtime):
+    marker = runtime.root / 'local-development.dpapi'
+    if marker.is_symlink() or not marker.is_file() or marker.stat().st_size > 8192:
+        raise ValueError('Local workspace binding unavailable')
+    value = json.loads(protect(marker.read_bytes(), decrypt=True))
+    if set(value) != {'kind', 'owner_id', 'workspace_id'} or value['kind'] != 'classmatter.local-development.v1':
+        raise ValueError('Unexpected local workspace binding')
+    return UUID(value['owner_id']), UUID(value['workspace_id'])

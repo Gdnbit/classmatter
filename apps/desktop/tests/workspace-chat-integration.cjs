@@ -12,9 +12,13 @@ const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
 let app;
 async function launch() {
   app = await electron.launch({ executablePath: require('electron'), args: [stage, '--classmatter-development-no-password'], env });
-  const page = await app.firstWindow();
+  // Private workspace connection (15s) precedes the API's bounded startup (30s).
+  const page = await app.firstWindow({ timeout: 60000 });
   await page.getByLabel('输入消息').waitFor();
   assert.equal(await page.getByLabel('Owner 密码').count(), 0);
+  assert.equal(await page.getByRole('button', { name: '退出登录', exact: true }).count(), 0);
+  assert.equal(await page.getByRole('button', { name: '进入本机开发', exact: true }).count(), 0);
+  assert.equal(await page.evaluate(() => window.classMatterDesktop.localOnly), true);
   return page;
 }
 (async () => { try {
@@ -37,6 +41,9 @@ async function launch() {
   await page.getByRole('region', { name: '已保存的对话' }).getByText('合成桌面重启持久聊天', { exact: true }).waitFor();
   await page.getByRole('region', { name: '已保存的对话' }).locator('article.assistant').waitFor();
   assert.equal(new URL(page.url()).pathname, chatPath);
+  await page.reload();
+  await page.getByLabel('输入消息').waitFor();
+  assert.equal(await page.getByRole('button', { name: '进入本机开发', exact: true }).count(), 0);
   console.log('PASS owned D3 Electron: passwordless original shell; persisted ordinary chat survives full API/application restart');
 } finally {
   if (app) await app.close();

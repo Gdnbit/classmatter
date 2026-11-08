@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowRight, PanelLeft } from "lucide-react"
 import "./desktop.css"
 
 declare global {
-  interface Window { classMatterDesktop?: { openMenu: (name: string) => void; development?: boolean; enterDevelopment?: () => Promise<void>; reauthenticateDevelopment?: () => Promise<void> } }
+  interface Window { classMatterDesktop?: { openMenu: (name: string) => void; development?: boolean; localOnly?: boolean; enterDevelopment?: () => Promise<void>; reauthenticateDevelopment?: () => Promise<void> } }
 }
 
 export default function DesktopChrome() {

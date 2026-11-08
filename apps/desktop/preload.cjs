@@ -5,6 +5,7 @@ const development=typeof process!=='undefined'&&Array.isArray(process.argv)&&pro
 contextBridge.exposeInMainWorld('classMatterDesktop', Object.freeze({
   ...(development?{
     development:true,
+    localOnly:process.argv.includes('--classmatter-local-only'),
     enterDevelopment:()=>ipcRenderer.invoke('desktop:development-session','enter'),
     reauthenticateDevelopment:()=>ipcRenderer.invoke('desktop:development-session','reauthenticate'),
   }:{}),

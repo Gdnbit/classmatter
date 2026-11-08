@@ -32,8 +32,9 @@ test('explicit development preload exposes two fixed identity actions without ca
   vm.runInNewContext(source,{process:{argv:['--classmatter-development-no-password']},require:name=>{
     assert.equal(name,'electron');return {contextBridge:{exposeInMainWorld:(_name,api)=>bridge=api},ipcRenderer:{send:()=>{},invoke:(...args)=>{requests.push(args);return Promise.resolve(true);}}};
   }});
-  assert.deepEqual(Object.keys(bridge).sort(),['development','enterDevelopment','openMenu','reauthenticateDevelopment']);
+  assert.deepEqual(Object.keys(bridge).sort(),['development','enterDevelopment','localOnly','openMenu','reauthenticateDevelopment']);
   assert.equal(bridge.development,true);
+  assert.equal(bridge.localOnly,false);
   await bridge.enterDevelopment({operation:'arbitrary',path:'elsewhere'});
   await bridge.reauthenticateDevelopment('not-a-token');
   assert.deepEqual(requests,[['desktop:development-session','enter'],['desktop:development-session','reauthenticate']]);
