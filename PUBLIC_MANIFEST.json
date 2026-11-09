@@ -2903,7 +2903,7 @@
       "sha256": "5f7da9de009ba06b80256a58b3dce3f91f5e7ccf31b945592c3401c5590fb809"
     },
     "apps/web/tests/persistent-chat-browser.mjs": {
-      "sha256": "00923cfc60ba5992972a19b4450da2d41e2ce115997e43985e067a6a36e542e6"
+      "sha256": "20a25e2c1f15ba66a757fced7a13557d740c0b4d07fa47d3c8c3620e9e2291eb"
     },
     "apps/web/tests/workspace-chat.mjs": {
       "sha256": "51e6b4cb1369de2332711b78d4b54150c2b57ea8bc670446c1c712f2c501e15c"

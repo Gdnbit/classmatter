@@ -20,6 +20,7 @@ try {
   async function assertFixedHome(width, height) {
     await page.setViewportSize({ width, height });
     await page.locator('.r1-conversation-home').waitFor();
+    await page.locator('.r1-welcome').evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
     const bounds = await page.evaluate(() => {
       const home = document.querySelector('.r1-conversation-home');
       const composer = document.querySelector('.r1-composer').getBoundingClientRect();
