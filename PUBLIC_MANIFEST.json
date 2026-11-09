@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "78270453f6141c3ae0b4b3d5d1bff4c8e113665e45a7820039daf30eb0f4db6c"
+      "sha256": "23b578cb105c9077dfb0c21a73ab83ee32c76476eeefb8595722c31260dbc5d9"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -528,7 +528,7 @@
       "sha256": "be2c6879293bc6fed1ad12245208b0d235dd40174bfd7745eabeb6fa5a96171d"
     },
     "apps/desktop/package.json": {
-      "sha256": "ed9ad05523cad8a4083ceda2dac24aeae1b7b2cbd968a924b7d2a9d21ac391c3"
+      "sha256": "eb8b1ccfbf29004096ef6df103e4b02eb4f8b6270f941e36d1e4548db2c7a1ba"
     },
     "apps/desktop/pnpm-lock.yaml": {
       "sha256": "11c1f20d52f0b44b34ca6f249d5bb4695286cd21904e982269f5ba41fb87c1e9"
@@ -540,7 +540,7 @@
       "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
     },
     "apps/desktop/README.md": {
-      "sha256": "f17419d4c91ab70cf6b26432290111dca3ff9b7c599fd5acebc0f00931b5b1ff"
+      "sha256": "e1b33cc810ff049e31ce7e37e3d2b9d0507edd812193540114b11fa1c45af0c3"
     },
     "apps/desktop/scripts/build.cjs": {
       "sha256": "586d17fa8f21ce2eda947c78a55d2139f4c979fd6110a9f0336d585fb777b7fc"
@@ -1026,7 +1026,7 @@
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
     },
     "backend/src/class_os/infrastructure/agent.py": {
-      "sha256": "49517e46349b2a2894f5fd6e4412f76175e9793df3571ce88e352ec3efc4a6ca"
+      "sha256": "c489b3b63b9d8c4e356f4c2642cc28acad8353a0a4bedc4530e0e1d697f02b5a"
     },
     "backend/src/class_os/infrastructure/agent_memory.py": {
       "sha256": "2042927005c163c2179cbf81f85ac0b3c01d57ca2b22f4d9f39199fe69f2d101"
@@ -1044,10 +1044,10 @@
       "sha256": "75d4f30948937887e1bb8e3ab882156ac0edcf0cabfce509cbd9cded777effd0"
     },
     "backend/src/class_os/infrastructure/model_control.py": {
-      "sha256": "1114f2fa8454b5cf60dc472afdcd4627e1d3241820b6a289642dcc0c17fe10cb"
+      "sha256": "8092bd51c9e5242edde9f4d781d4d2a419f94c0171db64d80c880000ae89936d"
     },
     "backend/src/class_os/infrastructure/model_provider.py": {
-      "sha256": "332b934ede500370958b3fdeb67f09c82c3a5fd3a180198dd399886a6351e406"
+      "sha256": "f19781bec6136bd3d79bc8a05b9fd4c64856b005b2d061b133991f3901174231"
     },
     "backend/src/class_os/infrastructure/model_secrets.py": {
       "sha256": "a4c31c1888e62b110079d19319ebbbd6d2757d7835e45b75683e03a52385364c"
@@ -2612,7 +2612,7 @@
       "sha256": "4e449de222400957e87440092e3a902624c8540f2afbe930606193b7f320e351"
     },
     "backend/tests/test_google_provider.py": {
-      "sha256": "d9db9524ce80fb2cfb58e1f64da31c220ccbbf6be9c1223a32d2a80cd7d74e23"
+      "sha256": "2f331f44d56cd8c00dbfeb99ef25679c952afbcd8b4a634f53a2487ea7355f6e"
     },
     "third_party/licenses/python/cryptography-50.0.2/0.txt": {
       "sha256": "3e0c7c091a948b82533ba98fd7cbb40432d6f1a9acbf85f5922d2f99a93ae6bb"
@@ -2921,7 +2921,7 @@
       "sha256": "8601cd5777a8dea780dff4f4606a0a2f601823cb6b13cfac0f9ccb03e7d3aaba"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "2a856a0de6bf55b48fe8f324f267fef0230fc42a8ada45535f3af480a8c59607"
+      "sha256": "77d37f6fb09f6855804f9871b20d0878d13dc3d8b8432cae9b9b16309f54c3c8"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "ed65b25292ee264e4dbc4e5526cbd67c6d67e4c3d8efab38593c279defff77f5"
@@ -2990,7 +2990,7 @@
       "sha256": "0c43bbda7e2fd1a0038e78eb0acb3ff3a1399c65d0c82b0d993b27ea2da56d6d"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "d9626bac4b775446e5e506213bcf10bd8290dcc14c0b0fdf29531a22228a131f"
+      "sha256": "454a1f5c79e98e7b69026b5b2b5951cb443d16c7cdc1e66952a603afb8303383"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3002,7 +3002,7 @@
       "sha256": "5bba5f9029f8f04c860f05c49e886a08072f41dec26194611e73a23a10c7df4b"
     },
     "apps/desktop/tests/live-chat-optin.test.cjs": {
-      "sha256": "c2003e4f429f4f036b3386f5f6e2d7b5b168d83bacebf9f2b22b7b41b1ae87a8"
+      "sha256": "239e88f9ebbef136d03a35e81ed69291f3aca1b90fddaed866d0ad5dd80b6c6c"
     },
     "backend/src/class_os/infrastructure/local_model_activation.py": {
       "sha256": "21539a3b64a7f03629edd4d9b6bed908a1d190cd583c88e924a46df46c5e93e0"
@@ -3056,7 +3056,7 @@
       "sha256": "09f8b98031e608d4fd127bfd1e56435e71675f782232a8f1a79fd52f77fcc130"
     },
     "backend/src/class_os/infrastructure/classroom_actions.py": {
-      "sha256": "085f59bb3e49be70cc2f47a3514852d6908703f204951746b9a5cbfe46d0f698"
+      "sha256": "3196acb04d63d16f558afc0746bb39783c1656be18254bc2bbdc8716c18b22e3"
     },
     "backend/src/class_os/infrastructure/classroom_upgrade.py": {
       "sha256": "c7e78300736532a0b832b301a9c004591d9947c60cb6ad50910448afa072660d"
@@ -3074,7 +3074,7 @@
       "sha256": "1bd84e53aaed4a669af8ce2bf6e80576172baf94f0b739611529a206fb9f2017"
     },
     "backend/tests/test_classroom_work_runtime.py": {
-      "sha256": "efd537cc7f13df02a870c0dd8d0e40a5577d8137275a40b410026460f03fc015"
+      "sha256": "aadfb0bafebe426f3513d30d0a476318986bf94c5e6a4e2b3a60810c0b34cfaa"
     },
     "backend/tests/test_classroom_work_storage.py": {
       "sha256": "e344c328a434ca28c6fc8a678924e392fae52d8bbdabc6b7ba1bc919ddbc3402"
@@ -3099,6 +3099,21 @@
     },
     "contracts/http/seating.v1.schema.json": {
       "sha256": "afbd08f4d56791a074a11ffbf8ad2a407f1e4d4787153698576cdd0f75e60695"
+    },
+    "apps/desktop/tests/live-classroom-acceptance.cjs": {
+      "sha256": "52f6dc7de3b397fc58b78efeaf6a764e97a0f8723a4954e1586052bab82639f1"
+    },
+    "backend/live_classroom_acceptance.py": {
+      "sha256": "591b8f8e92e1014b3b96e0e45ff40c5ed3a49741b6699412b154e5470d387289"
+    },
+    "backend/tests/test_live_classroom_operator.py": {
+      "sha256": "f21c2d18c12f67a0e10ef43b8190e4ad31d0c9d2bd31be051c741ec9682e568f"
+    },
+    "backend/tests/test_workspace_output_repair.py": {
+      "sha256": "7beaed781ee7d2df63e7df1cce32517f4575501313b76f282a7c997fb5bd90d6"
+    },
+    "backend/tests/test_workspace_step_policy.py": {
+      "sha256": "b177371c4030db972155a684059aa2af4e1da390e482f74c810904ee7fec4043"
     }
   }
 }

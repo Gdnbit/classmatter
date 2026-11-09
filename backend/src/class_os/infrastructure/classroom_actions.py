@@ -27,7 +27,12 @@ def tools(capture, query, credentials, context, execute, missing_class):
             if kind == 'exams':
                 return query.classroom_read(credentials, current.class_id, current.term_id)
             if kind == 'seating':
-                return {'layout': query.classroom_read(credentials, current.class_id, current.term_id, seating=True)}
+                layout = query.classroom_read(credentials, current.class_id, current.term_id, seating=True)
+                if layout is not None:
+                    names = {row.student_id: row.name for row in query.roster(*credentials, current.class_id, current.term_id)}
+                    layout = {**layout, 'seats': [{**seat, 'student_name': names.get(seat['student_id'])}
+                                                 for seat in layout['seats']]}
+                return {'layout': layout}
             matches = exams(current, exam_title, subject)
             if len(matches) != 1:
                 return needs

@@ -51,6 +51,7 @@ async def test_native_tool_roundtrip_preserves_signature_and_closes_without_busi
         assert request.url.path == "/v1beta/models/gemini-3.1-flash-lite:generateContent"
         assert request.headers["x-goog-api-key"] == KEY
         assert request.headers["x-server-timeout"] == "30"
+        assert request.extensions['timeout']['read'] == 30
         body = json.loads(request.content)
         assert body["generationConfig"]["thinkingConfig"] == {"thinking_level": "MINIMAL"}
         requests.append(body)
@@ -114,6 +115,29 @@ async def test_native_cancellation_closes_client_without_followup(monkeypatch):
     with pytest.raises(asyncio.CancelledError):
         await task
     assert len(calls) == 1 and clients[0].is_closed
+
+
+@pytest.mark.parametrize('base,model,deadline', [
+    ('https://open.bigmodel.cn/api/paas/v4/', 'glm-4-flash-250414', 30),
+    ('https://open.bigmodel.cn/api/paas/v4/', 'synthetic-other-model', 8),
+    ('https://fixture.invalid/v1/', 'glm-4-flash-250414', 8),
+])
+async def test_registered_free_profile_has_bounded_wire_timeout_without_retry(monkeypatch, base, model, deadline):
+    requests = []
+    def reply(request):
+        requests.append(request)
+        assert request.extensions['timeout']['read'] == deadline
+        return httpx.Response(200, json={'id': 'synthetic', 'object': 'chat.completion', 'created': 1, 'model': model,
+            'choices': [{'index': 0, 'message': {'role': 'assistant', 'content': 'OK'}, 'finish_reason': 'stop'}],
+            'usage': {'prompt_tokens': 1, 'completion_tokens': 1, 'total_tokens': 2}})
+    clients, options = intercept(monkeypatch, reply)
+    configuration = ModelConfiguration(Protocol.CHAT, model, base)
+    async with model_provider.configured_client(configuration, SecretStr(KEY)) as client:
+        assert client.max_retries == 0
+        agent = Agent(model_provider.model_for_configuration(configuration, client), retries=0)
+        agent.instrument = False
+        assert (await agent.run('Synthetic only')).output == 'OK'
+    assert len(requests) == 1 and clients[0].is_closed and options[0]['timeout'] == deadline
 
 
 async def test_sdk_auto_continuation_cannot_dispatch_outside_agent_budget(monkeypatch):

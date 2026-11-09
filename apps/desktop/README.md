@@ -4,6 +4,20 @@ Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷�
 
 ## 当前成绩与座位开发入口（D4）
 
+### 手动真实免费模型联测
+
+在仓库根目录执行下列命令；默认CI不执行真实调用。参数必须同时提供，缺少任一项在读取实例/凭据前拒绝。仅使用用户已授权免费模型，不开通付费，不传入密钥参数或环境变量，不修改原应用的模型选择或业务数据。
+
+```powershell
+backend/.venv/Scripts/python.exe backend/live_classroom_acceptance.py --live --provider google --source-runtime-root '<现有D4开发实例>' --pg-root '<PostgreSQL18安装目录>'
+```
+
+`google`仅复用当前已启用的`gemini-3.1-flash-lite`与其已批准代理；显式`--provider zhipu`仅复用本机已登记的标准智谱配置及固定免费型号`glm-4-flash-250414`，不是自动回退。密钥只在进程内打开。供应商是否仍提供免费额度由其实际响应决定，429/404/超时如实失败，不替换收费型号。当前智谱旧型号连续工具兼容性不足，不能把连通探测当作可用性承诺。
+
+入口通过既有升级/备份/身份/模型配置链准备独立合成实例，再启动独立端口的原生应用。合成班级及两名学生是显式测试前置；考试、成绩、布局、安排与交换由真实模型调用原工具、原候选卡逐项确认。核对80分、88.5分更正、最终座位、只读查询、刷新及完整应用/API重启后保留。原来的用户实例和窗口不停止、不重置。日志、模型统计及测试数据库只写入忽略的`test-results/live-classroom/`，不得公开上传。
+
+协议探测失败时，可人工重试`--resume-runtime-root '<先前隔离验收runtime目录>'`；只允许本仓库验收目录中尚无考试/座位的实例，已部分确认的实例不清空、不伪装全新通过。默认每轮仅一次；显式`--attempts-per-turn 2|3`才允许测试脚本在原UI以新请求重发失败消息，全部失败和重发次数保留。应用不增加自动模型重试、业务重放或免费到付费降级。验收脚本全部通过也不代表真实师生数据或正式发布Gate准入。
+
 默认`pnpm build`/`pnpm start`使用同一个原界面的D4开发增量，增加成绩表格、座位图及对话候选。只有存储协议升级，不是另一套工作台。完整工程证据与限制见[领域设计](../../docs/design/workbench-domain-packs.md)和[实施台账](../../docs/implementation-ledger.md)。
 
 已有D3实例先关闭本次应用与API服务，保持数据库运行，在backend执行`uv run --frozen python local.py upgrade-classroom --profile workspace-chat-d3`。它先完整备份并隔离恢复核验，保留Owner、学生、聊天、文档与模型配置，再发布新描述；启动不隐式迁移。原D1/D2按下文先升级D3；全新目录仍用原`prepare-chat`，之后执行D4升级。不要对已有目录重新prepare、init或bootstrap。开发入口不设置密码。

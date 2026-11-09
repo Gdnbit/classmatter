@@ -76,7 +76,7 @@
 | 固定状态/输入hash/候选验证 | `backend/src/class_os/domain/workspace_chat.py` |
 | ISB/BCG/QG及固定SQL | `backend/src/class_os/application/workspace_chat.py`、`infrastructure/workspace_chat.py` |
 | 持久化前后边界、上下文重建 | `infrastructure/workspace_chat_runtime.py` |
-| 七个只读/候选工具 | `infrastructure/workspace_actions.py`、`contracts/workspace-tools/catalog.v1.json` |
+| 基础八个只读/候选工具与D4六个领域工具 | `infrastructure/workspace_actions.py`、`infrastructure/classroom_actions.py`、`contracts/workspace-tools/catalog.v1.json` |
 | HTTP与typed client | `interfaces/http/workspace_chat.py`、`apps/web/src/runtime/workspace-chat.ts` |
 | 原界面接线与交互 | `useWorkspaceChat.ts`、`WorkspaceChat.tsx`、原`R1App.tsx` |
 | 原生升级/启动/备份 | `workspace_upgrade.py`、`workspace_local_runtime.py`、原`operator_backup.py`与桌面宿主 |
@@ -95,6 +95,16 @@
 
 输入保存结果未知时按原UUID/原文本恢复，不换键重发；模型启动由人工显式继续。取消版本化保存，迟到输出不采纳；重启看到运行中时可取消，不因刷新重跑。归档保留可查历史；清除聊天正文/候选不删除已提交业务数据，也不自动抹除旧备份。D3完整本机checkpoint和隔离恢复包含三张新表；跨机迁移、带新表的完整世界退出/重新准入仍未实现，旧部分退出明确拒绝。
 
+## 真实模型接续的有界校验
+
+真实供应商可能输出“已准备，请确认”却没有调用准备工具。原“继续任务”轮次没有完成任何工具，或没有候选却要求确认时，使用Pydantic AI output validator与最多一次ModelRetry纠正；修复步要求工具调用，仍不遵循则失败，不释放假成功。普通聊天不强迫读取班级；澄清、已有待确认卡及全部完成的结论保留。接续首步通过SDK capability选择`read_task_progress`，随后自动选择领域工具；请求10次、工具8次、16000 Token与45秒整体预算不变。校验是补充，不是通用自然语言真实性证明，更不是批准权限。
+
+D4准备工具从QG读取、领域校验并得到有效候选后，用SDK原生`CallDeferred`/`DeferredToolRequests`结束本轮，不再为已存在的候选请求一次自由文本回答。原聊天BCG仍原子保存候选/回答，随后原卡片预览、人工确认及BCG提交；不使用SDK的延后结果执行业务或自动恢复。单轮只接纳一项延后候选；普通聊天、只读和缺信息仍由模型回答。D3与冻结R1不切换到延后输出协议，HTTP候选DTO和14工具契约不变。
+
+免费供应商兼容性需要实测。智谱`glm-4-flash-250414`的固定标准端点采用30秒有限读取超时、35秒协议探测预算，整体Agent仍45秒；其他兼容端点保持原8秒读取。成功连通或单工具探测不能证明连续工具任务成熟。对忽略`tool_choice`、普通文字模拟工具、429、404或超时的模型，记录失败，不解析文字JSON冒充工具、不自动切换付费模型或重放业务。可替换Harness/模型边界不改变。
+
+手动真实验收入口为`backend/live_classroom_acceptance.py`和`apps/desktop/tests/live-classroom-acceptance.cjs`；仅显式opt-in、已授权免费配置、隔离合成数据库。默认测试/CI不读取本机密钥、不发外部模型请求。原生场景逐项核对真实工具事件、供应商Token、原确认回执、考试/成绩/座位视图、刷新与完整API/Electron重启；失败记录保留，不以离线FunctionModel代替真实模型验收。入口和限制见[桌面说明](../../apps/desktop/README.md)，实际通过范围见[实现台账](../implementation-ledger.md)。
+
 ## 开始使用检查
 
 | 项目 | 当前判断 |
@@ -103,7 +113,7 @@
 | 对话内创建/编辑与原视图联动 | 已实现封闭核心切片；用合成模型验收真实API/PG与界面，不声称自然语言质量已过关 |
 | 当前用户实例模型配置 | 首次核验为零条；后续已在原配置链路接入Gemini并完成12轮合成真实调用，见台账。不是持续可用性或所有模型质量证明 |
 | 数据恢复 | 完整本机checkpoint+隔离恢复可验证；不可把它称为完整跨机迁移/发行能力 |
-| 原型全部页面与未来功能 | 成绩/座位等持久业务绑定、微信、多模态解析、长期画像/记忆及持续工作不能据本单元宣称完成 |
+| 原型全部页面与未来功能 | D4基本考试、逐项成绩与座位已绑定原页面；文件批量导入、复杂排座、微信、多模态解析、长期画像/记忆及持续工作仍不能据此宣称完成 |
 | 正式使用与发布 | 当前是本机开发版本；真实Provider端到端质量、教师实际试用、完整退出/迁移及冻结正式Gate未完成 |
 
 用户不需要先填写班级表单来聊天。只有其请求确实需要班级数据时才追问必要信息；已有信息与原领域默认值复用。当前阶段不增加密码、隐私审批或额外填报流程；版本、幂等、回执和备份用于避免丢数据和重复写入。
