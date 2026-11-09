@@ -1,6 +1,6 @@
 import type { WorkFilter } from "./work-projection.ts"
 
-export type RuntimePage = "conversation" | "dashboard" | "students" | "work" | "documents" | "settings" | "unavailable"
+export type RuntimePage = "conversation" | "dashboard" | "students" | "work" | "documents" | "settings" | "unavailable" | 'grades' | 'seating'
 export type StudentTab = "overview" | "timeline" | "tasks" | "records" | "unavailable"
 export type RuntimeRoute = {
   conversationId: string
@@ -35,6 +35,8 @@ export function parseRuntimeRoute(path: string): RuntimeRoute {
   }
   if (simple[url.pathname]) return runtimeRoute(simple[url.pathname])
   if (url.pathname === "/data" && !url.search && !url.hash) return runtimeRoute("documents")
+  if (url.pathname === '/data/spreadsheets' && !url.search && !url.hash) return runtimeRoute('grades')
+  if (url.pathname === '/views/seat' && !url.search && !url.hash) return runtimeRoute('seating')
   const document = url.pathname.match(/^\/data\/documents\/([^/]+)$/)
   if (document) {
     if (url.search || url.hash || (document[1] !== "new" && !uuid.test(document[1]))) return unavailable()
@@ -75,6 +77,8 @@ export function parseRuntimeRoute(path: string): RuntimeRoute {
 }
 
 export function runtimePath(route: RuntimeRoute): string {
+  if (route.page === 'grades') return '/data/spreadsheets'
+  if (route.page === 'seating') return '/views/seat'
   if (route.page === "documents") return !route.documentId ? "/data"
     : route.documentId === "new" || uuid.test(route.documentId) ? `/data/documents/${route.documentId}` : "/unavailable"
   if (route.page === "conversation" && route.conversationId) {

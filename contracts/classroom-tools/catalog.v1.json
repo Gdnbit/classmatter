@@ -1,0 +1,439 @@
+{
+  "schema_version": "classmatter.classroom-tools.v1",
+  "tools": [
+    {
+      "name": "read_class_work",
+      "description": "Only when the user's request concerns class data, read current authorized class information. Never writes.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "default": "class",
+            "enum": [
+              "class",
+              "students",
+              "tasks",
+              "documents"
+            ],
+            "type": "string"
+          },
+          "search": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_class_create",
+      "description": "Prepare one class and term creation candidate from explicit user-provided names and dates. Ask for missing information; never saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "term_name": {
+            "type": "string"
+          },
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "term_name",
+          "start_date",
+          "end_date"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_class_edit",
+      "description": "Prepare renaming the current class, using its freshly read version. Never saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_term_edit",
+      "description": "Prepare correcting current term metadata. Reuse unchanged values; ask only for missing requested changes. Never guesses a date or saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "start_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "end_date": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_student",
+      "description": "Prepare adding a named student or renaming one uniquely matching current student. Never selects an ambiguous person or saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "create",
+              "rename"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "new_name": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "name"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_task",
+      "description": "Prepare creating a task or editing one uniquely matching task title/status. No inferred deadline, student, completion or responsibility; never saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "create",
+              "edit"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "new_title": {
+            "default": "",
+            "type": "string"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "enum": [
+                  "not-started",
+                  "in-progress",
+                  "waiting"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "action",
+          "title"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_document",
+      "description": "Prepare a working document or revise one unique title. Read its current body before replacing it, or append without losing old text. Generated prose is unverified. Never saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "create",
+              "edit"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "new_title": {
+            "default": "",
+            "type": "string"
+          },
+          "format": {
+            "default": "markdown",
+            "enum": [
+              "plain-text",
+              "markdown"
+            ],
+            "type": "string"
+          },
+          "edit_mode": {
+            "default": "replace",
+            "enum": [
+              "replace",
+              "append"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "title",
+          "body"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "read_task_progress",
+      "description": "Read this conversation's recent requests and freshly verified committed or pending actions before continuing a multi-step task. Never writes or treats assistant claims as receipts.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "read_classroom_work",
+      "description": "Read authorized current exams, exact score/status results or the seating layout. Resolve one exact exam title and subject for scores; never writes.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "kind": {
+            "enum": [
+              "exams",
+              "scores",
+              "seating"
+            ],
+            "type": "string"
+          },
+          "exam_title": {
+            "default": "",
+            "type": "string"
+          },
+          "subject": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_exam",
+      "description": "Prepare one exam/subject with the explicitly supplied title, subject and full mark. Ask for missing full mark; never saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "maximum_score": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "subject",
+          "maximum_score"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_score",
+      "description": "Prepare one explicitly provided student score or absence/exemption status in an exact exam/subject. Read current version, preserve correction history, never infer marks or save.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "exam_title": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "student_name": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "scored",
+              "absent",
+              "exempt",
+              "not-recorded"
+            ],
+            "type": "string"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "reason": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "required": [
+          "exam_title",
+          "subject",
+          "student_name",
+          "status"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_seat_layout",
+      "description": "Prepare an empty seating layout using explicitly supplied row and column counts. Never guesses assignments or saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "rows": {
+            "type": "integer"
+          },
+          "columns": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "rows",
+          "columns"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_seat_assignment",
+      "description": "Prepare moving one uniquely named student to an explicitly requested empty seat using the current layout version. Never displaces another student or saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "student_name": {
+            "type": "string"
+          },
+          "row": {
+            "type": "integer"
+          },
+          "column": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "student_name",
+          "row",
+          "column"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_seat_swap",
+      "description": "Prepare swapping the current seats of two explicitly named, unique active students. Read the actual layout, ask if either has no seat, never saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "first_student": {
+            "type": "string"
+          },
+          "second_student": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "first_student",
+          "second_student"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    }
+  ]
+}

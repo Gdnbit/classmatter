@@ -201,7 +201,7 @@ class PydanticAgentRuntime:
                 if _workspace_actions is not None:
                     from .workspace_tool_contracts import catalog as workspace_catalog
                     tools = list(_workspace_actions.tools(self.query, credentials, current_memory, emit))
-                    expected = workspace_catalog()
+                    expected = workspace_catalog(_workspace_actions.classroom_enabled)
                 if len(tools) != len(expected):
                     raise AgentRejected()
                 native_tools = []

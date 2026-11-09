@@ -53,7 +53,7 @@ class SetupPipe {
 }
 
 function setupService(repositoryRoot,runtimeRoot,development=false,profile='conversation-d1') {
-  if(!['conversation-d1','workspace-chat-d3'].includes(profile))throw new Error('unsupported_setup');
+  if(!['conversation-d1','workspace-chat-d3','classroom-work-d4'].includes(profile))throw new Error('unsupported_setup');
   if(process.platform!=='win32'||!path.isAbsolute(repositoryRoot)||!path.isAbsolute(runtimeRoot))throw new Error('unsupported_setup');
   const key=randomBytes(32).toString('hex');
   const env={...process.env,CLASSMATTER_SETUP_PROCESS_KEY:key};delete env.PYTHONPATH;delete env.PYTHONHOME;

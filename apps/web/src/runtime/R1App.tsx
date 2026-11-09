@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react"
 import { localDateTimeToUtc } from "./local-time"
+import { GradesWorkspace, SeatingWorkspace } from './ClassroomWorkspace'
 import {
   ArrowUp,
   ClipboardList,
@@ -111,6 +112,7 @@ type Pending = {
   proposal: Proposal
   key: string
   approval?: string
+  displayNames?: Record<string, string>
 }
 
 async function developmentSession(action: "enter" | "reauthenticate") {
@@ -142,8 +144,11 @@ export default function R1App() {
     document.addEventListener("pointerdown", close)
     return () => document.removeEventListener("pointerdown", close)
   }, [moreOpen])
-  const [runtimeProfile, setRuntimeProfile] = useState<"loading" | "failed" | "r1" | "conversation-d1" | "workbench-d2" | "workspace-chat-d3">("loading")
-  const workbenchProfile = runtimeProfile === "workbench-d2" || runtimeProfile === "workspace-chat-d3"
+  const [runtimeProfile, setRuntimeProfile] = useState<"loading" | "failed" | "r1" | "conversation-d1" | "workbench-d2" | "workspace-chat-d3" | 'classroom-work-d4'>("loading")
+  const classroomProfile = runtimeProfile === 'classroom-work-d4'
+  const workspaceProfile = runtimeProfile === 'workspace-chat-d3' || classroomProfile
+  const workbenchProfile = runtimeProfile === "workbench-d2" || workspaceProfile
+  const [classroomDraft, setClassroomDraft] = useState(false), [classroomRevision, setClassroomRevision] = useState(0)
   const durableProfile = runtimeProfile === "conversation-d1" || workbenchProfile
   const [profileRetry, setProfileRetry] = useState(0)
   const [durableBusy, setDurableBusy] = useState(false)
@@ -198,7 +203,7 @@ export default function R1App() {
   const loading = useRef(0)
   const connectivity = useRef(0)
   const interactionBlocked = busy || confirmLogout || durableBusy || durableDraft || exitBusy || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
-  const navigationBlocked = summaryDraft || documentDraft || documentBusy || interactionBlocked
+  const navigationBlocked = summaryDraft || documentDraft || classroomDraft || documentBusy || interactionBlocked
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
   const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
@@ -495,7 +500,7 @@ export default function R1App() {
     })
   }
   function requestLogout() {
-    if (summaryDraft || documentDraft || durableDraft || workspaceDraft || workspaceBusy || message.trim()) setConfirmLogout(true)
+    if (summaryDraft || documentDraft || classroomDraft || durableDraft || workspaceDraft || workspaceBusy || message.trim()) setConfirmLogout(true)
     else logoutCurrentSession()
   }
   async function preview(command: Command) {
@@ -556,6 +561,7 @@ export default function R1App() {
     await acceptReceipt(receipt, String(pending.proposal.payload.command))
   }
   async function acceptReceipt(receipt: CommandReceipt, command: string) {
+    if (command.startsWith('exam.') || command.startsWith('score.') || command.startsWith('seat.')) setClassroomRevision(value => value + 1)
     if (command.startsWith("model_configuration.")) {
       runningAgent.current?.abort(); setConversationId(""); setMessages([]); setMessage(""); setAgentStatus("")
       setModelRevision(value => value + 1)
@@ -867,7 +873,7 @@ export default function R1App() {
 
   const durableScopeMatches = !navigation.route.conversationId ||
     (navigation.route.conversationClassId === classroom?.class_id && navigation.route.conversationTermId === classroom?.term_id)
-  const workspaceMode = runtimeProfile === "workspace-chat-d3" && !navigation.route.conversationClassId
+  const workspaceMode = workspaceProfile && !navigation.route.conversationClassId
   const durable = useDurableConversation({
     enabled: durableProfile && (workspaceMode ? !!classroom : durableScopeMatches),
     session, classroom, threadId: workspaceMode ? "" : navigation.route.conversationId,
@@ -877,11 +883,11 @@ export default function R1App() {
     onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
     onBusyChange: value => { if (!workspaceMode) setDurableBusy(value) }, onDraftChange: value => { if (!workspaceMode) setDurableDraft(value) }, onError: fail,
   })
-  const workspaceConversation = useWorkspaceChat({ enabled: runtimeProfile === "workspace-chat-d3", session, threadId: workspaceMode ? navigation.route.conversationId : "",
+  const workspaceConversation = useWorkspaceChat({ enabled: workspaceProfile, session, threadId: workspaceMode ? navigation.route.conversationId : "",
     canInteract: !!session && !busy && !form && !pending && !modelUncertain, refreshSignal: activity,
     onSelect: id => navigation.setConversation("", "", id), onSaved: navigation.adoptWorkspaceConversation,
     onBusy: setWorkspaceBusy, onDraft: setWorkspaceDraft, onError: fail,
-    onPreview: proposal => setPending({ proposal, key: crypto.randomUUID() }) })
+    onPreview: proposal => setPending({ proposal, key: crypto.randomUUID(), displayNames: proposal.displayNames }) })
 
   const workspaceLatest = workspaceConversation.history?.turns.at(-1)
   useLayoutEffect(() => {
@@ -974,6 +980,8 @@ export default function R1App() {
             <summary aria-label="更多功能"><MoreHorizontal size={19} /></summary>
             <div className="r1-sidebar-more-menu">
               <button onClick={() => { setMoreOpen(false); setPage("documents") }}><FileText size={17} />数据与内容</button>
+              {classroomProfile && <button onClick={() => { setMoreOpen(false); setPage('grades') }}><LayoutList size={17} />成绩</button>}
+              {classroomProfile && <button onClick={() => { setMoreOpen(false); setPage('seating') }}><Users size={17} />座位</button>}
               <button onClick={() => { setMoreOpen(false); setSelectedStudent(""); setStudentView("table"); setPage("students") }}><LayoutList size={17} />视图</button>
             </div>
           </details>
@@ -1042,7 +1050,7 @@ export default function R1App() {
       </SidebarFrame>
       } header={
         <header className="topbar r1-topbar">
-          <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "documents" ? "数据与内容" : page === "settings" ? "设置" : "班事有谱"}</strong>
+          <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "documents" ? "数据与内容" : page === "grades" ? "成绩" : page === "seating" ? "座位" : page === "settings" ? "设置" : "班事有谱"}</strong>
           <span role={refreshing ? "status" : undefined}>
             {refreshing ? "正在加载…" : page === "conversation" ? "" : classroom?.term_name || ""}
             {classroom?.status === "archived" && " · 历史只读"}
@@ -1491,6 +1499,18 @@ export default function R1App() {
               ))}
             </>
           )}
+          {(page === 'grades' || page === 'seating') && (classroomProfile && classroom
+            ? <div key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}/${page}`}>
+                {page === 'grades' ? <GradesWorkspace session={session} classroom={classroom} students={students}
+                  canWrite={editable && !busy && !form && !pending} revision={classroomRevision} refreshSignal={activity} previewOpen={!!pending}
+                  onDirty={setClassroomDraft} onError={fail} onAsk={text => { if (!workspaceConversation.text.trim()) workspaceConversation.setText(text); setPage('conversation') }}
+                  onPreview={(value, displayNames) => setPending({ proposal: value, key: crypto.randomUUID(), displayNames })} />
+                : <SeatingWorkspace session={session} classroom={classroom} students={students}
+                  canWrite={editable && !busy && !form && !pending} revision={classroomRevision} refreshSignal={activity} previewOpen={!!pending}
+                  onDirty={setClassroomDraft} onError={fail} onAsk={text => { if (!workspaceConversation.text.trim()) workspaceConversation.setText(text); setPage('conversation') }}
+                  onPreview={(value, displayNames) => setPending({ proposal: value, key: crypto.randomUUID(), displayNames })} />}
+              </div>
+            : <section><h1>{page === 'grades' ? '成绩' : '座位'}</h1><p>{classroomProfile ? '请先在对话中建立班级。' : '此功能暂不可用。'}</p></section>)}
           {page === "documents" && (workbenchProfile && classroom
             ? <DocumentsWorkspace key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`}
                 session={session} classroom={classroom} documentId={navigation.route.documentId}
@@ -1904,8 +1924,8 @@ export default function R1App() {
         </R1Dialog>
       )}
       {pending && <CommandPreview proposal={pending.proposal} error={error} busy={busy}
-        names={{ ...(classroom ? { [classroom.class_id]: classroom.name, [classroom.term_id]: classroom.term_name } : {}),
-          ...Object.fromEntries(students.map(item => [item.student_id, item.name])),
+        names={{ ...Object.fromEntries(classes.flatMap(item => [[item.class_id, item.name], [item.term_id, item.term_name]])),
+          ...Object.fromEntries(students.map(item => [item.student_id, item.name])), ...pending.displayNames,
           ...Object.fromEntries((activity?.tasks || []).map(item => [item.task_id, item.title])),
           ...Object.fromEntries((activity?.records || []).map(item => [item.record_id, `${studentName(item.student_id)} · ${kinds[item.kind] || "记录"}`])) }}
         onReject={() => void action(async () => {

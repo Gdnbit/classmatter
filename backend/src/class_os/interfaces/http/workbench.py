@@ -11,7 +11,7 @@ from .roster import credentials
 
 
 class WorkbenchAuditEntry(DurableAuditEntry):
-    action: DurableAuditEntry.model_fields['action'].annotation | Literal['document.list', 'document.read', 'document.history']
+    action: DurableAuditEntry.model_fields['action'].annotation | Literal['document.list', 'document.read', 'document.history', 'exam.list', 'exam.read', 'seat.read']
 
 
 class WorkbenchAuditResponse(D1AuditResponse):

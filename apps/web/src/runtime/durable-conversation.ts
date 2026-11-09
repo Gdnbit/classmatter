@@ -4,6 +4,7 @@ import { ApiError, type Session, type Classroom, type Activity, type AuditPage, 
 import { decodeApproval } from "./command-receipts"
 import { consumeEvents } from "./events"
 import { workspaceChatAvailable } from "./workspace-chat"
+import { classroomAvailable } from './classroom-work'
 
 export type Attribution = Readonly<{
   origin: "local-owner" | "source-import"; created_by: string | null; last_modified_by: string | null
@@ -82,8 +83,9 @@ async function json<T>(schema: Schema, path: string, session: Session, body?: un
   return decodeD1<T>(schema, JSON.parse(text))
 }
 function root(session: Session) { return `/api/workspaces/${id(session.subject.workspace_id)}` }
-export type DurableProfile = "conversation-d1" | "workbench-d2" | "workspace-chat-d3"
+export type DurableProfile = "conversation-d1" | "workbench-d2" | "workspace-chat-d3" | "classroom-work-d4"
 export async function discoverD1(session: Session, signal?: AbortSignal): Promise<"r1" | DurableProfile> {
+  if (await classroomAvailable(session, signal)) return 'classroom-work-d4'
   if (await workspaceChatAvailable(session, signal)) return "workspace-chat-d3"
   try { await json("capabilities", `${root(session)}/conversation-d1/capabilities`, session, undefined, signal); return "conversation-d1" }
   catch (error) { if (!(error instanceof ApiError && error.status === 404)) throw error }
@@ -91,7 +93,7 @@ export async function discoverD1(session: Session, signal?: AbortSignal): Promis
   catch (error) { if (error instanceof ApiError && error.status === 404) return "r1"; throw error }
 }
 export function d1Client(session: Session, current: Pick<Classroom, "class_id" | "term_id">, profile: DurableProfile = "conversation-d1") {
-  if (profile !== "conversation-d1" && profile !== "workbench-d2" && profile !== "workspace-chat-d3") throw mismatch()
+  if (profile !== "conversation-d1" && profile !== "workbench-d2" && profile !== "workspace-chat-d3" && profile !== 'classroom-work-d4') throw mismatch()
   const classId = id(current.class_id), termId = id(current.term_id)
   const base = `${root(session)}/conversation-d1/classes/${classId}/terms/${termId}`
   const thread = (value: string) => `${base}/conversations/${id(value)}`

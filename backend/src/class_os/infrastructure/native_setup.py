@@ -19,13 +19,16 @@ from class_os.infrastructure.durable_local_runtime import _surface, open_service
 
 class NativeSetup:
     def __init__(self, runtime, *, development=False):
-        if type(runtime) is not LocalRuntime or runtime.profile not in ('conversation-d1', 'workbench-d2', 'workspace-chat-d3'):
+        if type(runtime) is not LocalRuntime or runtime.profile not in ('conversation-d1', 'workbench-d2', 'workspace-chat-d3', 'classroom-work-d4'):
             raise ValueError('Owned D1/D2 runtime required')
         if runtime.profile == 'workbench-d2':
             from .workbench_upgrade import verify_upgrade_receipt
             verify_upgrade_receipt(runtime)
         elif runtime.profile == 'workspace-chat-d3':
             from .workspace_upgrade import verify_upgrade_receipt
+            verify_upgrade_receipt(runtime)
+        elif runtime.profile == 'classroom-work-d4':
+            from .classroom_upgrade import verify_upgrade_receipt
             verify_upgrade_receipt(runtime)
         self.runtime = runtime
         self.development = development is True
@@ -34,7 +37,7 @@ class NativeSetup:
         self.commit_key = uuid4()
 
     def _open_services(self):
-        if self.runtime.profile == 'workspace-chat-d3':
+        if self.runtime.profile in ('workspace-chat-d3', 'classroom-work-d4'):
             from .workspace_local_runtime import open_services as open_workspace
             return open_workspace(self.runtime, local_development=self.development and (self.runtime.root / 'local-development.dpapi').exists())
         if self.runtime.profile == 'workbench-d2':
@@ -57,9 +60,9 @@ class NativeSetup:
         business = self.runtime.database('runtime')
         try:
             with business.transaction(read_only=True) as connection:
-                if self.runtime.profile == 'workspace-chat-d3':
+                if self.runtime.profile in ('workspace-chat-d3', 'classroom-work-d4'):
                     from .workspace_local_runtime import surface
-                    surface(connection)
+                    surface(connection, profile=self.runtime.profile)
                 elif self.runtime.profile == 'workbench-d2':
                     from .workbench_local_runtime import surface
                     surface(connection)
@@ -70,7 +73,7 @@ class NativeSetup:
                 owners = connection.execute(text('SELECT count(*) FROM class_os.owner_account')).scalar_one()
             if owners not in (0, 1) or controls not in (0, 1) or controls > owners:
                 raise ValueError('Setup requires review')
-            if self.runtime.profile in ('workbench-d2', 'workspace-chat-d3') and (owners != 1 or controls != 1):
+            if self.runtime.profile in ('workbench-d2', 'workspace-chat-d3', 'classroom-work-d4') and (owners != 1 or controls != 1):
                 raise ValueError('Existing D2 identity and control required; no bootstrap')
             if controls:
                 services = self._open_services()
@@ -159,7 +162,7 @@ class NativeSetup:
     def development_reauthenticate(self, client, token, csrf):
         if not self.development:
             raise ValueError('Explicit local development required')
-        if self.runtime.profile == 'workspace-chat-d3':
+        if self.runtime.profile in ('workspace-chat-d3', 'classroom-work-d4'):
             return self.local_access()
         password = self._developer_password()
         services = self._open_services()
@@ -173,7 +176,7 @@ class NativeSetup:
     def development_access(self):
         if not self.development:
             raise ValueError('Explicit local development required')
-        if self.runtime.profile == 'workspace-chat-d3':
+        if self.runtime.profile in ('workspace-chat-d3', 'classroom-work-d4'):
             return self.local_access()
         # Explicit trusted desktop flag only; never registered in HTTP/tools.
         # Refuse to adopt an existing personal Owner. No shared/default password.
@@ -257,7 +260,7 @@ class NativeSetup:
                 self.close()
                 result = boundary.connect(self.client)
             response = {'cookies': {'client': self.client, 'session': result.token, 'csrf': result.csrf}}
-            if self.runtime.profile == 'workspace-chat-d3':
+            if self.runtime.profile in ('workspace-chat-d3', 'classroom-work-d4'):
                 from .local_model_activation import LocalModelActivation
                 selected = LocalModelActivation(self.runtime.root, workspace_id).read()
                 if selected is not None:

@@ -41,10 +41,17 @@ D3_COLUMNS = MappingProxyType({
         "candidate", "candidate_hash", "state", "version", "generation", "created_at", "started_at", "lease_until", "ended_at", "input_tokens", "output_tokens", "duration_ms"}),
     "workspace_chat_audit": frozenset({"workspace_id", "event_id", "owner_id", "action", "outcome", "resource_id", "resource_version", "occurred_at"}),
 })
+D4_COLUMNS = MappingProxyType({
+    "class_exam": frozenset({"workspace_id", "exam_id", "owner_id", "class_id", "term_id", "title", "subject", "maximum_score", "version", "created_at", "updated_at"}),
+    "exam_result_revision": frozenset({"workspace_id", "exam_id", "class_id", "term_id", "student_id", "enrollment_id", "version", "status", "score", "reason", "created_by", "created_at"}),
+    "class_seating": frozenset({"workspace_id", "layout_id", "owner_id", "class_id", "term_id", "rows", "columns", "version", "created_at", "updated_at"}),
+    "seat_revision": frozenset({"workspace_id", "layout_id", "class_id", "term_id", "version", "row_index", "column_index", "student_id", "enrollment_id", "created_by", "created_at"}),
+})
 SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
                                    "conversation-d1": ("0026", REGISTERED_TABLES | D1_TABLES),
                                    "workbench-d2": ("0027", REGISTERED_TABLES | D1_TABLES | D2_TABLES),
-                                   "workspace-chat-d3": ("0028", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS))})
+                                   "workspace-chat-d3": ("0028", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS)),
+                                   "classroom-work-d4": ("0029", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS))})
 
 
 def schema_profile(value="r1"):

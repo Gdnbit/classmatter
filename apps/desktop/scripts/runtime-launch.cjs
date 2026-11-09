@@ -8,7 +8,7 @@ if(args.filter(value=>value==='--development-no-password').length>1)throw new Er
 const options=parseLaunchArguments(args.filter(value=>value!=='--development-no-password'));
 const d1=options.profile!=='r1';
 if(development&&!d1)throw new Error('Development identity requires the synthetic D1 profile');
-const stage=path.resolve(__dirname,options.profile==='workspace-chat-d3'?'../.build/runtime-d3':d1?'../.build/runtime-d1':'../.build/runtime');
+const stage=path.resolve(__dirname,options.profile==='classroom-work-d4'?'../.build/runtime-d4':options.profile==='workspace-chat-d3'?'../.build/runtime-d3':d1?'../.build/runtime-d1':'../.build/runtime');
 const repositoryRoot=path.resolve(__dirname,'../../..');
 const report=prerequisites(repositoryRoot,process.platform,options.profile);
 if(!report.prerequisites_present) {

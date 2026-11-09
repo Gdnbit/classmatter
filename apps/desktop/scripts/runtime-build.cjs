@@ -2,11 +2,11 @@ const fs=require('node:fs');
 const path=require('node:path');
 const {spawnSync}=require('node:child_process');
 const args=process.argv.slice(2);
-if(args.length && (args.length!==2 || args[0]!=='--profile' || !['conversation-d1','workspace-chat-d3'].includes(args[1]))) throw new Error('Explicit supported profile required');
+if(args.length && (args.length!==2 || args[0]!=='--profile' || !['conversation-d1','workspace-chat-d3','classroom-work-d4'].includes(args[1]))) throw new Error('Explicit supported profile required');
 const d1=args.length===2;
-const profile=d1?args[1]:'r1',folder=profile==='workspace-chat-d3'?'runtime-d3':d1?'runtime-d1':'runtime';
+const profile=d1?args[1]:'r1',folder=profile==='classroom-work-d4'?'runtime-d4':profile==='workspace-chat-d3'?'runtime-d3':d1?'runtime-d1':'runtime';
 const desktop=path.resolve(__dirname,'..'),root=path.resolve(desktop,'../..'),web=path.join(root,'apps/web'),stage=path.join(desktop,'.build',folder);
-for(const name of ['identity','model-configuration','agent-conversation','command-receipts','durable-conversation','documents','workspace-chat']) {
+for(const name of ['identity','model-configuration','agent-conversation','command-receipts','durable-conversation','documents','workspace-chat','classroom-work']) {
   const result=spawnSync(process.execPath,[path.join(web,'scripts',`generate-${name}.mjs`),'--check'],{cwd:web,stdio:'inherit'});
   if(result.status!==0)process.exit(1);
 }

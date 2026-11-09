@@ -11,6 +11,10 @@ const actions: Record<string, string> = {
 const fields: Record<string, string> = { command: "操作", name: "名称", term_name: "学期", start_date: "开始日期", end_date: "结束日期", title: "标题", status: "状态", kind: "记录类型", fact_text: "事实记录", observation_text: "教师观察", occurred_at: "发生时间", recorded_at: "记录时间", due_at: "截止时间", evidence: "结果说明", reason: "原因", revision_reason: "更正原因", source: "来源", authority: "信息来源", identifier_type: "信息类型", value: "内容", valid_from: "开始生效", valid_to: "结束生效", body: "正文", format: "正文格式", protocol: "服务接口", model: "模型", base_url: "服务地址" }
 const values: Record<string, string> = { "not-started": "未开始", "in-progress": "进行中", waiting: "等待别人", done: "已完成", cancelled: "已取消", active: "在班", inactive: "已停用", "plain-text": "纯文本", markdown: "Markdown", "trusted-ui-synthetic": "教师录入", "trusted-ui": "教师录入", attendance: "考勤", discipline: "纪律", homework: "作业", learning: "学习", other: "其他" }
 const targets: Record<string, string> = { class_id: "班级", term_id: "学期", student_id: "学生", record_id: "记录", task_id: "跟进", source_record_id: "来源记录", related_record_id: "关联记录", identifier_id: "学生信息" }
+Object.assign(actions, { 'exam.create': '建立考试', 'score.record': '记录成绩', 'seat.layout.create': '建立座位表', 'seat.assign': '安排座位', 'seat.swap': '交换座位' })
+Object.assign(fields, { subject: '科目', maximum_score: '满分', score: '分数', rows: '排数', columns: '每排座位数', row: '目标排', column: '目标座位', first_row: '原座位排', first_column: '原座位号', second_row: '目标排', second_column: '目标座位号' })
+Object.assign(values, { scored: '已录入', absent: '缺考', exempt: '免考', 'not-recorded': '未录入' })
+Object.assign(targets, { exam_id: '考试' })
 Object.assign(fields, { previous_name: "原名称", previous_start_date: "原开始日期", previous_end_date: "原结束日期" })
 Object.assign(values, { ordinary_fact: "事实记录", teacher_observation: "教师观察", attendance_late_fact: "迟到", attendance_absent_fact: "缺勤", leave_requested_fact: "请假申请", leave_approved_fact: "请假批准", leave_returned_fact: "销假", homework_missing_fact: "作业未交", homework_submitted_fact: "作业补交", discipline_fact: "纪律记录", conversation_fact: "谈话记录" })
 export function actionName(action: string) { return actions[action] || "操作记录" }

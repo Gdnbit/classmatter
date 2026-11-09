@@ -1,0 +1,31 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.classroom-capabilities.v1",
+      "default": "classmatter.classroom-capabilities.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "profile": {
+      "const": "classroom-work-d4",
+      "default": "classroom-work-d4",
+      "title": "Profile",
+      "type": "string"
+    },
+    "agent_business_write": {
+      "const": false,
+      "default": false,
+      "title": "Agent Business Write",
+      "type": "boolean"
+    },
+    "complete_exit": {
+      "const": false,
+      "default": false,
+      "title": "Complete Exit",
+      "type": "boolean"
+    }
+  },
+  "title": "ClassroomCapabilities",
+  "type": "object"
+}

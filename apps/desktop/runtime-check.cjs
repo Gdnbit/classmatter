@@ -12,10 +12,10 @@ function json(file) {
   } catch { return null; }
 }
 function prerequisites(repositoryRoot, platform = process.platform, profile = 'r1') {
-  if (!['r1', 'conversation-d1','workspace-chat-d3'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
+  if (!['r1', 'conversation-d1','workspace-chat-d3','classroom-work-d4'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
   const d1=profile!=='r1', mode=d1?`synthetic-${profile}`:'synthetic-runtime';
   const root = path.resolve(repositoryRoot), desktop = path.join(root, 'apps/desktop');
-  const stage = path.join(desktop, profile==='workspace-chat-d3'?'.build/runtime-d3':d1?'.build/runtime-d1':'.build/runtime');
+  const stage = path.join(desktop, profile==='classroom-work-d4'?'.build/runtime-d4':profile==='workspace-chat-d3'?'.build/runtime-d3':d1?'.build/runtime-d1':'.build/runtime');
   const runtime = path.join(root, d1?'.local-runtime/synthetic-conversation-d1':'.local-runtime/synthetic-v1');
   const source = json(path.join(stage, 'runtime-source.json'));
   const marker = json(path.join(stage, 'ui/desktop-runtime.json'));
@@ -49,7 +49,7 @@ function prerequisites(repositoryRoot, platform = process.platform, profile = 'r
 }
 if (require.main === module) {
   const args=process.argv.slice(2);
-  if(args.length && (args.length!==2 || args[0]!=='--profile' || !['conversation-d1','workspace-chat-d3'].includes(args[1])))throw new Error('Unknown profile arguments');
+  if(args.length && (args.length!==2 || args[0]!=='--profile' || !['conversation-d1','workspace-chat-d3','classroom-work-d4'].includes(args[1])))throw new Error('Unknown profile arguments');
   const result = prerequisites(path.resolve(__dirname, '../..'),process.platform,args.length?args[1]:'r1');
   console.log(JSON.stringify(result));
   process.exitCode = result.prerequisites_present ? 0 : 2;

@@ -210,6 +210,308 @@
       "title": "DocumentRevise",
       "type": "object"
     },
+    "ExamCreate": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "command": {
+          "const": "exam.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "exam_id": {
+          "format": "uuid",
+          "title": "Exam Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "subject": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Subject",
+          "type": "string"
+        },
+        "maximum_score": {
+          "title": "Maximum Score",
+          "type": "string"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "command",
+        "exam_id",
+        "title",
+        "subject",
+        "maximum_score"
+      ],
+      "title": "ExamCreate",
+      "type": "object"
+    },
+    "ScoreRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "command": {
+          "const": "score.record",
+          "title": "Command",
+          "type": "string"
+        },
+        "exam_id": {
+          "format": "uuid",
+          "title": "Exam Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 0,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "scored",
+            "absent",
+            "exempt",
+            "not-recorded"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Score"
+        },
+        "reason": {
+          "maxLength": 500,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "command",
+        "exam_id",
+        "student_id",
+        "expected_version",
+        "status",
+        "score",
+        "reason"
+      ],
+      "title": "ScoreRecord",
+      "type": "object"
+    },
+    "SeatAssign": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "command": {
+          "const": "seat.assign",
+          "title": "Command",
+          "type": "string"
+        },
+        "layout_id": {
+          "format": "uuid",
+          "title": "Layout Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "row": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Row",
+          "type": "integer"
+        },
+        "column": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Column",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "command",
+        "layout_id",
+        "student_id",
+        "expected_version",
+        "row",
+        "column"
+      ],
+      "title": "SeatAssign",
+      "type": "object"
+    },
+    "SeatLayoutCreate": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "command": {
+          "const": "seat.layout.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "layout_id": {
+          "format": "uuid",
+          "title": "Layout Id",
+          "type": "string"
+        },
+        "rows": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "columns": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Columns",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "command",
+        "layout_id",
+        "rows",
+        "columns"
+      ],
+      "title": "SeatLayoutCreate",
+      "type": "object"
+    },
+    "SeatSwap": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "command": {
+          "const": "seat.swap",
+          "title": "Command",
+          "type": "string"
+        },
+        "layout_id": {
+          "format": "uuid",
+          "title": "Layout Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "exclusiveMaximum": 2147483647,
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "first_row": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "First Row",
+          "type": "integer"
+        },
+        "first_column": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "First Column",
+          "type": "integer"
+        },
+        "second_row": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Second Row",
+          "type": "integer"
+        },
+        "second_column": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Second Column",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "command",
+        "layout_id",
+        "expected_version",
+        "first_row",
+        "first_column",
+        "second_row",
+        "second_column"
+      ],
+      "title": "SeatSwap",
+      "type": "object"
+    },
     "StudentBody": {
       "additionalProperties": false,
       "properties": {
@@ -609,6 +911,21 @@
         },
         {
           "$ref": "#/$defs/DocumentRevise"
+        },
+        {
+          "$ref": "#/$defs/ExamCreate"
+        },
+        {
+          "$ref": "#/$defs/ScoreRecord"
+        },
+        {
+          "$ref": "#/$defs/SeatLayoutCreate"
+        },
+        {
+          "$ref": "#/$defs/SeatAssign"
+        },
+        {
+          "$ref": "#/$defs/SeatSwap"
         }
       ],
       "title": "Payload"

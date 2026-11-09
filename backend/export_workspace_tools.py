@@ -21,3 +21,16 @@ elif not sys.argv[1:]:
     target.write_text(content, encoding="utf-8", newline="\n")
 else:
     raise SystemExit("Only generation or --check is supported")
+
+tools = []
+for function in WorkspaceActionCapture((), classroom_enabled=True).tools(None, None, None, None):
+    definition = Tool(function).tool_def
+    tools.append({key: getattr(definition, key) for key in ("name", "description", "parameters_json_schema", "kind", "strict")})
+content = json.dumps({"schema_version": "classmatter.classroom-tools.v1", "tools": tools}, ensure_ascii=False, indent=2) + "\n"
+target = Path(__file__).resolve().parents[1] / "contracts/classroom-tools/catalog.v1.json"
+if sys.argv[1:] == ["--check"]:
+    if not target.exists() or target.read_text(encoding="utf-8") != content:
+        raise SystemExit("Classroom tool contract drift")
+else:
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(content, encoding="utf-8", newline="\n")

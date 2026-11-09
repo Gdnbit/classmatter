@@ -19,6 +19,7 @@ from class_os.domain.workspace_chat import candidate
 class WorkspaceActionCapture:
     user_messages: tuple[str, ...]
     progress_reader: Callable | None = None
+    classroom_enabled: bool = False
     proposed: dict | None = None
     reads: list[str] = field(default_factory=list)
     input_tokens: int | None = None
@@ -88,7 +89,12 @@ class WorkspaceActionCapture:
                         "status": "committed" if receipt else "awaiting-confirmation",
                         "resource_id": str(receipt["resource_id"]) if receipt else None,
                         "version": receipt["version"] if receipt else None})
-                return {"requests": [row["user_text"] for row in history["turns"] if row["user_text"]][-8:],
+                requests = [row['user_text'] for row in history['turns'] if row['user_text']]
+                original = next((value for value in reversed(requests) if value != '继续完成上面的任务，只处理尚未完成的步骤。'), None)
+                recent = requests[-7:]
+                if original is not None and original not in recent:
+                    recent.insert(0, original)
+                return {"requests": recent, 'active_request': original,
                     "actions": actions, "truncated": history["next_before"] is not None,
                     "instruction": "Continue only unfinished requested steps. Re-read current domain data. Pending actions are NOT completed. Stop for human confirmation before the next business change; never repeat a committed creation."}
             return await execute("read_task_progress", read)
@@ -221,4 +227,8 @@ class WorkspaceActionCapture:
                 return self.propose(ReviseDocument(row["document_id"], current.class_id, current.term_id, existing["version"], new_title or title, revised, format))
             return await execute("prepare_document", prepare)
 
-        return (read_class_work, prepare_class_create, prepare_class_edit, prepare_term_edit, prepare_student, prepare_task, prepare_document, read_task_progress)
+        base = (read_class_work, prepare_class_create, prepare_class_edit, prepare_term_edit, prepare_student, prepare_task, prepare_document, read_task_progress)
+        if self.classroom_enabled:
+            from .classroom_actions import tools
+            return base + tools(self, query, credentials, context, execute, missing_class)
+        return base

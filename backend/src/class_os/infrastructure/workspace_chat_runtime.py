@@ -17,7 +17,7 @@ class WorkspaceChatRuntime:
         if (type(business) is not WorkspaceChatBusinessGateway or type(query) is not WorkspaceChatQueryGateway
                 or type(sdk) is not PydanticAgentRuntime or business.store is not query.store
                 or sdk.query.store is not business.store or business.identity is not query.identity or sdk.query.identity is not business.identity
-                or business.store.database.profile != "workspace-chat-d3"):
+                or business.store.database.profile not in ("workspace-chat-d3", "classroom-work-d4")):
             raise ValueError("Exact workspace chat composition required")
         self.business, self.query, self.sdk = business, query, sdk
 
@@ -51,8 +51,12 @@ class WorkspaceChatRuntime:
                 previous.insert(0, row); total += size
             conversation.history = [message for row in previous for message in (
                 ModelRequest(parts=[UserPromptPart(row["user_text"])]), ModelResponse(parts=[TextPart(row["assistant_text"])]))]
-            capture = WorkspaceActionCapture(tuple([row["user_text"] for row in previous] + [ticket["user_text"]]),
-                progress_reader=lambda: self.query.history(credentials, thread_id))
+            # Keep explicit user intent available to candidate validation even
+            # when many short continuations pushed it outside the SDK window.
+            intent = [row['user_text'] for row in history['turns'] if row['ordinal'] < ticket['ordinal'] and row['state'] == 'completed']
+            capture = WorkspaceActionCapture(tuple(intent + [ticket["user_text"]]),
+                progress_reader=lambda: self.query.history(credentials, thread_id),
+                classroom_enabled=self.business.store.database.profile == 'classroom-work-d4')
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket["user_text"], Mode.CHAT)
             async with aclosing(self.sdk.stream(credentials, request, _workspace_actions=capture)) as stream:

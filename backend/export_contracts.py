@@ -24,6 +24,7 @@ from class_os.interfaces.http.durable_views import (ActivityResponse as DurableA
 from class_os.interfaces.http.documents import (DocumentCreate, DocumentRevise, DocumentState, DocumentPreview,
     DocumentReceipt, DocumentApproval, DocumentRejection, DocumentResponse, RevisionResponse, DocumentPage, RevisionPage)
 from class_os.interfaces.http.workbench import WorkbenchCapabilities, WorkbenchAuditResponse
+from class_os.interfaces.http.classroom_work import ClassroomCapabilities, ExamListing, ExamResults, SeatingResponse, ClassroomPreview
 from class_os.interfaces.http.workspace_chat import (ChatCapabilities, ChatListing, ChatHistory, ChatSend, ChatTurnResponse,
     ChatVersion, ChatClear, ChatThreadResponse, CandidatePreviewBody, CandidatePreview)
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
@@ -87,7 +88,9 @@ def main():
                         ("workspace-chat-history.v1", ChatHistory), ("workspace-chat-send.v1", ChatSend),
                         ("workspace-chat-turn.v1", ChatTurnResponse), ("workspace-chat-version.v1", ChatVersion),
                         ("workspace-chat-clear.v1", ChatClear), ("workspace-chat-thread.v1", ChatThreadResponse),
-                        ("workspace-chat-preview-body.v1", CandidatePreviewBody), ("workspace-chat-preview.v1", CandidatePreview)]:
+                        ("workspace-chat-preview-body.v1", CandidatePreviewBody), ("workspace-chat-preview.v1", CandidatePreview),
+                        ("classroom-capabilities.v1", ClassroomCapabilities), ("exams.v1", ExamListing),
+                        ("exam-results.v1", ExamResults), ("seating.v1", SeatingResponse), ("classroom-preview.v1", ClassroomPreview)]:
         target = root / f"{name}.schema.json"
         content = json.dumps(model.model_json_schema(), indent=2, ensure_ascii=False) + "\n"
         if args.check:

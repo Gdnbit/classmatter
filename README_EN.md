@@ -138,6 +138,7 @@ The supported persistent local runtime currently targets **Windows** with PowerS
 cd backend
 uv sync --frozen
 uv run --frozen python local.py prepare-chat --profile conversation-d1 --pg-root '<PostgreSQL18 installation directory>'
+uv run --frozen python local.py upgrade-classroom --profile workspace-chat-d3
 
 # Build and open the standalone development workbench
 cd ../apps/web
@@ -148,7 +149,7 @@ pnpm build
 pnpm start
 ```
 
-`prepare-chat` is an explicit fresh-development operation: prepare the original D1 instance and passwordless developer identity, verify checkpoints, then upgrade to D3. It refuses an existing directory. Existing D1/D2 instances use the [desktop upgrade guide](apps/desktop/README.md). The app keeps its original UI and opens without a password prompt. Workspace chats persist without requiring a class; class actions become reviewed candidates using the original QG/BCG. Configure and test a provider in Settings for actual AI capabilities. Closing the app preserves its database; stop it from backend with `uv run --frozen python local.py stop --profile workspace-chat-d3`, and use the same profile's `start` command before the next launch. Only synthetic development data is currently admitted.
+`prepare-chat` only prepares a fresh D3 development workspace and refuses an existing directory. Then run `uv run --frozen python local.py upgrade-classroom --profile workspace-chat-d3` to verify a complete checkpoint and upgrade the same workspace to D4. Existing D3 instances only need this upgrade; close the app/service first. Existing D1/D2 instances use the [desktop upgrade guide](apps/desktop/README.md). No Owner reset, password setup or data clearing occurs. The original UI supports persistent chat, reviewed task continuation, basic exams/results and seating. Imports, scheduling solvers, unattended work and complete portable exit remain unfinished. Configure and test a provider in Settings for actual AI capabilities. Closing the app preserves its database; use `local.py stop --profile classroom-work-d4` and the same profile's `start` before relaunch. Only synthetic development data is currently admitted.
 
 <details>
 <summary><strong>Verification, mock mode and supported boundaries</strong></summary>

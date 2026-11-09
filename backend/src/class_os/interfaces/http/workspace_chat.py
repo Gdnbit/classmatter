@@ -15,6 +15,7 @@ from class_os.domain.workspace_chat import candidate
 from .contracts import WireModel
 from .roster import credentials, ClassBody, ClassChangeBody, TermBody, StudentBody, StudentNameBody, TaskBody, ChangeTaskBody
 from .documents import DocumentCreate, DocumentRevise
+from .classroom_work import ExamCreate, ScoreRecord, SeatLayoutCreate, SeatAssign, SeatSwap
 
 
 class ClassEditCandidate(ClassChangeBody):
@@ -25,7 +26,7 @@ class TaskEditCandidate(ChangeTaskBody):
     command: Literal["task.update"]
 
 
-Candidate = ClassBody | ClassEditCandidate | TermBody | StudentBody | StudentNameBody | TaskBody | TaskEditCandidate | DocumentCreate | DocumentRevise
+Candidate = ClassBody | ClassEditCandidate | TermBody | StudentBody | StudentNameBody | TaskBody | TaskEditCandidate | DocumentCreate | DocumentRevise | ExamCreate | ScoreRecord | SeatLayoutCreate | SeatAssign | SeatSwap
 
 
 class ChatCapabilities(WireModel):
@@ -210,11 +211,14 @@ def create_workspace_chat_app(settings, *, worker, query, sdk, readiness=None, m
     from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
     from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
     if (type(worker) is not WorkbenchBusinessGateway or type(query) is not WorkbenchQueryGateway
-            or worker.store.database.profile != "workspace-chat-d3"):
+            or worker.store.database.profile not in ("workspace-chat-d3", "classroom-work-d4")):
         raise ValueError("Explicit workspace chat assembly required")
     app = create_workbench_app(settings, worker=worker, query=query, sdk=sdk, readiness=readiness, model_controller=model_controller)
     business = WorkspaceChatBusinessGateway(worker.identity, worker.store, clock=worker.clock)
     history = WorkspaceChatQueryGateway(query.identity, query.store, clock=query.clock)
     runtime = WorkspaceChatRuntime(business, history, sdk)
     app.include_router(router(runtime, worker))
+    if worker.store.database.profile == 'classroom-work-d4':
+        from .classroom_work import router as classroom_router
+        app.include_router(classroom_router(worker, query))
     return app

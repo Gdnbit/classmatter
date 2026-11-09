@@ -1,0 +1,125 @@
+{
+  "$defs": {
+    "ScoreResult": {
+      "additionalProperties": false,
+      "properties": {
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "scored",
+            "absent",
+            "exempt",
+            "not-recorded"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "score": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Score"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "student_id",
+        "version",
+        "status",
+        "score",
+        "reason",
+        "created_at"
+      ],
+      "title": "ScoreResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "exam_id": {
+      "format": "uuid",
+      "title": "Exam Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "subject": {
+      "title": "Subject",
+      "type": "string"
+    },
+    "maximum_score": {
+      "title": "Maximum Score",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "classmatter.exam-results.v1",
+      "default": "classmatter.exam-results.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "results": {
+      "items": {
+        "$ref": "#/$defs/ScoreResult"
+      },
+      "title": "Results",
+      "type": "array"
+    },
+    "scored_count": {
+      "minimum": 0,
+      "title": "Scored Count",
+      "type": "integer"
+    },
+    "average": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Average"
+    }
+  },
+  "required": [
+    "exam_id",
+    "title",
+    "subject",
+    "maximum_score",
+    "version",
+    "results",
+    "scored_count",
+    "average"
+  ],
+  "title": "ExamResults",
+  "type": "object"
+}
