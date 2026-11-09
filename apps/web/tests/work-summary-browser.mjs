@@ -61,6 +61,17 @@ try {
   await page.getByRole('button', { name: '复制已核对草稿', exact: true }).click();
   await page.getByText('复制失败，请选择文字复制。', { exact: true }).waitFor();
   assert((await editor.inputValue()).includes('人工补充'));
+  for (const fail of [false, true]) {
+    await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', { configurable: true,
+      value: { writeText: () => new Promise((resolve, reject) => { window.releaseSummaryCopy = fail => fail ? reject(new Error('synthetic delayed denial')) : resolve(); }) } }));
+    await page.getByRole('button', { name: '复制已核对草稿', exact: true }).click();
+    const newer = original + '\n人工补充：复制期间继续编辑。' + fail;
+    await editor.fill(newer);
+    await page.evaluate(async fail => { window.releaseSummaryCopy(fail); await new Promise(resolve => setTimeout(resolve, 0)); }, fail);
+    assert.equal(await editor.inputValue(), newer);
+    assert.equal(await page.getByText('已复制', { exact: true }).count(), 0);
+    assert.equal(await page.getByText('复制失败，请选择文字复制。', { exact: true }).count(), 0);
+  }
   await page.evaluate(() => { delete navigator.clipboard; });
   await context.setOffline(true);
   await page.getByText('记录已更新，请重新整理后再复制。', { exact: true }).waitFor();

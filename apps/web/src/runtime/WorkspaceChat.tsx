@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useLayoutEffect, useRef, useState } from "react"
 import { ArrowUp, Copy, Check, X } from "lucide-react"
 import type { ChatCandidate } from "./workspace-chat"
 import type { WorkspaceChatController } from "./useWorkspaceChat"
@@ -39,14 +39,13 @@ function CandidateContent({ value }: { value: ChatCandidate }) {
   </>
 }
 export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatController }) {
-  const end = useRef<HTMLDivElement>(null), [clear, setClear] = useState(false)
-  const latest = s.history?.turns.at(-1)
-  useEffect(() => { if (latest) end.current?.scrollIntoView({ block: "nearest", inline: "nearest" }) }, [latest?.turn_id, latest?.state])
+  const [clear, setClear] = useState<{ thread: string; version: number } | null>(null)
+  useLayoutEffect(() => { setClear(null) }, [s.history?.thread.thread_id, s.history?.thread.version])
   return <section aria-label="已保存的对话">
     <div className="r1-toolbar">
       <button disabled={s.working} onClick={s.refresh}>刷新对话</button>
       {s.history && <><button disabled={!s.fresh || s.working || s.lastActive || s.history.thread.status !== "active"} onClick={() => void s.control("archive")}>归档对话</button>
-        <button disabled={!s.fresh || s.working || s.lastActive || s.history.thread.status === "cleared"} onClick={() => setClear(true)}>清除聊天正文</button></>}
+        <button disabled={!s.fresh || s.working || s.lastActive || s.history.thread.status === "cleared"} onClick={() => setClear({ thread: s.history!.thread.thread_id, version: s.history!.thread.version })}>清除聊天正文</button></>}
     </div>
     {s.history?.thread.status === "cleared" && <p>聊天正文已清除；原业务数据保持在各自页面中。</p>}
     {s.history?.next_before && <button disabled={s.working} onClick={() => void s.moreHistory()}>加载更早消息</button>}
@@ -66,10 +65,9 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
     </div>
     {s.status && <p role="status" className="r1-muted">{userMessage(s.status)}</p>}
     {s.pendingSend && <button disabled={s.working} onClick={() => void s.recoverSend()}>恢复消息</button>}
-    <div ref={end} />
-    {clear && <R1Dialog titleId="workspace-chat-clear" onDismiss={() => setClear(false)}><h2 id="workspace-chat-clear">清除这段聊天正文？</h2>
+    {clear && clear.thread === s.history?.thread.thread_id && clear.version === s.history.thread.version && <R1Dialog titleId="workspace-chat-clear" onDismiss={() => setClear(null)}><h2 id="workspace-chat-clear">清除这段聊天正文？</h2>
       <p>仅清除这段本机聊天的消息和未提交候选；已保存的班级、学生、任务和文档不受影响。既有备份不会自动删除。</p>
-      <button disabled={s.working} onClick={() => { setClear(false); void s.control("clear") }}>确认清除正文</button><button onClick={() => setClear(false)}>保留聊天</button></R1Dialog>}
+      <button disabled={s.working || !s.fresh} onClick={() => { if (clear.thread !== s.history?.thread.thread_id || clear.version !== s.history.thread.version) return; setClear(null); void s.control("clear") }}>确认清除正文</button><button onClick={() => setClear(null)}>保留聊天</button></R1Dialog>}
   </section>
 }
 export function WorkspaceChatComposer({ state: s, session, modelRevision, onManageModels, onPreviewModel, onModelVerified, onError }: {

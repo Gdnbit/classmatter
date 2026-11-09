@@ -37,6 +37,8 @@ export function DocumentsWorkspace(props: Props) {
   const [pending, setPending] = useState<Pending | null>(null)
   const [busy, setBusy] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [reading, setReading] = useState(false)
+  const readOperation = useRef<AbortController | null>(null)
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
   const [refresh, setRefresh] = useState(0)
@@ -70,7 +72,7 @@ export function DocumentsWorkspace(props: Props) {
   }, [anchor, tab])
   useEffect(() => {
     const controller = new AbortController(); lifetime.current = controller
-    return () => controller.abort()
+    return () => { controller.abort(); readOperation.current?.abort() }
   }, [])
   useEffect(() => {
     const controller = new AbortController()
@@ -86,6 +88,7 @@ export function DocumentsWorkspace(props: Props) {
     // A new route must never paint the previous document as an editable new
     // draft. Reset selection/content before paint, not in a later passive tick.
     const controller = new AbortController()
+    readOperation.current?.abort(); readOperation.current = null; setReading(false)
     setCurrent(null); setHistory(null); setHistorical(null); setError(""); setEdited(false); setPending(null); setAnchor(null); setTab("修改后")
     setTitle(""); setBody(""); setFormat("plain-text")
     if (!documentId || fresh) {
@@ -123,6 +126,22 @@ export function DocumentsWorkspace(props: Props) {
         props.onError(reason)
       }
     } finally { working.current = false; if (!lifetime.current.signal.aborted) setBusy(false) }
+  }
+  async function read<T>(request: (signal: AbortSignal) => Promise<T>, apply: (value: T) => void) {
+    if (readOperation.current || working.current) return
+    const controller = new AbortController()
+    readOperation.current = controller; setReading(true); setError("")
+    try {
+      const value = await request(controller.signal)
+      if (!controller.signal.aborted && !lifetime.current.signal.aborted && selection.current === documentId) apply(value)
+    } catch (reason) {
+      if (!controller.signal.aborted && !lifetime.current.signal.aborted) {
+        setError(reason instanceof Error ? reason.message : "读取未完成，请重试。")
+        props.onError(reason)
+      }
+    } finally {
+      if (readOperation.current === controller) { readOperation.current = null; if (!lifetime.current.signal.aborted) setReading(false) }
+    }
   }
   async function preview(operation: DocumentCommand["command"]) {
     if (!props.canWrite || loading || pending) return
@@ -171,7 +190,7 @@ export function DocumentsWorkspace(props: Props) {
     {error && <p role="alert" className="r1-error">{userMessage(error)}</p>}
     {notice && !pending && <p role="status" className="r1-muted">{notice}</p>}
     <div className="r1-toolbar">
-      <button disabled={!props.canEdit || dirty || busy || loading} onClick={() => props.onSelect("new")}>新建文档</button>
+      <button disabled={!props.canEdit || dirty || busy} onClick={() => props.onSelect("new")}>新建文档</button>
       <button disabled={dirty || busy || loading} onClick={() => setRefresh(value => value + 1)}>重新读取文档</button>
       {edited && !pending && <button disabled={busy} onClick={() => { setEdited(false); setRefresh(value => value + 1) }}>放弃本地编辑并重新读取</button>}
     </div>
@@ -179,15 +198,15 @@ export function DocumentsWorkspace(props: Props) {
       <aside aria-label="文档列表"><strong>班级文档</strong>
         {!listing && <p>{error ? "文档列表不可用，可重新读取。" : "正在读取文档列表…"}</p>}
         {listing?.data.length === 0 && <p>尚无已保存文档。</p>}
-        {listing?.data.map(item => <button key={item.document_id} disabled={dirty || busy || loading}
+        {listing?.data.map(item => <button key={item.document_id} disabled={dirty || busy}
           className={item.document_id === documentId ? "selected-outline" : ""} onClick={() => props.onSelect(item.document_id)}>
           {item.title}<small>版本 {item.version}{item.status === "archived" ? " · 已归档" : ""}</small>
         </button>)}
-        {listing?.next_offset !== null && listing?.next_offset !== undefined && <button disabled={dirty || busy} onClick={() => void run(async () => {
-          const next = await api.list({ offset: listing.next_offset!, snapshot: listing.snapshot }, lifetime.current.signal)
+        {listing?.next_offset !== null && listing?.next_offset !== undefined && <button disabled={dirty || busy || reading} onClick={() => void read(
+          signal => api.list({ offset: listing.next_offset!, snapshot: listing.snapshot }, signal), next => {
           if (new Set([...listing.data, ...next.data].map(item => item.document_id)).size !== listing.data.length + next.data.length)
             throw new Error("文档分页出现重复，未拼接结果，请重新读取。")
-          if (!lifetime.current.signal.aborted) setListing({ ...next, data: [...listing.data, ...next.data] })
+          setListing({ ...next, data: [...listing.data, ...next.data] })
         })}>更多文档</button>}
         {present && <><strong>文档结构</strong><button disabled={busy} onClick={() => { setTab("修改后"); setAnchor({ title: "全文", offset: 0, length: 0 }) }}>全文</button>
           {outline.map(item => <button key={item.offset} disabled={busy} onClick={() => { setTab("修改后"); setAnchor(item) }}>{item.title}</button>)}
@@ -214,15 +233,14 @@ export function DocumentsWorkspace(props: Props) {
           </>}
           {tab === "修订记录" && <section aria-label="已保存文档版本">
             {!history && <p>尚无已保存版本。</p>}
-            {history?.data.map(item => <button key={item.version} disabled={busy} onClick={() => void run(async () => {
-              const value = await api.revision(documentId, item.version, lifetime.current.signal)
-              if (!lifetime.current.signal.aborted && selection.current === documentId) setHistorical(value)
-            })}>版本 {item.version} · {operations[item.operation]} · {time(item.created_at)}</button>)}
-            {history?.next_offset !== null && history?.next_offset !== undefined && <button disabled={busy} onClick={() => void run(async () => {
-              const next = await api.history(documentId, { offset: history.next_offset!, snapshot: history.snapshot }, lifetime.current.signal)
+            {history?.data.map(item => <button key={item.version} disabled={busy || reading} onClick={() => void read(
+              signal => api.revision(documentId, item.version, signal), setHistorical
+            )}>版本 {item.version} · {operations[item.operation]} · {time(item.created_at)}</button>)}
+            {history?.next_offset !== null && history?.next_offset !== undefined && <button disabled={busy || reading} onClick={() => void read(
+              signal => api.history(documentId, { offset: history.next_offset!, snapshot: history.snapshot }, signal), next => {
               if (next.data.length && next.data[0].version >= history.data[history.data.length - 1].version)
                 throw new Error("版本分页出现重复或错序，未拼接结果，请重新读取。")
-              if (!lifetime.current.signal.aborted && selection.current === documentId) setHistory({ ...next, data: [...history.data, ...next.data] })
+              setHistory({ ...next, data: [...history.data, ...next.data] })
             })}>更多版本</button>}
             {historical && <><h2>{historical.title} · 版本 {historical.version}</h2><pre className="document-text">{historical.body}</pre></>}
           </section>}
