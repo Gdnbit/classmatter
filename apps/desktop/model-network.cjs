@@ -28,7 +28,7 @@ function parseLaunchArguments(args) {
   for(let index=0;index<args.length;index+=2) {
     const flag=args[index],value=args[index+1];
     if(typeof value!=='string')fail();
-    if(flag==='--profile'&&!seenProfile&&['r1','conversation-d1','workspace-chat-d3'].includes(value)){profile=value;seenProfile=true;}
+    if(flag==='--profile'&&!seenProfile&&['r1','conversation-d1','workspace-chat-d3','classroom-work-d4'].includes(value)){profile=value;seenProfile=true;}
     else if(flag==='--model-api-base-url'){bases.push(value);}
     else if(flag==='--model-api-proxy'&&proxy===null){proxy=value;}
     else fail();

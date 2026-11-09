@@ -27,6 +27,14 @@ test('document routes preserve only validated identity and reject mock IDs or se
   }
 })
 
+test('classroom work routes are exact presentation paths without mock entity IDs', () => {
+  for (const [path, page] of [['/data/spreadsheets', 'grades'], ['/views/seat', 'seating']]) {
+    assert.equal(parseRuntimeRoute(path).page, page)
+    assert.equal(runtimePath(parseRuntimeRoute(path)), path)
+    for (const suffix of ['?text=private', '#approval', '/commit']) assert.equal(parseRuntimeRoute(path + suffix).page, 'unavailable')
+  }
+})
+
 test('workspace chat links require only a thread ID and contain no class or draft', () => {
   const path = `/chats/${id}`;
   assert.equal(runtimePath(parseRuntimeRoute(path)), path);

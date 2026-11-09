@@ -27,7 +27,7 @@ def test_closed_web_paths_and_queries_do_not_relax_api_boundary(tmp_path):
     with TestClient(app, base_url="http://127.0.0.1:8000", client=("127.0.0.1", 12)) as client:
         assert client.get("/students?view=table").status_code == 400  # Not mounted.
         mount_web(app, tmp_path)
-        for path in ("/students?view=table", "/students/00000000-0000-0000-0000-000000000001?tab=tasks", "/work?filter=waiting", "/work?filter=mine", "/settings/user", "/data/spreadsheets/score-001"):
+        for path in ("/students?view=table", "/students/00000000-0000-0000-0000-000000000001?tab=tasks", "/work?filter=waiting", "/work?filter=mine", "/settings/user", "/data/spreadsheets/score-001", "/data/spreadsheets", "/views/seat"):
             response = client.get(path)
             assert response.status_code == 200 and "synthetic-shell" in response.text
             assert response.headers["cache-control"] == "no-store"

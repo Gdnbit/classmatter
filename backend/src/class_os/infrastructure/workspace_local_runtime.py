@@ -12,38 +12,46 @@ from .identity import PostgresIdentityStore
 from .local_runtime import LocalRuntime, protect
 from .model_secrets import ModelSecrets
 from .conversation_restrictions import ProtectedConversationRestrictions
-from .persistence.schema_inventory import validate_surface
+from .persistence.schema_inventory import validate_surface, schema_profile
 from .persistence.role_guards import validate_role_guards
 from .documents import validate_document_integrity
 from .workspace_chat import validate_workspace_chat_integrity
 from .workbench import WorkbenchStore
 
 
-def surface(connection):
-    validate_surface(connection, complete=True, profile="workspace-chat-d3")
-    validate_role_guards(connection, profile="workspace-chat-d3")
-    if (connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != "0028"
+def surface(connection, *, profile='workspace-chat-d3'):
+    if profile not in ('workspace-chat-d3', 'classroom-work-d4'):
+        raise ValueError('Explicit workspace profile required')
+    validate_surface(connection, complete=True, profile=profile)
+    validate_role_guards(connection, profile=profile)
+    if (connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != schema_profile(profile)[0]
             or connection.execute(text("SELECT data_mode FROM class_os.database_state WHERE singleton=true")).scalar_one() != "synthetic-only"):
         raise RuntimeError("Explicit current synthetic D3 schema required")
     validate_document_integrity(connection); validate_workspace_chat_integrity(connection)
+    if profile == 'classroom-work-d4':
+        from .classroom_work import validate_classroom_integrity
+        validate_classroom_integrity(connection)
 
 
 class OwnedWorkspaceServices(OwnedD1Services):
     def surface(self, connection):
-        surface(connection)
+        surface(connection, profile=self.business_database.profile)
 
 
 def open_services(runtime, *, local_development=False):
-    if os.name != "nt" or type(runtime) is not LocalRuntime or runtime.profile != "workspace-chat-d3":
+    if os.name != "nt" or type(runtime) is not LocalRuntime or runtime.profile not in ('workspace-chat-d3', 'classroom-work-d4'):
         raise ValueError("Explicit owned Windows D3 runtime required")
     runtime.configuration()
-    from .workspace_upgrade import verify_upgrade_receipt
+    if runtime.profile == 'classroom-work-d4':
+        from .classroom_upgrade import verify_upgrade_receipt
+    else:
+        from .workspace_upgrade import verify_upgrade_receipt
     receipt = verify_upgrade_receipt(runtime)
     identity_database, business_database = runtime.database("identity"), None
     try:
         business_database = runtime.database("runtime")
         with business_database.transaction(read_only=True) as connection:
-            surface(connection)
+            surface(connection, profile=runtime.profile)
         with identity_database.transaction(read_only=True) as connection:
             owner = connection.execute(text("SELECT owner_id,workspace_id FROM class_os.owner_account")).one_or_none()
         if owner is None or str(owner.owner_id) != receipt["owner_id"] or str(owner.workspace_id) != receipt["workspace_id"]:

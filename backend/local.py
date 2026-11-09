@@ -13,8 +13,8 @@ from class_os.interfaces.http.settings import Settings
 
 def main():
     parser = argparse.ArgumentParser(description="ClassMatter owned synthetic Windows runtime; no real data")
-    parser.add_argument("command", choices=("init", "prepare-chat", "start", "stop", "migrate", "upgrade-workbench", "upgrade-chat", "serve", "bootstrap", "initialize-control", "doctor", "support", "backup", "backup-list", "backup-check"))
-    parser.add_argument("--profile", choices=("r1", "conversation-d1", "workbench-d2", "workspace-chat-d3"), default="r1",
+    parser.add_argument("command", choices=("init", "prepare-chat", "start", "stop", "migrate", "upgrade-workbench", "upgrade-chat", "upgrade-classroom", "serve", "bootstrap", "initialize-control", "doctor", "support", "backup", "backup-list", "backup-check"))
+    parser.add_argument("--profile", choices=("r1", "conversation-d1", "workbench-d2", "workspace-chat-d3", "classroom-work-d4"), default="r1",
                         help="Explicit isolated runtime; never upgrades the other profile")
     parser.add_argument("--pg-root")
     parser.add_argument("--backup-id", type=UUID, help="Owned checkpoint UUID; no arbitrary file paths")
@@ -28,7 +28,9 @@ def main():
         parser.error('upgrade-workbench requires the existing owned D1/D2 profile')
     if args.command == 'upgrade-chat' and args.profile not in ('conversation-d1', 'workbench-d2', 'workspace-chat-d3'):
         parser.error('upgrade-chat requires the existing owned D1/D2/D3 profile')
-    if args.profile in ('workbench-d2', 'workspace-chat-d3') and args.command in ('init', 'migrate', 'bootstrap', 'initialize-control'):
+    if args.command == 'upgrade-classroom' and args.profile not in ('workspace-chat-d3', 'classroom-work-d4'):
+        parser.error('upgrade-classroom requires the existing owned D3/D4 profile')
+    if args.profile in ('workbench-d2', 'workspace-chat-d3', 'classroom-work-d4') and args.command in ('init', 'migrate', 'bootstrap', 'initialize-control'):
         parser.error('D2 requires verified in-place upgrade; no new world or identity bootstrap')
     if args.command == "initialize-control":
         if args.profile != "conversation-d1":
@@ -73,6 +75,13 @@ def main():
         runtime.stop()
     elif args.command == "migrate":
         runtime.upgrade()
+    elif args.command == 'upgrade-classroom':
+        from class_os.infrastructure.classroom_upgrade import upgrade_classroom, verify_upgrade_receipt
+        current = upgrade_classroom(runtime)
+        print(json.dumps({'schema_version': 'classmatter.owned-classroom-work-upgraded.v1',
+            'profile': current.profile, 'backup_id': verify_upgrade_receipt(current)['backup_id'],
+            'complete_exit': False, 'activation_allowed': False}))
+        return 0
     elif args.command == 'upgrade-chat':
         from class_os.infrastructure.workspace_upgrade import upgrade_workspace_chat, verify_upgrade_receipt
         current = upgrade_workspace_chat(runtime)
@@ -95,7 +104,9 @@ def main():
                        "backup_id": str(backup.create()), "portable": False, "complete_exit": False}
             if args.profile != "r1":
                 created.update(schema_version="classmatter.conversation-backup-created.v1", activation_allowed=False)
-                if args.profile == 'workspace-chat-d3':
+                if args.profile == 'classroom-work-d4':
+                    created['schema_version'] = 'classmatter.classroom-work-backup-created.v1'
+                elif args.profile == 'workspace-chat-d3':
                     created['schema_version'] = 'classmatter.workspace-chat-backup-created.v1'
             print(json.dumps(created))
         elif args.command == "backup-list":
@@ -104,7 +115,7 @@ def main():
             if args.profile == "r1":
                 print(json.dumps(backup.check(args.backup_id)))
             else:
-                if args.profile == 'workspace-chat-d3':
+                if args.profile in ('workspace-chat-d3', 'classroom-work-d4'):
                     from class_os.infrastructure.workspace_local_runtime import open_services
                 elif args.profile == 'workbench-d2':
                     from class_os.infrastructure.workbench_local_runtime import open_services
@@ -122,7 +133,7 @@ def main():
         settings = Settings.from_env({"CLASS_OS_PORT": "8001", **os.environ} if args.profile != "r1" else os.environ)
         from dataclasses import replace
         settings = replace(settings, model_api_bases=tuple(args.model_api_base_url), model_api_proxy=args.model_api_proxy)
-        if args.profile == 'workspace-chat-d3':
+        if args.profile in ('workspace-chat-d3', 'classroom-work-d4'):
             from class_os.infrastructure.workspace_local_runtime import compose as compose_chat
             app = compose_chat(settings, runtime)
         elif args.profile == 'workbench-d2':

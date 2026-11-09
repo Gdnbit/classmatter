@@ -1,9 +1,11 @@
 import * as validators from "./workspace-chat-validators.cjs"
 import { ApiError, workspace, type Session } from "./api"
 import { consumeEvents } from "./events"
+import { classroomClient, type ClassroomCommand } from './classroom-work'
 
 type Scope = { class_id: string; term_id: string }
 export type ChatCandidate =
+  | ClassroomCommand
   | (Scope & { command: "class.create"; name: string; term_name: string; start_date: string; end_date: string })
   | (Scope & { command: "class.update"; name: string; expected_version: number })
   | (Scope & { command: "term.update"; expected_version: number; previous_name: string; name: string; previous_start_date: string; start_date: string; previous_end_date: string; end_date: string })
@@ -20,7 +22,7 @@ export type ChatTurn = { turn_id: string; request_id: string; ordinal: number; s
   action_receipt: { receipt_id: string; resource_id: string; version: number } | null }
 export type ChatListing = { schema_version: "classmatter.workspace-chat-list.v1"; data: ChatThread[]; next_offset: number | null }
 export type ChatHistory = { schema_version: "classmatter.workspace-chat-history.v1"; thread: ChatThread; turns: ChatTurn[]; next_before: number | null }
-export type ChatPreview = { schema_version: "classmatter.workspace-chat-preview.v1"; proposal_id: string; payload_hash: string; risk: "W1" | "W2"; expires_at: string; payload: ChatCandidate }
+export type ChatPreview = { schema_version: "classmatter.workspace-chat-preview.v1"; proposal_id: string; payload_hash: string; risk: "W1" | "W2"; expires_at: string; payload: ChatCandidate; displayNames?: Record<string, string> }
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/
 function id(value: string) { if (!uuid.test(value)) throw new Error("对话标识无效"); return value }
 function dates(value: unknown): void {
@@ -79,6 +81,10 @@ export function workspaceChatClient(session: Session) {
       const result = await json<ChatPreview>("preview", `${thread(threadId)}/turns/${id(turn.request_id)}/proposal`, session, { candidate_hash: turn.candidate_hash })
       if (result.payload_hash !== turn.candidate_hash || Object.keys(result.payload).length !== Object.keys(turn.candidate).length
         || Object.entries(turn.candidate).some(([key, value]) => result.payload[key as keyof ChatCandidate] !== value)) throw new Error("预览与原聊天候选不匹配")
+      if (result.payload.command === 'score.record') {
+        const exam = await classroomClient(session, result.payload).results(result.payload.exam_id)
+        result.displayNames = { [exam.exam_id]: `${exam.title} · ${exam.subject}` }
+      }
       return result
     },
   }

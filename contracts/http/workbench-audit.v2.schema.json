@@ -54,7 +54,10 @@
               "enum": [
                 "document.list",
                 "document.read",
-                "document.history"
+                "document.history",
+                "exam.list",
+                "exam.read",
+                "seat.read"
               ],
               "type": "string"
             }

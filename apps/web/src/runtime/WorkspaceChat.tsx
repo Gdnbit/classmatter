@@ -7,9 +7,10 @@ import type { Command, Session } from "./api"
 import { ModelSwitcher } from "./ModelSwitcher"
 import { userMessage } from "./user-facing"
 
-const labels = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
+const labels: Record<string, string> = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "task.create": "建立任务", "task.update": "修改任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
 const states = { queued: "等待回复", running: "正在回复…", completed: "回复完成", failed: "回复失败，请稍后再试", cancelled: "已停止回复", unknown: "暂时无法确认回复结果" }
+Object.assign(labels, { 'exam.create': '建立考试', 'score.record': '记录成绩', 'seat.layout.create': '建立座位表', 'seat.assign': '安排座位', 'seat.swap': '交换座位' })
 function AnswerActions({ text, duration }: { text: string; duration: number | null }) {
   const [copied, setCopied] = useState(false), [failed, setFailed] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -34,7 +35,12 @@ function CandidateContent({ value }: { value: ChatCandidate }) {
     {"term_name" in value && <p>学期：{value.term_name} · {value.start_date} 至 {value.end_date}</p>}
     {"previous_start_date" in value && <p>起止：{value.previous_start_date} — {value.previous_end_date} → {value.start_date} — {value.end_date}</p>}
     {"title" in value && <p>标题：{value.title}</p>}
-    {"status" in value && <p>状态：{value.status === "waiting" ? "等待别人" : value.status === "in-progress" ? "进行中" : "未开始"}</p>}
+    {'subject' in value && <p>科目：{value.subject} · 满分：{value.maximum_score}</p>}
+    {'score' in value && <p>成绩：{value.score ?? ({ absent: '缺考', exempt: '免考', 'not-recorded': '未录入', scored: '未录入' }[value.status])}</p>}
+    {'rows' in value && <p>{value.rows} 排 · 每排 {value.columns} 座</p>}
+    {'row' in value && <p>目标：{value.row} 排 {value.column} 座</p>}
+    {'first_row' in value && <p>{value.first_row} 排 {value.first_column} 座 ↔ {value.second_row} 排 {value.second_column} 座</p>}
+    {"status" in value && !('score' in value) && <p>状态：{value.status === "waiting" ? "等待别人" : value.status === "in-progress" ? "进行中" : "未开始"}</p>}
     {"body" in value && <details open><summary>核对文档正文（工作草稿，非正式事实）</summary><p className="r1-document-draft">{value.body}</p></details>}
   </>
 }

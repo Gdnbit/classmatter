@@ -114,9 +114,9 @@ class OwnedService {
 }
 
 function desktopService(repositoryRoot, uiRoot, onUnexpectedExit, runtimeRoot, profile = 'r1', servicePort = profile !== 'r1' ? 8001 : 8000, modelNetwork, localDevelopment = false) {
-  if (typeof localDevelopment !== 'boolean' || (localDevelopment && profile !== 'workspace-chat-d3')) throw new Error('Invalid local workspace mode');
+  if (typeof localDevelopment !== 'boolean' || (localDevelopment && !['workspace-chat-d3','classroom-work-d4'].includes(profile))) throw new Error('Invalid local workspace mode');
   const network=validateNetwork(modelNetwork);
-  if (!['r1', 'conversation-d1', 'workspace-chat-d3'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
+  if (!['r1', 'conversation-d1', 'workspace-chat-d3', 'classroom-work-d4'].includes(profile)) throw new Error('Unknown synthetic runtime profile');
   if (!Number.isInteger(servicePort) || servicePort < 1024 || servicePort > 65535 || (profile === 'r1' && servicePort !== 8000)) throw new Error('Invalid owned service port');
   if (process.platform !== 'win32' || !path.isAbsolute(repositoryRoot) || !path.isAbsolute(uiRoot)) throw new Error('Unsupported desktop runtime');
   const root = fs.realpathSync(repositoryRoot), ui = fs.realpathSync(uiRoot);

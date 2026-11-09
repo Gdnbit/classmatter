@@ -9,8 +9,8 @@
   "packageManager": "pnpm@11.19.0",
   "engines": { "node": ">=22 <25" },
   "scripts": {
-    "build": "node scripts/runtime-build.cjs --profile workspace-chat-d3",
-    "start": "node scripts/runtime-launch.cjs --profile workspace-chat-d3 --development-no-password",
+    "build": "node scripts/runtime-build.cjs --profile classroom-work-d4",
+    "start": "node scripts/runtime-launch.cjs --profile classroom-work-d4 --development-no-password",
     "build:fixture": "node scripts/build.cjs",
     "start:fixture": "node scripts/launch.cjs",
     "build:runtime": "node scripts/runtime-build.cjs",

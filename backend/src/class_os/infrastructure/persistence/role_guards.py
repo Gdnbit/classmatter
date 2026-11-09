@@ -1,7 +1,7 @@
 """Owned synthetic profile's read-only critical guards, not a full ACL matrix."""
 from sqlalchemy import text
 
-from .schema_inventory import REGISTERED_TABLES, D1_COLUMNS, D2_COLUMNS, D3_COLUMNS, schema_profile
+from .schema_inventory import REGISTERED_TABLES, D1_COLUMNS, D2_COLUMNS, D3_COLUMNS, D4_COLUMNS, schema_profile
 
 
 ROLE_NAMES = ("class_os_migrator", "class_os_identity", "class_os_runtime")
@@ -55,7 +55,7 @@ def validate_role_guards(connection, *, profile="r1"):
         'class_os.business_audit','session_digest','SELECT')""")).scalar_one():
         reject()
 
-    if profile in ("conversation-d1", "workbench-d2", "workspace-chat-d3"):
+    if profile in ("conversation-d1", "workbench-d2", "workspace-chat-d3", "classroom-work-d4"):
         updates = {"conversation_import": set(), "conversation_provenance": set(), "conversation_source_audit": set(),
                    "conversation_admission": set(), "conversation_origin": set(),
                    "conversation_query_source": set(), "conversation_task_draft": {"title", "visibility"}, "conversation_result_receipt": set(),
@@ -65,16 +65,20 @@ def validate_role_guards(connection, *, profile="r1"):
                    "conversation_run": {"state", "version", "generation", "started_at", "lease_until", "ended_at",
                                         "cancel_requested_at", "input_tokens", "output_tokens", "duration_ms"}}
         inventory = D1_COLUMNS
-        if profile in ("workbench-d2", "workspace-chat-d3"):
+        if profile in ("workbench-d2", "workspace-chat-d3", "classroom-work-d4"):
             inventory = {**D1_COLUMNS, **D2_COLUMNS}
             updates = {**updates, "working_document": {"status", "version", "updated_at"},
                        "working_document_revision": set()}
-        if profile == "workspace-chat-d3":
+        if profile in ("workspace-chat-d3", "classroom-work-d4"):
             inventory = {**inventory, **D3_COLUMNS}
             updates = {**updates,
                 "workspace_chat_thread": {"title", "status", "version", "updated_at", "cleared_at"},
                 "workspace_chat_turn": {"user_text", "assistant_text", "candidate", "candidate_hash", "state", "version", "generation", "started_at", "lease_until", "ended_at", "input_tokens", "output_tokens", "duration_ms"},
                 "workspace_chat_audit": set()}
+        if profile == "classroom-work-d4":
+            inventory = {**inventory, **D4_COLUMNS}
+            updates = {**updates, "class_exam": {"version", "updated_at"}, "exam_result_revision": set(),
+                       "class_seating": {"version", "updated_at"}, "seat_revision": set()}
         for table in sorted(inventory):
             columns = connection.execute(text("""SELECT attname,
                 pg_catalog.has_column_privilege('class_os_runtime',attrelid,attnum,'UPDATE') AS writable,

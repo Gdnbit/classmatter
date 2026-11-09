@@ -16,6 +16,11 @@ class WorkbenchStore(DocumentStore):
         self.retirement = None  # D2 import/transfer has no admission yet.
 
     def _transaction(self, connection):
+        if self.database.profile == 'classroom-work-d4':
+            if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0029':
+                raise RuntimeError('Explicit classroom work schema required')
+            from .classroom_work import ClassroomTransaction
+            return ClassroomTransaction(connection, self)
         if self.database.profile == 'workspace-chat-d3':
             if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0028':
                 raise RuntimeError('Explicit workspace chat schema required')
@@ -72,7 +77,8 @@ class WorkbenchTransaction(DocumentTransaction, AdmissionTransaction):
         if recovery['conversation_import'] or recovery['conversation_admission']:
             raise CommandRejected()
         audit = self._collection(binding, 'business_audit', AUDIT_COLUMNS, ('occurred_at', 'event_id'), budget)
-        legacy, document_audit = partition_audit(audit, str(binding['workspace_id']), str(binding['actor_id']), now)
+        legacy, document_audit = partition_audit(audit, str(binding['workspace_id']), str(binding['actor_id']), now,
+            classroom=self._store.database.profile == 'classroom-work-d4')
         bundle = build_package(binding['workspace_id'], binding['actor_id'], now, core, conversations, proof, legacy, recovery)
         verify_native_result_commits(self._connection, binding, conversations)
         return bundle, document_audit, budget

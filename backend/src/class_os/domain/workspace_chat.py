@@ -8,13 +8,14 @@ import rfc8785
 from .activity import instant, content
 from .roster import identifiers, decode
 from .documents import decode_document
+from .classroom_work import COMMANDS as CLASSROOM_COMMANDS, decode_classroom
 
 
 PROFILE = "workspace-chat-d3"
 ACTIVE = frozenset({"queued", "running"})
 TERMINAL = frozenset({"completed", "failed", "cancelled", "unknown"})
 CANDIDATES = frozenset({"class.create", "class.update", "term.update", "student.create", "student.update_name",
-                        "task.create", "task.update", "document.create", "document.revise"})
+                        "task.create", "task.update", "document.create", "document.revise", *CLASSROOM_COMMANDS})
 MAX_TURNS = 10_000
 LEASE = timedelta(minutes=5)
 
@@ -36,7 +37,8 @@ def input_hash(workspace_id, owner_id, thread_id, text):
 def candidate(payload):
     if type(payload) is not dict or payload.get("command") not in CANDIDATES:
         raise ValueError("Unsupported conversational candidate")
-    command = decode_document(payload) if payload["command"].startswith("document.") else decode(payload)
+    command = (decode_classroom(payload) if payload['command'] in CLASSROOM_COMMANDS
+               else decode_document(payload) if payload["command"].startswith("document.") else decode(payload))
     if command.canonical() != payload or len(rfc8785.dumps(payload)) > 440_000:
         raise ValueError("Noncanonical conversational candidate")
     return command

@@ -222,7 +222,8 @@ class ConversationTransaction(BusinessTransaction):
         from .recovery_admission_store import AdmissionTransaction
         from .workbench import WorkbenchTransaction
         from .workspace_chat import WorkspaceChatTransaction
-        if type(self) not in (AdmissionTransaction, WorkbenchTransaction, WorkspaceChatTransaction) and self._connection.execute(text("""SELECT
+        from .classroom_work import ClassroomTransaction
+        if type(self) not in (AdmissionTransaction, WorkbenchTransaction, WorkspaceChatTransaction, ClassroomTransaction) and self._connection.execute(text("""SELECT
             EXISTS(SELECT 1 FROM class_os.conversation_result_receipt
                 WHERE workspace_id=:workspace_id AND thread_id=:thread AND protocol='fixed-result')
             OR EXISTS(SELECT 1 FROM class_os.conversation_query_source WHERE workspace_id=:workspace_id AND thread_id=:thread)

@@ -51,7 +51,7 @@ def read_bytes(path, limit=LIMIT):
 
 
 def descriptor(runtime, *, source_profile='conversation-d1', target_profile='workbench-d2'):
-    if (source_profile, target_profile) not in (('conversation-d1', 'workbench-d2'), ('workbench-d2', 'workspace-chat-d3')):
+    if (source_profile, target_profile) not in (('conversation-d1', 'workbench-d2'), ('workbench-d2', 'workspace-chat-d3'), ('workspace-chat-d3', 'classroom-work-d4')):
         raise UpgradeRejected()
     raw = read_bytes(runtime.manifest, 16384)
     value = json.loads(raw, object_pairs_hook=unique)
@@ -144,7 +144,7 @@ def business_digest(inventory):
 
 def known_service_stopped(runtime):
     repository = Path(__file__).resolve().parents[4]
-    for stage in ('runtime-d1', 'runtime-d2', 'runtime-d3'):
+    for stage in ('runtime-d1', 'runtime-d2', 'runtime-d3', 'runtime-d4'):
         path = repository / 'apps/desktop/.build' / stage / 'runtime-source.json'
         if not path.is_file():
             continue

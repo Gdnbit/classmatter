@@ -12,7 +12,7 @@ from .conversation_control import ConversationTransaction
 
 class DocumentStore(PostgresBusinessStore):
     def __init__(self, database, restrictions):
-        if database.profile not in ("workbench-d2", "workspace-chat-d3"):
+        if database.profile not in ("workbench-d2", "workspace-chat-d3", "classroom-work-d4"):
             raise ValueError("Explicit D2 document profile required")
         super().__init__(database)
         self.restrictions = restrictions

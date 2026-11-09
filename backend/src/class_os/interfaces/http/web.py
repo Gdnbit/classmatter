@@ -46,8 +46,8 @@ def mount_web(app, directory: Path):
     for path in ("/", "/dashboard", "/students", "/students/{student_id}", "/work",
                  "/conversations/{class_id:uuid}/{term_id:uuid}/{thread_id:uuid}",
                  "/chats/{thread_id:uuid}",
-                 "/settings", "/settings/user", "/unavailable", "/data",
+                 "/settings", "/settings/user", "/unavailable", "/data", "/data/spreadsheets",
                  "/data/spreadsheets/{file_id}", "/data/documents/{file_id}",
-                 "/spaces/{space_id}", "/automation", "/knowledge", "/reports"):
+                 "/spaces/{space_id}", "/views/seat", "/automation", "/knowledge", "/reports"):
         app.add_api_route(path, index, methods=["GET"], include_in_schema=False)
     app.state.web_mounted = True

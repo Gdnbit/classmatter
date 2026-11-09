@@ -1,0 +1,108 @@
+{
+  "$defs": {
+    "SeatPosition": {
+      "additionalProperties": false,
+      "properties": {
+        "row_index": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Row Index",
+          "type": "integer"
+        },
+        "column_index": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Column Index",
+          "type": "integer"
+        },
+        "student_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Student Id"
+        }
+      },
+      "required": [
+        "row_index",
+        "column_index",
+        "student_id"
+      ],
+      "title": "SeatPosition",
+      "type": "object"
+    },
+    "Seating": {
+      "additionalProperties": false,
+      "properties": {
+        "layout_id": {
+          "format": "uuid",
+          "title": "Layout Id",
+          "type": "string"
+        },
+        "rows": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "columns": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Columns",
+          "type": "integer"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "seats": {
+          "items": {
+            "$ref": "#/$defs/SeatPosition"
+          },
+          "maxItems": 400,
+          "title": "Seats",
+          "type": "array"
+        }
+      },
+      "required": [
+        "layout_id",
+        "rows",
+        "columns",
+        "version",
+        "seats"
+      ],
+      "title": "Seating",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.seating.v1",
+      "default": "classmatter.seating.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "layout": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Seating"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  },
+  "required": [
+    "layout"
+  ],
+  "title": "SeatingResponse",
+  "type": "object"
+}

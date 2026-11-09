@@ -1,0 +1,67 @@
+{
+  "$defs": {
+    "ExamMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "exam_id": {
+          "format": "uuid",
+          "title": "Exam Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "subject": {
+          "title": "Subject",
+          "type": "string"
+        },
+        "maximum_score": {
+          "title": "Maximum Score",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "exam_id",
+        "title",
+        "subject",
+        "maximum_score",
+        "version"
+      ],
+      "title": "ExamMetadata",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.exams.v1",
+      "default": "classmatter.exams.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "exams": {
+      "items": {
+        "$ref": "#/$defs/ExamMetadata"
+      },
+      "maxItems": 50,
+      "title": "Exams",
+      "type": "array"
+    },
+    "truncated": {
+      "title": "Truncated",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "exams",
+    "truncated"
+  ],
+  "title": "ExamListing",
+  "type": "object"
+}

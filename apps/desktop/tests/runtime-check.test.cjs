@@ -10,7 +10,7 @@ function fixture(t, profile = 'r1') {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'classmatter-prerequisites-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true })); // Only this test's fresh owned directory.
   const d1=profile!=='r1';
-  const stageName=profile==='workspace-chat-d3'?'apps/desktop/.build/runtime-d3':d1?'apps/desktop/.build/runtime-d1':'apps/desktop/.build/runtime';
+  const stageName=profile==='classroom-work-d4'?'apps/desktop/.build/runtime-d4':profile==='workspace-chat-d3'?'apps/desktop/.build/runtime-d3':d1?'apps/desktop/.build/runtime-d1':'apps/desktop/.build/runtime';
   const runtimeName=d1?'.local-runtime/synthetic-conversation-d1':'.local-runtime/synthetic-v1';
   const stage = path.join(root, stageName);
   const runtime = path.join(root, runtimeName);
@@ -43,7 +43,7 @@ test('empty checkout reports fixed missing steps without modifying or leaking pa
   assert(!JSON.stringify(result).includes(f.root));
 });
 
-for(const profile of ['r1','conversation-d1','workspace-chat-d3']) test(`missing ${profile} staged dependency rejects before loading Electron`,t=>{
+for(const profile of ['r1','conversation-d1','workspace-chat-d3','classroom-work-d4']) test(`missing ${profile} staged dependency rejects before loading Electron`,t=>{
   const f=fixture(t,profile);f.ready();
   f.put('apps/desktop/scripts/runtime-launch.cjs',fs.readFileSync(path.join(__dirname,'../scripts/runtime-launch.cjs')));
   f.put('apps/desktop/runtime-check.cjs',fs.readFileSync(path.join(__dirname,'../runtime-check.cjs')));

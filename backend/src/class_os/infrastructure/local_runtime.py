@@ -27,6 +27,7 @@ PROFILES = {
     "conversation-d1": ("classmatter-owned-synthetic-conversation-d1", "class_os_synthetic_conversation_local", D1_ROOT),
     "workbench-d2": ("classmatter-owned-synthetic-workbench-d2", "class_os_synthetic_conversation_local", D1_ROOT),
     "workspace-chat-d3": ("classmatter-owned-synthetic-workspace-chat-d3", "class_os_synthetic_conversation_local", D1_ROOT),
+    "classroom-work-d4": ("classmatter-owned-synthetic-classroom-work-d4", "class_os_synthetic_conversation_local", D1_ROOT),
 }
 ROLES = ("root", "migrator", "identity", "runtime")
 
@@ -64,7 +65,7 @@ class LocalRuntime:
         self.profile = profile
         self.root = Path(root if root is not None else PROFILES[profile][2]).resolve()
         if any(self.root == entry[2].resolve() and name != profile
-               and not {name, profile} <= {'conversation-d1', 'workbench-d2', 'workspace-chat-d3'} for name, entry in PROFILES.items()):
+               and not {name, profile} <= {'conversation-d1', 'workbench-d2', 'workspace-chat-d3', 'classroom-work-d4'} for name, entry in PROFILES.items()):
             raise ValueError("Another profile's default runtime root is reserved")
         self.cluster = self.root / "cluster"
         self.manifest = self.root / "runtime.json"
@@ -93,7 +94,7 @@ class LocalRuntime:
             raise RuntimeError(f"Local PostgreSQL {binary} failed; no automatic reset attempted")
 
     def initialize(self, pg_root):
-        if self.profile in ('workbench-d2', 'workspace-chat-d3'):
+        if self.profile in ('workbench-d2', 'workspace-chat-d3', 'classroom-work-d4'):
             raise RuntimeError('D2 requires verified in-place upgrade of the existing D1 runtime')
         if os.name != "nt" or self.root.exists():
             raise RuntimeError("Initialization requires a new owned Windows runtime directory")
@@ -172,7 +173,7 @@ class LocalRuntime:
         return Database(url, migration=role == "migrator", identity=role == "identity", profile=self.profile)
 
     def upgrade(self):
-        if self.profile in ('workbench-d2', 'workspace-chat-d3'):
+        if self.profile in ('workbench-d2', 'workspace-chat-d3', 'classroom-work-d4'):
             raise RuntimeError('D2 requires the verified workbench upgrade operator')
         database = self.database("migrator")
         try:

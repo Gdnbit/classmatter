@@ -78,7 +78,7 @@ test('D2 discovery is explicit, closed and never an outage fallback', async () =
     globalThis.fetch = async path => { calls.push(path); return path.endsWith('/workbench-d2/capabilities')
       ? response(capability) : new Response('', { status: 404 }); };
     assert.equal(await api.discoverD1(session), 'workbench-d2');
-    assert.equal(calls.length, 3);
+    assert.equal(calls.length, 4);
     assert.ok(calls.every(path => path.startsWith(`/api/workspaces/${session.subject.workspace_id}/`)));
     for (const value of [{ ...capability, complete_exit: true }, { ...capability, data_mode: 'production' },
       { ...capability, unexpected: true }, { ...capability, document_protocol: 'arbitrary' }]) {

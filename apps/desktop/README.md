@@ -2,6 +2,14 @@
 
 Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷方式，也不是完整本地 Agent。
 
+## 当前成绩与座位开发入口（D4）
+
+默认`pnpm build`/`pnpm start`使用同一个原界面的D4开发增量，增加成绩表格、座位图及对话候选。只有存储协议升级，不是另一套工作台。完整工程证据与限制见[领域设计](../../docs/design/workbench-domain-packs.md)和[实施台账](../../docs/implementation-ledger.md)。
+
+已有D3实例先关闭本次应用与API服务，保持数据库运行，在backend执行`uv run --frozen python local.py upgrade-classroom --profile workspace-chat-d3`。它先完整备份并隔离恢复核验，保留Owner、学生、聊天、文档与模型配置，再发布新描述；启动不隐式迁移。原D1/D2按下文先升级D3；全新目录仍用原`prepare-chat`，之后执行D4升级。不要对已有目录重新prepare、init或bootstrap。开发入口不设置密码。
+
+完整D4本机checkpoint使用`backup`/`backup-check`及`--profile classroom-work-d4`，不能用D3备份漏掉成绩/座位后声称完整。启用后旧客户端不能连接新库；回滚需保留新旧checkpoint、核验整库恢复并说明升级后写入损失，或前进修复，不能仅revert后DROP表。兼容D3源码仍可显式`node scripts/runtime-build.cjs --profile workspace-chat-d3`构建，但只连接未升级的D3库。以下早期D3说明保留为演进记录，当前默认以本节为准。
+
 ## 本机开发直接使用（取代下文早期免密码登录流程）
 
 默认 D3 桌面开发入口不设置用户密码，不生成隐藏密码，不显示登录、退出登录或重新验证身份。原工作区和聊天数据保留；刷新和完整重启直接恢复使用，空闲不触发登录过期。前端仅在本机连接实际失败时提供“重试连接”，不自动重放发送、创建、编辑或批准操作。

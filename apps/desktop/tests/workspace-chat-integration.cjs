@@ -3,7 +3,9 @@ const { _electron: electron } = require('playwright-core');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const stage = path.resolve(__dirname, '../.build/runtime-d3');
+const profile = process.env.CLASSMATTER_TEST_PROFILE || 'workspace-chat-d3';
+if (!['workspace-chat-d3','classroom-work-d4'].includes(profile)) throw new Error('Owned fixture profile required');
+const stage = path.resolve(__dirname, profile === 'classroom-work-d4' ? '../.build/runtime-d4' : '../.build/runtime-d3');
 const root = process.env.CLASSMATTER_TEST_RUNTIME_ROOT, port = Number(process.env.CLASSMATTER_TEST_SERVICE_PORT);
 if (!root || !path.isAbsolute(root) || !Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Owned fixture required');
 const file = path.join(stage, 'runtime-source.json'), original = fs.readFileSync(file);
@@ -51,6 +53,15 @@ async function launch() {
   await page.reload();
   await page.getByLabel('输入消息').waitFor();
   assert.equal(await page.getByRole('button', { name: '进入本机开发', exact: true }).count(), 0);
+  if (profile === 'classroom-work-d4') {
+    await page.getByLabel('更多功能', {exact:true}).click();
+    await page.getByRole('button',{name:'成绩',exact:true}).click();
+    await page.getByRole('region',{name:'成绩表格',exact:true}).getByRole('row').filter({hasText:'合成原学生'}).filter({hasText:'88.50'}).waitFor();
+    await page.getByLabel('更多功能', {exact:true}).click();
+    await page.getByRole('button',{name:'座位',exact:true}).click();
+    await page.getByRole('button',{name:'1排2座 合成原学生',exact:true}).waitFor();
+    console.log('PASS owned D4 Electron: grades/seating share the preserved world after full native/API restart');
+  }
   console.log('PASS owned D3 Electron: passwordless original shell; persisted ordinary chat survives full API/application restart');
 } finally {
   if (app) await app.close();

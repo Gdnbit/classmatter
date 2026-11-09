@@ -9,6 +9,10 @@ function target(command: Command): { id: string; version: number } {
   let changed = false
   let zeroBased = false
   switch (command.command) {
+    case 'exam.create': field = 'exam_id'; break
+    case 'score.record': field = 'student_id'; changed = true; zeroBased = true; break
+    case 'seat.layout.create': field = 'layout_id'; break
+    case 'seat.assign': case 'seat.swap': field = 'layout_id'; changed = true; break
     case "class.create": field = "class_id"; break
     case "student.create": field = "student_id"; break
     case "record.create": field = "record_id"; break

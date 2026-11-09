@@ -15,7 +15,7 @@ try {
 try {
   source=JSON.parse(fs.readFileSync(path.join(__dirname,'runtime-source.json'),'utf8'));
   const keys=Object.keys(source).sort().join(',');
-  d1=source.schema_version===2 && ['conversation-d1','workspace-chat-d3'].includes(source.profile) && keys==='profile,repositoryRoot,runtimeRoot,schema_version,servicePort'
+  d1=source.schema_version===2 && ['conversation-d1','workspace-chat-d3','classroom-work-d4'].includes(source.profile) && keys==='profile,repositoryRoot,runtimeRoot,schema_version,servicePort'
     && Number.isInteger(source.servicePort) && source.servicePort>=1024 && source.servicePort<=65535;
   if(!d1 && (source.schema_version!==1 || keys!=='repositoryRoot,runtimeRoot,schema_version'))sourceInvalid=true;
 } catch {sourceInvalid=true;}
@@ -54,14 +54,14 @@ else {
         developerCookies=opened.cookies;
         // Only the current local workspace may restore the previously tested
         // and explicitly enabled transport. Explicit operator flags win.
-        if(source.profile==='workspace-chat-d3'&&!modelNetwork.bases.length&&opened.model_network!==undefined)modelNetwork=validateNetwork(opened.model_network);
+        if(['workspace-chat-d3','classroom-work-d4'].includes(source.profile)&&!modelNetwork.bases.length&&opened.model_network!==undefined)modelNetwork=validateNetwork(opened.model_network);
       }finally{pipe.stop();}
     }else if(d1)setupWindow=await require('./setup-window.cjs').prepareWorkspace({BrowserWindow,ipcMain,session},source);
     service=desktopService(source.repositoryRoot,path.join(__dirname,'ui'),()=>{
       if(window) window.close();
       // No automatic replay or reattachment after a service crash.
       app.quit();
-    },source.runtimeRoot,d1?source.profile:'r1',d1?source.servicePort:8000,modelNetwork,development&&source.profile==='workspace-chat-d3');
+    },source.runtimeRoot,d1?source.profile:'r1',d1?source.servicePort:8000,modelNetwork,development&&['workspace-chat-d3','classroom-work-d4'].includes(source.profile));
     origin=await service.start();
     const isolated=session.fromPartition(d1?'classmatter-synthetic-d1':'classmatter-synthetic-runtime');
     const installDeveloperCookies=async cookies=>{
@@ -82,7 +82,7 @@ else {
       // leaves the destination to the user. Never set an arbitrary save path.
       item.setSaveDialogOptions({title:d1?'保存已批准的合成证据退出包':'保存已批准的合成核心退出包',defaultPath:d1?'ClassMatter-synthetic-conversation-v6.json':'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});
     });
-    window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · ClassMatter',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),additionalArguments:development?['--classmatter-development-no-password',...(source.profile==='workspace-chat-d3'?['--classmatter-local-only']:[])]:[],session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
+    window=new BrowserWindow({width:1380,height:900,minWidth:1000,minHeight:680,title:'班事有谱 · ClassMatter',show:false,backgroundColor:'#ffffff',titleBarStyle:'hidden',titleBarOverlay:{color:'#eef3f6',symbolColor:'#505c63',height:44},webPreferences:{preload:path.join(__dirname,'preload.cjs'),additionalArguments:development?['--classmatter-development-no-password',...(['workspace-chat-d3','classroom-work-d4'].includes(source.profile)?['--classmatter-local-only']:[])]:[],session:isolated,sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,allowRunningInsecureContent:false,webviewTag:false,spellcheck:false,devTools:false}});
     let developmentBusy=false;
     ipcMain.handle('desktop:development-session',async(event,action)=>{
       if(!development||developmentBusy||!window||event.sender!==window.webContents||event.senderFrame!==window.webContents.mainFrame||!allowed(origin,event.senderFrame.url)||!['enter','reauthenticate'].includes(action))throw new Error('开发会话不可用');

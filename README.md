@@ -65,7 +65,7 @@
 
 ## ✦ 产品能力
 
-**独立 PC 工作台：** Windows x64 桌面默认接本机工作区聊天数据库（D3，旧实例需显式备份升级），沿用原型布局；开发入口免输密码。普通聊天无需先建班并可恢复历史；对话可准备班级、学生、任务和工作文档的创建/修改候选，确认后经原受控流程保存。尚未覆盖全部原型页面，真实模型需在设置接入并验证；完整持久化发行包和完整本地 Agent 尚未交付。当前仅合成开发数据。见[桌面运行与打包](apps/desktop/README.md)。
+**独立 PC 工作台：** Windows x64 桌面沿用原界面，开发入口不设置密码。普通聊天无需先建班并可恢复历史；对话可准备班级、学生、任务、文档、基本考试成绩与座位操作，确认后接续下一步，原页面读取同一数据库。当前D4开发实例需先按说明完整备份升级；导入、solver、无人值守任务、完整跨机退出和全部原型页面尚未交付，真实模型需在设置接入并验证。当前仅合成开发数据。见[桌面运行与打包](apps/desktop/README.md)。
 
 ### 从一件班务开始，形成完整的工作闭环
 
@@ -140,6 +140,7 @@ flowchart LR
 cd backend
 uv sync --frozen
 uv run --frozen python local.py prepare-chat --profile conversation-d1 --pg-root '<PostgreSQL18安装目录>'
+uv run --frozen python local.py upgrade-classroom --profile workspace-chat-d3
 
 # 构建并打开独立桌面开发应用
 cd ../apps/web
@@ -150,7 +151,7 @@ pnpm build
 pnpm start
 ```
 
-`prepare-chat`仅用于全新开发目录：准备原D1实例与免密码开发身份，完成备份验证后显式升级到D3；拒绝覆盖已有目录。已有D1/D2实例按[桌面升级说明](apps/desktop/README.md)操作，不重复prepare。开发入口直接打开独立窗口，不要求输入密码；退出应用不删除数据库。需要停止数据库时，在backend执行`uv run --frozen python local.py stop --profile workspace-chat-d3`，下次先用同profile的`start`命令启动。聊天记录由数据库保存；真实AI需在设置接入并测试启用模型。
+`prepare-chat`仅用于全新开发目录并拒绝覆盖。它先准备D3工作区，随后`upgrade-classroom`核验完整备份并原地升级至D4；已有D3只执行后一步，旧D1/D2按[桌面升级说明](apps/desktop/README.md)操作，不重复prepare。升级前关闭应用与本次服务；不重建Owner、设置密码或清库。退出应用不删除数据库；停止数据库用`uv run --frozen python local.py stop --profile classroom-work-d4`，下次用同profile的`start`启动。真实AI需在设置接入并测试启用模型。
 
 <details>
 <summary><strong>验证命令、Demo 模式与适用边界</strong></summary>

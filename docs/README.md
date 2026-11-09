@@ -2,6 +2,7 @@
 
 - [Logo 资产登记](../assets/brand/README.md)：用户指定的带字标识与独立图形原件、哈希及本地留档边界；图片未随源码公开，不代表应用图标已替换。
 - [聊天持久化与对话创建、编辑](design/workspace-chat-and-actions.md)：工作区聊天、原界面接线、D3显式升级、验收与当前可用边界；不改变冻结R1准入。
+- [成绩与座位接入](design/workbench-domain-packs.md)：D4固定领域、同实例升级与完整checkpoint、对话工具及原页面；保留导入/solver/完整退出等未完成项。
 
 ## 数据库与真实数据接入（2026-10-23 · 设计提案）
 
