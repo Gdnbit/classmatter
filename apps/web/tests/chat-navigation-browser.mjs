@@ -48,6 +48,7 @@ try {
   await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await send('会话甲'); await answer('会话甲').waitFor(); const a = new URL(page.url()).pathname;
+  assert.equal(await input.inputValue(), '');
   await sidebar.getByRole('button', { name: '新对话', exact: true }).click();
   await send('会话乙'); await answer('会话乙').waitFor(); const b = new URL(page.url()).pathname;
   assert.notEqual(a, b);
@@ -88,14 +89,18 @@ try {
 
   await select('会话甲');
   let release = await holdSave('延迟保存甲');
+  await input.fill('回包前的新草稿'); await input.fill('延迟保存甲');
   await select('会话乙'); assert.equal(await input.inputValue(), '乙的未发送草稿'); release();
   await idle(); assert.equal(new URL(page.url()).pathname, b);
   await select('会话甲'); await answer('延迟保存甲').waitFor();
+  assert.equal(await input.inputValue(), '延迟保存甲');
   await sidebar.getByRole('button', { name: '新对话', exact: true }).click();
   release = await holdSave('延迟新会话');
+  await input.fill('新对话回包前的草稿'); await input.fill('延迟新会话');
   await select('会话乙'); release(); await idle();
   assert.equal(new URL(page.url()).pathname, b);
   await select('延迟新会话'); await answer('延迟新会话').waitFor();
+  assert.equal(await input.inputValue(), '延迟新会话');
 
   await sidebar.getByRole('button', { name: '新对话', exact: true }).click();
   await page.route('**/workspace-chat/threads/*/turns', route => route.abort('failed'), { times: 1 });
@@ -103,8 +108,10 @@ try {
   const pendingPath = new URL(page.url()).pathname;
   await select('会话乙'); assert.equal(await input.inputValue(), '乙的未发送草稿');
   await select('待恢复新会话 · 待确认'); assert.equal(new URL(page.url()).pathname, pendingPath);
+  await input.fill('恢复前的新草稿'); await input.fill('待恢复新会话');
   await page.getByRole('button', { name: '恢复消息', exact: true }).click();
   await page.getByRole('button', { name: '继续回复', exact: true }).waitFor();
+  assert.equal(await input.inputValue(), '待恢复新会话');
   assert.equal(starts.length, 4); // Recovering input never dispatches a model.
   await page.getByRole('button', { name: '继续回复', exact: true }).click();
   await answer('待恢复新会话').waitFor();

@@ -7,7 +7,10 @@ import { getModelStatus, type ModelStatus } from "./model-configuration"
 type Props = { enabled: boolean; session: Session | null; threadId: string; canInteract: boolean; refreshSignal: unknown;
   onSelect: (id: string) => void; onSaved: (id: string) => void; onBusy: (busy: boolean) => void; onDraft: (dirty: boolean) => void; onError: (error: unknown) => void; onPreview: (preview: ChatPreview) => void }
 const active = (turn?: ChatTurn) => !!turn && (turn.state === "queued" || turn.state === "running")
-type LocalThread = { text: string; busy: boolean; saving: boolean; status: string; pending: {thread: string; request: string; text: string} | null; stream: AbortController | null }
+type LocalThread = { text: string; editVersion: number; busy: boolean; saving: boolean; status: string; pending: {thread: string; request: string; text: string; editVersion: number} | null; stream: AbortController | null }
+function clearSentDraft(state: LocalThread, sent: { text: string; editVersion: number }) {
+  if (state.text === sent.text && state.editVersion === sent.editVersion) { state.text = ""; state.editVersion++ }
+}
 export function useWorkspaceChat(props: Props) {
   const latest = useRef(props); latest.current = props
   const epoch = useRef(0), view = useRef(0), selected = useRef(props.threadId)
@@ -17,7 +20,7 @@ export function useWorkspaceChat(props: Props) {
   const changed = () => redraw(value => value + 1)
   function local(thread = selected.current) {
     let state = threads.current.get(thread)
-    if (!state) { state = { text: "", busy: false, saving: false, status: "", pending: null, stream: null }; threads.current.set(thread, state) }
+    if (!state) { state = { text: "", editVersion: 0, busy: false, saving: false, status: "", pending: null, stream: null }; threads.current.set(thread, state) }
     return state
   }
   const [history, setHistory] = useState<ChatHistory | null>(null), [listing, setListing] = useState<ChatListing | null>(null)
@@ -133,9 +136,10 @@ export function useWorkspaceChat(props: Props) {
   }
   async function send() {
     if (!props.canInteract || model?.mode === "stale" || !freshScope || local().busy || pendingSend || active(last) || !navigator.onLine || !text.trim() || history?.thread.status && history.thread.status !== "active") return
-    const target = { thread: selected.current || crypto.randomUUID(), request: crypto.randomUUID(), text }
+    const target = { thread: selected.current || crypto.randomUUID(), request: crypto.randomUUID(), text, editVersion: local().editVersion }
     if (!selected.current) {
-      local(target.thread).text = text; local("").text = ""
+      local(target.thread).text = text; local(target.thread).editVersion = target.editVersion
+      local("").text = ""; local("").editVersion++
       selected.current = target.thread; view.current++; reader.current?.abort(); setHistory(null); setFresh(false)
     }
     await operate(async (generation, thread, api, state) => {
@@ -147,7 +151,7 @@ export function useWorkspaceChat(props: Props) {
         if (generation !== epoch.current) return
         if (result.turn.request_id !== target.request || result.turn.user_text !== target.text) throw new Error("输入保存响应不匹配")
         savedInput = true; state.pending = null; state.saving = false
-        if (state.text === target.text) state.text = ""
+        clearSentDraft(state, target)
         changed(); await refreshAfter(thread, generation)
         if (generation === epoch.current && navigator.onLine) await runSaved(thread, result.turn, generation, api)
       } catch (error) {
@@ -160,7 +164,7 @@ export function useWorkspaceChat(props: Props) {
           const restored = await (wasCurrent ? refreshRef.current(thread) : api.history(thread)).catch(error => { if (generation === epoch.current) report(error, thread); return null })
           if (generation !== epoch.current) return
           if (restored?.turns.some(row => row.request_id === target.request && row.user_text === target.text)) {
-            if (!savedInput) { state.pending = null; if (state.text === target.text) state.text = "" }
+            if (!savedInput) { state.pending = null; clearSentDraft(state, target) }
             savedInput = true
           }
           if (restored?.turns.find(row => row.request_id === target.request)?.state === "completed") state.status = ""
@@ -184,7 +188,7 @@ export function useWorkspaceChat(props: Props) {
     }
     catch (error) { if (generation === epoch.current) report(error, thread) }
   }
-  const setText = (value: string) => { local().text = value; changed() }
+  const setText = (value: string) => { const state = local(); state.text = value; state.editVersion++; changed() }
   const pendingThreads = [...threads.current.entries()].flatMap(([id, item]) => id && item.pending && !listing?.data.some(row => row.thread_id === id)
     ? [{ thread_id: id, title: item.pending.text.slice(0, 40) }] : [])
   return { history, listing, pendingThreads, model, text, setText, working, anyWorking, listingBusy: listingLoading.current, fresh: freshScope, status, pendingSend, send, lastActive: active(last),
@@ -203,7 +207,7 @@ export function useWorkspaceChat(props: Props) {
       const saved = await api.history(thread)
       if (generation !== epoch.current) return
       const turn = saved?.turns.find(row => row.request_id === pendingSend.request)
-      if (turn && turn.user_text === pendingSend.text) { state.pending = null; if (state.text === pendingSend.text) state.text = ""; state.status = "消息已保存，可以继续回复。"; changed(); await refreshAfter(thread, generation) }
+      if (turn && turn.user_text === pendingSend.text) { state.pending = null; clearSentDraft(state, pendingSend); state.status = "消息已保存，可以继续回复。"; changed(); await refreshAfter(thread, generation) }
     }),
     startQueued: (turn: ChatTurn) => operate(async (generation, thread, api) => { if (props.canInteract && freshScope && turn.state === "queued" && history?.thread.status === "active") { await runSaved(thread, turn, generation, api); await refreshAfter(thread, generation) } }),
     preview: (turn: ChatTurn) => operate(async (generation, thread, api) => { if (props.canInteract && freshScope && history?.thread.status === "active" && turn.candidate && !turn.action_receipt) {
