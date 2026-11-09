@@ -1076,7 +1076,7 @@ export default function R1App() {
             <button disabled={busy || documentBusy || refreshing} onClick={() => { setError(""); setNotice(""); void reload(documentDraft ? classroom : undefined).catch(fail) }}>重新读取数据</button>
           </div>
         )}
-        <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}`}
+        <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}${page === "conversation" && workspaceMode && !conversationStarted ? " r1-conversation-home" : ""}`}
           onWheel={event => { if (page === "conversation" && event.deltaY < 0) followingConversation.current = false }}
           onKeyDown={event => {
             if (page === "conversation" && ["PageUp", "Home", "ArrowUp"].includes(event.key)
@@ -1143,7 +1143,7 @@ export default function R1App() {
                 <button onClick={() => setPage("students")}>查看学生</button>
               </div>
               </div></div>
-              {workspaceMode && <WorkspaceChatHistory state={workspaceConversation} />}
+              {workspaceMode && (conversationStarted || workspaceConversation.status) && <WorkspaceChatHistory state={workspaceConversation} />}
               {!workspaceMode && durableProfile && <DurableHistory state={durable} canWrite={editable && !busy && !form && !pending}
                 onDraft={title => { setDraftTitle(title); setRecord(null); open("task") }} />}
               {!durableProfile && <div ref={conversationContent} className="r1-messages">
