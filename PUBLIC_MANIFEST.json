@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "ea5a547143707bf36c8a6d2771ecb98ab0da0dc75013766e27a18e769047b87b"
+      "sha256": "78270453f6141c3ae0b4b3d5d1bff4c8e113665e45a7820039daf30eb0f4db6c"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2702,7 +2702,7 @@
       "sha256": "79bcb8eb49a580c6bcc30205077548d38506622e2e07d27b961b6d0cd8ceb9fd"
     },
     "apps/desktop/tests/setup-integration.cjs": {
-      "sha256": "20b84431f83b2473eb7c7bd21839aac7f3c765fad0c2443764b7b8238dd22666"
+      "sha256": "0af984086fb4333147a2780002c15a6c5cf267dd438a548acc1a3c155be232d1"
     },
     "apps/desktop/tests/setup-service.test.cjs": {
       "sha256": "1562151016965324c1cdaa9a2f7621d4dab4516988fc9873f8c4a93e97edb817"

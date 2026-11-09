@@ -1,5 +1,13 @@
 # 实现与验收台账
 
+## 2026-11-09 追加Windows全库回归与旧原生设置测试修复
+
+成绩/座位PR #70已合并至main `7380796`；精确head `b1a2fd0`的CI `42615605010`、合并后main的CI `42619296755`均Windows/Ubuntu成功。前者Ubuntu真实PG/浏览器671通过、32项平台跳过（1322.94秒），不是拿上一提交的状态代替当前提交。
+
+额外本机Windows完整DB运行在约71%发现旧`test_original_shell_opens_after_native_human_setup`失败。独立复现`test-results/classroom-legacy-setup-repro.log`为外层100秒超时（149.49秒含初始化/退出）；未更改该总时限。旧`apps/desktop/tests/setup-integration.cjs`查找不存在的“本机 密码”，实际既有标签为“本机 Owner 密码”；原脚本未设置Playwright步骤超时，不能及时进入finally。仅将两处定位改为现有精确标签，并给两个窗口增加15秒步骤上限；原恢复码、清空密码、初始化批准、原窗口结构、能力隔离和禁止外部请求断言全部保留，产品/身份策略不变。
+
+已核验并仅清理两个此次超时留下的D1临时测试Electron进程，未触碰正在使用的D4应用或数据库。修复后原单项`test-results/classroom-legacy-setup-fixed.log`1通过（90.86秒）；原完整运行的结果仍如实保留，不能把旧运行的失败改写成一次全绿。后续精确提交CI与组合验收在本修复PR留证。本修复不新增业务能力，不改变无密码本机开发入口或正式Gate。
+
 ## 2026-11-09 D4成绩/座位对话与原页面闭环
 
 承接已合并首页PR #68（main c960b6e）及多步任务PR #69（main e22d2f1），各自精确head的Windows/Ubuntu CI均成功；未借用旧失败运行。本单元为后续D2-GRD/D2-SEA合成工程增量，正式107需求/147 Eval/94任务、冻结R1及Gate状态不变。
