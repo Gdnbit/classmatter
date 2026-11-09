@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "646f870874ba0d2be2519dbc5c9361559f0d75b2ed1fab2803cf42608da83542"
+      "sha256": "64d0213c17268593c82fcc2fa69cc8f1cab6dca86563924b37cba6dbab409c3f"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -726,7 +726,7 @@
       "sha256": "a1eefaa3a1085e59a7857ab3d485491c465f9db63de095c9b7ac0f8408001b5c"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "9745d9b9537741510ff3beeb71e4dadf80b8eecf410e2021d804294928cbb638"
+      "sha256": "ec5a764e8e584c2439e5da145251da45ac9ce1400b3f2e3be59c6d813bf1ed4c"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "2bccc19ae001e98e669f3bbb7b6f3cd2b968893b2d85e27544e0ef6caca80fbe"
@@ -870,7 +870,7 @@
       "sha256": "507d510cee982bdd2b6af4169e3701fb42642c849558155cdbdf0339d5442885"
     },
     "apps/web/tests/runtime.mjs": {
-      "sha256": "c296c7dd0f6f5640259464b22a4b62367c46a55e43dd439765a9ad4af95642a8",
+      "sha256": "2d8b18754064f01ceb050a668b46684f10e903fb24d2fceaf36adc887315acdd",
       "reviewed_pattern_exceptions": [
         {
           "rule": "email-shape",
@@ -2990,7 +2990,7 @@
       "sha256": "63960ad5c85e3ec77e7764eeeda849d15f1d5da3655b266c778dcd76b5c21cd0"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "050a9b3e6759acd79c8077139f4b5d657d544e5515495e1157b9aca95c74978d"
+      "sha256": "c5a08daa6d3dfbb68c4ab8265704abb774ecb0021b568e29382e54753878a617"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"

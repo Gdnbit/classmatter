@@ -47,10 +47,10 @@ try {
   await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   await page.getByRole('heading', { name: '今天想处理什么？' }).waitFor();
-  await page.getByRole('status').waitFor();
+  await page.getByRole('status').filter({ hasText: /^正在加载…$/ }).waitFor();
   assert.equal(await (await classControl()).isDisabled(), true);
   await closeSettings();
-  await page.getByRole('status').waitFor({ state: 'hidden' });
+  await page.getByRole('status').filter({ hasText: /^正在加载…$/ }).waitFor({ state: 'hidden' });
   const initialReadRoute = /\/workspaces\/[0-9a-f-]+\/classes$/;
   await page.route(initialReadRoute, route => route.fulfill({ status: 503, body: 'synthetic-private-initial-read-canary' }));
   await closeSettings();
@@ -762,8 +762,10 @@ try {
   await page.getByLabel('输入消息').press('Enter');
   // Complete an actual read-only UI request instead of sleeping to flush the event.
   await closeSettings();
+  const inactiveScopeRefresh = page.waitForResponse(response => activityRoute.test(new URL(response.url()).pathname) && response.status() === 200);
   await page.getByRole('button', { name: '刷新数据', exact: true }).click();
-  await page.getByRole('status').waitFor({ state: 'hidden' });
+  await observed(inactiveScopeRefresh, 'inactive scope refresh');
+  await page.getByRole('status').filter({ hasText: /^正在加载…$/ }).waitFor({ state: 'hidden' });
   assert.equal(blockedAgentRequests.length, 0);
   assert.equal(await page.getByLabel('输入消息').inputValue(), '停用范围不能发送的合成消息');
   page.off('request', trackBlockedSend);

@@ -1050,7 +1050,7 @@ export default function R1App() {
           <button
             aria-label="刷新数据"
             disabled={interactionBlocked || documentBusy || refreshing}
-            onClick={() => void reload(documentDraft ? classroom : undefined).catch(fail)}
+            onClick={() => { setError(""); setNotice(""); void reload(documentDraft ? classroom : undefined).catch(fail) }}
           >
             <RefreshCw size={16} />
           </button>
@@ -1073,7 +1073,7 @@ export default function R1App() {
         {!refreshing && !queryFresh && (
           <div className="r1-warning" role="status">
             <strong>当前列表尚未刷新。</strong>请刷新后再继续编辑；若刚才正在保存，请先核对结果。
-            <button disabled={busy || documentBusy || refreshing} onClick={() => void reload(documentDraft ? classroom : undefined).catch(fail)}>重新读取数据</button>
+            <button disabled={busy || documentBusy || refreshing} onClick={() => { setError(""); setNotice(""); void reload(documentDraft ? classroom : undefined).catch(fail) }}>重新读取数据</button>
           </div>
         )}
         <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}`}
