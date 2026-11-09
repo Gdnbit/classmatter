@@ -1,6 +1,7 @@
 /* Original shell is shared with the fixture UI; live controllers own all data. */
 .connected-runtime{display:contents}
 .connected-runtime .classroom-grades .sheet-row>span{padding:12px;border-right:1px solid #e0e6e2;border-bottom:1px solid #e0e6e2;min-width:0;overflow-wrap:anywhere}
+.connected-runtime .classroom-grades h1{font-size:clamp(25px,3vw,34px);line-height:1.15;letter-spacing:-.035em;margin:4px 0 9px;font-weight:640;color:#202b24}
 .connected-runtime .app-shell{height:100dvh;min-height:0}
 .desktop-host .connected-runtime .app-shell{height:calc(100dvh - var(--desktop-bar-height))}
 .connected-runtime .app-shell>.sidebar{width:auto;min-width:0;min-height:0;padding:0}
