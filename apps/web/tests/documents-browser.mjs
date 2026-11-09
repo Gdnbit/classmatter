@@ -16,6 +16,7 @@ page.on('request', request => {
 const body = '# 合成工作小结\n<script>throw new Error("untrusted body executed")</script>\n不作为正式事实。';
 const editor = page.getByLabel('文档正文', { exact: true });
 const dialog = page.getByRole('dialog', { name: '确认文档变更', exact: true });
+const readReleases = [];
 async function confirm() {
   await dialog.getByRole('button', { name: '明确批准并保存', exact: true }).click();
   await dialog.waitFor({ state: 'hidden' });
@@ -62,6 +63,27 @@ try {
   await editor.waitFor();
   assert.equal(await editor.inputValue(), body);
   assert.equal(commits.length, 1);
+  let releaseRead, readReached, readFinished;
+  const readGate = new Promise(resolve => { releaseRead = resolve; }); readReleases.push(releaseRead);
+  const reached = new Promise(resolve => { readReached = resolve; });
+  const finished = new Promise(resolve => { readFinished = resolve; });
+  await page.route(`**${collection}/${documentId}`, async route => {
+    const response = await route.fetch(); readReached(); await readGate;
+    try { await route.fulfill({ response }); } catch { /* Navigation aborted this owned read. */ }
+    finally { readFinished(); }
+  }, { times: 1 });
+  await page.getByRole('button', { name: '重新读取文档', exact: true }).click();
+  await Promise.race([reached, new Promise((_, reject) => setTimeout(() => reject(new Error('Owned document read not reached')), 10000))]);
+  assert(await page.getByRole('button', { name: '新建文档', exact: true }).isEnabled());
+  await page.getByRole('button', { name: '新建文档', exact: true }).click();
+  await page.getByLabel('文档标题', { exact: true }).fill('切换后的未保存草稿');
+  await editor.fill('迟到的旧文档不得覆盖此草稿');
+  releaseRead(); await finished;
+  assert.equal(await editor.inputValue(), '迟到的旧文档不得覆盖此草稿');
+  assert.equal(await page.getByLabel('文档标题', { exact: true }).inputValue(), '切换后的未保存草稿');
+  await page.getByRole('button', { name: '放弃本地编辑并重新读取', exact: true }).click();
+  await page.getByRole('complementary', { name: '文档列表' }).getByRole('button', { name: /合成文档浏览器验收/ }).click();
+  await page.waitForFunction(expected => document.querySelector('[aria-label="文档正文"]')?.value === expected, body);
   await context.setOffline(true);
   await editor.fill(body + '\n保留离线编辑。');
   assert.equal(await editor.inputValue(), body + '\n保留离线编辑。');
@@ -72,6 +94,26 @@ try {
   await confirm();
   await page.getByText('版本 2 · 可审阅草稿', { exact: true }).waitFor();
   await page.getByRole('button', { name: '修订记录', exact: true }).click();
+  let releaseRevision, revisionReached, revisionFinished;
+  const revisionGate = new Promise(resolve => { releaseRevision = resolve; }); readReleases.push(releaseRevision);
+  const revisionReady = new Promise(resolve => { revisionReached = resolve; });
+  const revisionDone = new Promise(resolve => { revisionFinished = resolve; });
+  await page.route(`**${collection}/${documentId}/revisions/1`, async route => {
+    const response = await route.fetch(); revisionReached(); await revisionGate;
+    try { await route.fulfill({ response }); } catch { /* Selection invalidates this owned read. */ }
+    finally { revisionFinished(); }
+  }, { times: 1 });
+  await page.getByRole('region', { name: '已保存文档版本' }).getByRole('button', { name: /版本 1 · 新建/ }).click();
+  await Promise.race([revisionReady, new Promise((_, reject) => setTimeout(() => reject(new Error('Owned revision not reached')), 10000))]);
+  assert(await page.getByRole('button', { name: '新建文档', exact: true }).isEnabled());
+  await page.getByRole('button', { name: '新建文档', exact: true }).click();
+  await editor.fill('版本读取期间的新草稿'); releaseRevision(); await revisionDone;
+  assert.equal(await editor.inputValue(), '版本读取期间的新草稿');
+  await page.getByRole('button', { name: '修订记录', exact: true }).click();
+  assert.equal(await page.getByRole('region', { name: '已保存文档版本' }).locator('h2').count(), 0);
+  await page.getByRole('button', { name: '放弃本地编辑并重新读取', exact: true }).click();
+  await page.getByRole('complementary', { name: '文档列表' }).getByRole('button', { name: /合成文档浏览器验收/ }).click();
+  await editor.waitFor(); await page.getByRole('button', { name: '修订记录', exact: true }).click();
   await page.getByRole('region', { name: '已保存文档版本' }).getByRole('button', { name: /版本 1 · 新建/ }).click();
   assert.equal(await page.locator('.document-text').last().innerText(), body);
   await page.getByRole('button', { name: '修改后', exact: true }).click();
@@ -117,4 +159,4 @@ try {
   await page.screenshot({ path: `../../test-results/document-editor-${process.env.CLASS_OS_TEST_LOST_REPLY}-mobile.png`, fullPage: true });
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   console.log('PASS original document create/revise/history/reload/offline draft/CAS/archive/restore and lost commit recovery');
-} finally { await context.close(); await browser.close(); }
+} finally { for (const release of readReleases) release(); await context.close(); await browser.close(); }

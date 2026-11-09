@@ -6,13 +6,14 @@ if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synt
 const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 page.setDefaultTimeout(10000);
-const faults = [], external = [], starts = [], cancels = [], failures = [], saveReleases = [];
+const faults = [], external = [], starts = [], cancels = [], clears = [], failures = [], saveReleases = [];
 page.on('response', response => { if (response.status() >= 400) failures.push({ path: new URL(response.url()).pathname, status: response.status() }); });
 page.on('pageerror', error => faults.push(error.message));
 page.on('request', request => {
   if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url());
   if (request.method() === 'POST' && request.url().endsWith('/events')) starts.push(request.url());
   if (request.method() === 'POST' && request.url().endsWith('/cancel')) cancels.push(request.url());
+  if (request.method() === 'POST' && request.url().endsWith('/clear')) clears.push(request.url());
 });
 const input = page.getByLabel('输入消息'), sidebar = page.getByRole('region', { name: '聊天列表' });
 const select = async title => { const button = sidebar.getByRole('button', { name: title, exact: true }); assert(await button.isEnabled()); await button.click(); };
@@ -50,6 +51,30 @@ try {
   await sidebar.getByRole('button', { name: '新对话', exact: true }).click();
   await send('会话乙'); await answer('会话乙').waitFor(); const b = new URL(page.url()).pathname;
   assert.notEqual(a, b);
+  // Browser history must not retarget an already-open destructive dialog.
+  await page.getByRole('button', { name: '清除聊天正文', exact: true }).click();
+  const clearDialog = page.getByRole('dialog', { name: '清除这段聊天正文？', exact: true });
+  await clearDialog.waitFor();
+  await page.goBack(); await page.waitForURL(base + a);
+  await clearDialog.waitFor({ state: 'hidden' });
+  await answer('会话甲').waitFor();
+  await page.goForward(); await page.waitForURL(base + b);
+  await clearDialog.waitFor({ state: 'hidden' });
+  await answer('会话乙').waitFor();
+  assert.equal(clears.length, 0);
+  // New input in the same thread invalidates the opened confirmation too.
+  await page.getByRole('button', { name: '清除聊天正文', exact: true }).click();
+  const identity = await (await page.request.get(base + '/api/identity/session')).json();
+  const threadRoot = `${base}/api/workspaces/${identity.subject.workspace_id}/workspace-chat/threads/${b.split('/').at(-1)}`;
+  const headers = { origin: base, 'x-class-os-csrf': identity.csrf_token }, requestId = crypto.randomUUID();
+  const queuedResponse = await page.request.post(threadRoot + '/turns', { headers, data: { request_id: requestId, text: '合成外部已保存消息' } });
+  assert.equal(queuedResponse.status(), 200);
+  const queued = (await queuedResponse.json()).turn;
+  assert.equal((await page.request.post(`${threadRoot}/turns/${requestId}/cancel`, { headers, data: { expected_version: queued.version } })).status(), 200);
+  await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+  await clearDialog.waitFor({ state: 'hidden' });
+  await page.getByText('合成外部已保存消息', { exact: true }).waitFor();
+  assert.equal(clears.length, 0); assert.equal(starts.length, 2);
 
   await input.fill('乙的未发送草稿'); await select('会话甲');
   assert.equal(await input.inputValue(), ''); await input.fill('甲的未发送草稿');
@@ -119,21 +144,38 @@ try {
   assert.equal(starts.length, 7);
   await select('会话甲'); await answer('等待甲').waitFor();
   assert.equal(starts.length, 7);
-  // A background 401 must still invoke the original global identity handler.
+  // Reading earlier messages must not be interrupted by a completed reply.
   await page.request.post(base + '/__fixture__/hold/甲');
   await send('等待甲');
   await waitState(state => state.calls.filter(text => text === '等待甲').length === 2 && state.active === 1);
+  await page.setViewportSize({ width: 1440, height: 520 });
+  const viewport = page.locator('.r1-conversation-scroll');
+  await page.waitForFunction(() => { const node = document.querySelector('.r1-conversation-scroll'); return node && node.scrollHeight - node.clientHeight > 100; });
+  await viewport.hover(); await page.mouse.wheel(0, -10000);
+  await page.waitForFunction(() => document.querySelector('.r1-conversation-scroll')?.scrollTop < 5);
+  await page.request.post(base + '/__fixture__/release/甲');
+  await page.getByRole('button', { name: '查看新回复', exact: true }).waitFor();
+  assert((await viewport.evaluate(node => node.scrollTop)) < 5);
+  await page.getByRole('button', { name: '查看新回复', exact: true }).click();
+  await page.waitForFunction(() => { const node = document.querySelector('.r1-conversation-scroll'); return node && node.scrollHeight - node.clientHeight - node.scrollTop <= 48; });
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  // A background 401 must still invoke the original global identity handler.
+  await page.request.post(base + '/__fixture__/hold/甲');
+  await send('等待甲');
+  await waitState(state => state.calls.filter(text => text === '等待甲').length === 3 && state.active === 1);
   await select('会话乙');
   await page.route(`**/workspace-chat/threads/${a.split('/').at(-1)}`, route => route.fulfill({ status: 401 }), { times: 1 });
   await page.request.post(base + '/__fixture__/release/甲');
   await page.getByRole('button', { name: '登录', exact: true }).waitFor();
   await waitState(state => state.active === 0);
-  assert.equal(starts.length, 8); assert.equal(cancels.length, 1);
+  assert.equal(starts.length, 9); assert.equal(cancels.length, 1);
   assert.deepEqual(faults, []); assert.deepEqual(external, []);
   console.log('PASS drafts, browser history, new chat, concurrent replies, background completion, targeted cancel, reload without redispatch and background identity failure');
 } catch (error) {
+  await page.screenshot({ path: '../../test-results/interaction-audit-scroll-failure.png' });
   console.error('Owned chat switch failed', page.url(), await page.locator('body').evaluate(element => {
     const copy = element.cloneNode(true); copy.querySelectorAll('input,textarea,pre').forEach(node => node.remove()); return copy.textContent;
-  }), await page.locator('.r1-composer').evaluate(element => ({ ...element.dataset })), failures);
+  }), await page.locator('.r1-composer').evaluate(element => ({ ...element.dataset })),
+  await page.locator('.r1-conversation-scroll').evaluate(node => ({ top: node.scrollTop, height: node.clientHeight, content: node.scrollHeight, ...node.dataset })), failures);
   throw error;
 } finally { for (const release of saveReleases) release(); await page.request.post(base + '/__fixture__/release/甲').catch(() => {}); await page.request.post(base + '/__fixture__/release/乙').catch(() => {}); await browser.close(); }

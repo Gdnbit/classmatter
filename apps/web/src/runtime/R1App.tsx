@@ -197,7 +197,7 @@ export default function R1App() {
   const termLoad = useRef(0)
   const loading = useRef(0)
   const connectivity = useRef(0)
-  const interactionBlocked = busy || confirmLogout || durableBusy || durableDraft || exitBusy || refreshing || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
+  const interactionBlocked = busy || confirmLogout || durableBusy || durableDraft || exitBusy || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
   const navigationBlocked = summaryDraft || documentDraft || documentBusy || interactionBlocked
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
@@ -222,6 +222,11 @@ export default function R1App() {
     if (viewport) viewport.scrollTop = viewport.scrollHeight
     setNewReply(false)
   }, [])
+  useLayoutEffect(() => {
+    followingConversation.current = true
+    setNewReply(false)
+    conversationGeometry.current = null
+  }, [navigation.route.conversationId, navigation.route.conversationClassId, navigation.route.conversationTermId])
   useLayoutEffect(() => {
     if (page !== "conversation" || checking || !session) return
     const appended = messages.length > observedMessages.current
@@ -878,6 +883,14 @@ export default function R1App() {
     onBusy: setWorkspaceBusy, onDraft: setWorkspaceDraft, onError: fail,
     onPreview: proposal => setPending({ proposal, key: crypto.randomUUID() }) })
 
+  const workspaceLatest = workspaceConversation.history?.turns.at(-1)
+  useLayoutEffect(() => {
+    if (!workspaceMode || page !== "conversation" || !workspaceLatest) return
+    if (workspaceLatest.state === "queued") followingConversation.current = true
+    if (followingConversation.current) scrollToLatest()
+    else if (workspaceLatest.state === "completed") setNewReply(true)
+  }, [workspaceMode, page, workspaceLatest?.turn_id, workspaceLatest?.state, scrollToLatest])
+
   const conversationStarted = workspaceMode ? !!navigation.route.conversationId || !!workspaceConversation.pendingSend || !!workspaceConversation.history?.turns.length : durableProfile ? !!navigation.route.conversationId || !!durable.history?.history.messages.length || !!durable.chatMessages.length || durable.working : !!messages.length
 
   if (checking)
@@ -1036,8 +1049,8 @@ export default function R1App() {
           </span>
           <button
             aria-label="刷新数据"
-            disabled={interactionBlocked || documentBusy}
-            onClick={() => void action(() => reload(documentDraft ? classroom : undefined))}
+            disabled={interactionBlocked || documentBusy || refreshing}
+            onClick={() => void reload(documentDraft ? classroom : undefined).catch(fail)}
           >
             <RefreshCw size={16} />
           </button>
@@ -1060,10 +1073,15 @@ export default function R1App() {
         {!refreshing && !queryFresh && (
           <div className="r1-warning" role="status">
             <strong>当前列表尚未刷新。</strong>请刷新后再继续编辑；若刚才正在保存，请先核对结果。
-            <button disabled={busy || documentBusy} onClick={() => void action(() => reload(documentDraft ? classroom : undefined))}>重新读取数据</button>
+            <button disabled={busy || documentBusy || refreshing} onClick={() => void reload(documentDraft ? classroom : undefined).catch(fail)}>重新读取数据</button>
           </div>
         )}
-        <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}`} onScroll={event => {
+        <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}`}
+          onWheel={event => { if (page === "conversation" && event.deltaY < 0) followingConversation.current = false }}
+          onKeyDown={event => {
+            if (page === "conversation" && ["PageUp", "Home", "ArrowUp"].includes(event.key)
+                && !(event.target instanceof HTMLElement && event.target.closest("input,textarea,select,[contenteditable=true]"))) followingConversation.current = false
+          }} onScroll={event => {
           if (page !== "conversation") return
           const viewport = event.currentTarget
           const previous = conversationGeometry.current
@@ -1556,7 +1574,7 @@ export default function R1App() {
                   }
                 }) }}>查看操作记录</button>
                 {!classes.some(item => item.status === "active") && <button disabled={busy || refreshing || !queryFresh} onClick={() => open("class")}>建立班级与学期</button>}
-                <label>切换查看班级<select aria-label="设置中切换班级" disabled={navigationBlocked} value={classroom?.class_id || ""} onChange={event => {
+                <label>切换查看班级<select aria-label="设置中切换班级" disabled={navigationBlocked || refreshing} value={classroom?.class_id || ""} onChange={event => {
                   const target = classes.find(item => item.class_id === event.target.value)
                   setSelectedStudent("")
                   void action(() => reload(target || null))

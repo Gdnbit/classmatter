@@ -95,10 +95,10 @@ def test_chat_navigation_keeps_drafts_and_background_runs_isolated(workspace_cha
             env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}'), capture_output=True,
             text=True, encoding='utf-8', timeout=100, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         assert result.returncode == 0, result.stdout + result.stderr + repr(failures) + repr(activity)
-        assert calls == ['会话甲', '会话乙', '延迟保存甲', '延迟新会话', '待恢复新会话', '等待甲', '等待乙', '等待甲']
+        assert calls == ['会话甲', '会话乙', '延迟保存甲', '延迟新会话', '待恢复新会话', '等待甲', '等待乙', '等待甲', '等待甲']
         with owner.transaction(read_only=True) as connection:
-            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='completed'")).scalar_one() == 7
-            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='cancelled'")).scalar_one() == 1
+            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='completed'")).scalar_one() == 8
+            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='cancelled'")).scalar_one() == 2
             assert connection.execute(text('SELECT count(*) FROM class_os.school_class')).scalar_one() == 0
     finally:
         for gate in gates.values(): gate.set()

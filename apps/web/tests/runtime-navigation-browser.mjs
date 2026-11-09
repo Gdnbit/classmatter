@@ -8,6 +8,7 @@ const browser = await chromium.launch({ headless: true, ...(process.platform ===
 const context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, timezoneId: 'Asia/Shanghai' })
 const page = await context.newPage()
 const errors = [], external = [], mutations = []
+const readReleases = []
 page.on('pageerror', error => errors.push(error.message))
 page.on('request', request => {
   if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url())
@@ -58,6 +59,27 @@ try {
   const idA = new URL(page.url()).pathname.split('/')[2]
   assert.notEqual(idA, idB)
   assert.match(idA, /^[0-9a-f-]{36}$/)
+  let releaseRead, readReached, readFinished
+  const readGate = new Promise(resolve => { releaseRead = resolve }); readReleases.push(releaseRead)
+  const reached = new Promise(resolve => { readReached = resolve })
+  const finished = new Promise(resolve => { readFinished = resolve })
+  await page.route('**/api/workspaces/*/classes', async route => {
+    const response = await route.fetch(); readReached(); await readGate
+    try { await route.fulfill({ response }) } finally { readFinished() }
+  }, { times: 1 })
+  await page.getByRole('button', { name: '刷新数据', exact: true }).click()
+  await Promise.race([reached, new Promise((_, reject) => setTimeout(() => reject(new Error('Owned refresh not reached')), 10000))])
+  assert(await page.getByRole('button', { name: '添加记录', exact: true }).isDisabled())
+  await page.getByRole('button', { name: '工作', exact: true }).click()
+  await page.getByRole('heading', { name: '工作与跟进', exact: true }).waitFor()
+  await page.getByRole('button', { name: '学生', exact: true }).click()
+  await views.getByRole('tab', { name: '表格', exact: true }).click()
+  await page.getByRole('region', { name: '学生表格' }).getByRole('button', { name: /合成导航学生乙/ }).click()
+  releaseRead(); await finished
+  await page.locator('.student-profile-head').getByRole('heading', { name: '合成导航学生乙', exact: true }).waitFor()
+  await page.getByRole('button', { name: '添加记录', exact: true }).waitFor({ state: 'visible' })
+  await page.getByRole('button', { name: '返回学生列表', exact: true }).click()
+  await page.getByRole('region', { name: '学生表格' }).getByRole('button', { name: /合成导航学生甲/ }).click()
   await page.getByRole('button', { name: '添加记录', exact: true }).click()
   await page.getByLabel('发生时间（本机时区）').fill('2026-10-08T08:00')
   await page.getByLabel('事实原文（观察类型请留空）').fill('合成导航数据库事实')
@@ -307,4 +329,4 @@ try {
   assert.deepEqual(external, [])
   assert.equal(mutations.filter(path => /\/agent\//.test(path)).length, 0)
   console.log('PASS: real PG single-world table/detail/tabs/reload/back/deferred form+proposal/unknown/future/logout; Agent absent')
-} finally { await browser.close() }
+} finally { for (const release of readReleases) release(); await browser.close() }
