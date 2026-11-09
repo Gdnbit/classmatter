@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "4c2a20500dcae5adcddd5e9cf459d0b662adbc65587b66cd4365f3f5d77cf943"
+      "sha256": "05941c6920844b71549fb7c34ae6a69db47abe9eaf59116967d9290f2e7e205c"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2942,7 +2942,7 @@
       "sha256": "0b6ddf0917579953ba111430e19b23fd5184c3d5d3d9a3852ffc386146e2b315"
     },
     "backend/tests/test_persistent_chat_web.py": {
-      "sha256": "d2e4fbd56370b07d364a32c1db202a40871333d4629850dd7a3c11d7f240d283"
+      "sha256": "c0193cab1c3be03a0e42bbacbcc6045c60eaa14106cfbaa25e662129bece12a9"
     },
     "backend/tests/test_workspace_chat_runtime.py": {
       "sha256": "56c2acb0ecd093ff8eaa753188f95fe24995f5d2f84eea71e0ff69aa39cd015b"

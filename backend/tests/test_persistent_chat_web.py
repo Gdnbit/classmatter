@@ -124,9 +124,18 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
     }
     def factory(request):
         def respond(messages, info):
-            if any(isinstance(part, ToolReturnPart) for part in messages[-1].parts):
+            returned = [part for part in messages[-1].parts if isinstance(part, ToolReturnPart)]
+            if returned and returned[-1].tool_name == 'read_task_progress':
+                actions = returned[-1].content['actions']
+                assert len(actions) == len(mapping) and all(action['status'] == 'committed' for action in actions)
+                return ModelResponse(parts=[TextPart('已核对已保存操作，没有重复创建。')])
+            if returned:
                 return ModelResponse(parts=[TextPart('合成候选已准备；核对后在对话中确认，不会自动保存。')])
             calls.append(request.text)
+            if request.text == '继续完成上面的任务，只处理尚未完成的步骤。':
+                # FunctionModel does not implement the provider's forced-tool
+                # setting. Honor that contract rather than returning chat text.
+                return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
             if request.text not in mapping:
                 return ModelResponse(parts=[TextPart('合成普通聊天已回复，不需要班级。')])
             return ModelResponse(parts=[ToolCallPart(*mapping[request.text])])
