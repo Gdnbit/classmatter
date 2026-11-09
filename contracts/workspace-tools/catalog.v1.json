@@ -245,6 +245,17 @@
       },
       "kind": "function",
       "strict": null
+    },
+    {
+      "name": "read_task_progress",
+      "description": "Read this conversation's recent requests and freshly verified committed or pending actions before continuing a multi-step task. Never writes or treats assistant claims as receipts.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
     }
   ]
 }

@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-NAMES = ("read_class_work", "prepare_class_create", "prepare_class_edit", "prepare_term_edit", "prepare_student", "prepare_task", "prepare_document")
+NAMES = ("read_class_work", "prepare_class_create", "prepare_class_edit", "prepare_term_edit", "prepare_student", "prepare_task", "prepare_document", "read_task_progress")
 
 
 def catalog():

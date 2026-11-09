@@ -51,7 +51,8 @@ class WorkspaceChatRuntime:
                 previous.insert(0, row); total += size
             conversation.history = [message for row in previous for message in (
                 ModelRequest(parts=[UserPromptPart(row["user_text"])]), ModelResponse(parts=[TextPart(row["assistant_text"])]))]
-            capture = WorkspaceActionCapture(tuple([row["user_text"] for row in previous] + [ticket["user_text"]]))
+            capture = WorkspaceActionCapture(tuple([row["user_text"] for row in previous] + [ticket["user_text"]]),
+                progress_reader=lambda: self.query.history(credentials, thread_id))
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket["user_text"], Mode.CHAT)
             async with aclosing(self.sdk.stream(credentials, request, _workspace_actions=capture)) as stream:

@@ -16,6 +16,73 @@ from test_workspace_chat_storage import workspace_chat, roster, identity
 
 
 @pytest.mark.db
+async def test_multistep_uses_receipts_and_current_reads_across_restarted_runtimes(workspace_chat):
+    business, history, auth, owner, _, clock, store, boundary = workspace_chat
+    commands = WorkbenchBusinessGateway(boundary, store, clock=lambda: clock[0])
+    query = WorkbenchQueryGateway(boundary, store, clock=lambda: clock[0])
+    progress_seen, tools_seen = [], []
+    original = '建立合成流程班，合成流程学期，2026-09-01至2027-01-30；然后添加合成流程学生，再建立文档合成流程小结。'
+    def factory(request):
+        completed = set()
+        def respond(messages, info):
+            assert not {'commit', 'approve', 'sql'} & {tool.name for tool in info.function_tools}
+            returned = [part for part in messages[-1].parts if isinstance(part, ToolReturnPart)]
+            if not returned:
+                return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
+            tool, value = returned[-1].tool_name, returned[-1].content
+            tools_seen.append(tool)
+            if tool == 'read_task_progress':
+                progress_seen.append(value)
+                assert original in value['requests']
+                if any(action['status'] == 'awaiting-confirmation' for action in value['actions']):
+                    return ModelResponse(parts=[TextPart('请先确认尚未保存的步骤。')])
+                completed.update(action['command'] for action in value['actions'] if action['status'] == 'committed')
+                if 'class.create' not in completed:
+                    return ModelResponse(parts=[ToolCallPart('prepare_class_create', {'name': '合成流程班', 'term_name': '合成流程学期', 'start_date': '2026-09-01', 'end_date': '2027-01-30'})])
+                if 'document.create' in completed:
+                    return ModelResponse(parts=[TextPart('已完成三步，没有重复创建。')])
+                return ModelResponse(parts=[ToolCallPart('read_class_work', {'kind': 'class'})])
+            if tool == 'read_class_work':
+                # Exercise a real SDK loop longer than the former 3-tool limit.
+                kinds = [part.args_as_dict().get('kind') for message in messages for part in message.parts
+                         if isinstance(part, ToolCallPart) and part.tool_name == 'read_class_work']
+                if len(kinds) < 4:
+                    return ModelResponse(parts=[ToolCallPart('read_class_work', {'kind': ['class', 'students', 'tasks', 'documents'][len(kinds)]})])
+                if 'student.create' not in completed:
+                    return ModelResponse(parts=[ToolCallPart('prepare_student', {'action': 'create', 'name': '合成流程学生'})])
+                return ModelResponse(parts=[ToolCallPart('prepare_document', {'action': 'create', 'title': '合成流程小结', 'body': '待核对的小结。'})])
+            return ModelResponse(parts=[TextPart('已准备下一步，请核对确认。')])
+        return FunctionModel(respond)
+    thread = uuid4()
+    for index, expected in enumerate(['class.create', None, 'student.create', 'document.create', None]):
+        # Recreate SDK/runtime every time: progress must come from PG receipts, not RAM.
+        runtime = WorkspaceChatRuntime(business, history, PydanticAgentRuntime(query, model_factory=factory))
+        key = uuid4()
+        business.send(auth, thread, key, original if index == 0 else '继续完成上面的任务，只处理尚未完成的步骤。')
+        events = [event async for event in runtime.stream_queued(auth, thread, key)]
+        assert any(event.type == 'run.completed' for event in events), runtime.sdk.last_failure_type
+        row = history.history(auth, thread)['turns'][-1]
+        if expected is None:
+            assert row['candidate'] is None
+        else:
+            assert row['candidate']['command'] == expected
+        if index in (1, 2, 3):
+            candidate_row = history.history(auth, thread)['turns'][0] if index == 1 else row
+            from class_os.domain.workspace_chat import candidate
+            proposal = commands.preview(*auth, candidate(candidate_row['candidate']))
+            approval = commands.approve(*auth, proposal.proposal_id, proposal.payload_hash) if proposal.risk == 'W2' else None
+            commands.commit(*auth, proposal.proposal_id, uuid4(), approval)
+        # Refresh/repeated dispatch never repeats a tool or business operation.
+        assert [event async for event in runtime.stream_queued(auth, thread, key)] == []
+    assert len(progress_seen) == 5 and tools_seen.count('read_class_work') == 8
+    assert [action['status'] for action in progress_seen[1]['actions']] == ['awaiting-confirmation']
+    assert [action['status'] for action in progress_seen[-1]['actions']] == ['committed'] * 3
+    with owner.transaction(read_only=True) as connection:
+        for table in ('school_class', 'student', 'working_document'):
+            assert connection.execute(text(f'SELECT count(*) FROM class_os.{table}')).scalar_one() == 1
+
+
+@pytest.mark.db
 async def test_conversation_creates_and_edits_core_objects_after_human_confirmation(workspace_chat):
     business, history, credentials, owner, _, clock, store, boundary = workspace_chat
     commands = WorkbenchBusinessGateway(boundary, store, clock=lambda: clock[0])
@@ -152,5 +219,27 @@ async def test_missing_class_dates_remain_conversational_not_invented_data(works
     assert any(event.type == 'run.completed' for event in events)
     row = history.history(auth, thread)['turns'][0]
     assert row['candidate'] is None and '日期' in row['assistant_text']
+    with owner.transaction(read_only=True) as connection:
+        assert connection.execute(text('SELECT count(*) FROM class_os.school_class')).scalar_one() == 0
+
+
+@pytest.mark.db
+async def test_repeating_multistep_tools_exhausts_budget_without_writes(workspace_chat):
+    business, history, auth, owner, _, clock, store, boundary = workspace_chat
+    query = WorkbenchQueryGateway(boundary, store, clock=lambda: clock[0])
+    calls = []
+    def respond(messages, info):
+        calls.append(1)
+        return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
+    sdk = PydanticAgentRuntime(query, model_factory=lambda _: FunctionModel(respond))
+    runtime = WorkspaceChatRuntime(business, history, sdk)
+    thread, request = uuid4(), uuid4()
+    business.send(auth, thread, request, '合成循环故障，不应无限执行。')
+    events = [event async for event in runtime.stream_queued(auth, thread, request)]
+    assert not any(event.type in ('message.delta', 'draft.available', 'run.completed') for event in events)
+    row = history.history(auth, thread)['turns'][0]
+    assert row['state'] == 'failed' and row['candidate'] is None and row['assistant_text'] is None
+    assert 1 < len(calls) <= 10 and sdk.active == 0
+    assert [event async for event in runtime.stream_queued(auth, thread, request)] == []
     with owner.transaction(read_only=True) as connection:
         assert connection.execute(text('SELECT count(*) FROM class_os.school_class')).scalar_one() == 0

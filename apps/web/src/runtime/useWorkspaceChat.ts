@@ -134,9 +134,10 @@ export function useWorkspaceChat(props: Props) {
       }
     } finally { if (state.stream === controller) state.stream = null }
   }
-  async function send() {
-    if (!props.canInteract || model?.mode === "stale" || !freshScope || local().busy || pendingSend || active(last) || !navigator.onLine || !text.trim() || history?.thread.status && history.thread.status !== "active") return
-    const target = { thread: selected.current || crypto.randomUUID(), request: crypto.randomUUID(), text, editVersion: local().editVersion }
+  async function send(continuation?: string) {
+    const message = continuation ?? text
+    if (!props.canInteract || model?.mode === "stale" || !freshScope || local().busy || pendingSend || active(last) || !navigator.onLine || !message.trim() || history?.thread.status && history.thread.status !== "active") return
+    const target = { thread: selected.current || crypto.randomUUID(), request: crypto.randomUUID(), text: message, editVersion: continuation === undefined ? local().editVersion : -1 }
     if (!selected.current) {
       local(target.thread).text = text; local(target.thread).editVersion = target.editVersion
       local("").text = ""; local("").editVersion++
@@ -194,6 +195,10 @@ export function useWorkspaceChat(props: Props) {
   return { history, listing, pendingThreads, model, text, setText, working, anyWorking, listingBusy: listingLoading.current, fresh: freshScope, status, pendingSend, send, lastActive: active(last),
     canSend: props.canInteract && model?.mode !== "stale" && freshScope && !working && !pendingSend && !active(last) && (!history || history.thread.status === "active") && navigator.onLine,
     stop, refresh: () => void refreshRef.current().catch(report),
+    continueTask: (turn: ChatTurn) => {
+      if (turn.turn_id === history?.turns.at(-1)?.turn_id && turn.action_receipt && !active(last))
+        return send("继续完成上面的任务，只处理尚未完成的步骤。")
+    },
     select: (thread: string) => latest.current.onSelect(thread),
     newChat: () => latest.current.onSelect(""),
     recoverSend: () => operate(async (generation, thread, api, state) => {
