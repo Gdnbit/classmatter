@@ -54,6 +54,19 @@
 .connected-runtime .r1-welcome{display:grid;grid-template-rows:1fr;opacity:1;transform:translateY(0);visibility:visible;transition:grid-template-rows .24s ease,opacity .20s ease,transform .24s ease,visibility 0s}
 .connected-runtime .r1-welcome-inner{min-height:0;overflow:hidden;padding-inline:clamp(0px,3vw,50px)}
 .connected-runtime .r1-welcome-hidden{grid-template-rows:0fr;opacity:0;transform:translateY(-24px);visibility:hidden;transition:grid-template-rows .24s ease,opacity .18s ease,transform .24s ease,visibility 0s .24s}
+.connected-runtime .r1-conversation-home{display:flex;flex-direction:column;overflow:hidden;padding-block:clamp(12px,3dvh,28px)}
+.connected-runtime .r1-conversation-home>.r1-welcome{flex:1;min-height:0}
+.connected-runtime .r1-conversation-home .r1-welcome-inner{display:flex;flex-direction:column;height:100%;gap:clamp(12px,3dvh,32px)}
+.connected-runtime .r1-conversation-home .r1-heading{flex:none;margin:0}
+.connected-runtime .r1-conversation-home .r1-attention{flex:1;min-height:0;grid-auto-rows:minmax(0,1fr);margin:0 auto;overflow:hidden}
+.connected-runtime .r1-conversation-home .r1-attention>section{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.connected-runtime .r1-conversation-home .r1-quick{flex:none;margin:0}
+@media(max-height:700px){
+  .connected-runtime .r1-conversation-home .r1-heading h1{font-size:clamp(26px,4dvh,34px);margin:6px 0}
+  .connected-runtime .r1-conversation-home .r1-heading p{margin:6px 0;line-height:1.5}
+  .connected-runtime .r1-conversation-home .r1-attention>section{padding-top:8px}
+  .connected-runtime .r1-conversation-home .r1-attention h3{margin:0 0 8px}
+}
 .connected-runtime .r1-model-picker{position:relative;flex:none;margin-left:auto;min-width:0}
 .connected-runtime .r1-model-picker button{border-radius:9px;background:transparent;color:var(--ink,#1f2923);border:0;display:flex;align-items:center;gap:8px;text-align:left;font-size:12px}
 .connected-runtime .r1-model-picker .r1-model-trigger{border:1px solid #e0e6e2;border-radius:22px;padding:8px 12px;max-width:290px}

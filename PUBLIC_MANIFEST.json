@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "4ad052e412cecdaa5c196631877fe9d70cc98f4d5ce7089ebbc017ba727f0cbd"
+      "sha256": "4fd9969874265bb643b7a8a94ab1897377e9e5dd598a290361e28f733f1a1a12"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -726,7 +726,7 @@
       "sha256": "a1eefaa3a1085e59a7857ab3d485491c465f9db63de095c9b7ac0f8408001b5c"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "ec5a764e8e584c2439e5da145251da45ac9ce1400b3f2e3be59c6d813bf1ed4c"
+      "sha256": "68ae0c319707d70f5b12306d1d86dc449d5ffc5fb8a35c0eb2e4fceb1fb23746"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "2bccc19ae001e98e669f3bbb7b6f3cd2b968893b2d85e27544e0ef6caca80fbe"
@@ -2708,7 +2708,7 @@
       "sha256": "1562151016965324c1cdaa9a2f7621d4dab4516988fc9873f8c4a93e97edb817"
     },
     "apps/web/src/runtime/connected-workbench.css": {
-      "sha256": "6451646378efd3946b2fa5400899d02d0abc42b325b0d750098ef1ec3d89df49"
+      "sha256": "657b7f235cfe697e717125be773fb824e5f656a889369c87e25499a1c255f112"
     },
     "apps/web/src/shell/Sidebar/SidebarFrame.tsx": {
       "sha256": "828ab6e8ef56fd1f831237573912792eab8cca2eda08f2319dff56040248e67a"
@@ -2903,7 +2903,7 @@
       "sha256": "5f7da9de009ba06b80256a58b3dce3f91f5e7ccf31b945592c3401c5590fb809"
     },
     "apps/web/tests/persistent-chat-browser.mjs": {
-      "sha256": "c806944905de1b8f276106bffba93a8e2f78352ad3f1b5cc6be989dcecc36bfc"
+      "sha256": "00923cfc60ba5992972a19b4450da2d41e2ce115997e43985e067a6a36e542e6"
     },
     "apps/web/tests/workspace-chat.mjs": {
       "sha256": "51e6b4cb1369de2332711b78d4b54150c2b57ea8bc670446c1c712f2c501e15c"
@@ -2990,7 +2990,7 @@
       "sha256": "63960ad5c85e3ec77e7764eeeda849d15f1d5da3655b266c778dcd76b5c21cd0"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "e3a306a257d9fa9ebcfb552796e4881ea8e762c85a06ad8640f1dd2da41c953c"
+      "sha256": "fcda5c93ba7d7819b6631a74cebb84f330424ba12ae47b63a23c8e212b4c890d"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"

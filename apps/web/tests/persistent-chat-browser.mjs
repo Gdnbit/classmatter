@@ -17,6 +17,31 @@ try {
   await page.getByRole('button', { name: '登录', exact: true }).click();
   const input = page.getByLabel('输入消息'), history = page.getByRole('region', { name: '已保存的对话' });
   await input.waitFor();
+  async function assertFixedHome(width, height) {
+    await page.setViewportSize({ width, height });
+    await page.locator('.r1-conversation-home').waitFor();
+    const bounds = await page.evaluate(() => {
+      const home = document.querySelector('.r1-conversation-home');
+      const composer = document.querySelector('.r1-composer').getBoundingClientRect();
+      const targets = [...document.querySelectorAll('.r1-heading, .r1-quick, .r1-attention h3')].map(element => {
+        const rect = element.getBoundingClientRect();
+        return { top: rect.top, bottom: rect.bottom };
+      });
+      return { overflow: home.scrollHeight - home.clientHeight, documentOverflow: document.documentElement.scrollHeight - innerHeight, top: home.getBoundingClientRect().top, composerTop: composer.top, composerBottom: composer.bottom, targets };
+    });
+    assert(bounds.overflow <= 1, JSON.stringify({ width, height, bounds }));
+    assert(bounds.documentOverflow <= 1);
+    assert(bounds.composerBottom <= height);
+    for (const target of bounds.targets) {
+      assert(target.top >= bounds.top && target.bottom <= bounds.composerTop, JSON.stringify({ width, height, target, bounds }));
+    }
+    assert.equal(await page.getByRole('button', { name: '刷新对话', exact: true }).count(), 0);
+    await page.locator('.r1-heading').hover();
+    await page.mouse.wheel(0, 600);
+    assert.equal(await page.locator('.r1-conversation-home').evaluate(element => element.scrollTop), 0);
+  }
+  for (const [width, height] of [[1440, 900], [1280, 720], [1024, 600], [390, 844]]) await assertFixedHome(width, height);
+  await page.setViewportSize({ width: 1440, height: 1000 });
   assert.equal(await page.locator('nav[aria-label="主要工作组件"] > button').count(), 4);
   assert.equal(await page.locator('.sidebar .scope').count(), 0);
   assert.equal(await page.getByRole('region', { name: '聊天列表' }).getByRole('button', { name: '新对话', exact: true }).count(), 1);
@@ -36,6 +61,7 @@ try {
   await page.getByRole('button', { name: '发送消息', exact: true }).click({ timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify({ body: await page.locator('body').innerText(), errors }), { cause: error }); });
   await history.getByText('合成普通聊天已回复，不需要班级。', { exact: true }).waitFor();
   await page.waitForURL(/\/chats\/[a-f0-9-]{36}$/);
+  assert.equal(await page.locator('.r1-conversation-home').count(), 0);
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.r1-welcome')).visibility === 'hidden');
   assert((await page.locator('.r1-welcome').boundingBox()).height < 1);
   assert.equal(await page.locator('.r1-messages .avatar').count(), 0);
@@ -134,6 +160,7 @@ try {
   await page.getByRole('button', { name: '新对话', exact: true }).click();
   await page.getByRole('heading', { name: '今天想处理什么？', exact: true }).waitFor();
   await page.waitForFunction(() => document.querySelector('.r1-welcome').getBoundingClientRect().height > 0);
+  await assertFixedHome(1280, 720);
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   console.log('PASS original UI: no-class persisted chat; refresh never replays; AI candidates create/edit via original confirmation; same students/tasks/documents; no data forms or external calls');
 } finally { await browser.close(); }
