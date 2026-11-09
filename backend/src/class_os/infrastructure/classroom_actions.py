@@ -48,8 +48,12 @@ def tools(capture, query, credentials, context, execute, missing_class):
             current = context()
             if current is None:
                 return missing_class
-            if not capture.mentioned(title) or not capture.mentioned(subject) or not explicit_number(maximum_score):
-                return needs
+            missing = [label for label, supplied in (
+                ('考试名称', capture.mentioned(title)), ('科目', capture.mentioned(subject)),
+                ('满分', explicit_number(maximum_score))) if not supplied]
+            if missing:
+                question = '这场考试的满分是多少？' if missing == ['满分'] else '请补充' + '、'.join(missing) + '。'
+                return {**needs, 'question': question}
             if exams(current, title, subject):
                 return {'status': 'existing-exam', 'instruction': 'Reuse the existing exam and subject; do not create a duplicate.'}
             return capture.propose(CreateExam(uuid4(), current.class_id, current.term_id, title, subject, maximum_score))

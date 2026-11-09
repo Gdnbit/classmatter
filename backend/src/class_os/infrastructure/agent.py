@@ -270,10 +270,13 @@ class PydanticAgentRuntime:
                 if (request.mode == Mode.READ and not sources) or (request.mode == Mode.DRAFT and draft is None):
                     raise AgentRejected()
                 deferred = isinstance(result.output, DeferredToolRequests)
+                clarification = _workspace_actions.clarification if _workspace_actions is not None else None
                 if deferred and (_workspace_actions is None or not _workspace_actions.classroom_enabled
-                                 or _workspace_actions.proposed is None or len(result.output.calls) != 1):
+                                 or (_workspace_actions.proposed is None and clarification is None)
+                                 or (_workspace_actions.proposed is not None and clarification is not None)
+                                 or len(result.output.calls) != 1):
                     raise AgentRejected()
-                answer = "下一步已准备，请核对后确认。" if deferred else str(result.output)
+                answer = (clarification or "下一步已准备，请核对后确认。") if deferred else str(result.output)
                 if len(answer) > 4000 or len(result.all_messages_json()) > 64000:
                     raise AgentRejected()
                 if _workspace_actions is not None:

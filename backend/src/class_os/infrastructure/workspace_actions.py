@@ -27,6 +27,7 @@ class WorkspaceActionCapture:
     output_tokens: int | None = None
     document_reads: set = field(default_factory=set)
     completed_tools: list[str] = field(default_factory=list)
+    clarification: str | None = None
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -56,6 +57,10 @@ class WorkspaceActionCapture:
             result = await anyio.to_thread.run_sync(operation)
             self.completed_tools.append(tool)
             current_memory(); emit("tool.completed", tool=tool)
+            if (self.classroom_enabled and isinstance(result, dict)
+                    and result.get('status') == 'needs-information' and result.get('question')):
+                self.clarification = result['question']
+                raise CallDeferred()
             if self.classroom_enabled and isinstance(result, dict) and result.get('status') == 'uncommitted-candidate':
                 # Stop the SDK at the existing human-review boundary. There is
                 # no reason to ask the model again after a valid candidate.
