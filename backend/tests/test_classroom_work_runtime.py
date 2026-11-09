@@ -75,8 +75,18 @@ async def test_agent_exams_scores_layout_assign_swap_and_original_receipts(class
         seating = await client.get(base + f'/classes/{c}/terms/{t}/seating')
         assert seating.status_code == 200, seating.text
         assert seating.json()['layout']['seats'][0]['student_id'] == str(students[1])
+        # Agent names come from the fresh authorized roster, not UUID guessing
+        # or assumptions about a previous seating plan in assistant history.
+        from class_os.infrastructure.workspace_actions import WorkspaceActionCapture
+        capture = WorkspaceActionCapture(('查询座位',), classroom_enabled=True)
+        read = next(tool for tool in capture.tools(query, auth, lambda: None, lambda *args, **kwargs: None)
+                    if tool.__name__ == 'read_classroom_work')
+        snapshot = await read('seating')
+        assert [seat['student_name'] for seat in snapshot['layout']['seats']] == ['合成学生1', '合成学生0', None, None, None, None]
         # The legacy component proof remains valid after new pack read audits;
         # complete-world exit is still explicitly unavailable.
         assert (await client.get(base + '/workbench-d2/capabilities')).status_code == 200
         assert (await client.get(base + f'/classes/{uuid4()}/terms/{t}/exams')).status_code == 409
-    assert len(seen) == len(steps) and sdk.active == 0
+    # D4 pauses via the SDK immediately after candidate preparation; no extra
+    # model response is needed before the original human preview/commit.
+    assert seen == [] and sdk.active == 0

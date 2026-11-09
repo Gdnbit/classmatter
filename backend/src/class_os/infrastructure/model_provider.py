@@ -19,6 +19,17 @@ GOOGLE_COMPAT_BASE = "https://generativelanguage.googleapis.com/v1beta/openai/"
 GOOGLE_NATIVE_BASE = "https://generativelanguage.googleapis.com/"
 
 
+def request_timeout(configuration):
+    # The registered free GLM profile can exceed the generic 8s budget on
+    # real multi-tool prompts. Keep the same finite bound as native Gemini;
+    # the Agent's existing outer deadline still caps the complete run.
+    if _google_configuration(configuration) or (
+            configuration.base_url.rstrip('/') == 'https://open.bigmodel.cn/api/paas/v4'
+            and configuration.model == 'glm-4-flash-250414'):
+        return 30
+    return 8
+
+
 @dataclass
 class NativeGoogleSession:
     configuration: ModelConfiguration
@@ -86,7 +97,7 @@ async def configured_client(configuration, key, *, proxy=None):
     transport = {"proxy": proxy} if proxy is not None else {}
     # Google rejects explicitly advertised request deadlines below 10 seconds;
     # Controller/runtime outer budgets cap the complete loop and can cancel sooner.
-    timeout = 30 if _google_configuration(configuration) else 8
+    timeout = request_timeout(configuration)
     async with httpx.AsyncClient(trust_env=False, follow_redirects=False, timeout=timeout, **transport) as http:
         if _google_configuration(configuration):
             http.event_hooks["request"].append(_google_request_boundary)

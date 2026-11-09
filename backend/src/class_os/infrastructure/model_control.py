@@ -130,8 +130,8 @@ class ModelController:
                 return "class-os-synthetic-probe-ok"
             # Native Gemini needs two bounded round trips for the tool probe.
             # Keep request/token limits and cancellation; never retry silently.
-            from .model_provider import GOOGLE_COMPAT_BASE
-            probe_timeout = 35 if profile.base_url.rstrip("/") == GOOGLE_COMPAT_BASE.rstrip("/") else 10
+            from .model_provider import request_timeout
+            probe_timeout = 35 if request_timeout(profile) == 30 else 10
             async with asyncio.timeout(probe_timeout):
                 async with self.client_factory(profile, key) as client:
                     probe = Agent(model_for_configuration(profile, client), tools=[class_os_probe], retries=0,
