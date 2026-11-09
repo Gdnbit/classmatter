@@ -58,7 +58,7 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
         {turn.state === "queued" && <button disabled={s.working || !s.fresh} onClick={() => void s.startQueued(turn)}>继续回复</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{labels[turn.candidate.command]}</h2><CandidateContent value={turn.candidate} />
-          {turn.action_receipt ? <p role="status">已保存</p>
+          {turn.action_receipt ? <><p role="status">已保存</p>{turn.turn_id === s.history?.turns.at(-1)?.turn_id && <button disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.continueTask(turn)}>继续任务</button>}</>
             : <><p className="r1-muted">这项操作尚未保存。核对内容后预览，再确认执行。</p><button className="r1-primary" disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.preview(turn)}>预览这项操作</button></>}
         </section>}
       </div>)}

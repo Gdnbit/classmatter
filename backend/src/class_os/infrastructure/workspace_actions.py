@@ -3,6 +3,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 import re
 from typing import Literal
+from collections.abc import Callable
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -17,6 +18,7 @@ from class_os.domain.workspace_chat import candidate
 @dataclass
 class WorkspaceActionCapture:
     user_messages: tuple[str, ...]
+    progress_reader: Callable | None = None
     proposed: dict | None = None
     reads: list[str] = field(default_factory=list)
     input_tokens: int | None = None
@@ -69,6 +71,27 @@ class WorkspaceActionCapture:
             return value
 
         missing_class = {"status": "needs-class-context", "instruction": "Ask which class to use or offer to prepare its creation. Do not invent a class or ask for a form."}
+
+        async def read_task_progress() -> dict:
+            """Read this conversation's recent requests and freshly verified committed or pending actions before continuing a multi-step task. Never writes or treats assistant claims as receipts."""
+            def read():
+                if self.progress_reader is None:
+                    return {"requests": [], "actions": [], "truncated": False}
+                history = self.progress_reader()
+                actions = []
+                for row in history["turns"]:
+                    value = row["candidate"]
+                    if row["state"] != "completed" or value is None:
+                        continue
+                    receipt = row["action_receipt"]
+                    actions.append({"command": value["command"], "name": value.get("name"), "title": value.get("title"),
+                        "status": "committed" if receipt else "awaiting-confirmation",
+                        "resource_id": str(receipt["resource_id"]) if receipt else None,
+                        "version": receipt["version"] if receipt else None})
+                return {"requests": [row["user_text"] for row in history["turns"] if row["user_text"]][-8:],
+                    "actions": actions, "truncated": history["next_before"] is not None,
+                    "instruction": "Continue only unfinished requested steps. Re-read current domain data. Pending actions are NOT completed. Stop for human confirmation before the next business change; never repeat a committed creation."}
+            return await execute("read_task_progress", read)
 
         async def read_class_work(kind: Literal["class", "students", "tasks", "documents"] = "class", search: str = "") -> dict:
             """Only when the user's request concerns class data, read current authorized class information. Never writes."""
@@ -163,6 +186,9 @@ class WorkspaceActionCapture:
                 if not self.mentioned(title) or new_title and not self.mentioned(new_title):
                     return {"status": "needs-information", "instruction": "Ask for the exact task title to create or edit."}
                 if action == "create":
+                    rows = query.projection(*credentials, current.class_id, current.term_id)["tasks"]
+                    if any(row["title"] == title for row in rows):
+                        return {"status": "existing-task", "instruction": "This task title already exists. Read and reuse it; ask before creating a duplicate."}
                     return self.propose(CreateTask("task.create", uuid4(), current.class_id, current.term_id, title))
                 rows = query.projection(*credentials, current.class_id, current.term_id)["tasks"]
                 matches = [row for row in rows if row["title"] == title and row["status"] not in ("done", "cancelled")]
@@ -181,6 +207,8 @@ class WorkspaceActionCapture:
                 if not self.mentioned(title) or new_title and not self.mentioned(new_title):
                     return {"status": "needs-information", "instruction": "Ask for the document title. Explain that generated prose needs review."}
                 if action == "create":
+                    if any(row["title"] == title for row in query.documents(*credentials, current.class_id, current.term_id)):
+                        return {"status": "existing-document", "instruction": "This document title already exists. Read and reuse it or ask before creating a duplicate."}
                     return self.propose(CreateDocument(uuid4(), current.class_id, current.term_id, title, body, format))
                 matches = [row for row in query.documents(*credentials, current.class_id, current.term_id) if row["title"] == title and row["status"] == "draft"]
                 if len(matches) != 1:
@@ -193,4 +221,4 @@ class WorkspaceActionCapture:
                 return self.propose(ReviseDocument(row["document_id"], current.class_id, current.term_id, existing["version"], new_title or title, revised, format))
             return await execute("prepare_document", prepare)
 
-        return (read_class_work, prepare_class_create, prepare_class_edit, prepare_term_edit, prepare_student, prepare_task, prepare_document)
+        return (read_class_work, prepare_class_create, prepare_class_edit, prepare_term_edit, prepare_student, prepare_task, prepare_document, read_task_progress)

@@ -149,11 +149,11 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
             text=True, encoding='utf-8', timeout=240, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         (root / 'test-results/ui-v3-browser-details.log').write_text(result.stdout + result.stderr, encoding='utf-8')
         assert result.returncode == 0, result.stdout + result.stderr
-        assert len(calls) == len(mapping) + 2
+        assert len(calls) == len(mapping) + 3
         assert sdk.active == 0
         with owner.transaction(read_only=True) as connection:
             assert connection.execute(text('SELECT count(*) FROM class_os.workspace_chat_thread')).scalar_one() == 1
-            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='completed'")).scalar_one() == len(mapping) + 2
+            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='completed'")).scalar_one() == len(mapping) + 3
             assert connection.execute(text('SELECT count(*) FROM class_os.school_class')).scalar_one() == 1
             assert connection.execute(text('SELECT count(*) FROM class_os.student')).scalar_one() == 1
             assert connection.execute(text('SELECT count(*) FROM class_os.manual_task')).scalar_one() == 1

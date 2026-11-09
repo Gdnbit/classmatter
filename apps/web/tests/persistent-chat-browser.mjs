@@ -150,6 +150,13 @@ try {
   await page.goto(base + path);
   await history.getByText('合成普通聊天已回复，不需要班级。', { exact: true }).first().waitFor();
   assert.equal(starts.length, messages.length + 2);
+  await input.fill('继续任务时保留的未发送草稿');
+  await history.getByRole('button', { name: '继续任务', exact: true }).click();
+  await history.getByText('继续完成上面的任务，只处理尚未完成的步骤。', { exact: true }).waitFor();
+  await page.waitForFunction(() => document.querySelectorAll('article.assistant').length === 11);
+  assert.equal(await input.inputValue(), '继续任务时保留的未发送草稿');
+  assert.equal(starts.length, messages.length + 3);
+  await input.fill('');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: '切换模型', exact: true }).click();
   const mobileMenu = await page.getByRole('region', { name: '选择模型', exact: true }).boundingBox();
