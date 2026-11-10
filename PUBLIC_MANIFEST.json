@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "c7ff31294ca6a4f7cf3d11d53ace5dde64f942f8add4b6e66f11878009612d1b"
+      "sha256": "8a946a6d340e3da46921acb6a4bb78db91196dc95bec326356ea68769decfd11"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -522,7 +522,7 @@
       "sha256": "e7e35b2f2d1ec466ed12d31aa6de56ed79366186c7e8ba852ee7df83fe22dbfa"
     },
     "design-qa.md": {
-      "sha256": "adf73edc36a41409d84e58d4761f1f378a2c106021da244978f152119024facc"
+      "sha256": "8f605f8e96cf010c5283b7bb890260943764c2d04e8287646e828bc40dae7843"
     },
     "apps/desktop/main.cjs": {
       "sha256": "be2c6879293bc6fed1ad12245208b0d235dd40174bfd7745eabeb6fa5a96171d"
