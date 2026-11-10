@@ -1,0 +1,30 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "data": {
+      "maxLength": 2796204,
+      "minLength": 1,
+      "title": "Data",
+      "type": "string"
+    },
+    "capacity": {
+      "maximum": 2000,
+      "minimum": 1,
+      "title": "Capacity",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "name",
+    "data",
+    "capacity"
+  ],
+  "title": "CaptureInput",
+  "type": "object"
+}

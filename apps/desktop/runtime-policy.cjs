@@ -13,4 +13,11 @@ function exitDownload(origin,value,mime,size) {
 function clipboardWrite(origin,permission,details) {
   return permission==='clipboard-sanitized-write' && details?.isMainFrame===true && allowed(origin,details.requestingUrl);
 }
-module.exports={allowed,CSP,exitDownload,clipboardWrite};
+function microphoneRequest(origin,permission,details) {
+  return permission==='media' && details?.isMainFrame===true && allowed(origin,details.requestingUrl)
+    && Array.isArray(details.mediaTypes) && details.mediaTypes.length===1 && details.mediaTypes[0]==='audio';
+}
+function microphoneCheck(origin,permission,details) {
+  return permission==='media' && details?.isMainFrame===true && allowed(origin,details.requestingUrl) && details.mediaType==='audio';
+}
+module.exports={allowed,CSP,exitDownload,clipboardWrite,microphoneRequest,microphoneCheck};

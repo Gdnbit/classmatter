@@ -2,13 +2,16 @@ import { useEffect, useId, useRef, useState } from "react"
 import { Check, ChevronDown, Settings } from "lucide-react"
 import type { Command, Session } from "./api"
 import { getModelStatus, modelControl, stageModelSwitch, type ModelStatus } from "./model-configuration"
+import { reasoningLabels, supportsReasoning, type Reasoning } from './composer-capture'
 
-export function ModelSwitcher({ session, state, revision, disabled, onManage, onPreview, onVerified, onError }: {
+export function ModelSwitcher({ session, state, revision, disabled, onManage, onPreview, onVerified, onError, reasoning = 'default', onReasoning }: {
   session: Session; state: ModelStatus | null; revision: number; disabled: boolean;
   onManage: () => void; onPreview: (command: Command) => Promise<void>;
   onVerified: (verified: boolean) => void; onError: (error: unknown) => void;
+  reasoning?: Reasoning; onReasoning?: (value: Reasoning) => void;
 }) {
   const [open, setOpen] = useState(false), [pending, setPending] = useState(false)
+  const [effortOpen, setEffortOpen] = useState(false)
   const [model, setModel] = useState(""), [current, setCurrent] = useState(state)
   const [recent, setRecent] = useState<string[]>([])
   const root = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null)
@@ -34,12 +37,12 @@ export function ModelSwitcher({ session, state, revision, disabled, onManage, on
     return () => { generation.current++; controller.abort() }
   }, [session.csrf_token, revision])
   useEffect(() => {
-    if (!open) return
-    const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false) }
-    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { event.preventDefault(); setOpen(false); trigger.current?.focus() } }
+    if (!open && !effortOpen) return
+    const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) { setOpen(false); setEffortOpen(false) } }
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { event.preventDefault(); setOpen(false); setEffortOpen(false); trigger.current?.focus() } }
     document.addEventListener("pointerdown", outside); document.addEventListener("keydown", escape)
     return () => { document.removeEventListener("pointerdown", outside); document.removeEventListener("keydown", escape) }
-  }, [open])
+  }, [open, effortOpen])
   async function operate(operation: "switch" | "enable" | "refresh", targetModel = model.trim()) {
     if (pending || disabled) return
     const version = generation.current
@@ -63,11 +66,23 @@ export function ModelSwitcher({ session, state, revision, disabled, onManage, on
     } catch (error) { if (version === generation.current) onError(error) }
     finally { if (version === generation.current) setPending(false) }
   }
-  return <div className="r1-model-picker" ref={root}>
+  const adjustable = !!onReasoning && supportsReasoning(current)
+  return <div className={`r1-model-picker${adjustable ? ' has-reasoning' : ''}`} ref={root}>
     <button ref={trigger} type="button" className="r1-model-trigger" aria-label="切换模型" aria-expanded={open}
-      aria-controls={title} disabled={disabled || pending} onClick={() => setOpen(value => !value)}>
+      aria-controls={title} disabled={disabled || pending} onClick={() => { setEffortOpen(false); setOpen(value => !value) }}>
       <span>{pending ? "正在核对模型…" : current?.mode === "configured-api" ? current.configuration?.model : "选择模型"}</span><ChevronDown size={15} />
     </button>
+    {adjustable && <button type="button" className="composer-reasoning" aria-label="思考强度" aria-expanded={effortOpen}
+      disabled={disabled || pending} onClick={() => { setOpen(false); setEffortOpen(value => !value) }}>
+      {reasoningLabels[reasoning]}<ChevronDown size={13} />
+    </button>}
+    {effortOpen && adjustable && <section className="r1-model-menu composer-reasoning-menu" aria-label="选择思考强度">
+      <h3>思考强度</h3>
+      {(Object.keys(reasoningLabels) as Reasoning[]).map(value => <button type="button" key={value} aria-pressed={reasoning === value}
+        onClick={() => { onReasoning?.(value); setEffortOpen(false); trigger.current?.focus() }}>
+        {reasoningLabels[value]}{reasoning === value && <Check size={15} />}
+      </button>)}
+    </section>}
     {open && <section id={title} className="r1-model-menu" aria-label="选择模型">
       <h3>选择模型</h3>
       {current?.configuration ? <>

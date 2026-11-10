@@ -1,5 +1,19 @@
 # 实现与验收台账
 
+## 2026-11-10 原对话输入区：附件文字、听写和模型偏好
+
+基线main `1eeb48a`（PR #72），分支`codex/composer-input-controls`。目标是沿原对话输入区完成可实际使用的输入操作，教师无需新页面或先填班级表单。承接FR-AGT-001/003/004/006、T-RPLT-001的合成开发增量，不改变正式Requirement/Eval/Task/Gate、冻结R1和Agent业务写权限。无数据库迁移；回滚本分支代码即可恢复原输入区，已有聊天/业务记录不受影响。
+
+已实现：加号图片/文件文字入口、拖拽、听写录音/结束/取消、模型切换与支持型号的思考强度、发送/停止、真实操作范围提示；不显示无限“完全访问”。识别回填可编辑草稿、不自动发送，超长拒绝不截断，切换对话取消旧识别并保留草稿。右侧蓝色按钮用于发送/停止；原生实时双向语音按用户答复暂不实施。成熟复用Pydantic AI、MediaRecorder、Lucide、python-docx/openpyxl/python-pptx及原QG/BCG/ISB，未自建解析器或Agent循环。
+
+实现路径：`apps/web/src/runtime/WorkspaceChat.tsx`、`useComposerInput.ts`、`composer-capture.ts`、`composer.css`、`ModelSwitcher.tsx`；后端`interfaces/http/composer.py`、`infrastructure/composer_capture.py`及`reasoning.py`。固定Capture DTO加入原契约导出/Ajv漂移检查；依赖固定在uv锁文件，八个新增传递/直接依赖原始许可证加入现有库存。范围与限制见[对话设计](design/workspace-chat-and-actions.md)。
+
+真实免费模型证据：现有授权Gemini `gemini-3.1-flash-lite`对完全合成图片和系统生成语音两次调用首试通过，图片7.68秒、音频3.28秒，均记录started/completed且active归零。只检查可读文字/关键数字，不等同通用OCR/ASR准确率、真实麦克风硬件或所有Provider支持保证；没有新增付费或读取用户音频。私有结果留在本机`test-results/composer-live-capture.json`，不公开Key、原图或录音。
+
+验收矩阵包含：真实PG/HTTP的认证、CSRF、未知字段/重复JSON、限长且无聊天/业务写入；成熟Office读取、中文编码、XML与展开上限；实际SDK的Google/OpenAI思考参数；原页面的添加/拖拽、合成设备录音转文字、取消、跨线程草稿隔离、菜单和1440/1024/390响应式布局。原生麦克风仅音频并需要当次用户允许，相机/屏幕/远程继续拒绝。完整回归和精确PR CI仍以本节后续结果为准，不把合成Provider测试称为真实模型测试。
+
+尚未承诺：原始附件保存/下载、旧Office格式/压缩包/批量成绩导入、实时音频、通用长文理解、任意Provider多模态兼容或正式发布准入。教师听写净节省时间仍需实际体验验证。
+
 ## 2026-11-10 真实免费模型多步任务、成绩与座位联测
 
 基线main `735caef`（PR #71已合并），分支`codex/live-classroom-agent-acceptance`；未修改原始私有仓库、冻结R1或正式107需求/147 Eval/94任务/Gate状态。承接FR-AGT-001/003/004/006、T-RPLT-001及既有D2-GRD/D2-SEA工程切片。教师一次描述任务、沿原卡片逐步确认；无需新页面、重复名单或额外维护。本轮没有增加Agent写权限、Schema、库迁移或依赖。

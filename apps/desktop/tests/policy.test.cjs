@@ -6,6 +6,18 @@ const path = require('node:path');
 const { ORIGIN, CSP, localURL, resolveResource, serveResource } = require('../policy.cjs');
 const vm = require('node:vm');
 const { clipboardWrite } = require('../runtime-policy.cjs');
+const { microphoneRequest, microphoneCheck } = require('../runtime-policy.cjs');
+
+test('microphone is audio-only from the exact main frame, never camera or a remote origin', () => {
+  const origin='http://127.0.0.1:8001', details={isMainFrame:true,requestingUrl:origin+'/',mediaTypes:['audio'],mediaType:'audio'};
+  assert.equal(microphoneRequest(origin,'media',details),true);
+  assert.equal(microphoneCheck(origin,'media',details),true);
+  for(const value of [null,{}, {...details,isMainFrame:false}, {...details,requestingUrl:'https://example.invalid'}, {...details,mediaTypes:['audio','video'],mediaType:'video'}, {...details,mediaTypes:[],mediaType:'unknown'}]) {
+    assert.equal(microphoneRequest(origin,'media',value),false);
+    assert.equal(microphoneCheck(origin,'media',value),false);
+  }
+  assert.equal(microphoneRequest(origin,'display-capture',details),false);
+});
 
 test('answer copy permits only text writes from the same main frame', () => {
   const origin='http://127.0.0.1:8001', details={isMainFrame:true,requestingUrl:origin+'/chats/synthetic'};

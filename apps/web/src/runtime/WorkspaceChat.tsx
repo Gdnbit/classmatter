@@ -1,11 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react"
-import { ArrowUp, Copy, Check, X } from "lucide-react"
+import { ArrowUp, Copy, Check, X, Plus, Image, FileText, Mic, Square, ShieldCheck, LoaderCircle } from "lucide-react"
 import type { ChatCandidate } from "./workspace-chat"
 import type { WorkspaceChatController } from "./useWorkspaceChat"
 import { R1Dialog } from "./R1Dialog"
 import type { Command, Session } from "./api"
 import { ModelSwitcher } from "./ModelSwitcher"
 import { userMessage } from "./user-facing"
+import { useComposerInput } from './useComposerInput'
+import './composer.css'
 
 const labels: Record<string, string> = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "task.create": "建立任务", "task.update": "修改任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
@@ -81,14 +83,51 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
   onManageModels: () => void; onPreviewModel: (command: Command) => Promise<void>;
   onModelVerified: (verified: boolean) => void; onError: (error: unknown) => void;
 }) {
-  return <form className="r1-composer" data-chat-fresh={s.fresh} data-chat-working={s.working} data-chat-pending={!!s.pendingSend} onSubmit={event => { event.preventDefault(); void s.send() }}>
+  const capture = useComposerInput(s, session, onError)
+  const [menu, setMenu] = useState<'files' | 'access' | null>(null), [dragging, setDragging] = useState(false)
+  const tools = useRef<HTMLDivElement>(null), file = useRef<HTMLInputElement>(null), image = useRef<HTMLInputElement>(null)
+  useEffect(() => { setMenu(null); setDragging(false) }, [s.draftKey])
+  useEffect(() => {
+    if (!menu) return
+    const outside = (event: PointerEvent) => { if (!tools.current?.contains(event.target as Node)) setMenu(null) }
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { event.preventDefault(); setMenu(null) } }
+    document.addEventListener('pointerdown', outside); document.addEventListener('keydown', escape)
+    return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) }
+  }, [menu])
+  const imports = (files: FileList | null) => { setMenu(null); if (files) void capture.files(Array.from(files)) }
+  return <form className={`r1-composer composer-reference${dragging ? ' composer-dropping' : ''}`} data-chat-fresh={s.fresh} data-chat-working={s.working} data-chat-pending={!!s.pendingSend}
+    onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragging(true) } }}
+    onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false) }}
+    onDrop={event => { event.preventDefault(); setDragging(false); imports(event.dataTransfer.files) }}
+    onSubmit={event => { event.preventDefault(); if (!capture.busy && !capture.recording) void s.send() }}>
     <textarea aria-label="输入消息" placeholder="随便聊聊，或告诉我你想创建、修改什么……" maxLength={2000} value={s.text}
-      onChange={event => s.setText(event.target.value)} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (s.canSend) void s.send() } }} />
-    <div>
-      <ModelSwitcher session={session} state={s.model} revision={modelRevision} disabled={s.anyWorking || s.lastActive || !!s.pendingSend}
+      onChange={event => { capture.clearNotice(); s.setText(event.target.value) }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (s.canSend && !capture.busy && !capture.recording) void s.send() } }} />
+    <div className="composer-toolbar">
+      <div className="composer-tools" ref={tools}>
+        <button type="button" className="composer-icon" aria-label="添加附件" title="添加附件" aria-expanded={menu === 'files'} disabled={capture.busy || capture.recording}
+          onClick={() => setMenu(value => value === 'files' ? null : 'files')}><Plus size={21} /></button>
+        <button type="button" className="composer-access" aria-label="操作权限" aria-expanded={menu === 'access'} onClick={() => setMenu(value => value === 'access' ? null : 'access')}><ShieldCheck size={17} /><span>操作需确认</span></button>
+        {menu === 'files' && <section className="composer-menu" aria-label="添加内容">
+          <button type="button" onClick={() => { setMenu(null); image.current?.click() }}><Image size={17} />添加图片</button>
+          <button type="button" onClick={() => { setMenu(null); file.current?.click() }}><FileText size={17} />导入文件文字</button>
+        </section>}
+        {menu === 'access' && <section className="composer-menu composer-access-menu" aria-label="当前操作范围"><strong>操作范围</strong><p>查看和整理已有信息</p><p>准备创建与修改</p><p>保存前由你核对确认</p></section>}
+      </div>
+      <span className="composer-spacer" />
+      {s.lastActive && <LoaderCircle className="composer-spinner" size={16} aria-label="正在回复" />}
+      <ModelSwitcher session={session} state={s.model} revision={modelRevision} disabled={s.anyWorking || s.lastActive || !!s.pendingSend || capture.busy || capture.recording}
+        reasoning={s.reasoning} onReasoning={s.setReasoning}
         onManage={onManageModels} onPreview={onPreviewModel} onVerified={onModelVerified} onError={onError} />
-      {s.lastActive ? <button type="button" aria-label="停止回复" onClick={() => void s.stop()}><X size={18} /></button>
-        : <button aria-label="发送消息" disabled={!s.canSend || !s.text.trim()}><ArrowUp size={18} /></button>}
+      <button type="button" className={`composer-icon${capture.recording ? ' composer-recording' : ''}`} aria-label={capture.recording ? '完成录音并转文字' : '语音转文字'}
+        title={capture.recording ? '完成录音并转文字' : '语音转文字'} disabled={capture.busy} onClick={() => void capture.microphone()}>{capture.recording ? <Square size={17} /> : <Mic size={19} />}</button>
+      {s.lastActive ? <button type="button" className="composer-send" aria-label="停止回复" onClick={() => void s.stop()}><X size={18} /></button>
+        : <button className="composer-send" aria-label="发送消息" disabled={!s.canSend || !s.text.trim() || capture.busy || capture.recording}><ArrowUp size={19} /></button>}
     </div>
+    <input ref={image} type="file" accept=".png,.jpg,.jpeg,.webp" multiple hidden aria-label="选择图片文件" onChange={event => { imports(event.target.files); event.target.value = '' }} />
+    <input ref={file} type="file" accept=".txt,.md,.csv,.tsv,.docx,.xlsx,.pptx,.pdf,.wav,.mp3,.webm" multiple hidden aria-label="选择内容文件" onChange={event => { imports(event.target.files); event.target.value = '' }} />
+    {(capture.busy || capture.recording || capture.status) && <div className="composer-feedback" role="status">{capture.recording ? `正在录音 ${Math.floor(capture.seconds / 60)}:${String(capture.seconds % 60).padStart(2, '0')}` : capture.status}
+      {(capture.busy || capture.recording) && <button type="button" onClick={capture.cancel} aria-label="取消识别">取消</button>}</div>}
+    {capture.error && <p className="composer-error" role="alert">{capture.error}</p>}
+    {dragging && <p className="composer-drop-hint">松开以添加内容</p>}
   </form>
 }

@@ -3,7 +3,7 @@ const {app,BrowserWindow,Menu,session,ipcMain,dialog}=require('electron');
 const fs=require('node:fs');
 const path=require('node:path');
 const {desktopService}=require('./runtime-service.cjs');
-const {allowed,CSP,exitDownload,clipboardWrite}=require('./runtime-policy.cjs');
+const {allowed,CSP,exitDownload,clipboardWrite,microphoneRequest,microphoneCheck}=require('./runtime-policy.cjs');
 const {networkFromSwitches,validateNetwork}=require('./model-network.cjs');
 let source,d1=false,sourceInvalid=false;
 let modelNetwork;
@@ -72,8 +72,20 @@ else {
       }
     };
     if(developerCookies){await installDeveloperCookies(developerCookies);developerCookies=null;}
-    isolated.setPermissionRequestHandler((contents,permission,callback,details)=>callback(!!window && contents===window.webContents && clipboardWrite(origin,permission,details)));
-    isolated.setPermissionCheckHandler((contents,permission,_requestingOrigin,details)=>!!window && contents===window.webContents && clipboardWrite(origin,permission,details));
+    let microphoneGranted=false, microphonePrompt=false;
+    isolated.setPermissionRequestHandler((contents,permission,callback,details)=>{
+      if(!window || window.isDestroyed() || contents!==window.webContents){callback(false);return;}
+      if(clipboardWrite(origin,permission,details)){callback(true);return;}
+      if(!microphoneRequest(origin,permission,details)){callback(false);return;}
+      if(microphoneGranted){callback(true);return;}
+      if(microphonePrompt){callback(false);return;}
+      microphonePrompt=true;
+      dialog.showMessageBox(window,{type:'question',title:'使用麦克风',message:'允许本次使用麦克风，将语音转为可编辑文字？',buttons:['取消','允许'],defaultId:0,cancelId:0}).then(result=>{
+        microphoneGranted=result.response===1 && !!window && !window.isDestroyed() && contents===window.webContents && allowed(origin,contents.getURL());
+        callback(microphoneGranted);
+      }).catch(()=>callback(false)).finally(()=>{microphonePrompt=false;});
+    });
+    isolated.setPermissionCheckHandler((contents,permission,_requestingOrigin,details)=>!!window && contents===window.webContents && (clipboardWrite(origin,permission,details)||microphoneGranted&&microphoneCheck(origin,permission,details)));
     isolated.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!allowed(origin,details.url)}));
     isolated.webRequest.onHeadersReceived((details,callback)=>callback({responseHeaders:{...details.responseHeaders,'Content-Security-Policy':[CSP],'X-Content-Type-Options':['nosniff']}}));
     isolated.on('will-download',(event,item,contents)=>{

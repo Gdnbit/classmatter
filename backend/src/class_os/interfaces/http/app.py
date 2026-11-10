@@ -64,6 +64,9 @@ class LocalBoundary:
             document_preview = (getattr(getattr(root, 'state', None), 'document_commands_enabled', False)
                 and re.fullmatch(r'/api/workspaces/[0-9a-fA-F-]{36}/document-commands/preview', scope.get('path', '')))
             body_limit = 640 * 1024 if document_preview else 8192
+            if (getattr(getattr(root, 'state', None), 'composer_capture_enabled', False)
+                    and re.fullmatch(r'/api/workspaces/[0-9a-fA-F-]{36}/composer/capture', scope.get('path', ''))):
+                body_limit = 3 * 1024 * 1024
             while True:
                 message = await receive()
                 if message["type"] == "http.disconnect":

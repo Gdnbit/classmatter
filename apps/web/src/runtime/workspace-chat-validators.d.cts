@@ -9,3 +9,5 @@ export const clear: ValidateFunction
 export const thread: ValidateFunction
 export const previewBody: ValidateFunction
 export const preview: ValidateFunction
+export const captureinput: ValidateFunction
+export const captureoutput: ValidateFunction<{ schema_version: 'classmatter.composer-capture.v1'; text: string }>

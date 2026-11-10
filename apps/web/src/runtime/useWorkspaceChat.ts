@@ -3,11 +3,12 @@ import { ApiError, type Session } from "./api"
 import { workspaceChatClient, type ChatHistory, type ChatListing, type ChatPreview, type ChatTurn } from "./workspace-chat"
 import { createQueryRefresh } from "./query-refresh"
 import { getModelStatus, type ModelStatus } from "./model-configuration"
+import { supportsReasoning, type Reasoning } from './composer-capture'
 
 type Props = { enabled: boolean; session: Session | null; threadId: string; canInteract: boolean; refreshSignal: unknown;
   onSelect: (id: string) => void; onSaved: (id: string) => void; onBusy: (busy: boolean) => void; onDraft: (dirty: boolean) => void; onError: (error: unknown) => void; onPreview: (preview: ChatPreview) => void }
 const active = (turn?: ChatTurn) => !!turn && (turn.state === "queued" || turn.state === "running")
-type LocalThread = { text: string; editVersion: number; busy: boolean; saving: boolean; status: string; pending: {thread: string; request: string; text: string; editVersion: number} | null; stream: AbortController | null }
+type LocalThread = { text: string; reasoning: Reasoning; editVersion: number; busy: boolean; saving: boolean; status: string; pending: {thread: string; request: string; text: string; editVersion: number} | null; stream: AbortController | null }
 function clearSentDraft(state: LocalThread, sent: { text: string; editVersion: number }) {
   if (state.text === sent.text && state.editVersion === sent.editVersion) { state.text = ""; state.editVersion++ }
 }
@@ -20,7 +21,7 @@ export function useWorkspaceChat(props: Props) {
   const changed = () => redraw(value => value + 1)
   function local(thread = selected.current) {
     let state = threads.current.get(thread)
-    if (!state) { state = { text: "", editVersion: 0, busy: false, saving: false, status: "", pending: null, stream: null }; threads.current.set(thread, state) }
+    if (!state) { state = { text: "", reasoning: 'default', editVersion: 0, busy: false, saving: false, status: "", pending: null, stream: null }; threads.current.set(thread, state) }
     return state
   }
   const [history, setHistory] = useState<ChatHistory | null>(null), [listing, setListing] = useState<ChatListing | null>(null)
@@ -126,7 +127,7 @@ export function useWorkspaceChat(props: Props) {
     try {
       await api.start(thread, turn.request_id, controller.signal, kind => {
         if (generation === epoch.current) { state.status = kind.startsWith("tool.") ? "正在整理…" : "正在回复…"; changed() }
-      })
+      }, supportsReasoning(model) && state.reasoning !== 'default' ? state.reasoning : undefined)
     } catch (error) {
       if (generation === epoch.current && !controller.signal.aborted) {
         if (error instanceof ApiError && error.status === 401) report(error, thread)
@@ -140,6 +141,7 @@ export function useWorkspaceChat(props: Props) {
     const target = { thread: selected.current || crypto.randomUUID(), request: crypto.randomUUID(), text: message, editVersion: continuation === undefined ? local().editVersion : -1 }
     if (!selected.current) {
       local(target.thread).text = text; local(target.thread).editVersion = target.editVersion
+      local(target.thread).reasoning = local('').reasoning
       local("").text = ""; local("").editVersion++
       selected.current = target.thread; view.current++; reader.current?.abort(); setHistory(null); setFresh(false)
     }
@@ -193,6 +195,13 @@ export function useWorkspaceChat(props: Props) {
   const pendingThreads = [...threads.current.entries()].flatMap(([id, item]) => id && item.pending && !listing?.data.some(row => row.thread_id === id)
     ? [{ thread_id: id, title: item.pending.text.slice(0, 40) }] : [])
   return { history, listing, pendingThreads, model, text, setText, working, anyWorking, listingBusy: listingLoading.current, fresh: freshScope, status, pendingSend, send, lastActive: active(last),
+    draftKey: identity + '/' + selected.current, reasoning: state.reasoning,
+    setReasoning: (value: Reasoning) => { if (!anyWorking && !pendingSend && !active(last)) { local().reasoning = value; changed() } },
+    inputSnapshot: () => ({ key: scopeRef.current + '/' + selected.current, text: local().text }),
+    appendInput: (value: string, key: string) => {
+      if (key !== scopeRef.current + '/' + selected.current || local().text.length + value.length > 2000) return false
+      const target = local(); target.text += value; target.editVersion++; changed(); return true
+    },
     canSend: props.canInteract && model?.mode !== "stale" && freshScope && !working && !pendingSend && !active(last) && (!history || history.thread.status === "active") && navigator.onLine,
     stop, refresh: () => void refreshRef.current().catch(report),
     continueTask: (turn: ChatTurn) => {

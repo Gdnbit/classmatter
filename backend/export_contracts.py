@@ -27,6 +27,7 @@ from class_os.interfaces.http.workbench import WorkbenchCapabilities, WorkbenchA
 from class_os.interfaces.http.classroom_work import ClassroomCapabilities, ExamListing, ExamResults, SeatingResponse, ClassroomPreview
 from class_os.interfaces.http.workspace_chat import (ChatCapabilities, ChatListing, ChatHistory, ChatSend, ChatTurnResponse,
     ChatVersion, ChatClear, ChatThreadResponse, CandidatePreviewBody, CandidatePreview)
+from class_os.interfaces.http.composer import CaptureInput, CaptureOutput
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
 from class_os.interfaces.http.roster import (ApprovalBody, ClassBody, CommitBody, ContextResponse,
@@ -90,7 +91,8 @@ def main():
                         ("workspace-chat-clear.v1", ChatClear), ("workspace-chat-thread.v1", ChatThreadResponse),
                         ("workspace-chat-preview-body.v1", CandidatePreviewBody), ("workspace-chat-preview.v1", CandidatePreview),
                         ("classroom-capabilities.v1", ClassroomCapabilities), ("exams.v1", ExamListing),
-                        ("exam-results.v1", ExamResults), ("seating.v1", SeatingResponse), ("classroom-preview.v1", ClassroomPreview)]:
+                        ("exam-results.v1", ExamResults), ("seating.v1", SeatingResponse), ("classroom-preview.v1", ClassroomPreview),
+                        ("composer-input.v1", CaptureInput), ("composer-output.v1", CaptureOutput)]:
         target = root / f"{name}.schema.json"
         content = json.dumps(model.model_json_schema(), indent=2, ensure_ascii=False) + "\n"
         if args.check:

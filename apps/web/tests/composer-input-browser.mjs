@@ -1,0 +1,97 @@
+import assert from 'node:assert/strict';
+import { chromium } from '@playwright/test';
+const base = process.env.CLASS_OS_TEST_URL;
+if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
+const browser = await chromium.launch({ headless: true, args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'], ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
+let page;
+try {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, permissions: ['microphone'] });
+  page = await context.newPage(); const errors = [], requests = [];
+  await page.addInitScript(() => {
+    const original = MediaRecorder.prototype.start;
+    MediaRecorder.prototype.start = function(...args) {
+      window.__syntheticRecordedBytes = 0;
+      this.addEventListener('dataavailable', event => { window.__syntheticRecordedBytes += event.data.size; });
+      return original.apply(this, args);
+    };
+  });
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('request', request => { if (request.url().endsWith('/capture')) requests.push(request); });
+  await page.goto(base);
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  const input = page.getByLabel('输入消息'), composer = page.locator('.composer-reference');
+  await input.waitFor();
+  await page.getByRole('button', { name: '思考强度', exact: true }).waitFor();
+  await input.fill('原草稿');
+  await page.getByRole('button', { name: '思考强度', exact: true }).click();
+  await page.getByRole('button', { name: '深入', exact: true }).click();
+  assert.match(await page.getByRole('button', { name: '思考强度', exact: true }).innerText(), /深入/);
+  await page.getByRole('button', { name: '思考强度', exact: true }).click();
+  await page.getByRole('button', { name: '默认', exact: true }).click();
+  await page.getByRole('button', { name: '操作权限', exact: true }).click();
+  await page.getByRole('region', { name: '当前操作范围' }).waitFor();
+  await page.keyboard.press('Escape');
+  await page.getByRole('region', { name: '当前操作范围' }).waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: '添加附件', exact: true }).click();
+  await page.getByRole('button', { name: '添加图片', exact: true }).waitFor();
+  await page.screenshot({ path: '../../test-results/composer-menu.png' });
+  await page.keyboard.press('Escape');
+  assert.equal(await input.inputValue(), '原草稿');
+  await page.getByLabel('选择内容文件').setInputFiles({ name: '小结.txt', mimeType: 'text/plain', buffer: Buffer.from('本周完成三项工作') });
+  await page.waitForFunction(() => document.querySelector('textarea').value.includes('本周完成三项工作'));
+  assert.equal(await input.inputValue(), '原草稿\n\n《小结.txt》\n本周完成三项工作');
+  await page.getByLabel('选择内容文件').setInputFiles({ name: '长文.txt', mimeType: 'text/plain', buffer: Buffer.from('长'.repeat(2100)) });
+  await page.getByRole('alert').filter({ hasText: '内容超过' }).waitFor();
+  assert.match(await input.inputValue(), /^原草稿/);
+  await input.fill('拖拽草稿');
+  const transfer = await page.evaluateHandle(() => { const dt = new DataTransfer(); dt.items.add(new File(['拖拽文字'], '拖拽.txt', { type: 'text/plain' })); return dt; });
+  await composer.dispatchEvent('drop', { dataTransfer: transfer });
+  await page.waitForFunction(() => document.querySelector('textarea').value.includes('拖拽文字'));
+  await input.fill('录音前草稿');
+  await page.getByRole('button', { name: '语音转文字', exact: true }).click();
+  await page.getByRole('button', { name: '完成录音并转文字', exact: true }).waitFor();
+  await page.waitForFunction(() => window.__syntheticRecordedBytes > 0);
+  await page.getByRole('button', { name: '完成录音并转文字', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('textarea').value.includes('合成识别文字'));
+  assert.equal(await input.inputValue(), '录音前草稿\n合成识别文字');
+  const beforeCancel = requests.length;
+  await page.getByRole('button', { name: '语音转文字', exact: true }).click();
+  await page.getByRole('button', { name: '完成录音并转文字', exact: true }).waitFor();
+  await page.getByRole('button', { name: '取消识别', exact: true }).click();
+  await page.waitForTimeout(800);
+  assert.equal(requests.length, beforeCancel);
+  await input.fill('保存聊天');
+  await page.getByRole('button', { name: '发送消息', exact: true }).click();
+  await page.getByText('合成回复已完成', { exact: true }).waitFor();
+  const original = page.url();
+  await input.fill('保留旧对话草稿');
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=', 'base64');
+  await page.getByLabel('选择图片文件').setInputFiles({ name: '合成.png', mimeType: 'image/png', buffer: png });
+  await page.getByRole('button', { name: '取消识别', exact: true }).waitFor();
+  await page.getByRole('button', { name: '新对话', exact: true }).click();
+  await input.fill('新对话草稿');
+  await page.waitForTimeout(1000);
+  assert.equal(await input.inputValue(), '新对话草稿');
+  await page.getByRole('region', { name: '聊天列表' }).getByRole('button', { name: '保存聊天', exact: true }).click();
+  await page.waitForURL(original);
+  assert.equal(await input.inputValue(), '保留旧对话草稿');
+  await page.getByRole('button', { name: '新对话', exact: true }).click();
+  await input.fill('');
+  for (const [width, height] of [[1440, 900], [1024, 680], [390, 844]]) {
+    await page.setViewportSize({ width, height });
+    const bounds = await composer.boundingBox();
+    assert(bounds.x >= 0 && bounds.x + bounds.width <= width + 1 && bounds.y + bounds.height <= height + 1);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+    for (const label of ['添加附件', '操作权限', '切换模型', '思考强度', '语音转文字', '发送消息']) {
+      const button = await page.getByRole('button', { name: label, exact: true }).boundingBox();
+      assert(button && button.x >= bounds.x && button.x + button.width <= bounds.x + bounds.width + 1, label);
+    }
+    await page.screenshot({ path: `../../test-results/composer-${width}.png` });
+  }
+  assert.deepEqual(errors, []);
+  console.log('PASS original composer: imports, limits, drag-drop, synthetic dictation, cancel, thread isolation, menus, responsive controls');
+} catch (error) {
+  console.error('Composer fixture failed', await page?.locator('body').innerText());
+  throw error;
+} finally { await browser.close(); }
