@@ -21,7 +21,7 @@ class WorkspaceChatRuntime:
             raise ValueError("Exact workspace chat composition required")
         self.business, self.query, self.sdk = business, query, sdk
 
-    async def stream_queued(self, credentials, thread_id, request_id):
+    async def stream_queued(self, credentials, thread_id, request_id, *, reasoning=None):
         ticket = await anyio.to_thread.run_sync(lambda: self.business.claim(credentials, thread_id, request_id))
         if ticket is None:
             return  # GET/reconnect/repeated start never redispatches.
@@ -59,7 +59,7 @@ class WorkspaceChatRuntime:
                 classroom_enabled=self.business.store.database.profile == 'classroom-work-d4')
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket["user_text"], Mode.CHAT)
-            async with aclosing(self.sdk.stream(credentials, request, _workspace_actions=capture)) as stream:
+            async with aclosing(self.sdk.stream(credentials, request, _workspace_actions=capture, _reasoning=reasoning)) as stream:
                 async for item in stream:
                     if item.type in ("message.delta", "draft.available", "run.completed"):
                         pending.append(item); completed = completed or item.type == "run.completed"

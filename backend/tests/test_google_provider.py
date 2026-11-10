@@ -26,6 +26,22 @@ KEY = "synthetic-google-provider-canary"
 SIGNATURE = "c3ludGhldGljLXNpZ25hdHVyZQ=="
 
 
+@pytest.mark.parametrize('effort', ['low', 'medium', 'high'])
+async def test_composer_effort_reaches_native_google_wire(monkeypatch, effort):
+    from class_os.infrastructure.reasoning import reasoning_settings
+    calls = []
+    def reply(request):
+        body = json.loads(request.content); calls.append(body)
+        assert body['generationConfig']['thinkingConfig']['thinking_level'] == effort.upper()
+        return httpx.Response(200, json=packet([{'text': 'OK'}]))
+    intercept(monkeypatch, reply)
+    async with model_provider.configured_client(CONFIG, SecretStr(KEY)) as session:
+        model = model_provider.model_for_configuration(CONFIG, session)
+        result = await Agent(model, model_settings=reasoning_settings(model, effort)).run('Synthetic effort probe')
+        assert result.output == 'OK'
+    assert len(calls) == 1
+
+
 def intercept(monkeypatch, handler):
     original = httpx.AsyncClient
     clients, options = [], []

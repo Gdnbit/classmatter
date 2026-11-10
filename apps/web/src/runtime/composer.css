@@ -1,0 +1,42 @@
+/* The existing conversation layout remains authoritative; only its composer changes. */
+.connected-runtime .r1-composer.composer-reference,.connected-runtime .r1-composer.composer-reference textarea,.connected-runtime .r1-composer.composer-reference button{font-family:"Segoe UI","Microsoft YaHei",sans-serif}
+.connected-runtime .r1-composer.composer-reference:focus-within{border-color:#d9e0e5}
+.connected-runtime .r1-composer.composer-reference{position:relative;border:1px solid #e8ebec;border-radius:28px;padding:16px 18px 12px;min-height:122px;box-shadow:0 3px 16px #182a3510;background:#fff}
+.connected-runtime .composer-reference textarea{display:block;min-height:48px;max-height:160px;font-size:15px;line-height:1.6;padding:1px 3px 8px;border:0;outline:0;box-shadow:none;resize:none}
+.connected-runtime .composer-reference textarea::placeholder{color:#a6afb3}
+.connected-runtime .composer-reference>.composer-toolbar{display:flex;flex-wrap:nowrap;align-items:center;gap:10px;min-height:34px}
+.connected-runtime .composer-reference .composer-toolbar span{margin:0;font-size:inherit}
+.connected-runtime .composer-tools{position:relative;display:flex;align-items:center;gap:12px;flex:none}
+.connected-runtime .composer-reference button{display:inline-flex;justify-content:center;align-items:center;gap:6px;border:0;box-shadow:none;background:transparent;color:#252a2d;padding:7px;cursor:pointer;border-radius:9px;min-width:0}
+.connected-runtime .composer-reference button:disabled{cursor:default;opacity:.42}
+.connected-runtime .composer-reference button:hover:not(:disabled){background:#f3f5f6}
+.connected-runtime .composer-reference button:focus-visible{outline:2px solid #81aef7;outline-offset:2px}
+.connected-runtime .composer-reference .composer-access{font-size:13px;color:#ed6b23;white-space:nowrap;padding-inline:3px}
+.connected-runtime .composer-reference .composer-spacer{flex:1;min-width:0}
+.connected-runtime .composer-reference .composer-icon{width:32px;height:32px;flex:none}
+.connected-runtime .composer-reference .composer-send{width:34px;height:34px;border-radius:50%;background:#3d82f6;color:white;flex:none}
+.connected-runtime .composer-reference .composer-send:hover:not(:disabled){background:#2c70df}
+.connected-runtime .composer-reference .composer-send:disabled{background:#dfe5e8;color:#8d999f;opacity:1}
+.connected-runtime .composer-reference .r1-model-picker{display:flex;align-items:center;gap:2px;flex:none;margin:0;max-width:46%;min-width:0}
+.connected-runtime .composer-reference .r1-model-picker .r1-model-trigger{border:0;border-radius:8px;padding:6px 3px;max-width:100%;min-width:0;font-size:13px}
+.connected-runtime .composer-reference .r1-model-trigger span{font-size:13px!important}
+.connected-runtime .composer-reference .has-reasoning .r1-model-trigger>svg{display:none}
+.connected-runtime .composer-reference .composer-reasoning{font-size:12px;color:#8a9399;padding:7px 3px;white-space:nowrap;flex:none}
+.connected-runtime .composer-reference .composer-reasoning-menu{width:180px}
+.connected-runtime .composer-reference .composer-reasoning-menu button{justify-content:space-between;width:100%;padding:10px}
+.connected-runtime .composer-reasoning-menu button[aria-pressed=true]{background:#eff5ff}
+.connected-runtime .composer-menu{position:absolute;bottom:calc(100% + 14px);left:0;z-index:45;width:220px;padding:7px;background:white;border:1px solid #e3e6e8;border-radius:15px;box-shadow:0 8px 28px #182a351a;font-size:13px}
+.connected-runtime .composer-reference .composer-menu button{display:flex;justify-content:flex-start;width:100%;padding:11px 10px;border-radius:9px;gap:10px}
+.connected-runtime .composer-access-menu{padding:15px 17px;width:220px}
+.connected-runtime .composer-access-menu strong{font-weight:600}.connected-runtime .composer-access-menu p{margin:9px 0 0;color:#768089;line-height:1.5}
+.connected-runtime .composer-reference>.composer-feedback{display:flex;align-items:center;justify-content:flex-start;gap:10px;color:#6d7880;font-size:12px;padding:8px 3px 0;flex-wrap:wrap}
+.connected-runtime .composer-reference .composer-feedback button{font-size:12px;text-decoration:underline;padding:0}
+.connected-runtime .composer-error{font-size:12px;line-height:1.5;margin:8px 3px 0;color:#aa493e}
+.connected-runtime .composer-reference .composer-recording{color:#dc493e;background:#fff0ed}
+.connected-runtime .composer-dropping{border-color:#77a7ef!important;background:#f7faff!important}
+.connected-runtime .composer-drop-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;margin:0;background:#f2f7ffed;border-radius:27px;color:#3b70b9;font-size:14px;pointer-events:none}
+.connected-runtime .composer-spinner{flex:none;animation:composer-spin 1s linear infinite;color:#899298}
+@keyframes composer-spin{to{transform:rotate(360deg)}}
+@media(max-width:650px){.connected-runtime .r1-composer.composer-reference{padding:12px 12px 10px;min-height:116px;border-radius:23px}.connected-runtime .composer-reference>.composer-toolbar{gap:6px}.connected-runtime .composer-tools{gap:6px}.connected-runtime .composer-reference .r1-model-picker{max-width:46%}}
+@media(max-width:480px){.connected-runtime .composer-reference .composer-access span{display:none!important}.connected-runtime .composer-reference .composer-icon{width:28px;height:30px}.connected-runtime .composer-tools{gap:5px}.connected-runtime .composer-reference .r1-model-trigger span{font-size:11px!important}.connected-runtime .composer-reference .composer-reasoning{font-size:10px}.connected-runtime .composer-reference .r1-model-picker{max-width:45%}.connected-runtime .composer-reference .composer-send{width:32px;height:32px}}
+@media(prefers-reduced-motion:reduce){.connected-runtime .composer-spinner{animation:none}}

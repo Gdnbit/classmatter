@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.composer-capture.v1",
+      "default": "classmatter.composer-capture.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "text": {
+      "maxLength": 2000,
+      "minLength": 1,
+      "title": "Text",
+      "type": "string"
+    }
+  },
+  "required": [
+    "text"
+  ],
+  "title": "CaptureOutput",
+  "type": "object"
+}

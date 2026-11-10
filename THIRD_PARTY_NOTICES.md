@@ -8,6 +8,8 @@ Important components: React/Vite/Tailwind/Lucide (generally permissive), Pydanti
 
 The optional configured Gemini path uses Pydantic AI's Google extra and the official Google Gen AI SDK (Apache-2.0). Its locked dependencies retain their own Apache/BSD and cryptography dual-license terms. Exact versions and original notices are included in the backend inventory; adding this source dependency is not permission to activate a Provider or a packaged-binary license verdict.
 
+Editable composer imports use python-docx/openpyxl/python-pptx (MIT), defusedxml (PSFL), et-xmlfile (MIT), lxml (BSD-3-Clause), Pillow (MIT-CMU) and XlsxWriter (BSD-2-Clause). The exact eight locked versions and original installed notices are retained in the backend inventory. These packages are installed dependencies, not redistributed Office binaries; workbook formulas are read as text, never executed.
+
 The installed scope also includes MPL-2.0 components such as certifi/pathspec, and PSF/BSD/ISC terms. No such dependency is relabeled Apache-2.0. Some wheels omit notices: exact-tag upstream notices supplement logfire-api and the native Rolldown binding; source URLs and checksums are in `third_party/supplemental-license-review.json`. `review_required=[]` means the installed metadata/notice collection has no unresolved entry, not universal distribution-law approval.
 
 Psycopg binary wheels can include native libpq/OpenSSL/other notices; source-only distribution with separately installed dependencies is different from bundling a desktop image, container or binary. Do not claim full binary-distribution compliance from Python metadata. PostgreSQL binaries, Node, Python, browsers and scanning executables are not shipped in this candidate.

@@ -68,9 +68,9 @@ export function workspaceChatClient(session: Session) {
       return result
     },
     send: (threadId: string, requestId: string, text: string, signal?: AbortSignal) => json<{turn: ChatTurn}>("turn", thread(threadId) + "/turns", session, { request_id: id(requestId), text }, signal),
-    start: async (threadId: string, requestId: string, signal: AbortSignal, onProgress: (kind: string) => void) => {
+    start: async (threadId: string, requestId: string, signal: AbortSignal, onProgress: (kind: string) => void, reasoning?: 'low' | 'medium' | 'high') => {
       const response = await fetch(`${thread(threadId)}/turns/${id(requestId)}/events`, { method: "POST", credentials: "same-origin", signal,
-        headers: { "content-type": "application/json", "x-class-os-csrf": session.csrf_token }, body: "{}" })
+        headers: { "content-type": "application/json", "x-class-os-csrf": session.csrf_token, ...(reasoning ? { 'x-classmatter-reasoning': reasoning } : {}) }, body: "{}" })
       if (!response.ok) throw new ApiError(response.status, response.headers.get("x-request-id") || "")
       await consumeEvents(response, item => onProgress(item.type)) // Render only QG-saved output, never these payloads.
     },

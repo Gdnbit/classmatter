@@ -166,10 +166,14 @@ def router(runtime, commands):
     async def events(workspace_id: UUID, thread_id: UUID, request_id: UUID, request: Request, body: ChatEmpty):
         if request.headers.get("last-event-id"):
             raise HTTPException(400)
+        options = request.headers.getlist('x-classmatter-reasoning')
+        if len(options) > 1 or options and options[0] not in ('low', 'medium', 'high'):
+            raise HTTPException(400)
+        reasoning = options[0] if options else None
         auth = credentials(request, workspace_id, write=True)
         await anyio.to_thread.run_sync(lambda: runtime.query.history(auth, thread_id))
         async def stream():
-            async with aclosing(runtime.stream_queued(auth, thread_id, request_id)) as source:
+            async with aclosing(runtime.stream_queued(auth, thread_id, request_id, reasoning=reasoning)) as source:
                 async for event in source:
                     data = {"cursor": event.cursor, "run_id": str(event.run_id), "type": event.type, "payload": event.payload}
                     yield f"id: {event.cursor}\nevent: {event.type}\ndata: {json.dumps(data, ensure_ascii=False)}\n\n"
@@ -221,4 +225,7 @@ def create_workspace_chat_app(settings, *, worker, query, sdk, readiness=None, m
     if worker.store.database.profile == 'classroom-work-d4':
         from .classroom_work import router as classroom_router
         app.include_router(classroom_router(worker, query))
+        from .composer import router as composer_router
+        app.state.composer_capture_enabled = True
+        app.include_router(composer_router(query, model_controller))
     return app

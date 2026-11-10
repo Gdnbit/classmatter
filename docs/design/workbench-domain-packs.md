@@ -4,6 +4,8 @@
 
 ## 2026-11-09 当前成绩与座位增量
 
+2026-11-10输入区增量：文件文字导入和语音听写仅为临时Capture能力，详见[对话与操作设计](workspace-chat-and-actions.md)。不进入成绩/座位领域事实模型，不增加Agent写入口；发送文字和准备领域候选继续走原链路。原始附件库、批量导入、实时双向语音仍待独立验证，不据此改变冻结R1。
+
 本轮实现基本考试/科目、精确分数与缺考/免考/未录入、更正理由及不可变历史；教室布局、单人安排/移动、两处交换与完整座位版本快照。受控导入、排名/跨考试分析、布局重塑/不可用位置、约束solver、排座多候选、批量无交互执行仍不计完成。产品优先级与实际教师净减负仍需试用验证，不以合成测试晋升正式需求。
 
 文件地图与数据流：`domain/classroom_work.py`闭集值/命令 → `application/workbench.py`复用原QG/BCG与W2确认策略 → `infrastructure/classroom_work.py`固定SQL和完整性校验 → `interfaces/http/classroom_work.py`typed读/预览 → `runtime/classroom-work.ts`固定Ajv客户端与`ClassroomWorkspace.tsx`原成绩表格/座位呈现。`classroom_actions.py`只读与准备候选，继续由Pydantic AI循环调用；没有SQL、批准、commit或Schema工具。

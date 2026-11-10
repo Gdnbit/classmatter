@@ -9,6 +9,17 @@ const api = await import(`data:text/javascript;base64,${Buffer.from(chunk.code).
 const session = { csrf_token: 'synthetic-session-' + 'a'.repeat(32), subject: { owner_id: randomUUID(), workspace_id: randomUUID() } };
 const client = api.workspaceChatClient(session), threadId = randomUUID(), instant = '2026-11-08T00:00:00Z';
 const reply = data => new Response(JSON.stringify(data), { headers: { 'content-type': 'application/json' } });
+test('dispatch preference changes only its optional header, preserving the empty body and CSRF', async () => {
+  const original = globalThis.fetch, calls = [];
+  try {
+    globalThis.fetch = async (url, options) => { calls.push({ url, options }); return new Response('', { status: 503 }); };
+    for (const effort of [undefined, 'high']) await assert.rejects(client.start(threadId, randomUUID(), new AbortController().signal, () => {}, effort));
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0].options.headers['x-classmatter-reasoning'], undefined);
+    assert.equal(calls[1].options.headers['x-classmatter-reasoning'], 'high');
+    for (const { options } of calls) { assert.equal(options.body, '{}'); assert.equal(options.headers['x-class-os-csrf'], session.csrf_token); }
+  } finally { globalThis.fetch = original; }
+});
 function history() {
   return { schema_version: 'classmatter.workspace-chat-history.v1', thread: { thread_id: threadId, title: 'synthetic history', status: 'active', version: 3, created_at: instant, updated_at: instant, cleared_at: null },
     turns: [{ turn_id: randomUUID(), request_id: randomUUID(), ordinal: 1, state: 'completed', version: 3, user_text: 'synthetic user', assistant_text: 'synthetic saved reply',

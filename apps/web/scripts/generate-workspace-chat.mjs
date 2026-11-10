@@ -8,6 +8,7 @@ ajv.addFormat('date-time', /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?
 ajv.addFormat('date', /^\d{4}-\d{2}-\d{2}$/);
 const names = { capabilities: 'capabilities', listing: 'list', history: 'history', send: 'send', turn: 'turn', version: 'version', clear: 'clear', thread: 'thread', previewBody: 'preview-body', preview: 'preview' };
 for (const [name, suffix] of Object.entries(names)) ajv.addSchema(JSON.parse(await readFile(new URL(`../../../contracts/http/workspace-chat-${suffix}.v1.schema.json`, import.meta.url), 'utf8')), name);
+for (const suffix of ['input', 'output']) { const name = `capture${suffix}`; names[name] = name; ajv.addSchema(JSON.parse(await readFile(new URL(`../../../contracts/http/composer-${suffix}.v1.schema.json`, import.meta.url), 'utf8')), name); }
 const code = '// Generated from fixed workspace chat schemas by Ajv. Do not edit.\n' + standaloneCode(ajv, Object.fromEntries(Object.keys(names).map(name => [name, name]))) + '\n';
 const target = new URL('../src/runtime/workspace-chat-validators.cjs', import.meta.url);
 if (process.argv.includes('--check')) {
