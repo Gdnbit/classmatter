@@ -15,13 +15,15 @@ _PRIOR = re.compile(r'上次|之前|已有|上一|原有|待确认|上方|先前
 
 def unbacked_action_promise(text, user_text, user_messages=(), *, attempted=False, pending=False):
     # Quoting, planning and hypothetical discussion must remain normal chat.
-    if _META.search(user_text):
+    # Withholding commit is the normal preview flow, not a refusal to prepare.
+    intent_text = re.sub(r'(?:不要|不用|不必|先不|暂不)(?:自动)?(?:保存|提交|落库)|(?:do not|don\x27t)\s+(?:save|submit)', '', user_text, flags=re.I)
+    if _META.search(intent_text):
         return False
     if pending and _PRIOR.search(user_text) and _PRIOR.search(text) and not _ACTION.search(user_text):
         return False  # Only a freshly verified, actually displayed earlier card.
     action = bool(_ACTION.search(user_text) or re.search(r'预览|preview', user_text, re.I)) or bool((_FOLLOWUP.fullmatch(user_text) or _DETAIL.search(user_text)) and any(_ACTION.search(message) for message in user_messages[:-1]))
     if not attempted and not action:
-        return unbacked_seating_promise(text, user_text, user_messages)
+        return unbacked_seating_promise(text, intent_text, user_messages)
     if not attempted and not (_DOMAIN.search(text) or any(_DOMAIN.search(message) for message in user_messages)):
         return False  # A joke/poem response is not a business candidate.
     return bool(_READY.search(text) or _WRITE.search(text))

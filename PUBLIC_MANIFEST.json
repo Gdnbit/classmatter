@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "022107109e28f5fe8334493f4037e07d27d77bbe5684f4fdfc37f8139f2039ed"
+      "sha256": "85b8c3dc84e6c10195388b961a26b0072b3ae7f56ceb29c6999e167a9d93c315"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2990,7 +2990,7 @@
       "sha256": "0c43bbda7e2fd1a0038e78eb0acb3ff3a1399c65d0c82b0d993b27ea2da56d6d"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "8e78114473539df74d317a7907cf034e92d8280518670d0c8ebd9b15d0aac41a"
+      "sha256": "15b53a08199078fd010068b415874d5b244e4081a49715040ea9c5df040afe3a"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3214,10 +3214,10 @@
       "sha256": "6d3a8d984e918a10e91d529093c4e703444977acd729ab1701480f501a40e0b0"
     },
     "backend/src/class_os/infrastructure/action_output.py": {
-      "sha256": "39b88137570c870789cba58eb40753ef0ffe1f4364f3987affa10b1153e2e782"
+      "sha256": "981999eec4c7afcd6e033e7c8314129407cf79839770cdbc0a3ec7665598a944"
     },
     "backend/tests/test_action_output.py": {
-      "sha256": "3aa13f94602f52aefae9e00be60bf72a1d89b7801e24c1af1dc41f7a911edd88"
+      "sha256": "2ef336920034d1bf81741817f7e07b43bd2a12913862825c91b7c0de65b0be6b"
     }
   }
 }

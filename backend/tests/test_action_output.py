@@ -44,6 +44,11 @@ def test_ready_wording_does_not_replace_an_actual_candidate(text):
     assert unbacked_action_promise(text, '创建任务合成回执', ('创建任务合成回执',))
 
 
+@pytest.mark.parametrize('message', ['创建文档合成小结，先不要保存', '创建任务合成回执，不用自动提交', '三行五列，暂不保存'])
+def test_withholding_commit_still_requires_the_promised_preview(message):
+    assert unbacked_action_promise('已准备好座位或文档，请核对确认。', message, (message,))
+
+
 @pytest.mark.db
 async def test_rejected_preparations_ask_only_missing_information_without_model_false_ready(classroom_work):
     business, query, auth, owner, clock, store, commit, c, t, students = classroom_work
@@ -106,7 +111,7 @@ async def test_generic_repair_is_bounded_and_can_refer_to_real_pending_card(clas
     cookies = dict(zip(('class_os_session', 'class_os_client', 'class_os_csrf'), auth[:3]))
     prefix = f'/api/workspaces/{auth[3]}/workspace-chat/threads/{uuid4()}'
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url='http://127.0.0.1:8000', cookies=cookies) as client:
-        for message in ('创建任务合成耗尽', '创建任务合成待确认', '显示上次待确认的预览'):
+        for message in ('创建任务合成耗尽', '创建任务合成待确认，先不要保存', '显示上次待确认的预览'):
             request = uuid4()
             await client.post(prefix+'/turns', headers=headers, json={'request_id': str(request), 'text': message})
             wire = await client.post(prefix+f'/turns/{request}/events', headers=headers, json={})
