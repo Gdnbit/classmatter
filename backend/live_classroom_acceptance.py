@@ -34,9 +34,13 @@ def main():
     parser.add_argument('--resume-runtime-root', type=Path, help='Reuse only a prior isolated, empty-classroom acceptance fixture')
     parser.add_argument('--provider', choices=('google', 'zhipu'), default='google', help='Explicit registered free model only; never an automatic fallback')
     parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed turns; all attempts remain in the report')
+    parser.add_argument('--scenario', choices=('classroom', 'full-workbench'), default='classroom', help='Full workbench starts empty; all class/student creation uses the original conversation UI')
     args = parser.parse_args()
     if not args.live or not args.source_runtime_root or not args.pg_root:
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_live_source_and_pg_required', 'requests': 0}))
+        return 2
+    if args.scenario == 'full-workbench' and args.resume_runtime_root:
+        print(json.dumps({'status': 'blocked', 'reason': 'full_workbench_requires_fresh_fixture', 'requests': 0}))
         return 2
     if os.name != 'nt':
         return 2
@@ -113,7 +117,7 @@ def main():
             c, t = context.class_id, context.term_id
             if target_services.query.classroom_read(auth, c, t)['exams'] or target_services.query.classroom_read(auth, c, t, seating=True) is not None:
                 raise ValueError('Resume cannot reset or overwrite classroom work')
-        else:
+        elif args.scenario == 'classroom':
             c, t = uuid4(), uuid4()
             commit(CreateClass(c, t, '合成联测班', '合成联测学期', date(2026, 9, 1), date(2027, 1, 30)))
             for name in ('合成学生甲', '合成学生乙'):
@@ -168,7 +172,7 @@ def main():
         config = json.loads(descriptor.read_text(encoding='utf-8'))
         config.update(runtimeRoot=str(runtime.root), servicePort=port)
         descriptor.write_text(json.dumps(config), encoding='utf-8')
-        env = dict(os.environ, CLASSMATTER_RUN_LIVE_CLASSROOM='1', CLASSMATTER_LIVE_STAGE=str(stage), CLASSMATTER_LIVE_REPORT=str(output / 'report.json'), CLASSMATTER_LIVE_MODEL=profile.model, CLASSMATTER_LIVE_ATTEMPTS=str(args.attempts_per_turn))
+        env = dict(os.environ, CLASSMATTER_RUN_LIVE_CLASSROOM='1', CLASSMATTER_LIVE_STAGE=str(stage), CLASSMATTER_LIVE_REPORT=str(output / 'report.json'), CLASSMATTER_LIVE_MODEL=profile.model, CLASSMATTER_LIVE_ATTEMPTS=str(args.attempts_per_turn), CLASSMATTER_LIVE_SCENARIO=args.scenario)
         phase = 'native-acceptance'
         result = subprocess.run(['node', 'tests/live-classroom-acceptance.cjs'], cwd=desktop, env=env,
             capture_output=True, text=True, encoding='utf-8', timeout=1500, creationflags=subprocess.CREATE_NO_WINDOW)

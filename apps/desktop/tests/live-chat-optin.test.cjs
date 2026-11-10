@@ -18,9 +18,16 @@ test('live chat acceptance refuses default invocation before launching Electron 
   assert.match(result.stderr,/Explicit live synthetic acceptance opt-in required/);
 });
 
-test('classroom live acceptance refuses default invocation before dependencies or network',()=>{
+for(const scenario of ['classroom','full-workbench'])test(`${scenario} live acceptance refuses default invocation before dependencies or network`,()=>{
   const env={...process.env};delete env.CLASSMATTER_RUN_LIVE_CLASSROOM;
+  env.CLASSMATTER_LIVE_SCENARIO=scenario;
   const result=spawnSync(process.execPath,[path.join(__dirname,'live-classroom-acceptance.cjs')],{env,encoding:'utf8',timeout:5000,windowsHide:true});
   assert.notEqual(result.status,0);assert.equal(result.stdout,'');
   assert.match(result.stderr,/Explicit live synthetic opt-in required/);
+});
+
+test('unknown live workbench scenario is rejected before Electron dependencies or network',()=>{
+  const env={...process.env,CLASSMATTER_RUN_LIVE_CLASSROOM:'1',CLASSMATTER_LIVE_SCENARIO:'unknown'};
+  const result=spawnSync(process.execPath,[path.join(__dirname,'live-classroom-acceptance.cjs')],{env,encoding:'utf8',timeout:5000,windowsHide:true});
+  assert.notEqual(result.status,0);assert.equal(result.stdout,'');assert.match(result.stderr,/Explicit supported scenario required/);
 });

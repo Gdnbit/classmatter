@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "85b8c3dc84e6c10195388b961a26b0072b3ae7f56ceb29c6999e167a9d93c315"
+      "sha256": "3a3e425431c27815c153adb6c9674dcfe58b7364028e7baad4624696bff9ee38"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -540,7 +540,7 @@
       "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
     },
     "apps/desktop/README.md": {
-      "sha256": "e1b33cc810ff049e31ce7e37e3d2b9d0507edd812193540114b11fa1c45af0c3"
+      "sha256": "e6e4812f616e5d9e06196233d2966f2d530267913de8b992bcb81777a8b4e023"
     },
     "apps/desktop/scripts/build.cjs": {
       "sha256": "586d17fa8f21ce2eda947c78a55d2139f4c979fd6110a9f0336d585fb777b7fc"
@@ -3002,7 +3002,7 @@
       "sha256": "5bba5f9029f8f04c860f05c49e886a08072f41dec26194611e73a23a10c7df4b"
     },
     "apps/desktop/tests/live-chat-optin.test.cjs": {
-      "sha256": "239e88f9ebbef136d03a35e81ed69291f3aca1b90fddaed866d0ad5dd80b6c6c"
+      "sha256": "8ae392059647d036c607337607f700ae5c8ba850772b43a2a4233b431071c33a"
     },
     "backend/src/class_os/infrastructure/local_model_activation.py": {
       "sha256": "21539a3b64a7f03629edd4d9b6bed908a1d190cd583c88e924a46df46c5e93e0"
@@ -3101,13 +3101,13 @@
       "sha256": "afbd08f4d56791a074a11ffbf8ad2a407f1e4d4787153698576cdd0f75e60695"
     },
     "apps/desktop/tests/live-classroom-acceptance.cjs": {
-      "sha256": "52f6dc7de3b397fc58b78efeaf6a764e97a0f8723a4954e1586052bab82639f1"
+      "sha256": "485ddadebdfc3802ffa0c2c1e6583640678f6b15c10e02c94f079f42d06b3d16"
     },
     "backend/live_classroom_acceptance.py": {
-      "sha256": "591b8f8e92e1014b3b96e0e45ff40c5ed3a49741b6699412b154e5470d387289"
+      "sha256": "e7fcb733a01c9834a9f0196072692e3b0e1b7244072971adcbd6c8f4467071c8"
     },
     "backend/tests/test_live_classroom_operator.py": {
-      "sha256": "f21c2d18c12f67a0e10ef43b8190e4ad31d0c9d2bd31be051c741ec9682e568f"
+      "sha256": "2f4534d96da77eed98a8b78b90edc3e0fd563350245a0a414608fd607002dfaf"
     },
     "backend/tests/test_workspace_output_repair.py": {
       "sha256": "ac7437d7ee482e00af6c8f9cf457fd66a2b126a3bf92edcf3bb7219d45b14113"
