@@ -114,7 +114,7 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
     </div>
     <input ref={image} type="file" accept=".png,.jpg,.jpeg,.webp" multiple hidden aria-label="选择图片文件" onChange={event => { imports(event.target.files); event.target.value = '' }} />
     <input ref={file} type="file" accept=".txt,.md,.csv,.tsv,.docx,.xlsx,.pptx,.pdf,.wav,.mp3,.webm" multiple hidden aria-label="选择内容文件" onChange={event => { imports(event.target.files); event.target.value = '' }} />
-    {(capture.busy || capture.recording || capture.status) && <div className="composer-feedback" role="status">{capture.recording ? `正在录音 ${Math.floor(capture.seconds / 60)}:${String(capture.seconds % 60).padStart(2, '0')}` : capture.status}
+    {(capture.busy || capture.recording || capture.status) && <div className={capture.busy || capture.recording ? 'composer-feedback' : 'sr-only'} role="status">{capture.recording ? `正在录音 ${Math.floor(capture.seconds / 60)}:${String(capture.seconds % 60).padStart(2, '0')}` : capture.status}
       {(capture.busy || capture.recording) && <button type="button" onClick={capture.cancel} aria-label="取消识别">取消</button>}</div>}
     {capture.error && <p className="composer-error" role="alert">{capture.error}</p>}
     {dragging && <p className="composer-drop-hint">松开以添加内容</p>}

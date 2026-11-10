@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "e9c84490e4e9e83122faeb3936a682d822962dd4dbc51833c40c1f55bf577f76"
+      "sha256": "2a64dc664d0a25c5bf6ea2971496fe05876e4ff6b5d569ca84b1c629d573f828"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2888,7 +2888,7 @@
       "sha256": "1eab8b252787a392864f9d1fa5f69e68ce189dbf3baa409bc5c32c7fc21e08d8"
     },
     "apps/web/src/runtime/WorkspaceChat.tsx": {
-      "sha256": "be3c129bf1b701112a145ff25100f61755c712c5afd6d5226126f02384ff152a"
+      "sha256": "c2b9030d4cb5efbdde14034301fdd193396ade973bf0bd05b8069ca62deb9374"
     },
     "apps/web/src/runtime/useWorkspaceChat.ts": {
       "sha256": "ebd16de917dc6ec61c0c6fac98fc776948ecfc7b4c5a9624e8af072deca527ec"
@@ -2990,7 +2990,7 @@
       "sha256": "0c43bbda7e2fd1a0038e78eb0acb3ff3a1399c65d0c82b0d993b27ea2da56d6d"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "b472dc5eafe36a2607399c8d25319fc5e888c13bfb49e75cf98f238c881bfd67"
+      "sha256": "b25fa2232857d179ad3b9d2b9bf563542a9667090d8e5be493eb9c7a1a3f8c2d"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3122,10 +3122,10 @@
       "sha256": "4b6c496333f776ec79aa36c3ae00c6677bba00b1e50186c3fd691478fc47f030"
     },
     "apps/web/src/runtime/useComposerInput.ts": {
-      "sha256": "57c09435d9b254b331c3028443902645ae4e6b045c442da657e1399efacb781f"
+      "sha256": "af6bb6d6cbc6d697c91fcca383a58f68501b5b7e379a12b4f5f84a41efb8cce5"
     },
     "apps/web/tests/composer-input-browser.mjs": {
-      "sha256": "538ceb2b75e8394eb327776339102b057837124a593f1d067c93854ec39932c0"
+      "sha256": "691574d74d2d583cdc91e497cc494852eff48faf0c2e8554cf81d38ed7b6834b"
     },
     "backend/src/class_os/infrastructure/composer_capture.py": {
       "sha256": "f7cda5de48738a7a44f2c45bf33fba1ee8ee7ee9a250e8797a064597f568c750"
