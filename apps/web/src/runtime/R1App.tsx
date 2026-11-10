@@ -936,10 +936,10 @@ export default function R1App() {
         >
           <span>
             {item.title}
-            <small>
+            {item.due_at && <small>
               {item.overdue ? "已逾期 · " : ""}
               {displayTime(item.due_at)}
-            </small>
+            </small>}
           </span>
           <span>›</span>
         </button>
@@ -1051,7 +1051,7 @@ export default function R1App() {
       } header={
         <header className="topbar r1-topbar">
           <strong>{page === "conversation" ? "对话" : page === "dashboard" ? "总览" : page === "students" ? "学生" : page === "work" ? "工作" : page === "documents" ? "数据与内容" : page === "grades" ? "成绩" : page === "seating" ? "座位" : page === "settings" ? "设置" : "班事有谱"}</strong>
-          <span role={refreshing ? "status" : undefined}>
+          {!(workspaceMode && page === "conversation") && <><span role={refreshing ? "status" : undefined}>
             {refreshing ? "正在加载…" : page === "conversation" ? "" : classroom?.term_name || ""}
             {classroom?.status === "archived" && " · 历史只读"}
           </span>
@@ -1061,7 +1061,7 @@ export default function R1App() {
             onClick={() => { setError(""); setNotice(""); void reload(documentDraft ? classroom : undefined).catch(fail) }}
           >
             <RefreshCw size={16} />
-          </button>
+          </button></>}
         </header>
       }>
         {error && !form && !pending && (
@@ -1111,9 +1111,7 @@ export default function R1App() {
             <>
               <div className={`r1-welcome${conversationStarted ? " r1-welcome-hidden" : ""}`} inert={conversationStarted || undefined}><div className="r1-welcome-inner">
               <div className="r1-heading">
-                <small>CLASSMATTER · 对话</small>
                 <h1>今天想处理什么？</h1>
-                <p>少记、少追、少重复。事实由你确认，系统帮你复用。</p>
               </div>
               <AttentionColumns className="r1-attention">{[
                 taskCards(attention.needsAction),

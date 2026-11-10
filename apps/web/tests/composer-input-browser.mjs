@@ -41,6 +41,10 @@ try {
   await page.getByLabel('选择内容文件').setInputFiles({ name: '小结.txt', mimeType: 'text/plain', buffer: Buffer.from('本周完成三项工作') });
   await page.waitForFunction(() => document.querySelector('textarea').value.includes('本周完成三项工作'));
   assert.equal(await input.inputValue(), '原草稿\n\n《小结.txt》\n本周完成三项工作');
+  const completion = page.getByRole('status').filter({ hasText: '文字已加入，可直接修改。' });
+  await completion.waitFor();
+  const completionBox = await completion.boundingBox();
+  assert(completionBox && completionBox.width <= 1 && completionBox.height <= 1, 'Completion is announced without adding visible helper copy');
   await page.getByLabel('选择内容文件').setInputFiles({ name: '长文.txt', mimeType: 'text/plain', buffer: Buffer.from('长'.repeat(2100)) });
   await page.getByRole('alert').filter({ hasText: '内容超过' }).waitFor();
   assert.match(await input.inputValue(), /^原草稿/);

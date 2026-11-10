@@ -38,3 +38,12 @@ test('teacher-facing pages do not restore removed development explanations', asy
     assert(!/同一数据世界|共享实体 · 多视图|内部 ID|可替换 AI 能力|完整性摘要|当前 owner|作者标识：|本切片|风险 X/.test(source), file);
   }
 });
+
+test('conversation does not restore routine maintenance controls or slogans', async () => {
+  const chat = await readFile(new URL('../src/runtime/WorkspaceChat.tsx', import.meta.url), 'utf8');
+  assert(!/刷新对话|归档对话|清除聊天正文|这项操作尚未保存|核对文档正文（/.test(chat));
+  const shell = await readFile(new URL('../src/runtime/R1App.tsx', import.meta.url), 'utf8');
+  assert(!/少记、少追、少重复|CLASSMATTER · 对话/.test(shell));
+  assert(chat.includes('aria-label="输入消息"'));
+  assert(chat.includes('aria-label="操作权限"'));
+});

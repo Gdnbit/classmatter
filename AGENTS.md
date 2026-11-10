@@ -17,6 +17,15 @@ Emergency response must not depend on ClassMatter availability. Never diagnose s
 
 ## User-facing language
 
+### Minimal, self-explanatory interfaces
+
+- Avoid unnecessary secondary labels, descriptions, helper text and redundant microcopy. Let layout, visual hierarchy, spacing and clear primary actions explain the interface.
+- Prefer self-explanatory structure over prose. Do not add slogans, tutorial paragraphs or a help explanation beneath every section by default. Put genuinely useful supplementary information behind an info icon with a keyboard-accessible tooltip when appropriate.
+- Preserve necessary form labels and accessible names. A clean interface must not sacrifice accessibility.
+- Dangerous or irreversible actions, including deletion, payment and permanent changes, must retain clear consequences before confirmation.
+- A first-time user must still understand where to act next and what clicking will do.
+- When revising an existing interface, remove redundant labels and explanations first. If clarity suffers, improve layout and action wording before adding more prose. Keep implementation rationale in code comments or developer documentation.
+
 All user-visible pages, dialogs, tooltips, errors and notifications must be concise and written for teachers. Show the task, result and next action; avoid developer notes, internal field names, IDs, hashes, framework names and release-stage explanations. Keep only necessary consequences, unsaved-change warnings and cost information. Preserve honest unavailable/preview/example states; never replace an unavailable action with a success claim. Technical contracts, diagnostics and implementation detail belong in developer documentation, not customer flows. Apply this rule to all future page and feature work and verify it in UI regression tests.
 
 ## Work and verification
