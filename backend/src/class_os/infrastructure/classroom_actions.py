@@ -75,7 +75,7 @@ def tools(capture, query, credentials, context, execute, missing_class):
             data = query.classroom_read(credentials, current.class_id, current.term_id, exam_id=matches[0]['exam_id'])
             previous = next((row for row in data['results'] if row['student_id'] == people[0].student_id), None)
             if previous and (not reason.strip() or not capture.mentioned(reason)):
-                return {'status': 'needs-correction-reason', 'instruction': 'Ask for the correction reason; keep the old result and never invent the reason.'}
+                return {'status': 'needs-correction-reason', 'question': '这次更正成绩的原因是什么？', 'instruction': 'Ask for the correction reason; keep the old result and never invent the reason.'}
             return capture.propose(RecordScore(matches[0]['exam_id'], current.class_id, current.term_id, people[0].student_id,
                 previous['version'] if previous else 0, status, score, reason))
         return await execute('prepare_score', prepare)

@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "3e15a457fd530aa4ff93f7e67b7604ed5eb134a872fb69f84cc778ac2ccb5997"
+      "sha256": "85b8c3dc84e6c10195388b961a26b0072b3ae7f56ceb29c6999e167a9d93c315"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1026,7 +1026,7 @@
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
     },
     "backend/src/class_os/infrastructure/agent.py": {
-      "sha256": "27e5b7b51b897ccc57fbef9ba7890d70f096e0f980a3bab2a3ef50c92855160c"
+      "sha256": "5a80d4081d34f5fdca7e839bd8f701dbdcdeff38dfa436d7fcce65f495d8bb00"
     },
     "backend/src/class_os/infrastructure/agent_memory.py": {
       "sha256": "2042927005c163c2179cbf81f85ac0b3c01d57ca2b22f4d9f39199fe69f2d101"
@@ -2921,7 +2921,7 @@
       "sha256": "8601cd5777a8dea780dff4f4606a0a2f601823cb6b13cfac0f9ccb03e7d3aaba"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "b6a5e69854a87dc2e3e92f6329306cf2c1963b93137da5ecdd64bdee04ab0685"
+      "sha256": "00f3141d70f013010c765854d8de8fea7180a4e5d2d0a68930c8e389fbac7353"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "ed65b25292ee264e4dbc4e5526cbd67c6d67e4c3d8efab38593c279defff77f5"
@@ -2942,10 +2942,10 @@
       "sha256": "29aaec218b927a71677e8a8e934cc362699e181197ecfeddecdb19ef4ed4e339"
     },
     "backend/tests/test_persistent_chat_web.py": {
-      "sha256": "c0193cab1c3be03a0e42bbacbcc6045c60eaa14106cfbaa25e662129bece12a9"
+      "sha256": "6f3ecc89ea0221ada8ecc38913b2f7b7a7baaeb4fc7af6de5dd64ff2fdc3b9ed"
     },
     "backend/tests/test_workspace_chat_runtime.py": {
-      "sha256": "56c2acb0ecd093ff8eaa753188f95fe24995f5d2f84eea71e0ff69aa39cd015b"
+      "sha256": "3822eb4455b6e5cd21ffc2378ba515126da95848ffb8a32fc7b07f6861ff306f"
     },
     "backend/tests/test_workspace_chat_storage.py": {
       "sha256": "1ec38c5ed6543c31817d08ea8524e5f99bee989a359662f6cd00c71ea3e147a6"
@@ -2990,7 +2990,7 @@
       "sha256": "0c43bbda7e2fd1a0038e78eb0acb3ff3a1399c65d0c82b0d993b27ea2da56d6d"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "cab3bb01dbe958bf8a24fd5ef8d1821953168d81271541bbb165a08660d49e83"
+      "sha256": "15b53a08199078fd010068b415874d5b244e4081a49715040ea9c5df040afe3a"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3056,7 +3056,7 @@
       "sha256": "09f8b98031e608d4fd127bfd1e56435e71675f782232a8f1a79fd52f77fcc130"
     },
     "backend/src/class_os/infrastructure/classroom_actions.py": {
-      "sha256": "88a76d09917c1075c224d180941c3ff10807a00797c44ea8730bd08a3ba97df4"
+      "sha256": "f99e8fd830f964976ed993233bd804685fb110c2de0b8eda6036dd726eb1be22"
     },
     "backend/src/class_os/infrastructure/classroom_upgrade.py": {
       "sha256": "c7e78300736532a0b832b301a9c004591d9947c60cb6ad50910448afa072660d"
@@ -3074,7 +3074,7 @@
       "sha256": "1bd84e53aaed4a669af8ce2bf6e80576172baf94f0b739611529a206fb9f2017"
     },
     "backend/tests/test_classroom_work_runtime.py": {
-      "sha256": "aadfb0bafebe426f3513d30d0a476318986bf94c5e6a4e2b3a60810c0b34cfaa"
+      "sha256": "dbc410453edd5d17a2d098281e5e3dd961ef1724f4ccddc36d20d047aa23ca51"
     },
     "backend/tests/test_classroom_work_storage.py": {
       "sha256": "e344c328a434ca28c6fc8a678924e392fae52d8bbdabc6b7ba1bc919ddbc3402"
@@ -3212,6 +3212,12 @@
     },
     "apps/web/tests/seating-preview-browser.mjs": {
       "sha256": "6d3a8d984e918a10e91d529093c4e703444977acd729ab1701480f501a40e0b0"
+    },
+    "backend/src/class_os/infrastructure/action_output.py": {
+      "sha256": "981999eec4c7afcd6e033e7c8314129407cf79839770cdbc0a3ec7665598a944"
+    },
+    "backend/tests/test_action_output.py": {
+      "sha256": "2ef336920034d1bf81741817f7e07b43bd2a12913862825c91b7c0de65b0be6b"
     }
   }
 }

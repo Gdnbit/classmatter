@@ -28,6 +28,7 @@ class WorkspaceActionCapture:
     document_reads: set = field(default_factory=set)
     completed_tools: list[str] = field(default_factory=list)
     clarification: str | None = None
+    pending_commands: set[str] = field(default_factory=set)
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -57,8 +58,9 @@ class WorkspaceActionCapture:
             result = await anyio.to_thread.run_sync(operation)
             self.completed_tools.append(tool)
             current_memory(); emit("tool.completed", tool=tool)
-            if (self.classroom_enabled and isinstance(result, dict)
-                    and result.get('status') == 'needs-information' and result.get('question')):
+            if (self.classroom_enabled and tool.startswith('prepare_') and isinstance(result, dict)
+                    and result.get('status') in ('needs-information', 'needs-class-context', 'needs-disambiguation', 'needs-correction-reason')
+                    and result.get('question')):
                 self.clarification = result['question']
                 raise CallDeferred()
             if self.classroom_enabled and isinstance(result, dict) and result.get('status') == 'uncommitted-candidate':
@@ -83,7 +85,7 @@ class WorkspaceActionCapture:
             self.reads.append("current-class")
             return value
 
-        missing_class = {"status": "needs-class-context", "instruction": "Ask which class to use or offer to prepare its creation. Do not invent a class or ask for a form."}
+        missing_class = {"status": "needs-class-context", "question": "要处理哪个班级？", "instruction": "Ask which class to use or offer to prepare its creation. Do not invent a class or ask for a form."}
 
         async def read_task_progress() -> dict:
             """Read this conversation's recent requests and freshly verified committed or pending actions before continuing a multi-step task. Never writes or treats assistant claims as receipts."""
@@ -92,11 +94,14 @@ class WorkspaceActionCapture:
                     return {"requests": [], "actions": [], "truncated": False}
                 history = self.progress_reader()
                 actions = []
+                self.pending_commands.clear()
                 for row in history["turns"]:
                     value = row["candidate"]
                     if row["state"] != "completed" or value is None:
                         continue
                     receipt = row["action_receipt"]
+                    if receipt is None:
+                        self.pending_commands.add(value['command'])
                     actions.append({"command": value["command"], "name": value.get("name"), "title": value.get("title"),
                         "status": "committed" if receipt else "awaiting-confirmation",
                         "resource_id": str(receipt["resource_id"]) if receipt else None,
@@ -144,7 +149,8 @@ class WorkspaceActionCapture:
             """Prepare one class and term creation candidate from explicit user-provided names and dates. Ask for missing information; never saves."""
             def prepare():
                 if not self.mentioned(name) or not self.mentioned(term_name) or not self.explicit_date(start_date) or not self.explicit_date(end_date):
-                    return {"status": "needs-information", "instruction": "Ask for the class name, term name and explicit start/end dates not supplied by the user. Never guess them."}
+                    missing = [label for label, supplied in (('班级名称', self.mentioned(name)), ('学期名称', self.mentioned(term_name)), ('开始日期', self.explicit_date(start_date)), ('结束日期', self.explicit_date(end_date))) if not supplied]
+                    return {"status": "needs-information", "question": '请补充' + '、'.join(missing) + '。', "instruction": "Ask for the class name, term name and explicit start/end dates not supplied by the user. Never guess them."}
                 if context() is not None:
                     return {"status": "existing-class", "instruction": "An active class already exists; clarify whether the user wants an edit. Do not replace or archive it."}
                 return self.propose(CreateClass(uuid4(), uuid4(), name, term_name, date.fromisoformat(start_date), date.fromisoformat(end_date)))
@@ -157,7 +163,7 @@ class WorkspaceActionCapture:
                 if current is None:
                     return missing_class
                 if not self.mentioned(name):
-                    return {"status": "needs-information", "instruction": "Ask for the desired class name."}
+                    return {"status": "needs-information", "question": "班级要改成什么名称？", "instruction": "Ask for the desired class name."}
                 return self.propose(ChangeClass("class.update", current.class_id, current.term_id, current.version, name))
             return await execute("prepare_class_edit", prepare)
 
@@ -168,15 +174,15 @@ class WorkspaceActionCapture:
                 if current is None:
                     return missing_class
                 if not self.mentioned(name) or action == "rename" and not self.mentioned(new_name):
-                    return {"status": "needs-information", "instruction": "Ask for the student's current name and, for a rename, desired new name."}
+                    return {"status": "needs-information", "question": "学生的新姓名是什么？" if self.mentioned(name) else "学生姓名是什么？", "instruction": "Ask for the student's current name and, for a rename, desired new name."}
                 rows = query.roster(*credentials, current.class_id, current.term_id)
                 matches = [row for row in rows if row.name == name and row.status == "active"]
                 if action == "create":
                     if matches:
-                        return {"status": "needs-disambiguation", "instruction": "A current student has this name. Clarify whether this is the same person before adding another."}
+                        return {"status": "needs-disambiguation", "question": "班里已有这个姓名，是同一位学生吗？", "instruction": "A current student has this name. Clarify whether this is the same person before adding another."}
                     return self.propose(CreateStudent(uuid4(), current.class_id, current.term_id, current.version, name))
                 if len(matches) != 1:
-                    return {"status": "needs-disambiguation", "instruction": "No unique active student matches. Ask the user to clarify; do not guess a person."}
+                    return {"status": "needs-disambiguation", "question": "没有找到唯一的学生，请确认姓名。", "instruction": "No unique active student matches. Ask the user to clarify; do not guess a person."}
                 row = matches[0]
                 return self.propose(ChangeStudentName("student.update_name", row.student_id, current.class_id, current.term_id, row.version, row.name, new_name))
             return await execute("prepare_student", prepare)
@@ -188,7 +194,7 @@ class WorkspaceActionCapture:
                 if current is None:
                     return missing_class
                 if all(value is None for value in (name, start_date, end_date)) or name is not None and not self.mentioned(name) or any(value is not None and not self.explicit_date(value) for value in (start_date, end_date)):
-                    return {"status": "needs-information", "instruction": "Ask for the requested new term name or explicit changed dates; do not ask for unchanged values."}
+                    return {"status": "needs-information", "question": "请明确要更正的学期名称或日期。", "instruction": "Ask for the requested new term name or explicit changed dates; do not ask for unchanged values."}
                 old = query.term_metadata(*credentials, current.class_id, current.term_id)
                 return self.propose(ChangeTerm("term.update", current.class_id, current.term_id, old.version,
                     old.name, name or old.name, old.start_date, date.fromisoformat(start_date) if start_date else old.start_date,
@@ -202,7 +208,7 @@ class WorkspaceActionCapture:
                 if current is None:
                     return missing_class
                 if not self.mentioned(title) or new_title and not self.mentioned(new_title):
-                    return {"status": "needs-information", "instruction": "Ask for the exact task title to create or edit."}
+                    return {"status": "needs-information", "question": "任务的新标题是什么？" if self.mentioned(title) else "要处理哪项任务？", "instruction": "Ask for the exact task title to create or edit."}
                 if action == "create":
                     rows = query.projection(*credentials, current.class_id, current.term_id)["tasks"]
                     if any(row["title"] == title for row in rows):
@@ -211,7 +217,7 @@ class WorkspaceActionCapture:
                 rows = query.projection(*credentials, current.class_id, current.term_id)["tasks"]
                 matches = [row for row in rows if row["title"] == title and row["status"] not in ("done", "cancelled")]
                 if len(matches) != 1:
-                    return {"status": "needs-disambiguation", "instruction": "No unique open task matches. Ask for clarification."}
+                    return {"status": "needs-disambiguation", "question": "没有找到唯一的未完成任务，请确认标题。", "instruction": "No unique open task matches. Ask for clarification."}
                 row = matches[0]
                 return self.propose(ChangeTask("task.update", row["task_id"], current.class_id, current.term_id, row["version"], status or row["status"], title=new_title or row["title"]))
             return await execute("prepare_task", prepare)
@@ -223,14 +229,14 @@ class WorkspaceActionCapture:
                 if current is None:
                     return missing_class
                 if not self.mentioned(title) or new_title and not self.mentioned(new_title):
-                    return {"status": "needs-information", "instruction": "Ask for the document title. Explain that generated prose needs review."}
+                    return {"status": "needs-information", "question": "文档的新标题是什么？" if self.mentioned(title) else "要处理哪份文档？", "instruction": "Ask for the document title. Explain that generated prose needs review."}
                 if action == "create":
                     if any(row["title"] == title for row in query.documents(*credentials, current.class_id, current.term_id)):
                         return {"status": "existing-document", "instruction": "This document title already exists. Read and reuse it or ask before creating a duplicate."}
                     return self.propose(CreateDocument(uuid4(), current.class_id, current.term_id, title, body, format))
                 matches = [row for row in query.documents(*credentials, current.class_id, current.term_id) if row["title"] == title and row["status"] == "draft"]
                 if len(matches) != 1:
-                    return {"status": "needs-disambiguation", "instruction": "No unique editable document matches. Ask for clarification."}
+                    return {"status": "needs-disambiguation", "question": "没有找到唯一的可编辑文档，请确认标题。", "instruction": "No unique editable document matches. Ask for clarification."}
                 row = matches[0]
                 existing = query.document(*credentials, current.class_id, current.term_id, row["document_id"])
                 if edit_mode == "replace" and existing["body"] and row["document_id"] not in self.document_reads:

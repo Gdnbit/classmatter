@@ -16,7 +16,7 @@ import uvicorn
 import httpx
 from openai import AsyncOpenAI
 from pydantic_ai.models.function import FunctionModel
-from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
+from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart, RetryPromptPart
 from sqlalchemy import text
 from starlette.middleware import Middleware
 
@@ -131,7 +131,11 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
                 return ModelResponse(parts=[TextPart('已核对已保存操作，没有重复创建。')])
             if returned:
                 return ModelResponse(parts=[TextPart('合成候选已准备；核对后在对话中确认，不会自动保存。')])
-            calls.append(request.text)
+            repair = any(isinstance(part, RetryPromptPart) for part in messages[-1].parts)
+            if not repair:
+                calls.append(request.text)
+                if request.text in mapping:
+                    return ModelResponse(parts=[TextPart('已为你准备好这项修改，请在对话中核对确认。')])
             if request.text == '继续完成上面的任务，只处理尚未完成的步骤。':
                 # FunctionModel does not implement the provider's forced-tool
                 # setting. Honor that contract rather than returning chat text.

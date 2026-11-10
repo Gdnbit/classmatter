@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
-from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
+from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart, RetryPromptPart
 from pydantic_ai.models.function import FunctionModel
 from sqlalchemy import text
 
@@ -83,7 +83,8 @@ async def test_multistep_uses_receipts_and_current_reads_across_restarted_runtim
 
 
 @pytest.mark.db
-async def test_conversation_creates_and_edits_core_objects_after_human_confirmation(workspace_chat):
+@pytest.mark.parametrize('false_ready', [False, True])
+async def test_conversation_creates_and_edits_core_objects_after_human_confirmation(workspace_chat, false_ready):
     business, history, credentials, owner, _, clock, store, boundary = workspace_chat
     commands = WorkbenchBusinessGateway(boundary, store, clock=lambda: clock[0])
     query = WorkbenchQueryGateway(boundary, store, clock=lambda: clock[0])
@@ -96,7 +97,11 @@ async def test_conversation_creates_and_edits_core_objects_after_human_confirmat
                 if any(isinstance(part, ToolReturnPart) and part.tool_name == "read_class_work" for part in messages[-1].parts):
                     return ModelResponse(parts=[ToolCallPart(*current_tool[0])])
                 return ModelResponse(parts=[TextPart("合成候选已准备，请在对话中预览确认；尚未保存。")])
-            calls.append(request.text); histories.append(len(messages))
+            repair = any(isinstance(part, RetryPromptPart) for part in messages[-1].parts)
+            if not repair:
+                calls.append(request.text); histories.append(len(messages))
+                if false_ready:
+                    return ModelResponse(parts=[TextPart("已为你准备好这项修改，请确认保存。")])
             if current_tool[0][0] == "prepare_document" and current_tool[0][1]["action"] == "edit":
                 return ModelResponse(parts=[ToolCallPart("read_class_work", {"kind": "documents", "search": current_tool[0][1]["title"]})])
             return ModelResponse(parts=[ToolCallPart(*current_tool[0])])
