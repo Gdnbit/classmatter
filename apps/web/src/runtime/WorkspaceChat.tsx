@@ -6,6 +6,7 @@ import type { Command, Session } from "./api"
 import { ModelSwitcher } from "./ModelSwitcher"
 import { useComposerInput } from './useComposerInput'
 import './composer.css'
+import { SeatLayoutPreview } from './SeatLayoutPreview'
 
 const labels: Record<string, string> = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "task.create": "建立任务", "task.update": "修改任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
@@ -37,7 +38,7 @@ function CandidateContent({ value }: { value: ChatCandidate }) {
     {"title" in value && <p>标题：{value.title}</p>}
     {'subject' in value && <p>科目：{value.subject} · 满分：{value.maximum_score}</p>}
     {'score' in value && <p>成绩：{value.score ?? ({ absent: '缺考', exempt: '免考', 'not-recorded': '未录入', scored: '未录入' }[value.status])}</p>}
-    {'rows' in value && <p>{value.rows} 排 · 每排 {value.columns} 座</p>}
+    {value.command === 'seat.layout.create' && <SeatLayoutPreview rows={value.rows} columns={value.columns} />}
     {'row' in value && <p>目标：{value.row} 排 {value.column} 座</p>}
     {'first_row' in value && <p>{value.first_row} 排 {value.first_column} 座 ↔ {value.second_row} 排 {value.second_column} 座</p>}
     {"status" in value && !('score' in value) && <p>状态：{value.status === "waiting" ? "等待别人" : value.status === "in-progress" ? "进行中" : "未开始"}</p>}

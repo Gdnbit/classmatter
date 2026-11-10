@@ -1,6 +1,7 @@
 import type { Proposal } from "./api"
 import { R1Dialog } from "./R1Dialog"
 import { previewFields, userMessage } from "./user-facing"
+import { SeatLayoutPreview } from './SeatLayoutPreview'
 
 type Props = {
   proposal: Proposal
@@ -24,6 +25,7 @@ export function CommandPreview({ proposal, error, busy, names, onReject, onCheck
     <dl>{previewFields(proposal.payload, names).map(([label, value], index) => <div key={index}>
       <dt>{label}</dt><dd>{value}</dd>
     </div>)}</dl>
+    {proposal.payload.command === 'seat.layout.create' && <SeatLayoutPreview rows={proposal.payload.rows} columns={proposal.payload.columns} />}
     <div className="r1-toolbar">
       <button disabled={busy} onClick={onReject}>放弃变更</button>
       <button disabled={busy} onClick={onCheck}>核对提交结果</button>

@@ -432,7 +432,7 @@
       "sha256": "0acd99f16a5dfb6399c3dddb4f4c387bf7538ab9414ae35835026b53a4b79ccb"
     },
     "apps/web/src/runtime/CommandPreview.tsx": {
-      "sha256": "edee26dda5da8cdfa3b948d6f1be99eefce49fea47773d1d1224e7e058ab2dc3"
+      "sha256": "7ff2507b6b96731ed3a70598763bea36e64f3a88421d6a06d7705de2c6d9fa00"
     },
     "docs/product/2026-10-23-personal-working-profile-and-adaptive-agent.md": {
       "sha256": "3df8e2b910093672e8a994fd0d6f2da93971cf06f3b7040f1a5c7b1ce07c7e2a"
@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "2a64dc664d0a25c5bf6ea2971496fe05876e4ff6b5d569ca84b1c629d573f828"
+      "sha256": "3e15a457fd530aa4ff93f7e67b7604ed5eb134a872fb69f84cc778ac2ccb5997"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -522,7 +522,7 @@
       "sha256": "e7e35b2f2d1ec466ed12d31aa6de56ed79366186c7e8ba852ee7df83fe22dbfa"
     },
     "design-qa.md": {
-      "sha256": "aa7a95b304c501df50a72722589e003a5e7b43f92b5d800e0e4decc425f54c06"
+      "sha256": "1bf58a6b2a1201984c4d203a75589f116256f9910a9d70dae29b197a50349355"
     },
     "apps/desktop/main.cjs": {
       "sha256": "be2c6879293bc6fed1ad12245208b0d235dd40174bfd7745eabeb6fa5a96171d"
@@ -1026,7 +1026,7 @@
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
     },
     "backend/src/class_os/infrastructure/agent.py": {
-      "sha256": "bb30d843b4571d28cdc3575fc50f40d5da31c2cba3b4ae13a7d4b10c011305fe"
+      "sha256": "27e5b7b51b897ccc57fbef9ba7890d70f096e0f980a3bab2a3ef50c92855160c"
     },
     "backend/src/class_os/infrastructure/agent_memory.py": {
       "sha256": "2042927005c163c2179cbf81f85ac0b3c01d57ca2b22f4d9f39199fe69f2d101"
@@ -2888,7 +2888,7 @@
       "sha256": "1eab8b252787a392864f9d1fa5f69e68ce189dbf3baa409bc5c32c7fc21e08d8"
     },
     "apps/web/src/runtime/WorkspaceChat.tsx": {
-      "sha256": "c2b9030d4cb5efbdde14034301fdd193396ade973bf0bd05b8069ca62deb9374"
+      "sha256": "1b2c47e7481f62472ecdeba6844c59e7b71811d45070f453c11b1f6fc9346d52"
     },
     "apps/web/src/runtime/useWorkspaceChat.ts": {
       "sha256": "ebd16de917dc6ec61c0c6fac98fc776948ecfc7b4c5a9624e8af072deca527ec"
@@ -2990,7 +2990,7 @@
       "sha256": "0c43bbda7e2fd1a0038e78eb0acb3ff3a1399c65d0c82b0d993b27ea2da56d6d"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "b25fa2232857d179ad3b9d2b9bf563542a9667090d8e5be493eb9c7a1a3f8c2d"
+      "sha256": "cab3bb01dbe958bf8a24fd5ef8d1821953168d81271541bbb165a08660d49e83"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3056,7 +3056,7 @@
       "sha256": "09f8b98031e608d4fd127bfd1e56435e71675f782232a8f1a79fd52f77fcc130"
     },
     "backend/src/class_os/infrastructure/classroom_actions.py": {
-      "sha256": "b64c47840e3ddacfc025593d7390121842783b39e7bc4033d7efbe78823d77bb"
+      "sha256": "88a76d09917c1075c224d180941c3ff10807a00797c44ea8730bd08a3ba97df4"
     },
     "backend/src/class_os/infrastructure/classroom_upgrade.py": {
       "sha256": "c7e78300736532a0b832b301a9c004591d9947c60cb6ad50910448afa072660d"
@@ -3197,6 +3197,21 @@
           "line_sha256": "b85c833c78b7815509877319a332d7e57a93339f91fc6df55ccb44063f040dfb"
         }
       ]
+    },
+    "backend/src/class_os/infrastructure/seating_input.py": {
+      "sha256": "a488e2eb5bf991c35c27a578212d5b2875b7cad1a3fbac9c18ec096c61df56d3"
+    },
+    "backend/tests/test_seating_preview.py": {
+      "sha256": "bd1ec76d31405e9755e62dee558b7a76145b1627361804ee00f32fbf2e0f1d60"
+    },
+    "apps/web/src/runtime/SeatLayoutPreview.tsx": {
+      "sha256": "7d64500e567897c871162740b8df4fffbdf7480bfb5af80de3a11cca15c4ce42"
+    },
+    "apps/web/src/runtime/seat-layout-preview.css": {
+      "sha256": "4514a28b7b12fa08af033b72cd4002e94876ae7f1e90d9754abb4348942a766e"
+    },
+    "apps/web/tests/seating-preview-browser.mjs": {
+      "sha256": "6d3a8d984e918a10e91d529093c4e703444977acd729ab1701480f501a40e0b0"
     }
   }
 }

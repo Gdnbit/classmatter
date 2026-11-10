@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import { chromium } from '@playwright/test';
+const base = process.env.CLASS_OS_TEST_URL, classId = process.env.CLASS_OS_TEST_CLASS_ID, termId = process.env.CLASS_OS_TEST_TERM_ID;
+if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '') || !/^[a-f0-9-]{36}$/.test(classId || '') || !/^[a-f0-9-]{36}$/.test(termId || '')) throw Error('Owned synthetic fixture required');
+const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
+let page;
+try {
+  page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+  const errors = []; page.on('pageerror', error => errors.push(error.message));
+  await page.goto(base);
+  await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
+  await page.getByRole('button', { name: '登录', exact: true }).click();
+  const input = page.getByLabel('输入消息');
+  async function send(text) { await input.fill(text); await page.getByRole('button', { name: '发送消息', exact: true }).click(); }
+  await send('看一下学生的座位');
+  await page.getByText('还没有座位表，需要几行几列？', { exact: true }).waitFor();
+  await send('是，三行五列');
+  const card = page.getByRole('region', { name: '对话中的操作候选' });
+  await card.getByRole('heading', { name: '建立座位表', exact: true }).waitFor();
+  const grid = card.getByRole('table', { name: '空座布局' });
+  assert.equal(await grid.getByRole('row').count(), 3);
+  assert.equal(await grid.getByRole('cell').count(), 15);
+  assert.equal(await grid.getByRole('cell', { name: '3排5座 空座', exact: true }).count(), 1);
+  const identity = await (await page.request.get(base + '/api/identity/session')).json();
+  const url = `${base}/api/workspaces/${identity.subject.workspace_id}/classes/${classId}/terms/${termId}/seating`;
+  const layout = async () => { const response = await page.request.get(url); assert.equal(response.status(), 200); return (await response.json()).layout; };
+  assert.equal(await layout(), null);
+  await page.screenshot({ path: '../../test-results/seat-preview-candidate.png' });
+  await card.getByRole('button', { name: '预览这项操作', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: '确认这次变更', exact: true });
+  await dialog.waitFor();
+  assert.equal(await dialog.getByRole('cell').count(), 15);
+  assert.equal(await layout(), null);
+  await page.screenshot({ path: '../../test-results/seat-preview-confirmation.png' });
+  await dialog.getByRole('button', { name: '明确批准并提交', exact: true }).click();
+  await dialog.waitFor({ state: 'hidden' });
+  const saved = await layout();
+  assert.equal(saved.rows, 3); assert.equal(saved.columns, 5); assert.equal(saved.version, 1);
+  assert(saved.seats.every(cell => cell.student_id === null));
+  await page.reload(); await card.getByRole('status').filter({ hasText: '已保存' }).waitFor();
+  assert.equal(await card.getByRole('cell').count(), 15);
+  assert.equal((await layout()).version, 1);
+  await page.getByLabel('更多功能', { exact: true }).click();
+  await page.getByRole('button', { name: '座位', exact: true }).click();
+  const seating = page.getByRole('region', { name: '座位图', exact: true });
+  await seating.getByRole('button', { name: '3排5座 空座', exact: true }).waitFor();
+  assert.equal(await seating.getByRole('button', { name: /排\d+座 空座$/ }).count(), 15);
+  assert.deepEqual(errors, []);
+  console.log('PASS Chinese followup: actual SDK repair, 3x5 card and confirmation preview; zero writes until human commit; saved seating and reload agree');
+} catch (error) { console.error(await page?.locator('body').innerText()); throw error; }
+finally { await browser.close(); }

@@ -18,6 +18,7 @@ from class_os.domain.activity import CreateTask
 from class_os.domain.query_snapshot import WorkSnapshot
 from class_os.domain.record_note import RecordNoteCandidate
 from .agent_memory import ConversationMemory
+from .seating_input import unbacked_seating_promise
 
 
 class WorkspaceStepPolicy(AbstractCapability):
@@ -255,11 +256,12 @@ class PydanticAgentRuntime:
                                 # The existing Continue CTA follows a saved operation.
                                 # A textual promise cannot stand in for the actual card.
                                 # Preserve ordinary chat, clarification and pending-card reminders.
-                                if (request.text == '继续完成上面的任务，只处理尚未完成的步骤。'
-                                        and isinstance(output, str) and _workspace_actions.proposed is None
-                                        and (not _workspace_actions.completed_tools
+                                if (isinstance(output, str) and _workspace_actions.proposed is None
+                                        and ((request.text == '继续完成上面的任务，只处理尚未完成的步骤。'
+                                              and (not _workspace_actions.completed_tools
                                              or re.search(r'请(?:你|您)?确认(?:是否)?(?:执行|提交|保存)', output)
-                                             or re.search(r'已(?:经)?准备[\s\S]{0,150}请[\s\S]{0,12}确认', output))):
+                                             or re.search(r'已(?:经)?准备[\s\S]{0,150}请[\s\S]{0,12}确认', output)))
+                                             or _workspace_actions.classroom_enabled and unbacked_seating_promise(output, request.text, _workspace_actions.user_messages))):
                                     step_policy.repair_step = ctx.run_step + 1
                                     raise ModelRetry('No operation candidate exists. Do not claim that the next step is prepared or ask for approval without its preparation tool. Read actual progress, then call the appropriate prepare tool if the next step is specified; otherwise ask for missing information or accurately conclude. Never repeat committed work or claim a business write.')
                                 return output
