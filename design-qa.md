@@ -38,6 +38,10 @@ Current local renderer evidence: `apps/desktop/.build/evidence/acceptance/01-men
 
 final result: passed
 
+## 2026-11-10 Seat preview follow-up
+
+Inspected the original-UI synthetic browser capture `test-results/seat-preview-candidate.png`: the actual candidate shows three rows and five columns, with fifteen empty positions and the existing preview action. The same read-only grid is reused in the existing confirmation dialog. No new page, avatar or explanatory banner; existing typography, spacing and palette remain. Larger layouts scroll within a bounded grid rather than stretching the conversation. The browser checks verify no seating write before explicit confirmation, committed layout read-back, refresh without duplicates and the original seating page. These images and real-provider reports stay local; they contain isolated synthetic fixture data. Existing prose-only messages are not represented as completed plans.
+
 ## 2026-11-10 Original chat composer
 
 Source: the user-selected composer screenshot, retained locally and not redistributed. Scope is the existing input field and controls; no alternate workbench. The reference (708 × 153) and rendered component crop from a 1024 × 680 browser viewport were compared together at 1× without stretching. Additional full-page captures cover 1440 × 900 and 390 × 844. Local-only evidence: `test-results/composer-comparison.png`, `composer-1024.png`, `composer-1440.png`, `composer-390.png` and `composer-menu.png`.

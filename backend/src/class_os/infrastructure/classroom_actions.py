@@ -3,6 +3,7 @@ from typing import Literal
 from uuid import uuid4
 import re
 from class_os.domain.classroom_work import CreateExam, RecordScore, CreateSeatLayout, AssignSeat, SwapSeats
+from .seating_input import explicit_layout_dimensions
 
 
 def tools(capture, query, credentials, context, execute, missing_class):
@@ -85,8 +86,11 @@ def tools(capture, query, credentials, context, execute, missing_class):
             current = context()
             if current is None:
                 return missing_class
-            if not explicit_number(str(rows)) or not explicit_number(str(columns)):
-                return needs
+            dimensions = explicit_layout_dimensions(capture.user_messages)
+            if dimensions is None:
+                return {**needs, 'question': '请明确座位的行数和列数（各1至20）。'}
+            if dimensions != (rows, columns):
+                return {'status': 'dimension-mismatch', 'instruction': f'The user explicitly specified {dimensions[0]} rows and {dimensions[1]} columns. Call prepare_seat_layout with those exact values; do not claim a candidate exists.'}
             if query.classroom_read(credentials, current.class_id, current.term_id, seating=True) is not None:
                 return {'status': 'existing-layout', 'instruction': 'Reuse the current seating layout; do not overwrite it.'}
             return capture.propose(CreateSeatLayout(uuid4(), current.class_id, current.term_id, rows, columns))

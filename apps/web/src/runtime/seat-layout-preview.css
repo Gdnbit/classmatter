@@ -1,0 +1,5 @@
+.seat-layout-preview{margin:14px 0;max-width:720px;min-width:0}
+.seat-layout-preview>p{margin:0 0 10px;font-size:13px}
+.seat-layout-scroll{overflow:auto;max-height:360px;padding:2px;display:grid;gap:8px}
+.seat-layout-row{display:grid;gap:8px;min-width:max-content}
+.seat-layout-cell{min-height:44px;display:flex;align-items:center;justify-content:center;padding:8px;border:1px solid #dfe6e2;border-radius:8px;background:#fafcfb;color:#718078;font-size:12px}
