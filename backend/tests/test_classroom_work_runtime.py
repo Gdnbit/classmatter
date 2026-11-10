@@ -3,7 +3,7 @@ from uuid import uuid4
 import httpx
 import pytest
 from pydantic_ai.models.function import FunctionModel
-from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
+from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart, RetryPromptPart
 from class_os.infrastructure.agent import PydanticAgentRuntime
 from class_os.interfaces.http.workspace_chat import create_workspace_chat_app
 from class_os.interfaces.http.settings import Settings
@@ -11,7 +11,8 @@ from test_classroom_work_storage import classroom_work, workspace_chat, roster, 
 
 
 @pytest.mark.db
-async def test_agent_exams_scores_layout_assign_swap_and_original_receipts(classroom_work):
+@pytest.mark.parametrize('false_ready', [False, True])
+async def test_agent_exams_scores_layout_assign_swap_and_original_receipts(classroom_work, false_ready):
     business, query, auth, owner, clock, store, commit, c, t, students = classroom_work
     selected, seen = [None], []
     def factory(request):
@@ -19,6 +20,8 @@ async def test_agent_exams_scores_layout_assign_swap_and_original_receipts(class
             names = {tool.name for tool in info.function_tools}
             assert 'read_classroom_work' in names and not names & {'commit', 'approve', 'sql', 'ddl'}
             returns = [part for part in messages[-1].parts if isinstance(part, ToolReturnPart)]
+            if false_ready and not returns and not any(isinstance(part, RetryPromptPart) for part in messages[-1].parts):
+                return ModelResponse(parts=[TextPart('已为你准备好本次安排，请核对并确认。')])
             if not returns:
                 return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
             if returns[-1].tool_name == 'read_task_progress':
@@ -54,6 +57,7 @@ async def test_agent_exams_scores_layout_assign_swap_and_original_receipts(class
             stream = await client.post(prefix + f'/turns/{request}/events', headers=headers, json={})
             assert 'event: run.completed' in stream.text, (sdk.last_failure_type, stream.text)
             row = (await client.get(prefix)).json()['turns'][-1]
+            assert row['candidate'] is not None, (message, row, sdk.last_failure_type)
             assert row['candidate']['command'] == expected, (row, seen)
             assert row['action_receipt'] is None
             proposed = await client.post(prefix + f'/turns/{request}/proposal', headers=headers, json={'candidate_hash': row['candidate_hash']})
