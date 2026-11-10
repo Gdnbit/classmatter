@@ -52,19 +52,14 @@ try {
   await sidebar.getByRole('button', { name: '新对话', exact: true }).click();
   await send('会话乙'); await answer('会话乙').waitFor(); const b = new URL(page.url()).pathname;
   assert.notEqual(a, b);
-  // Browser history must not retarget an already-open destructive dialog.
-  await page.getByRole('button', { name: '清除聊天正文', exact: true }).click();
-  const clearDialog = page.getByRole('dialog', { name: '清除这段聊天正文？', exact: true });
-  await clearDialog.waitFor();
+  // Conversation chrome has no routine maintenance/destructive controls.
+  for (const name of ['刷新对话', '归档对话', '清除聊天正文', '刷新数据']) assert.equal(await page.getByRole('button', { name, exact: true }).count(), 0);
   await page.goBack(); await page.waitForURL(base + a);
-  await clearDialog.waitFor({ state: 'hidden' });
   await answer('会话甲').waitFor();
   await page.goForward(); await page.waitForURL(base + b);
-  await clearDialog.waitFor({ state: 'hidden' });
   await answer('会话乙').waitFor();
   assert.equal(clears.length, 0);
-  // New input in the same thread invalidates the opened confirmation too.
-  await page.getByRole('button', { name: '清除聊天正文', exact: true }).click();
+  // Foreground sync still discovers saved input without a refresh button.
   const identity = await (await page.request.get(base + '/api/identity/session')).json();
   const threadRoot = `${base}/api/workspaces/${identity.subject.workspace_id}/workspace-chat/threads/${b.split('/').at(-1)}`;
   const headers = { origin: base, 'x-class-os-csrf': identity.csrf_token }, requestId = crypto.randomUUID();
@@ -73,7 +68,6 @@ try {
   const queued = (await queuedResponse.json()).turn;
   assert.equal((await page.request.post(`${threadRoot}/turns/${requestId}/cancel`, { headers, data: { expected_version: queued.version } })).status(), 200);
   await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-  await clearDialog.waitFor({ state: 'hidden' });
   await page.getByText('合成外部已保存消息', { exact: true }).waitFor();
   assert.equal(clears.length, 0); assert.equal(starts.length, 2);
 
@@ -126,6 +120,9 @@ try {
   await waitState(state => state.calls.includes('等待乙'));
   assert.equal((await (await page.request.get(base + '/__fixture__/state')).json()).active, 2);
   await select('会话甲'); await page.getByRole('button', { name: '停止回复', exact: true }).waitFor();
+  assert.equal(await page.getByText('正在回复…', { exact: true }).count(), 1);
+  assert.equal(await page.getByRole('button', { name: '继续回复', exact: true }).count(), 0);
+  await page.screenshot({ path: '../../test-results/minimal-chat-waiting.png' });
   assert.equal(await input.inputValue(), '甲等待期间的下一条草稿');
   assert.equal(starts.length, 7); assert.equal(cancels.length, 0);
   await sidebar.getByRole('button', { name: '新对话', exact: true }).click();

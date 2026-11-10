@@ -17,6 +17,9 @@ try {
   await page.getByRole('button', { name: '登录', exact: true }).click();
   const input = page.getByLabel('输入消息'), history = page.getByRole('region', { name: '已保存的对话' });
   await input.waitFor();
+  assert.equal(await page.getByText('CLASSMATTER · 对话', { exact: true }).count(), 0);
+  assert.equal(await page.getByText('少记、少追、少重复。事实由你确认，系统帮你复用。', { exact: true }).count(), 0);
+  for (const name of ['刷新对话', '归档对话', '清除聊天正文', '刷新数据']) assert.equal(await page.getByRole('button', { name, exact: true }).count(), 0);
   async function assertFixedHome(width, height) {
     await page.setViewportSize({ width, height });
     await page.locator('.r1-conversation-home').waitFor();
@@ -62,6 +65,8 @@ try {
   await page.getByRole('button', { name: '发送消息', exact: true }).click({ timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify({ body: await page.locator('body').innerText(), errors }), { cause: error }); });
   await history.getByText('合成普通聊天已回复，不需要班级。', { exact: true }).waitFor();
   await page.waitForURL(/\/chats\/[a-f0-9-]{36}$/);
+  for (const name of ['刷新对话', '归档对话', '清除聊天正文', '刷新数据']) assert.equal(await page.getByRole('button', { name, exact: true }).count(), 0);
+  await page.screenshot({ path: '../../test-results/minimal-chat-conversation.png' });
   assert.equal(await page.locator('.r1-conversation-home').count(), 0);
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.r1-welcome')).visibility === 'hidden');
   assert((await page.locator('.r1-welcome').boundingBox()).height < 1);

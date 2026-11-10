@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "8a946a6d340e3da46921acb6a4bb78db91196dc95bec326356ea68769decfd11"
+      "sha256": "e9c84490e4e9e83122faeb3936a682d822962dd4dbc51833c40c1f55bf577f76"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -522,7 +522,7 @@
       "sha256": "e7e35b2f2d1ec466ed12d31aa6de56ed79366186c7e8ba852ee7df83fe22dbfa"
     },
     "design-qa.md": {
-      "sha256": "8f605f8e96cf010c5283b7bb890260943764c2d04e8287646e828bc40dae7843"
+      "sha256": "aa7a95b304c501df50a72722589e003a5e7b43f92b5d800e0e4decc425f54c06"
     },
     "apps/desktop/main.cjs": {
       "sha256": "be2c6879293bc6fed1ad12245208b0d235dd40174bfd7745eabeb6fa5a96171d"
@@ -621,7 +621,7 @@
       "sha256": "c34bf3956a066550e5680221b82b4bfd8aaef7363305a1c5949b729a2d02b588"
     },
     "AGENTS.md": {
-      "sha256": "22636b33b89ac62a8b56bfad7118f5cecdd4d74e123a3398e88f2d96a7614d51"
+      "sha256": "471f148a2fc8a1f6066873affc1dd3e2a98a6ed0a6a0c4de199864c0c523ffc6"
     },
     "BRAND_MIGRATION_MATRIX.md": {
       "sha256": "2938e2a85f8f2de7e7ce2e1e3f61d38f1440395cfee02e56ba48ede7eba2d256"
@@ -726,7 +726,7 @@
       "sha256": "a1eefaa3a1085e59a7857ab3d485491c465f9db63de095c9b7ac0f8408001b5c"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "97a5c697ab86553b8c686fc76c722c3bf2fcbe81fc69d8538728666f060c1d78"
+      "sha256": "909eb295c376963db6b10d774a9f9aa7f3ce4aa45df8b147dc35c3d6a06990a5"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "2bccc19ae001e98e669f3bbb7b6f3cd2b968893b2d85e27544e0ef6caca80fbe"
@@ -2888,7 +2888,7 @@
       "sha256": "1eab8b252787a392864f9d1fa5f69e68ce189dbf3baa409bc5c32c7fc21e08d8"
     },
     "apps/web/src/runtime/WorkspaceChat.tsx": {
-      "sha256": "34f42c9b872eea426e52c49e771ed643f3dc4fbdfcfcdb5ecc3274a2b20df0ff"
+      "sha256": "be3c129bf1b701112a145ff25100f61755c712c5afd6d5226126f02384ff152a"
     },
     "apps/web/src/runtime/useWorkspaceChat.ts": {
       "sha256": "ebd16de917dc6ec61c0c6fac98fc776948ecfc7b4c5a9624e8af072deca527ec"
@@ -2903,7 +2903,7 @@
       "sha256": "9f800fa0b4992415c553093f4bb00ec4dd723f7a1bafd2a2ca0b9ef66b070857"
     },
     "apps/web/tests/persistent-chat-browser.mjs": {
-      "sha256": "c936abf47ebc015c02cbae62624dc7340d2b9242133ac3e19a533b795df9132c"
+      "sha256": "3d00d8206c8a159e56353f0ada1314f99ffddac42b6db7be15708c2ba9de6251"
     },
     "apps/web/tests/workspace-chat.mjs": {
       "sha256": "97a6dc00c577ac009653b9535e269183a0cb262ca67a12ecff2542b8ae4d4238"
@@ -2990,7 +2990,7 @@
       "sha256": "0c43bbda7e2fd1a0038e78eb0acb3ff3a1399c65d0c82b0d993b27ea2da56d6d"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "7d2717a10603123dc1295062c7a2652d21021d08bafe133718048c53a9722ed8"
+      "sha256": "b472dc5eafe36a2607399c8d25319fc5e888c13bfb49e75cf98f238c881bfd67"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3020,10 +3020,10 @@
       "sha256": "95ef576de0cead717f64984cba6d8171ca18086f89ca674794fbda7396bc7899"
     },
     "apps/web/tests/customer-copy.mjs": {
-      "sha256": "d73d9709ea110256f068d61f9c17864d7d463cb44741707a6249fe1c6ffec8e8"
+      "sha256": "d2541f6bfdf87ad0980f9e8a905a2386fe2ef97c13dca73959003787ec603334"
     },
     "apps/web/tests/chat-navigation-browser.mjs": {
-      "sha256": "72a0b95f9c4f94be56e94250ac1d81c4d8098afdd1876ffe5204a0c1218d3766"
+      "sha256": "45a9d2d519a7d2e41d40092b5a19a8c73fb6cd6897aaaa385c24310541d5dc40"
     },
     "apps/web/scripts/generate-classroom-work.mjs": {
       "sha256": "0876f2b10e4deac1001d4c96d11ccb069ddb9c36957e83b596b3b9f63f607d84"
@@ -3122,7 +3122,7 @@
       "sha256": "4b6c496333f776ec79aa36c3ae00c6677bba00b1e50186c3fd691478fc47f030"
     },
     "apps/web/src/runtime/useComposerInput.ts": {
-      "sha256": "af6bb6d6cbc6d697c91fcca383a58f68501b5b7e379a12b4f5f84a41efb8cce5"
+      "sha256": "57c09435d9b254b331c3028443902645ae4e6b045c442da657e1399efacb781f"
     },
     "apps/web/tests/composer-input-browser.mjs": {
       "sha256": "538ceb2b75e8394eb327776339102b057837124a593f1d067c93854ec39932c0"

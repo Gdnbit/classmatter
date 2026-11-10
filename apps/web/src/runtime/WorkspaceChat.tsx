@@ -1,11 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowUp, Copy, Check, X, Plus, Image, FileText, Mic, Square, ShieldCheck, LoaderCircle } from "lucide-react"
 import type { ChatCandidate } from "./workspace-chat"
 import type { WorkspaceChatController } from "./useWorkspaceChat"
-import { R1Dialog } from "./R1Dialog"
 import type { Command, Session } from "./api"
 import { ModelSwitcher } from "./ModelSwitcher"
-import { userMessage } from "./user-facing"
 import { useComposerInput } from './useComposerInput'
 import './composer.css'
 
@@ -43,39 +41,30 @@ function CandidateContent({ value }: { value: ChatCandidate }) {
     {'row' in value && <p>目标：{value.row} 排 {value.column} 座</p>}
     {'first_row' in value && <p>{value.first_row} 排 {value.first_column} 座 ↔ {value.second_row} 排 {value.second_column} 座</p>}
     {"status" in value && !('score' in value) && <p>状态：{value.status === "waiting" ? "等待别人" : value.status === "in-progress" ? "进行中" : "未开始"}</p>}
-    {"body" in value && <details open><summary>核对文档正文（工作草稿，非正式事实）</summary><p className="r1-document-draft">{value.body}</p></details>}
+    {"body" in value && <details open><summary>草稿正文</summary><p className="r1-document-draft">{value.body}</p></details>}
   </>
 }
 export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatController }) {
-  const [clear, setClear] = useState<{ thread: string; version: number } | null>(null)
-  useLayoutEffect(() => { setClear(null) }, [s.history?.thread.thread_id, s.history?.thread.version])
   return <section aria-label="已保存的对话">
-    <div className="r1-toolbar">
-      <button disabled={s.working} onClick={s.refresh}>刷新对话</button>
-      {s.history && <><button disabled={!s.fresh || s.working || s.lastActive || s.history.thread.status !== "active"} onClick={() => void s.control("archive")}>归档对话</button>
-        <button disabled={!s.fresh || s.working || s.lastActive || s.history.thread.status === "cleared"} onClick={() => setClear({ thread: s.history!.thread.thread_id, version: s.history!.thread.version })}>清除聊天正文</button></>}
-    </div>
-    {s.history?.thread.status === "cleared" && <p>聊天正文已清除；原业务数据保持在各自页面中。</p>}
+    {s.history?.thread.status === "cleared" && <p>此对话已清空</p>}
     {s.history?.next_before && <button disabled={s.working} onClick={() => void s.moreHistory()}>加载更早消息</button>}
     <div className="r1-messages">
       {s.pendingSend && !s.history?.turns.some(turn => turn.request_id === s.pendingSend?.request) && <article className="user" aria-label="你的消息"><p>{s.pendingSend.text}</p></article>}
       {s.history?.turns.map(turn => <div key={turn.turn_id}>
         {turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
         {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
-        {turn.state !== "completed" && <p className="r1-muted">{states[turn.state]}</p>}
-        {turn.state === "queued" && <button disabled={s.working || !s.fresh} onClick={() => void s.startQueued(turn)}>继续回复</button>}
+        {turn.state !== "completed" && <p className="r1-muted" role={turn.state === 'queued' || turn.state === 'running' ? 'status' : undefined}>{turn.state === 'queued' && s.working ? states.running : states[turn.state]}</p>}
+        {turn.state === "queued" && !s.working && <button disabled={!s.fresh} onClick={() => void s.startQueued(turn)}>继续回复</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{labels[turn.candidate.command]}</h2><CandidateContent value={turn.candidate} />
           {turn.action_receipt ? <><p role="status">已保存</p>{turn.turn_id === s.history?.turns.at(-1)?.turn_id && <button disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.continueTask(turn)}>继续任务</button>}</>
-            : <><p className="r1-muted">这项操作尚未保存。核对内容后预览，再确认执行。</p><button className="r1-primary" disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.preview(turn)}>预览这项操作</button></>}
+            : <button className="r1-primary" disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.preview(turn)}>预览这项操作</button>}
         </section>}
       </div>)}
     </div>
-    {s.status && <p role="status" className="r1-muted">{userMessage(s.status)}</p>}
+    {/* Normal progress belongs to the turn; only stale reads need a recovery action. */}
+    {s.history && s.status && !s.fresh && !s.working && !s.pendingSend && <div role="status" className="r1-toolbar"><span>暂时无法更新对话</span><button onClick={s.refresh}>重试</button></div>}
     {s.pendingSend && <button disabled={s.working} onClick={() => void s.recoverSend()}>恢复消息</button>}
-    {clear && clear.thread === s.history?.thread.thread_id && clear.version === s.history.thread.version && <R1Dialog titleId="workspace-chat-clear" onDismiss={() => setClear(null)}><h2 id="workspace-chat-clear">清除这段聊天正文？</h2>
-      <p>仅清除这段本机聊天的消息和未提交候选；已保存的班级、学生、任务和文档不受影响。既有备份不会自动删除。</p>
-      <button disabled={s.working || !s.fresh} onClick={() => { if (clear.thread !== s.history?.thread.thread_id || clear.version !== s.history.thread.version) return; setClear(null); void s.control("clear") }}>确认清除正文</button><button onClick={() => setClear(null)}>保留聊天</button></R1Dialog>}
   </section>
 }
 export function WorkspaceChatComposer({ state: s, session, modelRevision, onManageModels, onPreviewModel, onModelVerified, onError }: {
@@ -100,13 +89,13 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
     onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false) }}
     onDrop={event => { event.preventDefault(); setDragging(false); imports(event.dataTransfer.files) }}
     onSubmit={event => { event.preventDefault(); if (!capture.busy && !capture.recording) void s.send() }}>
-    <textarea aria-label="输入消息" placeholder="随便聊聊，或告诉我你想创建、修改什么……" maxLength={2000} value={s.text}
+    <textarea aria-label="输入消息" placeholder="发消息…" maxLength={2000} value={s.text}
       onChange={event => { capture.clearNotice(); s.setText(event.target.value) }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); if (s.canSend && !capture.busy && !capture.recording) void s.send() } }} />
     <div className="composer-toolbar">
       <div className="composer-tools" ref={tools}>
         <button type="button" className="composer-icon" aria-label="添加附件" title="添加附件" aria-expanded={menu === 'files'} disabled={capture.busy || capture.recording}
           onClick={() => setMenu(value => value === 'files' ? null : 'files')}><Plus size={21} /></button>
-        <button type="button" className="composer-access" aria-label="操作权限" aria-expanded={menu === 'access'} onClick={() => setMenu(value => value === 'access' ? null : 'access')}><ShieldCheck size={17} /><span>操作需确认</span></button>
+        <button type="button" className="composer-access" aria-label="操作权限" title="保存更改前需确认" aria-expanded={menu === 'access'} onClick={() => setMenu(value => value === 'access' ? null : 'access')}><ShieldCheck size={17} /></button>
         {menu === 'files' && <section className="composer-menu" aria-label="添加内容">
           <button type="button" onClick={() => { setMenu(null); image.current?.click() }}><Image size={17} />添加图片</button>
           <button type="button" onClick={() => { setMenu(null); file.current?.click() }}><FileText size={17} />导入文件文字</button>

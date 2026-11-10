@@ -1,5 +1,9 @@
 # Desktop chrome design QA
 
+## 2026-11-10 Minimal conversation chrome follow-up
+
+The user requested removal of routine conversation maintenance actions and redundant copy. Original page structure, navigation and composer remain. The desktop's current conversation and empty home were observed after rebuilding and reloading: no refresh/archive/clear toolbar, brand kicker, slogan or empty deadline placeholder; model, attachment, microphone and send controls retain accessible names. Reply waiting has one visible progress label, with resume/recovery only when necessary. Permanent business confirmation remains in the existing preview dialog. Browser evidence is kept locally under `test-results/minimal-chat-*.png`; no user screenshot is redistributed. This is a presentation-only follow-up to the earlier scope, not deletion of lifecycle data or backend authorization checks.
+
 ## Target and evidence
 
 Source visual truth: owner-selected P2 desktop header, retained only as a local attachment (not published). Scope is its integrated titlebar/navigation/menu treatment, not Codex's product tabs or content.

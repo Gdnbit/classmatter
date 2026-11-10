@@ -45,7 +45,7 @@ export function useComposerInput(state: WorkspaceChatController, session: Sessio
         if (version !== serial.current || abort.signal.aborted) return
         if (!current.current.appendInput(prefix + text, key)) throw new Error('本条消息放不下更多文字，请先发送或精简。')
       }
-      if (version === serial.current) setStatus('文字已加入，可直接修改。')
+      if (version === serial.current) setStatus('')
     } catch (failure) {
       if (version === serial.current && !abort.signal.aborted) {
         setStatus(''); setError(failure instanceof Error ? failure.message : '识别未完成，请重试。')
