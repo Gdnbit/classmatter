@@ -615,7 +615,7 @@
       "sha256": "d8dcad82c27b6c219a79efef25b2e999b049c6798ddf90f24c430bc64c5944fe"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "02f88e75b1216b7b0b88b01ba123806979d5881149fab71d519c46f110130eb2"
+      "sha256": "274bde394ee51e564f67f507cbcdb564ea84c3a6546ae62357cf393dd0ce2e07"
     },
     ".gitignore": {
       "sha256": "c34bf3956a066550e5680221b82b4bfd8aaef7363305a1c5949b729a2d02b588"
