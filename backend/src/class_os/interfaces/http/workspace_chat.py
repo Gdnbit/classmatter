@@ -12,6 +12,7 @@ from starlette.responses import StreamingResponse
 
 from class_os.application.roster import CommandRejected
 from class_os.domain.workspace_chat import candidate
+from class_os.domain.change_preview import ChangePreview
 from .contracts import WireModel
 from .roster import credentials, ClassBody, ClassChangeBody, TermBody, StudentBody, StudentNameBody, TaskBody, ChangeTaskBody
 from .documents import DocumentCreate, DocumentRevise
@@ -72,6 +73,7 @@ class ChatTurn(WireModel):
     output_tokens: int | None = Field(strict=True, ge=0)
     duration_ms: int | None = Field(strict=True, ge=0)
     action_receipt: ChatActionReceipt | None
+    change_preview: ChangePreview | None = None
 
 
 def visible_turn(row):
@@ -129,6 +131,7 @@ class CandidatePreview(WireModel):
     risk: Literal["W1", "W2"]
     expires_at: datetime
     payload: Candidate
+    change_preview: ChangePreview | None = None
 
 
 def router(runtime, commands):
@@ -205,7 +208,7 @@ def router(runtime, commands):
         # scope/version/risk and creates the original approval/commit proposal.
         result = commands.preview(*auth, command)
         return CandidatePreview(proposal_id=result.proposal_id, payload_hash=result.payload_hash,
-            risk=result.risk, expires_at=result.expires_at, payload=result.command.canonical())
+            risk=result.risk, expires_at=result.expires_at, payload=result.command.canonical(), change_preview=row.get('change_preview'))
     return routes
 
 

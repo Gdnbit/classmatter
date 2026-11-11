@@ -64,12 +64,43 @@ function assertSaved(candidate,before,after,receipt){
  if(cmd.startsWith('seat.'))assert.equal(after.seating.version,receipt.version);
 }
 async function assertDialog(candidate,before,dialog){
- const fields=await dialog.locator('dl>div').evaluateAll(nodes=>Object.fromEntries(nodes.map(n=>[n.querySelector('dt').textContent,n.querySelector('dd').textContent])));
- const labels={name:'名称',term_name:'学期',start_date:'开始日期',end_date:'结束日期',title:'标题',body:'正文',reason:'原因',subject:'科目',rows:'排数',columns:'每排座位数',row:'目标排',column:'目标座位',first_row:'原座位排',first_column:'原座位号',second_row:'目标排',second_column:'目标座位号'};
+ const comparison=dialog.getByRole('region',{name:'变更前后对比',exact:true});
+ const hasComparison=await comparison.count();
+ const target=hasComparison?comparison.getByLabel('待确认的结果',{exact:true}):dialog;
+ const fields=await target.locator('dl>div').evaluateAll(nodes=>Object.fromEntries(nodes.map(n=>[n.querySelector('dt').textContent,n.querySelector('dd').textContent])));
+ if(hasComparison){
+  const old=await comparison.getByLabel('修改前',{exact:true}).locator('dl>div').evaluateAll(nodes=>Object.fromEntries(nodes.map(n=>[n.querySelector('dt').textContent,n.querySelector('dd').textContent])));
+  if(candidate.command==='class.update')assert.equal(old['名称'],before.context.name);
+  if(candidate.command==='term.update'){assert.equal(old['名称'],before.term.name);assert.equal(old['开始日期'],before.term.start_date);assert.equal(old['结束日期'],before.term.end_date);}
+  if(candidate.command==='student.update_name')assert.equal(old['名称'],before.students.find(s=>s.student_id===candidate.student_id).name);
+  if(candidate.command==='task.update')assert.equal(old['标题'],before.tasks.find(t=>t.task_id===candidate.task_id).title);
+  if(candidate.command==='document.revise'){const doc=before.documents.find(d=>d.document_id===candidate.document_id);assert.equal(old['标题'],doc.title);assert.equal(old['正文'],doc.body);}
+  if(candidate.command==='score.record'){const prior=before.results.find(e=>e.exam_id===candidate.exam_id).results.find(r=>r.student_id===candidate.student_id);assert.equal(old['成绩'],prior?.score??'—');}
+ }
+ const labels={name:'名称',term_name:'学期',start_date:'开始日期',end_date:'结束日期',title:'标题',body:'正文',reason:hasComparison?'更正原因':'原因',subject:'科目',...(!hasComparison?{rows:'排数',columns:'每排座位数',row:'目标排',column:'目标座位',first_row:'原座位排',first_column:'原座位号',second_row:'目标排',second_column:'目标座位号'}:{})};
  for(const [key,label]of Object.entries(labels))if(candidate[key]!==undefined&&candidate[key]!==''&&candidate[key]!==null)assert.equal(fields[label],String(candidate[key]),`Preview field ${key}`);
- for(const [key,label]of [['score','分数'],['maximum_score','满分']])if(candidate[key]!==undefined&&candidate[key]!==null)assert.equal(Number(fields[label]),Number(candidate[key]),`Preview field ${key}`);
- if(candidate.student_id&&before.students){const name=before.students.find(s=>s.student_id===candidate.student_id)?.name;if(name)assert.equal(fields['学生'],name,'Student target must be visible');}
- if(candidate.command==='score.record'){const exam=before.exams.find(e=>e.exam_id===candidate.exam_id);assert.equal(fields['考试'],`${exam.title} · ${exam.subject}`,'Exam and subject must be visible');}
+ for(const [key,label]of [['score',hasComparison?'成绩':'分数'],['maximum_score','满分']])if(candidate[key]!==undefined&&candidate[key]!==null)assert.equal(Number(fields[label]),Number(candidate[key]),`Preview field ${key}`);
+ if(candidate.student_id&&before.students&&!candidate.command.startsWith('seat.')&&candidate.command!=='student.update_name'){const name=before.students.find(s=>s.student_id===candidate.student_id)?.name;if(name)assert.equal(fields['学生'],name,'Student target must be visible');}
+ if(candidate.command==='score.record'){const exam=before.exams.find(e=>e.exam_id===candidate.exam_id);if(hasComparison){assert.equal(fields['标题'],exam.title);assert.equal(fields['科目'],exam.subject);}else assert.equal(fields['考试'],`${exam.title} · ${exam.subject}`,'Exam and subject must be visible');}
+ if(hasComparison&&candidate.command.startsWith('seat.')){
+  const previous=before.seating;
+  const oldSide=comparison.getByLabel('修改前',{exact:true});
+  if(previous){
+   const next=structuredClone(previous);
+   if(candidate.command==='seat.assign'){
+    for(const cell of next.seats)if(cell.student_id===candidate.student_id)cell.student_id=null;
+    next.seats.find(s=>s.row_index===candidate.row&&s.column_index===candidate.column).student_id=candidate.student_id;
+   }else if(candidate.command==='seat.swap'){
+    const a=next.seats.find(s=>s.row_index===candidate.first_row&&s.column_index===candidate.first_column),b=next.seats.find(s=>s.row_index===candidate.second_row&&s.column_index===candidate.second_column);
+    [a.student_id,b.student_id]=[b.student_id,a.student_id];
+   }
+   for(const [side,board]of [[oldSide,previous],[target,next]])for(const cell of board.seats){
+    const name=cell.student_id?before.students.find(s=>s.student_id===cell.student_id).name:'空座';
+    const label=`${cell.row_index}排${cell.column_index}座：${name}`;
+    assert.equal(await side.getByRole('cell').filter({hasText:name}).evaluateAll((nodes,prefix)=>nodes.filter(n=>n.getAttribute('aria-label').startsWith(prefix)).length,label),1,'Actual seating comparison');
+   }
+  }else assert.match(await oldSide.innerText(),/尚未创建/);
+ }
  if(candidate.command==='seat.layout.create')assert.equal(await dialog.getByRole('cell').count(),candidate.rows*candidate.columns);
 }
 async function turn(text,continuation=false,attempt=1){
@@ -114,6 +145,7 @@ async function confirm(command){
  await card.getByRole('status').filter({hasText:'已保存'}).waitFor();
  if(scenario==='full-workbench'){
   const saved=await read(`/workspace-chat/threads/${lastResult.thread}`),turn=saved.turns.find(t=>t.request_id===lastResult.request);assert(turn.action_receipt,'Actual saved receipt required');
+  assert(turn.change_preview,'Every new action needs a factual comparison');assert.deepEqual(turn.change_preview,lastResult.last.change_preview,'Confirmation cannot change frozen preview');
   const after=await world();assertSaved(lastResult.last.candidate,lastResult.before,after,turn.action_receipt);
   await page.reload();await card.getByRole('status').filter({hasText:'已保存'}).waitFor();assert.deepEqual(await world(),after,'Reloaded world must equal the committed state');
  }

@@ -17,7 +17,7 @@ class WorkbenchStore(DocumentStore):
 
     def _transaction(self, connection):
         if self.database.profile == 'classroom-work-d4':
-            if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0029':
+            if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0030':
                 raise RuntimeError('Explicit classroom work schema required')
             from .classroom_work import ClassroomTransaction
             return ClassroomTransaction(connection, self)

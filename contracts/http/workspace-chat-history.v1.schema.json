@@ -1,5 +1,67 @@
 {
   "$defs": {
+    "ChangePreview": {
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {
+          "const": "classmatter.change-preview.v1",
+          "default": "classmatter.change-preview.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "candidate_hash": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Candidate Hash",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "create",
+            "edit",
+            "seating"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "fields": {
+          "items": {
+            "$ref": "#/$defs/FieldChange"
+          },
+          "maxItems": 16,
+          "title": "Fields",
+          "type": "array"
+        },
+        "before_seats": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SeatBoard"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after_seats": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SeatBoard"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "candidate_hash",
+        "kind",
+        "fields",
+        "before_seats",
+        "after_seats"
+      ],
+      "title": "ChangePreview",
+      "type": "object"
+    },
     "ChatActionReceipt": {
       "additionalProperties": false,
       "properties": {
@@ -298,6 +360,17 @@
               "type": "null"
             }
           ]
+        },
+        "change_preview": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ChangePreview"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
         }
       },
       "required": [
@@ -584,6 +657,64 @@
       "title": "ExamCreate",
       "type": "object"
     },
+    "FieldChange": {
+      "additionalProperties": false,
+      "properties": {
+        "field": {
+          "enum": [
+            "name",
+            "term_name",
+            "start_date",
+            "end_date",
+            "title",
+            "due_at",
+            "status",
+            "student",
+            "source",
+            "body",
+            "format",
+            "subject",
+            "maximum_score",
+            "score",
+            "reason",
+            "evidence"
+          ],
+          "title": "Field",
+          "type": "string"
+        },
+        "before": {
+          "anyOf": [
+            {
+              "maxLength": 220000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Before"
+        },
+        "after": {
+          "anyOf": [
+            {
+              "maxLength": 220000,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "After"
+        }
+      },
+      "required": [
+        "field",
+        "before",
+        "after"
+      ],
+      "title": "FieldChange",
+      "type": "object"
+    },
     "ScoreRecord": {
       "additionalProperties": false,
       "properties": {
@@ -717,6 +848,88 @@
         "column"
       ],
       "title": "SeatAssign",
+      "type": "object"
+    },
+    "SeatBoard": {
+      "additionalProperties": false,
+      "properties": {
+        "rows": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Rows",
+          "type": "integer"
+        },
+        "columns": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Columns",
+          "type": "integer"
+        },
+        "cells": {
+          "items": {
+            "$ref": "#/$defs/SeatCell"
+          },
+          "maxItems": 400,
+          "minItems": 1,
+          "title": "Cells",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rows",
+        "columns",
+        "cells"
+      ],
+      "title": "SeatBoard",
+      "type": "object"
+    },
+    "SeatCell": {
+      "additionalProperties": false,
+      "properties": {
+        "row": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Row",
+          "type": "integer"
+        },
+        "column": {
+          "maximum": 20,
+          "minimum": 1,
+          "title": "Column",
+          "type": "integer"
+        },
+        "student": {
+          "anyOf": [
+            {
+              "maxLength": 80,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Student"
+        },
+        "student_id": {
+          "anyOf": [
+            {
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Student Id"
+        }
+      },
+      "required": [
+        "row",
+        "column",
+        "student",
+        "student_id"
+      ],
+      "title": "SeatCell",
       "type": "object"
     },
     "SeatLayoutCreate": {

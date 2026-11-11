@@ -109,6 +109,12 @@ def test_chat_navigation_keeps_drafts_and_background_runs_isolated(workspace_cha
 @pytest.mark.db
 def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat):
     _, _, credentials, owner, _, clock, store, boundary = workspace_chat
+    from class_os.infrastructure.persistence.database import Database, migrate
+    from class_os.infrastructure.workbench import WorkbenchStore
+    comparison_owner = Database(owner.engine.url, migration=True, profile='classroom-work-d4')
+    comparison_runtime = Database(store.database.engine.url, profile='classroom-work-d4')
+    migrate(comparison_owner)
+    store = WorkbenchStore(comparison_runtime, store.restrictions)
     commands = WorkbenchBusinessGateway(boundary, store, clock=lambda: clock[0])
     query = WorkbenchQueryGateway(boundary, store, clock=lambda: clock[0])
     calls = []
@@ -173,6 +179,7 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
             assert connection.execute(text('SELECT count(*) FROM class_os.working_document_revision')).scalar_one() == 2
     finally:
         server.should_exit = True; thread.join(timeout=10)
+        comparison_owner.close(); comparison_runtime.close()
         assert not thread.is_alive()
 
 

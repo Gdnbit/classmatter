@@ -51,10 +51,15 @@ def encoded(value):
 
 
 class SyntheticBackup:
-    def __init__(self, runtime, *, codec=protect, profile="r1"):
+    def __init__(self, runtime, *, codec=protect, profile="r1", legacy_classroom=False):
         if profile not in ("r1", "conversation-d1", "workbench-d2", "workspace-chat-d3", "classroom-work-d4"):
             raise ValueError("Unsupported checkpoint profile")
         self.head, self.tables = schema_profile(profile)
+        if legacy_classroom and profile != 'classroom-work-d4':
+            raise ValueError('Legacy checkpoint is limited to D4 revision 0029')
+        self.legacy_classroom = legacy_classroom
+        if legacy_classroom:
+            self.head = '0029'
         self.profile = profile
         self.kind = {"r1": "class-os.owned-synthetic-backup.v1",
                      "conversation-d1": "classmatter.owned-conversation-backup.v1",
@@ -133,13 +138,17 @@ class SyntheticBackup:
             raise BackupRejected() from None
 
     @staticmethod
-    def _state(connection, *, profile="r1"):
+    def _state(connection, *, profile="r1", legacy_classroom=False):
         head, _ = schema_profile(profile)
+        if legacy_classroom:
+            if profile != 'classroom-work-d4':
+                raise BackupRejected()
+            head = '0029'
         validate_surface(connection, complete=True, profile=profile)
         if (connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != head
                 or connection.execute(text("SELECT data_mode FROM class_os.database_state WHERE singleton=true")).scalar_one() != "synthetic-only"):
             raise BackupRejected()
-        validate_role_guards(connection, profile=profile)
+        validate_role_guards(connection, profile=profile, legacy_classroom=legacy_classroom)
         if profile != "r1":
             from .conversation_integrity import validate_conversation_integrity
             validate_conversation_integrity(connection)
@@ -165,7 +174,10 @@ class SyntheticBackup:
             total += size
             if rows > 10000 or total > 12 * MIB:
                 raise BackupRejected()
-            data = connection.execute(text(f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]'::jsonb) FROM class_os.{table} t")).scalar_one()
+            # A D3 component check during D4 upgrade must retain its exact
+            # historical projection, excluding the D4-only presentation column.
+            row_value = "(to_jsonb(t)-'change_preview')" if profile == 'workspace-chat-d3' and table == 'workspace_chat_turn' else 'to_jsonb(t)'
+            data = connection.execute(text(f"SELECT coalesce(jsonb_agg({row_value} ORDER BY {row_value}::text),'[]'::jsonb) FROM class_os.{table} t")).scalar_one()
             result[table] = {"rows": rows, "sha256": hashlib.sha256(encoded(data)).hexdigest()}
         return result
 
@@ -201,7 +213,7 @@ class SyntheticBackup:
                 connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
                 if not connection.execute(text("SELECT pg_try_advisory_xact_lock_shared(607103003)")).scalar_one():
                     raise BackupRejected()
-                self._state(connection, profile=self.profile)
+                self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom)
                 if connection.execute(text("SELECT pg_database_size(current_database())")).scalar_one() > 32 * MIB:
                     raise BackupRejected()
                 snapshot = connection.execute(text("SELECT pg_export_snapshot()")).scalar_one()
@@ -290,7 +302,7 @@ class SyntheticBackup:
         from .conversation_integrity import restriction_head, validate_restriction_snapshot
         with database.transaction(read_only=True) as connection:
             connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
-            self._state(connection, profile=self.profile)
+            self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom)
             head = restriction_head(connection, restrictions.workspace_id)
             compared = restrictions.compare(head)
             if compared.state != "aligned":
@@ -317,7 +329,7 @@ class SyntheticBackup:
             restored = Database(database.engine.url.set(database=temporary), migration=True, profile=self.profile)
             try:
                 with restored.transaction(read_only=True) as connection:
-                    self._state(connection, profile=self.profile)
+                    self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom)
                     if self._inventory(connection, profile=self.profile) != packet["inventory"]:
                         raise BackupRejected()
                     if current is not None:

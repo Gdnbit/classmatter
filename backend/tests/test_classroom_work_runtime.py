@@ -11,6 +11,31 @@ from test_classroom_work_storage import classroom_work, workspace_chat, roster, 
 
 
 @pytest.mark.db
+async def test_concurrent_preview_refusal_streams_only_the_persisted_answer(classroom_work, monkeypatch):
+    from class_os.application.roster import CommandRejected
+    from class_os.infrastructure import change_preview
+    business, query, auth, owner, clock, store, commit, c, t, students = classroom_work
+    def unavailable(*args):
+        raise CommandRejected()
+    monkeypatch.setattr(change_preview, 'build_change_preview', unavailable)
+    sdk = PydanticAgentRuntime(query, model_factory=lambda request: FunctionModel(lambda messages, info:
+        ModelResponse(parts=[ToolCallPart('prepare_seat_layout', {'rows': 2, 'columns': 3})])))
+    app = create_workspace_chat_app(Settings(), worker=business, query=query, sdk=sdk)
+    cookies = dict(zip(('class_os_session', 'class_os_client', 'class_os_csrf'), auth[:3]))
+    headers = {'origin': 'http://127.0.0.1:8000', 'x-class-os-csrf': auth[2]}
+    prefix = f'/api/workspaces/{auth[3]}/workspace-chat/threads/{uuid4()}'
+    request = uuid4()
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url='http://127.0.0.1:8000', cookies=cookies) as client:
+        assert (await client.post(prefix + '/turns', headers=headers, json={'request_id': str(request), 'text': '建立2排3座座位表'})).status_code == 200
+        stream = await client.post(prefix + f'/turns/{request}/events', headers=headers, json={})
+        row = (await client.get(prefix)).json()['turns'][-1]
+        assert row['state'] == 'completed' and row['candidate'] is None and row['change_preview'] is None
+        assert row['assistant_text'] == '内容已变化，请重新生成这次操作。'
+        assert row['assistant_text'] in stream.text and 'event: draft.available' not in stream.text
+        assert query.classroom_read(auth, c, t, seating=True) is None
+
+
+@pytest.mark.db
 @pytest.mark.parametrize('false_ready', [False, True])
 async def test_agent_exams_scores_layout_assign_swap_and_original_receipts(classroom_work, false_ready):
     business, query, auth, owner, clock, store, commit, c, t, students = classroom_work

@@ -17,10 +17,10 @@ try {
   await send('是，三行五列');
   const card = page.getByRole('region', { name: '对话中的操作候选' });
   await card.getByRole('heading', { name: '建立座位表', exact: true }).waitFor();
-  const grid = card.getByRole('table', { name: '空座布局' });
+  const grid = card.getByRole('table', { name: '座位图' });
   assert.equal(await grid.getByRole('row').count(), 3);
   assert.equal(await grid.getByRole('cell').count(), 15);
-  assert.equal(await grid.getByRole('cell', { name: '3排5座 空座', exact: true }).count(), 1);
+  assert.equal(await grid.getByRole('cell', { name: '3排5座：空座（有变动）', exact: true }).count(), 1);
   const identity = await (await page.request.get(base + '/api/identity/session')).json();
   const url = `${base}/api/workspaces/${identity.subject.workspace_id}/classes/${classId}/terms/${termId}/seating`;
   const layout = async () => { const response = await page.request.get(url); assert.equal(response.status(), 200); return (await response.json()).layout; };

@@ -85,6 +85,68 @@ def test_d4_failed_descriptor_publish_resumes_without_recreating_data(owned_upgr
 
 
 @pytest.mark.db
+@pytest.mark.skipif(os.name != 'nt', reason='Owned Windows DPAPI checkpoint')
+def test_revision29_comparison_upgrade_checkpoints_preserves_chat_and_rolls_back(owned_upgrade, monkeypatch):
+    from sqlalchemy import text
+    from class_os.infrastructure import classroom_upgrade as upgrade
+    from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
+    current = upgrade_classroom(upgrade_workspace_chat(owned_upgrade.runtime))
+    native = NativeSetup(current, development=True)
+    try:
+        cookies = native.handle({'operation': 'development_access'})['cookies']
+    finally:
+        native.close()
+    auth = cookies['session'], cookies['client'], cookies['csrf'], owned_upgrade.workspace_id
+    services = open_services(current, local_development=True)
+    thread, request = uuid4(), uuid4()
+    try:
+        chats = WorkspaceChatBusinessGateway(services.worker.identity, services.worker.store)
+        chats.send(auth, thread, request, '合成旧版历史')
+        chats.finish(auth, chats.claim(auth, thread, request), 'completed', '合成旧版回答')
+    finally:
+        services.close()
+    # Reconstruct the exact pre-feature D4 schema in this disposable fixture.
+    owner = current.database('migrator')
+    try:
+        with owner.transaction() as connection:
+            connection.execute(text('ALTER TABLE class_os.workspace_chat_turn DROP COLUMN change_preview'))
+            connection.execute(text("UPDATE class_os.alembic_version SET version_num='0029'"))
+        old_backup = SyntheticBackup(current, profile='classroom-work-d4', legacy_classroom=True)
+        checkpoint = old_backup.create()
+        assert old_backup.check(checkpoint)['snapshot_integrity_verified']
+        migrate = upgrade.migrate
+        def fail_after_migration(*args, **kwargs):
+            migrate(*args, **kwargs)
+            raise RuntimeError('Synthetic interrupted additive migration')
+        monkeypatch.setattr(upgrade, 'migrate', fail_after_migration)
+        with pytest.raises(UpgradeRejected):
+            upgrade_classroom(current)
+        with owner.transaction(read_only=True) as connection:
+            assert connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() == '0029'
+        monkeypatch.setattr(upgrade, 'migrate', migrate)
+        upgrade_classroom(current)
+        services = open_services(current, local_development=True)
+        try:
+            row = WorkspaceChatQueryGateway(services.query.identity, services.query.store).turn(auth, thread, request)[1]
+            assert row['assistant_text'] == '合成旧版回答' and row['change_preview'] is None
+            from class_os.domain.roster import ChangeClass
+            context = services.query.context(*auth)
+            chats = WorkspaceChatBusinessGateway(services.worker.identity, services.worker.store)
+            comparison_request = uuid4()
+            chats.send(auth, thread, comparison_request, '合成升级后改班名')
+            result = chats.finish(auth, chats.claim(auth, thread, comparison_request), 'completed', '请核对。',
+                ChangeClass('class.update', context.class_id, context.term_id, context.version, '合成升级后班').canonical())
+            assert result['change_preview']['fields'][0]['before'] == context.name
+            backup = SyntheticBackup(current, profile='classroom-work-d4')
+            artifact = backup.create()
+            assert backup.check_current_restrictions(artifact, services.restrictions)['snapshot_integrity_verified']
+        finally:
+            services.close()
+    finally:
+        owner.close()
+
+
+@pytest.mark.db
 @pytest.mark.skipif(os.name != 'nt', reason='Actual Windows Electron/DPAPI runtime')
 def test_d4_native_chat_grades_seats_survive_application_restart(owned_upgrade):
     import socket

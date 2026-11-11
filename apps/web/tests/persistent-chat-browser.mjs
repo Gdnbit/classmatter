@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import nodePath from 'node:path';
 
 const base = process.env.CLASS_OS_TEST_URL;
@@ -111,10 +111,16 @@ try {
     ['生成文档合成班级小结', '创建工作文档'],
     ['给合成班级小结追加合成补充段落', '修改工作文档'],
   ];
+  const changes = [];
   for (const [message, title] of messages) {
     await input.fill(message); await page.getByRole('button', { name: '发送消息', exact: true }).click();
     const card = history.getByRole('region', { name: '对话中的操作候选' }).filter({ has: page.getByRole('heading', { name: title, exact: true }) });
     await card.getByRole('heading', { name: title, exact: true }).waitFor();
+    const comparison = card.getByRole('region', { name: '变更前后对比', exact: true });
+    await comparison.waitFor();
+    const oldContent = await comparison.getByLabel('修改前', { exact: true }).innerText();
+    const newContent = await comparison.getByLabel('待确认的结果', { exact: true }).innerText();
+    changes.push({ oldContent, newContent: newContent.replace(/^调整后/, '已保存') });
     assert.equal(await page.getByRole('dialog').count(), 0); // No manual data-entry form.
     const before = starts.length;
     await page.reload();
@@ -123,12 +129,23 @@ try {
     await card.getByRole('button', { name: '预览这项操作', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: /^(确认提交|明确批准并提交)$/ }).waitFor();
+    await expect.poll(() => dialog.getByLabel('修改前', { exact: true }).innerText()).toBe(oldContent);
+    await expect.poll(() => dialog.getByLabel('待确认的结果', { exact: true }).innerText()).toBe(newContent);
+    assert.equal(await dialog.locator('.change-comparison dl > div').first().evaluate(element => getComputedStyle(element).display), 'block');
     assert(!/payload_hash|expected_version|schema_version|[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/.test(await dialog.innerText()));
     assert.equal(await dialog.locator('input,textarea,select').count(), 0);
     await dialog.getByRole('button', { name: /^(确认提交|明确批准并提交)$/ }).click();
     await dialog.waitFor({ state: 'hidden', timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify({ message, dialog: await dialog.innerText(), errors }), { cause: error }); });
     await card.getByRole('status').filter({ hasText: '已保存' }).waitFor();
+    await page.reload();
+    await expect.poll(() => comparison.getByLabel('修改前', { exact: true }).innerText()).toBe(oldContent);
+    await expect.poll(() => comparison.getByLabel('已保存的结果', { exact: true }).innerText()).toBe(changes.at(-1).newContent);
     assert.equal(new URL(page.url()).pathname, path);
+  }
+  const cards = history.getByRole('region', { name: '变更前后对比', exact: true });
+  for (let index = 0; index < changes.length; index++) {
+    await expect.poll(() => cards.nth(index).getByLabel('修改前', { exact: true }).innerText()).toBe(changes[index].oldContent);
+    await expect.poll(() => cards.nth(index).getByLabel('已保存的结果', { exact: true }).innerText()).toBe(changes[index].newContent);
   }
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('region', { name: '学生清单', exact: true }).getByRole('button', { name: /合成学生乙/ }).waitFor();

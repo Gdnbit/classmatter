@@ -4,6 +4,9 @@ import { consumeEvents } from "./events"
 import { classroomClient, type ClassroomCommand } from './classroom-work'
 
 type Scope = { class_id: string; term_id: string }
+type SeatBoard = { rows: number; columns: number; cells: { row: number; column: number; student: string | null; student_id: string | null }[] }
+export type ChangePreview = { schema_version: 'classmatter.change-preview.v1'; candidate_hash: string; kind: 'create' | 'edit' | 'seating';
+  fields: { field: string; before: string | null; after: string | null }[]; before_seats: SeatBoard | null; after_seats: SeatBoard | null }
 export type ChatCandidate =
   | ClassroomCommand
   | (Scope & { command: "class.create"; name: string; term_name: string; start_date: string; end_date: string })
@@ -19,10 +22,10 @@ export type ChatThread = { thread_id: string; title: string; status: "active" | 
 export type ChatTurn = { turn_id: string; request_id: string; ordinal: number; state: "queued" | "running" | "completed" | "failed" | "cancelled" | "unknown"; version: number;
   user_text: string | null; assistant_text: string | null; candidate: ChatCandidate | null; candidate_hash: string | null;
   created_at: string; started_at: string | null; lease_until: string | null; ended_at: string | null; input_tokens: number | null; output_tokens: number | null; duration_ms: number | null;
-  action_receipt: { receipt_id: string; resource_id: string; version: number } | null }
+  action_receipt: { receipt_id: string; resource_id: string; version: number } | null; change_preview: ChangePreview | null }
 export type ChatListing = { schema_version: "classmatter.workspace-chat-list.v1"; data: ChatThread[]; next_offset: number | null }
 export type ChatHistory = { schema_version: "classmatter.workspace-chat-history.v1"; thread: ChatThread; turns: ChatTurn[]; next_before: number | null }
-export type ChatPreview = { schema_version: "classmatter.workspace-chat-preview.v1"; proposal_id: string; payload_hash: string; risk: "W1" | "W2"; expires_at: string; payload: ChatCandidate; displayNames?: Record<string, string> }
+export type ChatPreview = { schema_version: "classmatter.workspace-chat-preview.v1"; proposal_id: string; payload_hash: string; risk: "W1" | "W2"; expires_at: string; payload: ChatCandidate; change_preview: ChangePreview | null; displayNames?: Record<string, string> }
 const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/
 function id(value: string) { if (!uuid.test(value)) throw new Error("对话标识无效"); return value }
 function dates(value: unknown): void {
@@ -34,10 +37,33 @@ function dates(value: unknown): void {
     } else if (item && typeof item === "object") dates(item)
   }
 }
+function checkComparison(preview: ChangePreview | null | undefined, candidate: ChatCandidate | null, hash: string | null) {
+  if (!preview) return
+  if (!candidate || preview.candidate_hash !== hash || new Set(preview.fields.map(field => field.field)).size !== preview.fields.length) throw new Error('预览与对话不匹配')
+  const expectedKind = candidate.command.startsWith('seat.') ? 'seating' : candidate.command.endsWith('.create') ? 'create' : 'edit'
+  if (preview.kind !== expectedKind) throw new Error('预览类型不匹配')
+  if (preview.kind === 'seating' ? !candidate.command.startsWith('seat.') || !preview.after_seats || preview.fields.length > 0
+    : preview.before_seats || preview.after_seats || !preview.fields.length) throw new Error('预览内容不完整')
+  if (preview.kind === 'create' && preview.fields.some(field => field.before !== null)) throw new Error('预览内容不匹配')
+  for (const board of [preview.before_seats, preview.after_seats]) {
+    if (!board) continue
+    const positions = new Set<string>(), people = new Set<string>()
+    for (const cell of board.cells) {
+      const key = `${cell.row}-${cell.column}`
+      if (cell.row > board.rows || cell.column > board.columns || positions.has(key)
+        || (cell.student === null) !== (cell.student_id === null) || cell.student_id !== null && people.has(cell.student_id)) throw new Error('座位预览不完整')
+      positions.add(key); if (cell.student_id) people.add(cell.student_id)
+    }
+    if (positions.size !== board.rows * board.columns) throw new Error('座位预览不完整')
+  }
+}
 type Schema = "capabilities" | "listing" | "history" | "send" | "turn" | "version" | "clear" | "thread" | "previewBody" | "preview"
 function decode<T>(schema: Schema, data: unknown): T {
   const validate = validators[schema], valid = validate(data); validate.errors = null
   if (!valid) throw new Error("聊天响应契约不匹配；未回退到演示数据。")
+  const value = data as { turns?: ChatTurn[]; turn?: ChatTurn; change_preview?: ChangePreview | null; payload?: ChatCandidate; payload_hash?: string }
+  for (const row of [...(value.turns || []), ...(value.turn ? [value.turn] : [])]) checkComparison(row.change_preview, row.candidate, row.candidate_hash)
+  if (schema === 'preview') checkComparison(value.change_preview, value.payload || null, value.payload_hash || null)
   dates(data)
   return data as T
 }
@@ -65,6 +91,7 @@ export function workspaceChatClient(session: Session) {
     history: async (threadId: string, signal?: AbortSignal, before?: number) => {
       const result = await json<ChatHistory>("history", thread(threadId) + (before ? `/before/${before}` : ""), session, undefined, signal)
       if (result.thread.thread_id !== threadId || result.turns.some((row, index) => index > 0 && row.ordinal <= result.turns[index - 1].ordinal)) throw new Error("聊天范围或顺序不匹配")
+      if (result.turns.some(row => row.change_preview && (!row.candidate || row.change_preview.candidate_hash !== row.candidate_hash))) throw new Error('预览与对话不匹配')
       return result
     },
     send: (threadId: string, requestId: string, text: string, signal?: AbortSignal) => json<{turn: ChatTurn}>("turn", thread(threadId) + "/turns", session, { request_id: id(requestId), text }, signal),
@@ -81,6 +108,7 @@ export function workspaceChatClient(session: Session) {
       const result = await json<ChatPreview>("preview", `${thread(threadId)}/turns/${id(turn.request_id)}/proposal`, session, { candidate_hash: turn.candidate_hash })
       if (result.payload_hash !== turn.candidate_hash || Object.keys(result.payload).length !== Object.keys(turn.candidate).length
         || Object.entries(turn.candidate).some(([key, value]) => result.payload[key as keyof ChatCandidate] !== value)) throw new Error("预览与原聊天候选不匹配")
+      if (result.change_preview && (result.change_preview.candidate_hash !== turn.candidate_hash || JSON.stringify(result.change_preview) !== JSON.stringify(turn.change_preview))) throw new Error('预览已变化，请重新查看')
       if (result.payload.command === 'score.record') {
         const exam = await classroomClient(session, result.payload).results(result.payload.exam_id)
         result.displayNames = { [exam.exam_id]: `${exam.title} · ${exam.subject}` }

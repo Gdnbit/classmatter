@@ -23,13 +23,38 @@ try {
     await dialog.getByRole('button', { name: '明确批准并提交', exact: true }).click();
     await dialog.waitFor({ state: 'hidden' });
   }
+  const comparisons = [];
   for (const title of ['建立考试', '记录成绩', '建立座位表', '安排座位', '安排座位', '交换座位']) {
     const card = page.getByRole('region', { name: '对话中的操作候选' }).filter({ has: page.getByRole('heading', { name: title, exact: true }) }).last();
+    await card.getByRole('button', { name: '预览这项操作', exact: true }).waitFor();
+    const comparison = card.getByRole('region', { name: '变更前后对比', exact: true });
+    await comparison.waitFor();
+    const before = await comparison.getByLabel('修改前', { exact: true }).innerText();
+    const after = await comparison.getByLabel('待确认的结果', { exact: true }).innerText();
     await card.getByRole('button', { name: '预览这项操作', exact: true }).click().catch(async error => {
       throw new Error(JSON.stringify({ title, body: await page.locator('body').innerText(), errors, runs }), { cause: error });
     });
+    const dialogComparison = page.getByRole('dialog').getByRole('region', { name: '变更前后对比', exact: true });
+    await expect.poll(() => dialogComparison.getByLabel('修改前', { exact: true }).innerText()).toBe(before);
+    await expect.poll(() => dialogComparison.getByLabel('待确认的结果', { exact: true }).innerText()).toBe(after);
     await confirm();
     await card.getByRole('status').filter({ hasText: '已保存' }).waitFor();
+    comparisons.push({ before, after: after.replace(/^调整后/, '已保存') });
+    await page.reload();
+    await expect.poll(() => comparison.getByLabel('修改前', { exact: true }).innerText()).toBe(before);
+    await expect.poll(() => comparison.getByLabel('已保存的结果', { exact: true }).innerText()).toBe(comparisons.at(-1).after);
+    if (title === '交换座位') {
+      const beforeBoard = comparison.getByLabel('修改前', { exact: true });
+      const afterBoard = comparison.getByLabel('已保存的结果', { exact: true });
+      await expect(beforeBoard.getByRole('cell', { name: '1排1座：合成学生0（有变动）', exact: true })).toBeVisible();
+      await expect(afterBoard.getByRole('cell', { name: '1排1座：合成学生1（有变动）', exact: true })).toBeVisible();
+      await page.screenshot({ path: '../../test-results/chat-seat-comparison.png' });
+      await page.setViewportSize({ width: 390, height: 844 });
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await expect(afterBoard.getByRole('cell', { name: '1排1座：合成学生1（有变动）', exact: true })).toBeVisible();
+      await page.screenshot({ path: '../../test-results/chat-seat-comparison-narrow.png' });
+      await page.setViewportSize({ width: 1440, height: 1000 });
+    }
     await card.getByRole('button', { name: '继续任务', exact: true }).click();
   }
   await page.getByText('六步已完成，没有重复操作。', { exact: true }).waitFor();
@@ -83,6 +108,12 @@ try {
   await page.screenshot({ path: '../../test-results/classroom-seating.png' });
   await page.goto(conversation);
   await page.getByText('六步已完成，没有重复操作。', { exact: true }).waitFor();
+  const historical = page.getByRole('region', { name: '对话中的操作候选' }).getByRole('region', { name: '变更前后对比', exact: true });
+  assert.equal(await historical.count(), comparisons.length);
+  for (let index = 0; index < comparisons.length; index++) {
+    await expect.poll(() => historical.nth(index).getByLabel('修改前', { exact: true }).innerText()).toBe(comparisons[index].before);
+    await expect.poll(() => historical.nth(index).getByLabel('已保存的结果', { exact: true }).innerText()).toBe(comparisons[index].after);
+  }
   assert.equal(runs.length, 7); // No implicit continuation after reload/navigation.
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   console.log('PASS six-step chat → confirmed grades/seats → original views; lost receipt recovery; stale rejection; manual swap/drag; persistence; zero external calls');

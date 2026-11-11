@@ -7,6 +7,7 @@ import { ModelSwitcher } from "./ModelSwitcher"
 import { useComposerInput } from './useComposerInput'
 import './composer.css'
 import { SeatLayoutPreview } from './SeatLayoutPreview'
+import { ChangeComparison } from './ChangeComparison'
 
 const labels: Record<string, string> = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "task.create": "建立任务", "task.update": "修改任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
@@ -57,8 +58,9 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
         {turn.state !== "completed" && <p className="r1-muted" role={turn.state === 'queued' || turn.state === 'running' ? 'status' : undefined}>{turn.state === 'queued' && s.working ? states.running : states[turn.state]}</p>}
         {turn.state === "queued" && !s.working && <button disabled={!s.fresh} onClick={() => void s.startQueued(turn)}>继续回复</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
-          <h2>{labels[turn.candidate.command]}</h2><CandidateContent value={turn.candidate} />
-          {turn.action_receipt ? <><p role="status">已保存</p>{turn.turn_id === s.history?.turns.at(-1)?.turn_id && <button disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.continueTask(turn)}>继续任务</button>}</>
+          <h2>{labels[turn.candidate.command]}</h2>
+          {turn.change_preview ? <ChangeComparison preview={turn.change_preview} saved={!!turn.action_receipt} /> : <CandidateContent value={turn.candidate} />}
+          {turn.action_receipt ? <><p role="status" className={turn.change_preview ? 'sr-only' : undefined}>已保存</p>{turn.turn_id === s.history?.turns.at(-1)?.turn_id && <button disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.continueTask(turn)}>继续任务</button>}</>
             : <button className="r1-primary" disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.preview(turn)}>预览这项操作</button>}
         </section>}
       </div>)}

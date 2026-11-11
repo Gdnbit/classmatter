@@ -77,7 +77,10 @@ class WorkspaceChatRuntime:
                 yield event("run.failed", {"code": "run_expired"}); return
             # User-visible success is released only after BCG output and audit commit.
             for item in pending:
-                yield event(item.type, item.payload)
+                if item.type == 'draft.available' and stored['candidate'] is None:
+                    continue
+                payload = {**item.payload, 'text': stored['assistant_text']} if item.type == 'message.delta' else item.payload
+                yield event(item.type, payload)
         except asyncio.CancelledError:
             with suppress(Exception):
                 await finish("cancelled")

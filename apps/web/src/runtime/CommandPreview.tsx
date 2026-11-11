@@ -2,9 +2,11 @@ import type { Proposal } from "./api"
 import { R1Dialog } from "./R1Dialog"
 import { previewFields, userMessage } from "./user-facing"
 import { SeatLayoutPreview } from './SeatLayoutPreview'
+import { ChangeComparison } from './ChangeComparison'
+import type { ChangePreview } from './workspace-chat'
 
 type Props = {
-  proposal: Proposal
+  proposal: Proposal & { change_preview?: ChangePreview | null }
   error: string
   busy: boolean
   names?: Record<string, string>
@@ -22,10 +24,10 @@ export function CommandPreview({ proposal, error, busy, names, onReject, onCheck
       请核对以下内容后确认。
       有效至 {new Date(proposal.expires_at).toLocaleString("zh-CN", { hour12: false })}
     </p>
-    <dl>{previewFields(proposal.payload, names).map(([label, value], index) => <div key={index}>
+    {proposal.change_preview ? <ChangeComparison preview={proposal.change_preview} /> : <dl>{previewFields(proposal.payload, names).map(([label, value], index) => <div key={index}>
       <dt>{label}</dt><dd>{value}</dd>
-    </div>)}</dl>
-    {proposal.payload.command === 'seat.layout.create' && <SeatLayoutPreview rows={proposal.payload.rows} columns={proposal.payload.columns} />}
+    </div>)}</dl>}
+    {!proposal.change_preview && proposal.payload.command === 'seat.layout.create' && <SeatLayoutPreview rows={proposal.payload.rows} columns={proposal.payload.columns} />}
     <div className="r1-toolbar">
       <button disabled={busy} onClick={onReject}>放弃变更</button>
       <button disabled={busy} onClick={onCheck}>核对提交结果</button>
