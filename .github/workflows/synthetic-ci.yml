@@ -88,9 +88,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # Hosted-runner Azure mirror DNS failed twice before tests could start.
-          # Keep Ubuntu's existing suites/keyring and use official HTTPS mirrors.
-          printf '%s\n' https://archive.ubuntu.com/ubuntu https://security.ubuntu.com/ubuntu | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
+          # Canonical DNS can be unavailable across all Ubuntu-owned mirrors.
+          # Linux Kernel Archives mirrors the same Ubuntu-signed archive; retain
+          # the runner's suites/keyring, signature checks and pinned PG version.
+          printf '%s\n' https://mirrors.edge.kernel.org/ubuntu https://archive.ubuntu.com/ubuntu https://security.ubuntu.com/ubuntu | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl --fail --silent --show-error --output /usr/share/postgresql-common/pgdg/class-os-postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           sudo install -m 0644 infra/ci/pgdg.sources /etc/apt/sources.list.d/class-os-pgdg.sources
