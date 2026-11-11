@@ -24,6 +24,8 @@ D4显式迁移0030增加原聊天轮次的nullable比较列；既有0029实例�
 
 最终验收提交`7f426c2`的[CI及同head重跑](https://github.com/Gdnbit/classmatter/actions/runs/43034335997)两次均在Ubuntu安装依赖时因`azure.archive.ubuntu.com`域名解析失败退出100，尚未运行数据库/浏览器阶段；Windows已通过，不能据此宣称完整验收。与[runner-images镜像故障记录](https://github.com/actions/runner-images/issues/14594)同类，但不据此认定故障根因已由上游确认。仅调整CI运行器的APT镜像列表为Ubuntu官方HTTPS archive/security，沿用原suites、keyring、签名验证、固定PG18.6及全部测试；不修改应用代码、不跳过检查、不使用不受信镜像。新head须重新完成两平台CI，最终状态以PR #78的精确head运行记录为准。
 
+2026-11-12继续收口：主分支仍为`6dfff9a`，不替换并发工作。官方Ubuntu域名重跑仍失败后，按[同期故障报告](https://github.com/actions/runner-images/issues/15296)的症状核查，CI改用Linux Kernel Archives托管的Ubuntu签名镜像；原suites、keyring、包签名、PG18.6精确版本检查和17项既有步骤保留。`d8c3bf3`已越过PG安装，因被后续提交替代而取消，不算完整通过。为容纳已测26分31秒的DB阶段及依赖安装，工程job预算固定45分钟，应用/SDK/单项测试预算不变；`c09bac2`遗漏同步CI预算自检，两平台因此失败，保留[记录](https://github.com/Gdnbit/classmatter/actions/runs/43059967099)。现将自检固定45并拒绝其它预算，不放开失败抑制、凭据或正式Gate；最终精确head仍需完整两平台回归，收口证据见PR #78。
+
 ## 2026-11-10 空实例原界面真实模型完整班务验收
 
 基线main `63599c5`，分支`codex/live-full-workbench-acceptance`。扩展已有显式opt-in入口`backend/live_classroom_acceptance.py`和原生UI脚本，新增`--scenario full-workbench`；默认仍保留原classroom场景。新场景不预置班级和学生，沿原对话逐步完成班级/学期创建与改名、学生添加/改名、任务创建/改名、文档创建/追加，再衔接考试、成绩与更正、座位布局/安排/交换、只读查询。复用原免费模型配置、QG/BCG/ISB、SDK工具和预览确认，不新增产品UI、业务工具、权限或Schema。

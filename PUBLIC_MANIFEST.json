@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "d951b2682ac1cc76e5bcb6c88b4ce0a7a54f6a6fba8f06b8a2312fd1497edcf5"
+      "sha256": "1f0b268a4e2f5cdc1a964453d449cf178125d3b407a4a9a280399e92d839e888"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1621,7 +1621,7 @@
       "sha256": "32fe60502d9b9587797f4022d9e50751f29eefa17b4087ae2cb31638a7d31796"
     },
     "scripts/tests/test_ci_workflow.py": {
-      "sha256": "6b38b99e7069dd1ce2f1c86c480d7ae05be9659301392bde57eb22d6f8ead43f"
+      "sha256": "44b7f200b2d35a33d59ddd2220de7871f50fbc4921f3ff5375dd5071ff8385ec"
     },
     "scripts/tests/test_generate_synthetic_fixtures.py": {
       "sha256": "6c1074c4227fea921b9096e6b2f563499c2851bf80f0976b32655cf59b5ba478",
