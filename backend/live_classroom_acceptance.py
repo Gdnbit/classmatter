@@ -31,16 +31,22 @@ def main():
     parser.add_argument('--live', action='store_true')
     parser.add_argument('--source-runtime-root', type=Path)
     parser.add_argument('--pg-root', type=Path)
-    parser.add_argument('--resume-runtime-root', type=Path, help='Reuse only a prior isolated, empty-classroom acceptance fixture')
+    parser.add_argument('--resume-runtime-root', type=Path, help='Prior isolated fixture only; each scenario validates its declared business checkpoint without resetting data')
+    parser.add_argument('--resume-thread-id', type=UUID, help='Existing synthetic conversation for the explicit classroom-recovery scenario only')
     parser.add_argument('--provider', choices=('google', 'zhipu'), default='google', help='Explicit registered free model only; never an automatic fallback')
     parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed turns; all attempts remain in the report')
-    parser.add_argument('--scenario', choices=('classroom', 'full-workbench'), default='classroom', help='Full workbench starts empty; all class/student creation uses the original conversation UI')
+    parser.add_argument('--turn-interval-seconds', type=int, choices=(0, 15, 65), default=0, help='Explicit test-only pacing for free provider rate limits; not application latency or automatic retry')
+    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench'), default='classroom', help='Recovery verifies prior document/exam/score receipts in the same conversation before continuing its unfinished seating steps')
     args = parser.parse_args()
     if not args.live or not args.source_runtime_root or not args.pg_root:
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_live_source_and_pg_required', 'requests': 0}))
         return 2
     if args.scenario == 'full-workbench' and args.resume_runtime_root:
         print(json.dumps({'status': 'blocked', 'reason': 'full_workbench_requires_fresh_fixture', 'requests': 0}))
+        return 2
+    if (args.scenario == 'classroom-recovery' and (not args.resume_runtime_root or not args.resume_thread_id)
+            or args.resume_thread_id and args.scenario != 'classroom-recovery'):
+        print(json.dumps({'status': 'blocked', 'reason': 'explicit_recovery_fixture_and_thread_required', 'requests': 0}))
         return 2
     if os.name != 'nt':
         return 2
@@ -112,12 +118,15 @@ def main():
         # Explicit synthetic preconditions, not claimed as Agent-created data.
         if args.resume_runtime_root:
             context = target_services.query.context(*auth)
-            if context is None or context.name != '合成联测班':
+            expected_names = ('合成联测班', '合成联测修订班') if args.scenario in ('classroom-documents', 'classroom-recovery') else ('合成联测班',)
+            if context is None or context.name not in expected_names:
                 raise ValueError('Expected original synthetic fixture context')
             c, t = context.class_id, context.term_id
-            if target_services.query.classroom_read(auth, c, t)['exams'] or target_services.query.classroom_read(auth, c, t, seating=True) is not None:
+            if args.scenario != 'classroom-recovery' and (target_services.query.classroom_read(auth, c, t)['exams'] or target_services.query.classroom_read(auth, c, t, seating=True) is not None):
                 raise ValueError('Resume cannot reset or overwrite classroom work')
-        elif args.scenario == 'classroom':
+            if args.scenario == 'classroom-documents' and target_services.query.documents(*auth, c, t):
+                raise ValueError('Resume cannot reset or overwrite documents')
+        elif args.scenario in ('classroom', 'classroom-documents'):
             c, t = uuid4(), uuid4()
             commit(CreateClass(c, t, '合成联测班', '合成联测学期', date(2026, 9, 1), date(2027, 1, 30)))
             for name in ('合成学生甲', '合成学生乙'):
@@ -172,12 +181,13 @@ def main():
         config = json.loads(descriptor.read_text(encoding='utf-8'))
         config.update(runtimeRoot=str(runtime.root), servicePort=port)
         descriptor.write_text(json.dumps(config), encoding='utf-8')
-        env = dict(os.environ, CLASSMATTER_RUN_LIVE_CLASSROOM='1', CLASSMATTER_LIVE_STAGE=str(stage), CLASSMATTER_LIVE_REPORT=str(output / 'report.json'), CLASSMATTER_LIVE_MODEL=profile.model, CLASSMATTER_LIVE_ATTEMPTS=str(args.attempts_per_turn), CLASSMATTER_LIVE_SCENARIO=args.scenario)
+        env = dict(os.environ, CLASSMATTER_RUN_LIVE_CLASSROOM='1', CLASSMATTER_LIVE_STAGE=str(stage), CLASSMATTER_LIVE_REPORT=str(output / 'report.json'), CLASSMATTER_LIVE_MODEL=profile.model, CLASSMATTER_LIVE_ATTEMPTS=str(args.attempts_per_turn), CLASSMATTER_LIVE_SCENARIO=args.scenario, CLASSMATTER_LIVE_TURN_INTERVAL=str(args.turn_interval_seconds), CLASSMATTER_LIVE_RESUMED='1' if args.resume_runtime_root else '0', CLASSMATTER_LIVE_THREAD=str(args.resume_thread_id) if args.resume_thread_id else '')
         phase = 'native-acceptance'
         result = subprocess.run(['node', 'tests/live-classroom-acceptance.cjs'], cwd=desktop, env=env,
             capture_output=True, text=True, encoding='utf-8', timeout=1500, creationflags=subprocess.CREATE_NO_WINDOW)
         (output / 'ui.log').write_text(result.stdout + result.stderr, encoding='utf-8')
-        print(json.dumps({'status': 'passed' if result.returncode == 0 else 'failed', 'report': str(output / 'report.json'), 'test_attempt_limit': args.attempts_per_turn, 'application_automatic_retry': False}))
+        observed = json.loads((output / 'report.json').read_bytes()) if result.returncode == 0 else {}
+        print(json.dumps({'status': 'passed' if result.returncode == 0 else 'failed', 'scenario': args.scenario, 'report': str(output / 'report.json'), 'test_attempt_limit': args.attempts_per_turn, 'application_automatic_retry': False, 'resumed_isolated_fixture': bool(args.resume_runtime_root), 'prior_failures_retained': any(row.get('prior_failure') for row in observed.get('rows', []))}))
         return 0 if result.returncode == 0 else 1
     except Exception as error:
         print(json.dumps({'status': 'blocked-or-failed', 'phase': phase, 'error_type': type(error).__name__, 'report_directory': str(output), 'automatic_retry': False}))
