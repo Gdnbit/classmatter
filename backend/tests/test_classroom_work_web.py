@@ -72,7 +72,8 @@ def test_original_chat_multistep_grades_seats_same_world_and_failures(classroom_
             env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}'), capture_output=True, text=True, encoding='utf-8',
             timeout=200, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         (root / 'test-results/classroom-browser-details.log').write_text(result.stdout + result.stderr, encoding='utf-8')
-        assert result.returncode == 0, (result.stdout + result.stderr, sdk.last_failure_type, calls)
+        if result.returncode:
+            pytest.fail(f'Original classroom browser failed ({sdk.last_failure_type}); calls={len(calls)}\n{result.stdout}{result.stderr}')
         assert len(calls) == 7 and sdk.active == 0
         with owner.transaction(read_only=True) as connection:
             assert connection.execute(text('SELECT count(*) FROM class_os.class_exam')).scalar_one() == 1

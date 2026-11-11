@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "305d440f2f57896f198d715248133cc39ec2c5d4dd81c431224dfd8dce6a21fb"
+      "sha256": "3f375b29bc59c8bf0624c64d69f4730503f250d1554ecb15e8422e81cd5cc582"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2903,7 +2903,7 @@
       "sha256": "ded4da9341d616ae8962e2e57e358e063e9cac63cd7459182975816f473785cb"
     },
     "apps/web/tests/persistent-chat-browser.mjs": {
-      "sha256": "923d0f40dc0f07a5bbd4e23b23bc1b76f11f987292932c77552d48b736e26d1a"
+      "sha256": "4feeac5fd8d98317fa647203a58f2c959856cb0dd0435afea085a57aa1377a11"
     },
     "apps/web/tests/workspace-chat.mjs": {
       "sha256": "23b16d48d5a152ee2ac2b41db54e5be99d1bdc32d03486027f97e51b38c02072"
@@ -3041,7 +3041,7 @@
       "sha256": "85cca2acddaadd29aca547380b0bf0475fb16565b1c71029081e57affb8efbb2"
     },
     "apps/web/tests/classroom-work-browser.mjs": {
-      "sha256": "dfca2913646ab4f231e74a9fc6672d943f20474382eff65edca1d9a90c91ffd3"
+      "sha256": "bd5369e9bf55a358894a64f26343707df7ae611d40c9c94b21f077fd7d9e2177"
     },
     "apps/web/tests/classroom-work.mjs": {
       "sha256": "48d744c93faa1feaaa804c598284769118bb46523e2f903125bcb795618549f3"
@@ -3080,7 +3080,7 @@
       "sha256": "e344c328a434ca28c6fc8a678924e392fae52d8bbdabc6b7ba1bc919ddbc3402"
     },
     "backend/tests/test_classroom_work_web.py": {
-      "sha256": "57ef408273fff04787a7b6531b8cd94f7f9add683cc4fb1e7c29a7ac4c835b81"
+      "sha256": "4b8dff4f9281cde6093298607c8c8d43f6f5863210a205b07dcee03724aef638"
     },
     "contracts/classroom-tools/catalog.v1.json": {
       "sha256": "22e58b60ec2e4b800e0103be76c7449bfa6d3a274d0dc6c36896c335ce86ae98"
@@ -3239,6 +3239,9 @@
     },
     "backend/tests/test_change_preview_legacy.py": {
       "sha256": "b4ace318666b2bc3f7a7983d1a68c6bfe5100263d173fb00940b6e90ac66b50c"
+    },
+    "apps/web/tests/change-comparison-content.mjs": {
+      "sha256": "96357b4b28d873d7e7179c8d64999ccf1be41cb43e91e2101be087391ca2e76e"
     }
   }
 }

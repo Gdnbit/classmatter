@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { chromium, expect } from '@playwright/test';
+import { comparisonContent } from './change-comparison-content.mjs';
 const base = process.env.CLASS_OS_TEST_URL;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
 const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
@@ -29,20 +30,20 @@ try {
     await card.getByRole('button', { name: '预览这项操作', exact: true }).waitFor();
     const comparison = card.getByRole('region', { name: '变更前后对比', exact: true });
     await comparison.waitFor();
-    const before = await comparison.getByLabel('修改前', { exact: true }).innerText();
-    const after = await comparison.getByLabel('待确认的结果', { exact: true }).innerText();
+    const before = await comparisonContent(comparison.getByLabel('修改前', { exact: true }));
+    const after = await comparisonContent(comparison.getByLabel('待确认的结果', { exact: true }));
     await card.getByRole('button', { name: '预览这项操作', exact: true }).click().catch(async error => {
       throw new Error(JSON.stringify({ title, body: await page.locator('body').innerText(), errors, runs }), { cause: error });
     });
     const dialogComparison = page.getByRole('dialog').getByRole('region', { name: '变更前后对比', exact: true });
-    await expect.poll(() => dialogComparison.getByLabel('修改前', { exact: true }).innerText()).toBe(before);
-    await expect.poll(() => dialogComparison.getByLabel('待确认的结果', { exact: true }).innerText()).toBe(after);
+    await expect.poll(() => comparisonContent(dialogComparison.getByLabel('修改前', { exact: true }))).toEqual(before);
+    await expect.poll(() => comparisonContent(dialogComparison.getByLabel('待确认的结果', { exact: true }))).toEqual(after);
     await confirm();
     await card.getByRole('status').filter({ hasText: '已保存' }).waitFor();
-    comparisons.push({ before, after: after.replace(/^调整后/, '已保存') });
+    comparisons.push({ before, after: { ...after, heading: '已保存' } });
     await page.reload();
-    await expect.poll(() => comparison.getByLabel('修改前', { exact: true }).innerText()).toBe(before);
-    await expect.poll(() => comparison.getByLabel('已保存的结果', { exact: true }).innerText()).toBe(comparisons.at(-1).after);
+    await expect.poll(() => comparisonContent(comparison.getByLabel('修改前', { exact: true }))).toEqual(before);
+    await expect.poll(() => comparisonContent(comparison.getByLabel('已保存的结果', { exact: true }))).toEqual(comparisons.at(-1).after);
     if (title === '交换座位') {
       const beforeBoard = comparison.getByLabel('修改前', { exact: true });
       const afterBoard = comparison.getByLabel('已保存的结果', { exact: true });
@@ -111,8 +112,8 @@ try {
   const historical = page.getByRole('region', { name: '对话中的操作候选' }).getByRole('region', { name: '变更前后对比', exact: true });
   assert.equal(await historical.count(), comparisons.length);
   for (let index = 0; index < comparisons.length; index++) {
-    await expect.poll(() => historical.nth(index).getByLabel('修改前', { exact: true }).innerText()).toBe(comparisons[index].before);
-    await expect.poll(() => historical.nth(index).getByLabel('已保存的结果', { exact: true }).innerText()).toBe(comparisons[index].after);
+    await expect.poll(() => comparisonContent(historical.nth(index).getByLabel('修改前', { exact: true }))).toEqual(comparisons[index].before);
+    await expect.poll(() => comparisonContent(historical.nth(index).getByLabel('已保存的结果', { exact: true }))).toEqual(comparisons[index].after);
   }
   assert.equal(runs.length, 7); // No implicit continuation after reload/navigation.
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
