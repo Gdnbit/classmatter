@@ -10,7 +10,10 @@ PRIVATE_IDENTITY_TABLES = frozenset(("owner_account", "bootstrap_capability", "a
 BUSINESS_TABLES = REGISTERED_TABLES - PRIVATE_IDENTITY_TABLES - {"workspace", "database_state", "alembic_version"}
 
 
-def validate_role_guards(connection, *, profile="r1"):
+def validate_role_guards(connection, *, profile="r1", legacy_classroom=False):
+    if legacy_classroom and (profile != 'classroom-work-d4' or connection.execute(text(
+            'SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0029'):
+        raise ValueError('Legacy checkpoint requires exact D4 revision 0029')
     _, registered = schema_profile(profile)
     business = registered - PRIVATE_IDENTITY_TABLES - {"workspace", "database_state", "alembic_version"}
     def reject():
@@ -77,6 +80,9 @@ def validate_role_guards(connection, *, profile="r1"):
                 "workspace_chat_audit": set()}
         if profile == "classroom-work-d4":
             inventory = {**inventory, **D4_COLUMNS}
+            if not legacy_classroom:
+                inventory['workspace_chat_turn'] = inventory['workspace_chat_turn'] | {'change_preview'}
+                updates['workspace_chat_turn'] = updates['workspace_chat_turn'] | {'change_preview'}
             updates = {**updates, "class_exam": {"version", "updated_at"}, "exam_result_revision": set(),
                        "class_seating": {"version", "updated_at"}, "seat_revision": set()}
         for table in sorted(inventory):

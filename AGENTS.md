@@ -28,6 +28,8 @@ Emergency response must not depend on ClassMatter availability. Never diagnose s
 
 All user-visible pages, dialogs, tooltips, errors and notifications must be concise and written for teachers. Show the task, result and next action; avoid developer notes, internal field names, IDs, hashes, framework names and release-stage explanations. Keep only necessary consequences, unsaved-change warnings and cost information. Preserve honest unavailable/preview/example states; never replace an unavailable action with a success claim. Technical contracts, diagnostics and implementation detail belong in developer documentation, not customer flows. Apply this rule to all future page and feature work and verify it in UI regression tests.
 
+Every supported AI-created business change must show a factual, typed preview in its chat turn. Edits compare the original values with the proposed values; seating compares actual boards and documents retain both texts. Creation shows the proposed object and an honest not-yet-created state. Reuse the original human confirmation/BCG path, bind saved status to its matching receipt, and preserve the historical comparison after refresh and later edits. Never reconstruct an unknown historical before-state from current data or model prose, and never interpret presentation updates as permission to write business data.
+
 ## Work and verification
 
 Plan before multi-file work. Map changes to requirements/evals/tasks, preserve task scopes and dependencies, reuse existing contracts, and keep diffs reviewable. Run the relevant `scripts/verify.ps1` suites and update documentation when status changes. Keep legacy protocol/import/environment/migration names stable; see the naming matrix. Do not rewrite migration history or Gate hashes.

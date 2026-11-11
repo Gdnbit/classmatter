@@ -17,9 +17,9 @@ jobs:
   baseline:
     name: Static, contracts and Web / ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    # Full real-PG/browser regression alone measured 17m51s; retain every
-    # check while budgeting setup/teardown and dependency-download variance.
-    timeout-minutes: 30
+    # Full real-PG/browser regression measured 26m31s before dependency setup.
+    # Keep per-test/product deadlines; budget finite setup/teardown variance.
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
@@ -88,6 +88,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Canonical DNS can be unavailable across all Ubuntu-owned mirrors.
+          # Linux Kernel Archives mirrors the same Ubuntu-signed archive; retain
+          # the runner's suites/keyring, signature checks and pinned PG version.
+          printf '%s\n' https://mirrors.edge.kernel.org/ubuntu | sudo tee /etc/apt/apt-mirrors.txt >/dev/null
           sudo install -d /usr/share/postgresql-common/pgdg
           sudo curl --fail --silent --show-error --output /usr/share/postgresql-common/pgdg/class-os-postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           sudo install -m 0644 infra/ci/pgdg.sources /etc/apt/sources.list.d/class-os-pgdg.sources

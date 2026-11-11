@@ -50,6 +50,12 @@ def candidate_hash(payload):
 
 
 def validate_turn(row, *, cleared=False):
+    from .change_preview import ChangePreview
+    preview = row.get('change_preview')
+    if preview is not None:
+        parsed = ChangePreview.model_validate(preview)
+        if cleared or row['state'] != 'completed' or row['candidate'] is None or parsed.candidate_hash != row['candidate_hash']:
+            raise ValueError('Comparison is not bound to the saved candidate')
     for key in ("workspace_id", "thread_id", "turn_id", "request_id"):
         identifiers(row[key])
     if type(row["ordinal"]) is not int or not 1 <= row["ordinal"] <= MAX_TURNS:

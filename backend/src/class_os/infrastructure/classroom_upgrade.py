@@ -3,7 +3,7 @@ import os
 from uuid import uuid4
 from sqlalchemy import text
 from .local_runtime import LocalRuntime
-from .operator_backup import SyntheticBackup
+from .operator_backup import SyntheticBackup, encoded
 from .persistence.database import Database, migrate
 from .workspace_local_runtime import surface
 from .workbench_upgrade import (UpgradeRejected, descriptor, load_plan, save_plan, digest, business_digest,
@@ -43,6 +43,47 @@ def upgrade_classroom(runtime):
                 row, restrictions = native_anchor(connection, current)
                 no_clients(connection)
                 if head == '0029':
+                    if plan is None or plan['owner_id'] != str(row['owner_id']) or plan['workspace_id'] != str(row['workspace_id']):
+                        raise UpgradeRejected()
+                    if current.profile == 'workspace-chat-d3':
+                        if business_digest(SyntheticBackup._inventory(connection, profile='workspace-chat-d3')) != plan['business']:
+                            raise UpgradeRejected()
+                        if connection.execute(text('''SELECT EXISTS(SELECT 1 FROM class_os.class_exam) OR EXISTS(SELECT 1 FROM class_os.exam_result_revision)
+                            OR EXISTS(SELECT 1 FROM class_os.class_seating) OR EXISTS(SELECT 1 FROM class_os.seat_revision)''')).scalar_one():
+                            raise UpgradeRejected()
+            if head == '0029':
+                # Explicit operator-only upgrade. Retain and restore-check the
+                # old schema before adding the nullable comparison column.
+                backup = SyntheticBackup(current, profile='classroom-work-d4', legacy_classroom=True)
+                artifact = backup.create()
+                backup.check_current_restrictions(artifact, restrictions)
+                packet, _ = backup._open(artifact)
+                comparison_journal = 'chat-change-preview-upgrade.dpapi'
+                prior = load_plan(current, source, target, journal=comparison_journal, kind='classmatter.chat-change-preview-upgrade.v1')
+                save_plan(current, {'kind': 'classmatter.chat-change-preview-upgrade.v1', 'root': digest(str(current.root).encode('utf-8')),
+                    'source': digest(source), 'target': digest(target), 'attempt_id': str(uuid4()), 'backup_id': str(artifact),
+                    'business': business_digest(packet['inventory']), 'owner_id': str(row['owner_id']), 'workspace_id': str(row['workspace_id'])},
+                    prior, journal=comparison_journal)
+                with connection.begin():
+                    no_clients(connection); native_anchor(connection, current)
+                    if SyntheticBackup._inventory(connection, profile='classroom-work-d4') != packet['inventory']:
+                        raise UpgradeRejected()
+                    target_database = Database(database.engine.url, migration=True, profile='classroom-work-d4')
+                    migrate(target_database, connection=connection)
+                    surface(connection, profile='classroom-work-d4')
+                    if connection.execute(text('SELECT EXISTS(SELECT 1 FROM class_os.workspace_chat_turn WHERE change_preview IS NOT NULL)')).scalar_one():
+                        raise UpgradeRejected()
+                    after = SyntheticBackup._inventory(connection, profile='classroom-work-d4')
+                    turns = connection.execute(text("SELECT coalesce(jsonb_agg(to_jsonb(t)-'change_preview' ORDER BY (to_jsonb(t)-'change_preview')::text),'[]'::jsonb) FROM class_os.workspace_chat_turn t")).scalar_one()
+                    after['workspace_chat_turn']['sha256'] = digest(encoded(turns))
+                    after['alembic_version'] = packet['inventory']['alembic_version']
+                    if after != packet['inventory']:
+                        raise UpgradeRejected()
+                if current.profile == 'classroom-work-d4':
+                    return current
+                head = '0030'
+            with connection.begin():
+                if head == '0030':
                     surface(connection, profile='classroom-work-d4')
                     if plan is None or plan['owner_id'] != str(row['owner_id']) or plan['workspace_id'] != str(row['workspace_id']):
                         raise UpgradeRejected()

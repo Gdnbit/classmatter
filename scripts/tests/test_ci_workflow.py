@@ -20,7 +20,7 @@ def validate(document):
         raise ValueError("No elevated pull request or chained workflow trigger")
     job = document["jobs"]["baseline"]
     budget = job.get("timeout-minutes")
-    if type(budget) is not int or not 20 <= budget <= 30:
+    if type(budget) is not int or budget != 45:
         raise ValueError("Explicit bounded engineering job budget required")
     if job.get("permissions") or job.get("continue-on-error") or job.get("environment"):
         raise ValueError("No elevated permissions, deployment or suppressed failure")
@@ -52,8 +52,8 @@ class CiWorkflowTests(unittest.TestCase):
         validate(self.document)
 
     def test_full_regression_budget_is_explicit_and_bounded(self):
-        self.assertEqual(30, self.document["jobs"]["baseline"]["timeout-minutes"])
-        for budget in (None, True, 0, 19, 31, "30"):
+        self.assertEqual(45, self.document["jobs"]["baseline"]["timeout-minutes"])
+        for budget in (None, True, 0, 19, 30, 31, 44, 46, "45"):
             document = copy.deepcopy(self.document)
             document["jobs"]["baseline"]["timeout-minutes"] = budget
             with self.subTest(budget=budget), self.assertRaises(ValueError):

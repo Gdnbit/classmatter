@@ -10,6 +10,36 @@ from .workbench import WorkbenchTransaction
 
 
 class WorkspaceChatTransaction(WorkbenchTransaction):
+    def save_proposal(self, proposal, binding, payload, purpose):
+        # Legacy *pending* candidates can receive their first factual comparison
+        # only inside the existing human BCG preview transaction. Never derive
+        # an already-committed history card from today's values.
+        legacy, comparison = [], None
+        if self._store.database.profile == 'classroom-work-d4':
+            from class_os.domain.workspace_chat import CANDIDATES
+            if payload.get('command') in CANDIDATES:
+                import json
+                legacy = self._connection.execute(text('''SELECT t.thread_id,t.request_id
+                    FROM class_os.workspace_chat_turn t JOIN class_os.workspace_chat_thread h USING(workspace_id,thread_id)
+                    WHERE t.workspace_id=:workspace_id AND h.owner_id=:actor_id AND h.status='active'
+                      AND t.state='completed' AND t.candidate_hash=:hash AND t.candidate=CAST(:payload AS jsonb)
+                      AND t.change_preview IS NULL
+                      AND NOT EXISTS(SELECT 1 FROM class_os.command_receipt r WHERE r.workspace_id=t.workspace_id
+                          AND r.actor_id=h.owner_id AND r.payload_hash=t.candidate_hash) LIMIT 101'''),
+                    {**binding, 'hash': proposal.payload_hash, 'payload': json.dumps(payload, ensure_ascii=False)}).mappings().all()
+                if len(legacy) > 100:
+                    raise CommandRejected()
+                if legacy:
+                    from .change_preview import build_change_preview
+                    comparison = json.dumps(build_change_preview(self, binding, payload, self.authorized_at), ensure_ascii=False)
+        super().save_proposal(proposal, binding, payload, purpose)
+        for row in legacy:
+            self._mutate(text('''UPDATE class_os.workspace_chat_turn SET change_preview=CAST(:comparison AS jsonb)
+                WHERE workspace_id=:workspace_id AND thread_id=:thread AND request_id=:request
+                  AND candidate_hash=:hash AND change_preview IS NULL'''),
+                {**binding, 'thread': row['thread_id'], 'request': row['request_id'],
+                 'hash': proposal.payload_hash, 'comparison': comparison})
+
     def authorize_boundary(self, binding, action, proposal_id):
         if action.startswith("workspace.chat."):
             if proposal_id is not None:
@@ -67,8 +97,15 @@ class WorkspaceChatTransaction(WorkbenchTransaction):
             if header["status"] != "cleared" and input_hash(binding["workspace_id"], binding["actor_id"], thread_id, row["user_text"]) != row["input_hash"]:
                 raise CommandRejected()
             row["action_receipt"] = self.chat_action_receipt(binding, row)
-        visible = list(reversed(rows[:20]))
-        return {"thread": header, "turns": visible, "next_before": visible[0]["ordinal"] if len(rows) > 20 else None}
+        import json
+        selected, size = [], 0
+        for row in rows[:20]:
+            added = len(json.dumps(row, default=str, ensure_ascii=False).encode('utf-8'))
+            if selected and size + added > 9 * 1024 * 1024:
+                break
+            selected.append(row); size += added
+        visible = list(reversed(selected))
+        return {"thread": header, "turns": visible, "next_before": visible[0]["ordinal"] if len(rows) > len(selected) else None}
 
     def chat_action_receipt(self, binding, row):
         if row["candidate"] is None:
@@ -168,12 +205,27 @@ class WorkspaceChatTransaction(WorkbenchTransaction):
         if any(value is not None and (type(value) is not int or not 0 <= value <= 2147483647) for value in (duration_ms, input_tokens, output_tokens)):
             raise CommandRejected()
         import json
+        comparison = None
+        if proposed is not None and self._store.database.profile == 'classroom-work-d4':
+            from .change_preview import build_change_preview
+            try:
+                comparison = build_change_preview(self, binding, proposed, now)
+            except CommandRejected:
+                # The model may have read immediately before a concurrent
+                # edit. Do not release a "ready" card without factual evidence.
+                proposed, digest = None, None
+                answer = '内容已变化，请重新生成这次操作。'
         self._mutate(text("""UPDATE class_os.workspace_chat_turn SET state=:state,version=version+1,assistant_text=:answer,
             candidate=CAST(:candidate AS jsonb),candidate_hash=:hash,ended_at=:now,duration_ms=:duration,input_tokens=:input_tokens,output_tokens=:output_tokens
             WHERE workspace_id=:workspace_id AND thread_id=:thread AND request_id=:request AND version=:version AND generation=:generation"""),
             {**binding, "thread": row["thread_id"], "request": row["request_id"], "version": row["version"], "generation": row["generation"],
              "state": state, "answer": answer, "candidate": json.dumps(proposed, ensure_ascii=False) if proposed is not None else None,
              "hash": digest, "now": now, "duration": duration_ms, "input_tokens": input_tokens, "output_tokens": output_tokens})
+        if comparison is not None:
+            self._mutate(text('''UPDATE class_os.workspace_chat_turn SET change_preview=CAST(:comparison AS jsonb)
+                WHERE workspace_id=:workspace_id AND thread_id=:thread AND request_id=:request AND candidate_hash=:hash'''),
+                {**binding, 'thread': row['thread_id'], 'request': row['request_id'], 'hash': digest,
+                 'comparison': json.dumps(comparison, ensure_ascii=False)})
         self._chat_touch(binding, row["thread_id"], now)
         return self._chat_turn(binding, row["thread_id"], row["request_id"])
 
@@ -202,6 +254,9 @@ class WorkspaceChatTransaction(WorkbenchTransaction):
         values = {**binding, "thread": thread_id, "now": now, "version": expected_version,
                   "state": "cleared" if action == "clear" else "archived", "cleared": now if action == "clear" else None}
         if action == "clear":
+            if self._store.database.profile == 'classroom-work-d4':
+                self._connection.execute(text('''UPDATE class_os.workspace_chat_turn SET change_preview=NULL
+                    WHERE workspace_id=:workspace_id AND thread_id=:thread'''), values)
             self._connection.execute(text("""UPDATE class_os.workspace_chat_turn SET user_text=NULL,assistant_text=NULL,candidate=NULL,candidate_hash=NULL
                 WHERE workspace_id=:workspace_id AND thread_id=:thread"""), values)
         self._mutate(text("""UPDATE class_os.workspace_chat_thread SET status=:state,version=version+1,updated_at=:now,cleared_at=:cleared

@@ -59,6 +59,12 @@ test('candidate preview binds original hash and every value before confirmation'
   try {
     globalThis.fetch = async () => reply(value);
     assert.equal((await client.preview(threadId, turn)).payload.name, candidate.name);
+    const comparison = { schema_version: 'classmatter.change-preview.v1', candidate_hash: turn.candidate_hash, kind: 'create',
+      fields: [{ field: 'name', before: null, after: candidate.name }], before_seats: null, after_seats: null };
+    globalThis.fetch = async () => reply({ ...value, change_preview: comparison });
+    assert.deepEqual((await client.preview(threadId, turn)).change_preview, comparison);
+    globalThis.fetch = async () => reply({ ...value, change_preview: { ...comparison, fields: [{ ...comparison.fields[0], after: 'unexpected replacement' }] } });
+    await assert.rejects(client.preview(threadId, { ...turn, change_preview: comparison }));
     for (const invalid of [{ ...value, payload_hash: 'b'.repeat(64) }, { ...value, payload: { ...candidate, name: 'another class' } },
       { ...value, payload: { ...candidate, start_date: '2026-02-31' } }]) {
       globalThis.fetch = async () => reply(invalid); await assert.rejects(client.preview(threadId, turn));
@@ -74,6 +80,26 @@ test('capability discovery refuses permission/outage fallback and insists on per
     globalThis.fetch = async () => reply(value); assert.equal(await api.workspaceChatAvailable(session), true);
     for (const invalid of [{ ...value, agent_business_write: true }, { ...value, class_required: true }, { ...value, memory: 'domain-fact' }]) {
       globalThis.fetch = async () => reply(invalid); await assert.rejects(api.workspaceChatAvailable(session));
+    }
+  } finally { globalThis.fetch = original; }
+});
+
+test('factual comparisons bind candidate hashes and reject invented UI, partial seats and duplicate people', async () => {
+  const original = globalThis.fetch;
+  const value = history(), candidate = { command: 'seat.layout.create', class_id: randomUUID(), term_id: randomUUID(), layout_id: randomUUID(), rows: 1, columns: 2 };
+  const preview = { schema_version: 'classmatter.change-preview.v1', candidate_hash: 'a'.repeat(64), kind: 'seating', fields: [], before_seats: null,
+    after_seats: { rows: 1, columns: 2, cells: [{ row: 1, column: 1, student: null, student_id: null }, { row: 1, column: 2, student: null, student_id: null }] } };
+  value.turns[0] = { ...value.turns[0], candidate, candidate_hash: preview.candidate_hash, change_preview: preview };
+  try {
+    globalThis.fetch = async () => reply(value);
+    assert.deepEqual((await client.history(threadId)).turns[0].change_preview, preview);
+    const person = randomUUID();
+    for (const invalid of [{ ...preview, candidate_hash: 'b'.repeat(64) }, { ...preview, html: '<script>invalid</script>' },
+      { ...preview, after_seats: { ...preview.after_seats, cells: preview.after_seats.cells.slice(0, 1) } },
+      { ...preview, after_seats: { ...preview.after_seats, cells: preview.after_seats.cells.map(cell => ({ ...cell, student: '合成重复', student_id: person })) } },
+      { ...preview, kind: 'edit', after_seats: null, fields: [{ field: 'name', before: 'a', after: 'b' }] }]) {
+      globalThis.fetch = async () => reply({ ...value, turns: [{ ...value.turns[0], change_preview: invalid }] });
+      await assert.rejects(client.history(threadId));
     }
   } finally { globalThis.fetch = original; }
 });

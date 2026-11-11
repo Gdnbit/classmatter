@@ -1,0 +1,21 @@
+.change-comparison { display: grid; grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr); gap: 14px; align-items: start; margin: 16px 0; }
+.change-comparison .change-side { min-width: 0; border: 1px solid #dde5df; border-radius: 12px; padding: 14px; }
+.change-comparison h3 { font-size: 14px; margin: 0 0 12px; color: #586b63; }
+.change-comparison dl { margin: 0; }
+.change-comparison dl > div { padding: 8px; border-radius: 6px; }
+.r1-dialog .change-comparison dl > div { display: block; padding: 8px; border-bottom: 0; }
+.change-comparison dt { color: #66756e; font-size: 12px; }
+.change-comparison dd { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 360px; overflow-y: auto; }
+.change-comparison .changed { background: #edf4ee; border-left: 3px solid #719682; }
+.change-comparison .change-arrow { align-self: center; color: #719682; }
+.change-seat-scroll { overflow-x: auto; }
+.change-seats { display: grid; gap: 6px; }
+.change-seat-row { display: contents; }
+.change-seat { border: 1px solid #dde5df; border-radius: 6px; min-height: 52px; padding: 5px; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.change-seat small { color: #66756e; font-size: 10px; }
+.change-seat span { font-size: 13px; overflow-wrap: anywhere; }
+.change-empty { color: #66756e; }
+@media (max-width: 760px) {
+  .change-comparison { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .change-comparison .change-arrow { justify-self: center; transform: rotate(90deg); }
+}
