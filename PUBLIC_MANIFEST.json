@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "1f0b268a4e2f5cdc1a964453d449cf178125d3b407a4a9a280399e92d839e888"
+      "sha256": "f2cd90b72c3274cddf107a3ab76a455a69e25da2f1d08341f121ef96dfdcb0e9"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3002,7 +3002,7 @@
       "sha256": "5bba5f9029f8f04c860f05c49e886a08072f41dec26194611e73a23a10c7df4b"
     },
     "apps/desktop/tests/live-chat-optin.test.cjs": {
-      "sha256": "8ae392059647d036c607337607f700ae5c8ba850772b43a2a4233b431071c33a"
+      "sha256": "309a8c1599b91eb9b6be8a2f951cf53cbc4a2faac1c7f3517731eecd521fb30b"
     },
     "backend/src/class_os/infrastructure/local_model_activation.py": {
       "sha256": "21539a3b64a7f03629edd4d9b6bed908a1d190cd583c88e924a46df46c5e93e0"
@@ -3101,13 +3101,13 @@
       "sha256": "afbd08f4d56791a074a11ffbf8ad2a407f1e4d4787153698576cdd0f75e60695"
     },
     "apps/desktop/tests/live-classroom-acceptance.cjs": {
-      "sha256": "750c2d8df41614e451f2ed753694d9e46dd2619f61b3302b292035b0033fb170"
+      "sha256": "a852ae376ab899fe3b95d8f7156f10ebf82ebea49d12f950d326b1b8aef628c2"
     },
     "backend/live_classroom_acceptance.py": {
-      "sha256": "e7fcb733a01c9834a9f0196072692e3b0e1b7244072971adcbd6c8f4467071c8"
+      "sha256": "8e13e8061ceba0ceaa8dcafefc4f1041049aec2533eee282cb382950b692879f"
     },
     "backend/tests/test_live_classroom_operator.py": {
-      "sha256": "2f4534d96da77eed98a8b78b90edc3e0fd563350245a0a414608fd607002dfaf"
+      "sha256": "a100af7e4b61c8bb103fec11b4d078931c4a99bad0bab4fd28e152354a11d1a6"
     },
     "backend/tests/test_workspace_output_repair.py": {
       "sha256": "ac7437d7ee482e00af6c8f9cf457fd66a2b126a3bf92edcf3bb7219d45b14113"

@@ -1,5 +1,21 @@
 # 实现与验收台账
 
+## 2026-11-12 免费模型文档/成绩/座位及中断恢复验收
+
+沿PR #78的产品代码及原QG/BCG/ISB、Pydantic AI、typed tools与原桌面动线，扩展已有显式opt-in验收入口，不新增应用页面、API、业务命令、Schema或模型默认选择。`backend/live_classroom_acceptance.py`新增`classroom-documents`：只将合成班级/两名学生作为明确前置，实际模型在原对话创建/追加文档，再创建考试、录入80分、创建2×3座位图、安排两人、交换、更正88.5分及只读查询。每次核对对话卡与原确认框的真实前后内容、候选/回执、保存前无业务变更、确认后QG数据、页面刷新及完整Electron/API重启后的同一世界。原`full-workbench`仍要求全新实例，不把班级/学生前置冒称本场景由AI创建。
+
+`classroom-recovery`只用于显式指定的旧隔离fixture与UUID对话；在继续调用模型前，完整读取原线程并验证已提交回执、对应文档ID/version/完整正文、考试ID/科目/满分、学生80分及版本、两名合成学生。只接纳三个固定checkpoint：四次保存后尚无座位图；第五次保存后2×3六格全空；或八次保存后已按原要求交换两人、布局与最后冻结比较/回执一致，且原结束回复确实失败。拒绝其它阶段、额外文档/考试、未确认候选、历史分页不完整或非预期状态，不重置数据、不重放已保存步骤。最后一种情况明确保留原结束回复的失败状态，仅继续独立的成绩更正、查询和重启验收，不将旧失败晋升为成功。该恢复场景不替代“全新空实例20轮一次成功”的质量证据，不合并不同实例伪造通过。
+
+可复现入口（Windows，已有已启用免费配置及独立合成测试目录；不要指向用户实例）：`backend/.venv/Scripts/python.exe backend/live_classroom_acceptance.py --live --source-runtime-root <已启用配置的隔离实例> --pg-root <PG18目录> --scenario classroom-documents --attempts-per-turn 3 --turn-interval-seconds 15`。恢复另需`--scenario classroom-recovery --resume-runtime-root <同一隔离实例> --resume-thread-id <原对话UUID>`。CLI缺参/非法参数在IO前拒绝，恢复还需原QG和实际状态校验；已有实例只在其原注册配置仍匹配且有效时复用启用状态，必要时仍执行原协议探测，不转移其它实例的证明。测试重发最多3次，每次新请求并保留失败；间隔仅属显式免费测试节流，单项/SDK期限及应用自动重试策略不变，响应耗时不包含该等待，报告单列间隔。
+
+失败保留：Gemini探测曾503/504，旧免费智谱在多步任务中选择错误动作，GLM-4.7试验遇429而未纳入本改动；本轮只交付既有供应商选项的验收扩展。首轮Gemini文档创建后续接失败；另一原界面运行已完成文档创建/追加、考试/80分保存，座位续接三次失败；同一现场诊断确认一次HTTP504，不能据此认定所有失败均同因。全部报告/图片/配置只留忽略的`test-results/live-classroom/`。真实模型最终结果及两平台CI按下述收口和独立PR精确head证据判定，不提升正式Gate或真实数据准入。
+
+实际业务链路已在同一实例、同一对话经中断恢复完成：文档创建/追加、考试创建、80分录入、2×3布局、两人安排/交换、88.5分更正共九次原UI确认，逐项对话/确认框前后内容、QG数据与刷新一致；最终原成绩/座位/文档页面及完整Electron/API重开后的世界快照一致。最后只读模型回答经历史回读核对为甲88.5分、甲1排2列、乙1排1列。最后阶段报告为`test-results/live-classroom/e9fce506714a41b9b661ad507b38a86c/report.json`，上游阶段`f6b676d96ffd45d0bb54ec8acb6c2d99`、`7a79286d6a5f40af8d90e1e77837caed`、`7a345e51100e4ab0b26469b17894bc93`均保留为有失败的运行，不能改写成一次全绿。只读QG跨两页复核同一对话24轮、九回执、13个失败轮次仍在，文档原正文、初次成绩未录入→80和更正80→88.50的冻结比较及候选hash仍匹配，无额外模型请求。该次业务/持久化验收通过，但免费Provider的可用性、无故障连续运行及原结束回复仍未达标；不是“24轮全部成功”或正式质量放行。
+
+本地验收入口负例12项、桌面测试53项通过；包括默认不联网、无凭据回显、非法参数/节流值、缺少恢复fixture/UUID拒绝。模型使用率与每次失败/显式重发、测试间隔均留在原报告；间隔不是产品响应耗时或对用户新增的等待要求。源码实际改动只涉及四个既有验收代码/测试文件与本台账，公开审查和完整两平台CI按本单元独立PR最终head留证。
+
+回滚仅revert本单元验收脚本/测试/文档；保留失败报告与隔离实例，不撤销已保存的合成回执或覆盖数据库。追溯既有FR-AGT、T-RPLT-001与D2-GRD/SEA工程增量；教师无需新增表单或维护步骤。
+
 ## 2026-11-11 对话创建/修改的持久前后对比
 
 基线main `6dfff9a`，分支`codex/chat-change-comparisons`。沿原工作区聊天的14种候选、预览和BCG确认，增加真实创建内容、字段/成绩前后值、文档前后正文及完整座位图比较；不更换UI动线、模型或Pydantic AI。服务器生成并保存封闭展示数据，和候选hash绑定；只有匹配原回执才显示保存成功。前后值不是模型文字解析、Memory或新的事实源。无新外部依赖，无Agent批准/提交/Schema权限。
@@ -25,6 +41,8 @@ D4显式迁移0030增加原聊天轮次的nullable比较列；既有0029实例�
 最终验收提交`7f426c2`的[CI及同head重跑](https://github.com/Gdnbit/classmatter/actions/runs/43034335997)两次均在Ubuntu安装依赖时因`azure.archive.ubuntu.com`域名解析失败退出100，尚未运行数据库/浏览器阶段；Windows已通过，不能据此宣称完整验收。与[runner-images镜像故障记录](https://github.com/actions/runner-images/issues/14594)同类，但不据此认定故障根因已由上游确认。仅调整CI运行器的APT镜像列表为Ubuntu官方HTTPS archive/security，沿用原suites、keyring、签名验证、固定PG18.6及全部测试；不修改应用代码、不跳过检查、不使用不受信镜像。新head须重新完成两平台CI，最终状态以PR #78的精确head运行记录为准。
 
 2026-11-12继续收口：主分支仍为`6dfff9a`，不替换并发工作。官方Ubuntu域名重跑仍失败后，按[同期故障报告](https://github.com/actions/runner-images/issues/15296)的症状核查，CI改用Linux Kernel Archives托管的Ubuntu签名镜像；原suites、keyring、包签名、PG18.6精确版本检查和17项既有步骤保留。`d8c3bf3`已越过PG安装，因被后续提交替代而取消，不算完整通过。为容纳已测26分31秒的DB阶段及依赖安装，工程job预算固定45分钟，应用/SDK/单项测试预算不变；`c09bac2`遗漏同步CI预算自检，两平台因此失败，保留[记录](https://github.com/Gdnbit/classmatter/actions/runs/43059967099)。现将自检固定45并拒绝其它预算，不放开失败抑制、凭据或正式Gate；最终精确head仍需完整两平台回归，收口证据见PR #78。
+
+PR #78最终已验收合并：精确head `89b2b8c`的[两平台CI](https://github.com/Gdnbit/classmatter/actions/runs/43061298078)全部成功，Windows后端866/Web95/桌面及native通过；Ubuntu非DB859/7平台跳过，真实PG/浏览器692/33平台跳过、1745.31秒（29分05秒），验证器82、文档76及文件/历史扫描4项既有已审核/0未解决均通过。[PR #78](https://github.com/Gdnbit/classmatter/pull/78)合并为`f5e2507`，合并文件树与已验收head相同。本轮CI修复没有重置用户实例、改变界面或提升正式Gate；真实模型的后续恢复验收按2026-11-12单元单独记录。
 
 ## 2026-11-10 空实例原界面真实模型完整班务验收
 
