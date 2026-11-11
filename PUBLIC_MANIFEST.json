@@ -492,7 +492,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "3f375b29bc59c8bf0624c64d69f4730503f250d1554ecb15e8422e81cd5cc582"
+      "sha256": "d951b2682ac1cc76e5bcb6c88b4ce0a7a54f6a6fba8f06b8a2312fd1497edcf5"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -615,7 +615,7 @@
       "sha256": "d8dcad82c27b6c219a79efef25b2e999b049c6798ddf90f24c430bc64c5944fe"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "67f80679dafa71d191c095db7c29f4fdd30cb91f75977d9392f651b79a2abad2"
+      "sha256": "b6e31f854aa3b28f76e6c81ac70b63ad86d8ff4bd40dbede07e86a7df77f2c93"
     },
     ".gitignore": {
       "sha256": "c34bf3956a066550e5680221b82b4bfd8aaef7363305a1c5949b729a2d02b588"
