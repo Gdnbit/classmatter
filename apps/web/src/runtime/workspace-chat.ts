@@ -108,7 +108,7 @@ export function workspaceChatClient(session: Session) {
       const result = await json<ChatPreview>("preview", `${thread(threadId)}/turns/${id(turn.request_id)}/proposal`, session, { candidate_hash: turn.candidate_hash })
       if (result.payload_hash !== turn.candidate_hash || Object.keys(result.payload).length !== Object.keys(turn.candidate).length
         || Object.entries(turn.candidate).some(([key, value]) => result.payload[key as keyof ChatCandidate] !== value)) throw new Error("预览与原聊天候选不匹配")
-      if (result.change_preview && (result.change_preview.candidate_hash !== turn.candidate_hash || JSON.stringify(result.change_preview) !== JSON.stringify(turn.change_preview))) throw new Error('预览已变化，请重新查看')
+      if (result.change_preview && (result.change_preview.candidate_hash !== turn.candidate_hash || turn.change_preview && JSON.stringify(result.change_preview) !== JSON.stringify(turn.change_preview))) throw new Error('预览已变化，请重新查看')
       if (result.payload.command === 'score.record') {
         const exam = await classroomClient(session, result.payload).results(result.payload.exam_id)
         result.displayNames = { [exam.exam_id]: `${exam.title} · ${exam.subject}` }

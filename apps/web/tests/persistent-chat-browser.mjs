@@ -126,12 +126,30 @@ try {
     await page.reload();
     await card.getByRole('heading', { name: title, exact: true }).waitFor();
     assert.equal(starts.length, before);
+    if (title === '建立班级与学期') {
+      const csrf = (await page.context().cookies()).find(cookie => cookie.name === 'class_os_csrf');
+      const legacy = await page.request.post(base + '/__fixture__/legacy-pending-preview', { data: {}, headers: { origin: base, 'x-class-os-csrf': csrf.value } });
+      assert.equal(legacy.status(), 200);
+      await page.reload();
+      await card.getByRole('button', { name: '预览这项操作', exact: true }).waitFor();
+      assert.equal(await comparison.count(), 0);
+    }
     await card.getByRole('button', { name: '预览这项操作', exact: true }).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: /^(确认提交|明确批准并提交)$/ }).waitFor();
     await expect.poll(() => dialog.getByLabel('修改前', { exact: true }).innerText()).toBe(oldContent);
     await expect.poll(() => dialog.getByLabel('待确认的结果', { exact: true }).innerText()).toBe(newContent);
     assert.equal(await dialog.locator('.change-comparison dl > div').first().evaluate(element => getComputedStyle(element).display), 'block');
+    if (title === '建立班级与学期') {
+      await dialog.getByRole('button', { name: '放弃变更', exact: true }).click();
+      await dialog.waitFor({ state: 'hidden' });
+      await expect.poll(() => comparison.getByLabel('待确认的结果', { exact: true }).innerText()).toBe(newContent);
+      await page.reload();
+      await card.getByRole('button', { name: '预览这项操作', exact: true }).click();
+      await dialog.getByRole('button', { name: /^(确认提交|明确批准并提交)$/ }).waitFor();
+      await expect.poll(() => dialog.getByLabel('修改前', { exact: true }).innerText()).toBe(oldContent);
+      await expect.poll(() => dialog.getByLabel('待确认的结果', { exact: true }).innerText()).toBe(newContent);
+    }
     assert(!/payload_hash|expected_version|schema_version|[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/.test(await dialog.innerText()));
     assert.equal(await dialog.locator('input,textarea,select').count(), 0);
     await dialog.getByRole('button', { name: /^(确认提交|明确批准并提交)$/ }).click();

@@ -226,7 +226,12 @@ export function useWorkspaceChat(props: Props) {
     startQueued: (turn: ChatTurn) => operate(async (generation, thread, api) => { if (props.canInteract && freshScope && turn.state === "queued" && history?.thread.status === "active") { await runSaved(thread, turn, generation, api); await refreshAfter(thread, generation) } }),
     preview: (turn: ChatTurn) => operate(async (generation, thread, api) => { if (props.canInteract && freshScope && history?.thread.status === "active" && turn.candidate && !turn.action_receipt) {
       const currentView = view.current, value = await api.preview(thread, turn)
-      if (generation === epoch.current && thread === selected.current && currentView === view.current) latest.current.onPreview(value) } }),
+      if (generation === epoch.current && thread === selected.current && currentView === view.current) {
+        if (!turn.change_preview && value.change_preview) setHistory(current => current?.thread.thread_id === thread
+          ? { ...current, turns: current.turns.map(row => row.request_id === turn.request_id && row.candidate_hash === value.payload_hash
+            ? { ...row, change_preview: value.change_preview } : row) } : current)
+        latest.current.onPreview(value)
+      } } }),
     control: (action: "archive" | "clear") => operate(async (generation, thread, api) => { if (!props.canInteract || !freshScope || !history || active(last)) return
       await api.control(thread, history.thread.version, action); await refreshAfter(thread, generation) }),
     moreThreads: async () => {

@@ -207,6 +207,10 @@ def router(runtime, commands):
         # Trusted human adapter, not an Agent tool. Original BCG validates
         # scope/version/risk and creates the original approval/commit proposal.
         result = commands.preview(*auth, command)
+        if row.get('change_preview') is None and commands.store.database.profile == 'classroom-work-d4':
+            header, row = runtime.query.turn(auth, thread_id, request_id)
+            if header['status'] != 'active' or row.get('change_preview') is None:
+                raise CommandRejected()
         return CandidatePreview(proposal_id=result.proposal_id, payload_hash=result.payload_hash,
             risk=result.risk, expires_at=result.expires_at, payload=result.command.canonical(), change_preview=row.get('change_preview'))
     return routes

@@ -155,6 +155,13 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
         probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
     root = Path(__file__).resolve().parents[2]
     app = create_workspace_chat_app(Settings(port=port), worker=commands, query=query, sdk=sdk)
+    @app.post('/__fixture__/legacy-pending-preview')
+    def legacy_pending_preview():
+        # This route exists only in this disposable test server, never product.
+        with comparison_owner.transaction() as connection:
+            count = connection.execute(text("UPDATE class_os.workspace_chat_turn SET change_preview=NULL WHERE candidate->>'command'='class.create'")).rowcount
+        assert count == 1
+        return {'updated': count}
     mount_web(app, root / 'apps/web/dist')
     server = uvicorn.Server(uvicorn.Config(app, host='127.0.0.1', port=port, proxy_headers=False, access_log=False, log_level='error', timeout_graceful_shutdown=5))
     thread = threading.Thread(target=server.run, daemon=True); thread.start()

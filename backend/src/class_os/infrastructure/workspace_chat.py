@@ -10,6 +10,36 @@ from .workbench import WorkbenchTransaction
 
 
 class WorkspaceChatTransaction(WorkbenchTransaction):
+    def save_proposal(self, proposal, binding, payload, purpose):
+        # Legacy *pending* candidates can receive their first factual comparison
+        # only inside the existing human BCG preview transaction. Never derive
+        # an already-committed history card from today's values.
+        legacy, comparison = [], None
+        if self._store.database.profile == 'classroom-work-d4':
+            from class_os.domain.workspace_chat import CANDIDATES
+            if payload.get('command') in CANDIDATES:
+                import json
+                legacy = self._connection.execute(text('''SELECT t.thread_id,t.request_id
+                    FROM class_os.workspace_chat_turn t JOIN class_os.workspace_chat_thread h USING(workspace_id,thread_id)
+                    WHERE t.workspace_id=:workspace_id AND h.owner_id=:actor_id AND h.status='active'
+                      AND t.state='completed' AND t.candidate_hash=:hash AND t.candidate=CAST(:payload AS jsonb)
+                      AND t.change_preview IS NULL
+                      AND NOT EXISTS(SELECT 1 FROM class_os.command_receipt r WHERE r.workspace_id=t.workspace_id
+                          AND r.actor_id=h.owner_id AND r.payload_hash=t.candidate_hash) LIMIT 101'''),
+                    {**binding, 'hash': proposal.payload_hash, 'payload': json.dumps(payload, ensure_ascii=False)}).mappings().all()
+                if len(legacy) > 100:
+                    raise CommandRejected()
+                if legacy:
+                    from .change_preview import build_change_preview
+                    comparison = json.dumps(build_change_preview(self, binding, payload, self.authorized_at), ensure_ascii=False)
+        super().save_proposal(proposal, binding, payload, purpose)
+        for row in legacy:
+            self._mutate(text('''UPDATE class_os.workspace_chat_turn SET change_preview=CAST(:comparison AS jsonb)
+                WHERE workspace_id=:workspace_id AND thread_id=:thread AND request_id=:request
+                  AND candidate_hash=:hash AND change_preview IS NULL'''),
+                {**binding, 'thread': row['thread_id'], 'request': row['request_id'],
+                 'hash': proposal.payload_hash, 'comparison': comparison})
+
     def authorize_boundary(self, binding, action, proposal_id):
         if action.startswith("workspace.chat."):
             if proposal_id is not None:

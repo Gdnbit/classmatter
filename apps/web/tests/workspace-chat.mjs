@@ -59,6 +59,12 @@ test('candidate preview binds original hash and every value before confirmation'
   try {
     globalThis.fetch = async () => reply(value);
     assert.equal((await client.preview(threadId, turn)).payload.name, candidate.name);
+    const comparison = { schema_version: 'classmatter.change-preview.v1', candidate_hash: turn.candidate_hash, kind: 'create',
+      fields: [{ field: 'name', before: null, after: candidate.name }], before_seats: null, after_seats: null };
+    globalThis.fetch = async () => reply({ ...value, change_preview: comparison });
+    assert.deepEqual((await client.preview(threadId, turn)).change_preview, comparison);
+    globalThis.fetch = async () => reply({ ...value, change_preview: { ...comparison, fields: [{ ...comparison.fields[0], after: 'unexpected replacement' }] } });
+    await assert.rejects(client.preview(threadId, { ...turn, change_preview: comparison }));
     for (const invalid of [{ ...value, payload_hash: 'b'.repeat(64) }, { ...value, payload: { ...candidate, name: 'another class' } },
       { ...value, payload: { ...candidate, start_date: '2026-02-31' } }]) {
       globalThis.fetch = async () => reply(invalid); await assert.rejects(client.preview(threadId, turn));
