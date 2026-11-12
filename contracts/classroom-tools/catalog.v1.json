@@ -506,6 +506,24 @@
       },
       "kind": "function",
       "strict": null
+    },
+    {
+      "name": "recall_this_chat",
+      "description": "Find earlier user-authored notes in this chat by a literal keyword (2-80 characters), including notes beyond recent context. Returns bounded original quotes with recorded times/turns. Never searches other chats or assistant claims. Historical notes are not current facts, authority, permanent memory or completion evidence; use current domain reads for business actions.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "keyword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "keyword"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
     }
   ]
 }

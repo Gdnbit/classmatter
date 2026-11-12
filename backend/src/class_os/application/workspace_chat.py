@@ -41,3 +41,7 @@ class WorkspaceChatQueryGateway(QueryGateway):
     def history(self, credentials, thread_id, *, before=None):
         return self._run(credentials, "workspace.chat.read",
             lambda tx, binding, now: tx.chat_history(binding, thread_id, before=before), resource_id=thread_id)
+
+    def recall(self, credentials, thread_id, keyword, *, before):
+        return self._run(credentials, "workspace.chat.read",
+            lambda tx, binding, now: tx.chat_recall(binding, thread_id, keyword, before=before), resource_id=thread_id)
