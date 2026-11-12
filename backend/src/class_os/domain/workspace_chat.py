@@ -15,7 +15,8 @@ PROFILE = "workspace-chat-d3"
 ACTIVE = frozenset({"queued", "running"})
 TERMINAL = frozenset({"completed", "failed", "cancelled", "unknown"})
 CANDIDATES = frozenset({"class.create", "class.update", "term.update", "student.create", "student.update_name",
-                        "task.create", "task.update", "document.create", "document.revise", *CLASSROOM_COMMANDS})
+                        "record.create", "task.create", "task.update", "task.complete", "task.cancel",
+                        "document.create", "document.revise", *CLASSROOM_COMMANDS})
 MAX_TURNS = 10_000
 LEASE = timedelta(minutes=5)
 

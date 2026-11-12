@@ -4,14 +4,14 @@ import './change-comparison.css'
 
 const labels: Record<string, string> = { name: '名称', term_name: '学期', start_date: '开始日期', end_date: '结束日期',
   title: '标题', due_at: '截止时间', status: '状态', student: '学生', source: '来源', body: '正文', format: '格式',
-  subject: '科目', maximum_score: '满分', score: '成绩', reason: '更正原因', evidence: '跟进记录' }
-const statuses: Record<string, string> = { open: '未开始', 'in-progress': '进行中', waiting: '等待别人',
+  subject: '科目', maximum_score: '满分', score: '成绩', reason: '更正原因', evidence: '跟进记录', fact_text: '事实', occurred_at: '发生时间' }
+const statuses: Record<string, string> = { open: '未开始', 'not-started': '未开始', 'in-progress': '进行中', waiting: '等待别人',
   done: '已完成', cancelled: '已取消', scored: '已录入', absent: '缺考', exempt: '免考', 'not-recorded': '未录入' }
 function display(field: string, value: string | null) {
   if (value === null || value === '') return '—'
   if (field === 'status') return statuses[value] || value
   if (field === 'format') return value === 'markdown' ? 'Markdown' : '纯文本'
-  if (field === 'due_at') return new Date(value).toLocaleString('zh-CN', { hour12: false })
+  if (field === 'due_at' || field === 'occurred_at') return new Date(value).toLocaleString('zh-CN', { hour12: false })
   return value
 }
 function Board({ board, other }: { board: NonNullable<ChangePreview['after_seats']>; other: ChangePreview['before_seats'] }) {

@@ -68,11 +68,16 @@ def build_change_preview(tx, binding, payload, now):
         kind = 'edit' if previous else 'create'
         for key in ('title', 'body', 'format'):
             field(key, previous[key] if previous else None, payload[key])
+    elif operation == 'record.create':
+        kind = 'create'
+        field('student', None, student(command.student_id))
+        field('fact_text', None, command.fact_text)
+        field('occurred_at', None, command.occurred_at.isoformat())
     elif operation.startswith('task.'):
-        previous = tx.task(binding['workspace_id'], command.class_id, command.term_id, command.task_id) if operation == 'task.update' else None
+        previous = tx.task(binding['workspace_id'], command.class_id, command.term_id, command.task_id) if operation != 'task.create' else None
         kind = 'edit' if previous else 'create'
         field('title', previous['title'] if previous else None, payload.get('title') or (previous['title'] if previous else None))
-        field('status', previous['status'] if previous else None, payload.get('status', 'open'))
+        field('status', previous['status'] if previous else None, payload.get('status', 'not-started'))
         due = payload.get('due_at') if not previous or payload.get('change_due_date') else previous['due_at']
         field('due_at', previous['due_at'] if previous else None, due)
         if not previous:

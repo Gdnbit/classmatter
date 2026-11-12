@@ -7,6 +7,7 @@ from class_os.application.roster import CommandRejected
 from .documents import DocumentStore, DocumentTransaction
 from .conversation_control import ConversationTransaction
 from .recovery_admission_store import AdmissionTransaction
+from .persistence.schema_inventory import schema_profile
 
 
 class WorkbenchStore(DocumentStore):
@@ -17,7 +18,7 @@ class WorkbenchStore(DocumentStore):
 
     def _transaction(self, connection):
         if self.database.profile == 'classroom-work-d4':
-            if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0030':
+            if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != schema_profile('classroom-work-d4')[0]:
                 raise RuntimeError('Explicit classroom work schema required')
             from .classroom_work import ClassroomTransaction
             return ClassroomTransaction(connection, self)

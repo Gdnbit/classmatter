@@ -14,7 +14,7 @@ from class_os.application.roster import CommandRejected
 from class_os.domain.workspace_chat import candidate
 from class_os.domain.change_preview import ChangePreview
 from .contracts import WireModel
-from .roster import credentials, ClassBody, ClassChangeBody, TermBody, StudentBody, StudentNameBody, TaskBody, ChangeTaskBody
+from .roster import credentials, ClassBody, ClassChangeBody, TermBody, StudentBody, StudentNameBody, RecordBody, TaskBody, ChangeTaskBody
 from .documents import DocumentCreate, DocumentRevise
 from .classroom_work import ExamCreate, ScoreRecord, SeatLayoutCreate, SeatAssign, SeatSwap
 
@@ -24,10 +24,10 @@ class ClassEditCandidate(ClassChangeBody):
 
 
 class TaskEditCandidate(ChangeTaskBody):
-    command: Literal["task.update"]
+    command: Literal["task.update", "task.complete", "task.cancel"]
 
 
-Candidate = ClassBody | ClassEditCandidate | TermBody | StudentBody | StudentNameBody | TaskBody | TaskEditCandidate | DocumentCreate | DocumentRevise | ExamCreate | ScoreRecord | SeatLayoutCreate | SeatAssign | SeatSwap
+Candidate = ClassBody | ClassEditCandidate | TermBody | StudentBody | StudentNameBody | RecordBody | TaskBody | TaskEditCandidate | DocumentCreate | DocumentRevise | ExamCreate | ScoreRecord | SeatLayoutCreate | SeatAssign | SeatSwap
 
 
 class ChatCapabilities(WireModel):

@@ -133,7 +133,9 @@ class WorkspaceActionCapture:
                 elif kind == "tasks":
                     rows = query.projection(*credentials, current.class_id, current.term_id)["tasks"]
                     values = [{"title": row["title"], "status": row["status"], "version": row["version"],
-                               "due_at": row["due_at"].isoformat() if row["due_at"] is not None else None}
+                               "due_at": row["due_at"].isoformat() if row["due_at"] is not None else None,
+                               "evidence": row["evidence"], "task_id": str(row["task_id"]),
+                               "source_record_id": str(row["source_record_id"]) if row["source_record_id"] else None}
                               for row in rows if not search or search in row["title"]]
                 else:
                     rows = query.documents(*credentials, current.class_id, current.term_id)
@@ -250,5 +252,7 @@ class WorkspaceActionCapture:
         base = (read_class_work, prepare_class_create, prepare_class_edit, prepare_term_edit, prepare_student, prepare_task, prepare_document, read_task_progress)
         if self.classroom_enabled:
             from .classroom_actions import tools
-            return base + tools(self, query, credentials, context, execute, missing_class)
+            from .activity_actions import tools as activity_tools
+            activity = activity_tools(self, query, credentials, context, execute, missing_class)
+            return tuple(activity[2] if tool is prepare_task else tool for tool in base) + activity[:2] + tools(self, query, credentials, context, execute, missing_class)
         return base

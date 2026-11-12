@@ -17,7 +17,7 @@ from test_workspace_chat_storage import workspace_chat, roster, identity
 
 
 @pytest.mark.db
-def test_all_fourteen_comparisons_are_factual_frozen_cleared_and_receipt_bound(workspace_chat):
+def test_all_registered_comparisons_are_factual_frozen_cleared_and_receipt_bound(workspace_chat):
     _, _, auth, old_owner, old_runtime, clock, old_store, boundary = workspace_chat
     owner = Database(old_owner.engine.url, migration=True, profile='classroom-work-d4')
     database = Database(old_runtime.engine.url, profile='classroom-work-d4')
@@ -27,12 +27,12 @@ def test_all_fourteen_comparisons_are_factual_frozen_cleared_and_receipt_bound(w
     business = WorkspaceChatBusinessGateway(boundary, store, clock=lambda: clock[0])
     history = WorkspaceChatQueryGateway(boundary, store, clock=lambda: clock[0])
     query = WorkbenchQueryGateway(boundary, store, clock=lambda: clock[0])
-    c, t, student, second, task, doc, exam, layout, thread = [uuid4() for _ in range(9)]
+    c, t, student, second, task, doc, exam, layout, thread, record, cancelled_task = [uuid4() for _ in range(11)]
     scope = {'class_id': str(c), 'term_id': str(t)}
     saved = []
 
-    def stage(kind, **kwargs):
-        payload = {'command': kind, **scope, **kwargs}
+    def stage(operation, **kwargs):
+        payload = {'command': operation, **scope, **kwargs}
         command = candidate(payload)
         request = uuid4()
         business.send(auth, thread, request, '合成前后对比验收')
@@ -59,9 +59,23 @@ def test_all_fourteen_comparisons_are_factual_frozen_cleared_and_receipt_bound(w
         stage('student.create', student_id=str(student), expected_class_version=query.context(*auth).version, name='合成学生甲')
         stage('student.create', student_id=str(second), expected_class_version=query.context(*auth).version, name='合成学生乙')
         stage('student.update_name', student_id=str(student), expected_version=1, previous_name='合成学生甲', name='合成学生一')
-        stage('task.create', task_id=str(task), title='合成收集回执', due_at=None, student_id=str(student), source_record_id=None)
+        created = stage('record.create', record_id=str(record), student_id=str(student), kind='ordinary_fact',
+              occurred_at=clock[0].isoformat(), fact_text='合成学生一交来首份回执', observation_text='', related_record_id=None)
+        assert created['kind'] == 'create' and all(field['before'] is None for field in created['fields'])
+        assert next(field for field in created['fields'] if field['field'] == 'student')['after'] == '合成学生一'
+        assert next(field for field in created['fields'] if field['field'] == 'fact_text')['after'] == '合成学生一交来首份回执'
+        created = stage('task.create', task_id=str(task), title='合成收集回执', due_at=None, student_id=str(student), source_record_id=str(record))
+        assert next(field for field in created['fields'] if field['field'] == 'source')['after'] == '合成学生一交来首份回执'
         edit = stage('task.update', task_id=str(task), expected_version=1, status='waiting', evidence='合成等待', title='合成核对回执')
         assert next(field for field in edit['fields'] if field['field'] == 'title')['before'] == '合成收集回执'
+        edit = stage('task.complete', task_id=str(task), expected_version=2, status='done', evidence='合成已核对齐全')
+        assert edit['kind'] == 'edit'
+        assert next(field for field in edit['fields'] if field['field'] == 'status') == {'field': 'status', 'before': 'waiting', 'after': 'done'}
+        assert next(field for field in edit['fields'] if field['field'] == 'evidence') == {'field': 'evidence', 'before': '合成等待', 'after': '合成已核对齐全'}
+        stage('task.create', task_id=str(cancelled_task), title='合成备用核对', due_at=None, student_id=None, source_record_id=None)
+        edit = stage('task.cancel', task_id=str(cancelled_task), expected_version=1, status='cancelled', evidence='合成不再需要')
+        assert next(field for field in edit['fields'] if field['field'] == 'status') == {'field': 'status', 'before': 'not-started', 'after': 'cancelled'}
+        assert next(field for field in edit['fields'] if field['field'] == 'evidence')['after'] == '合成不再需要'
         stage('document.create', document_id=str(doc), title='合成小结', body='第一段\n保留段', format='plain-text')
         edit = stage('document.revise', document_id=str(doc), expected_version=1, title='合成修订小结', body='新第一段\n保留段\n新段落', format='plain-text')
         assert next(field for field in edit['fields'] if field['field'] == 'body') == {
