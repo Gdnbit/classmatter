@@ -14,6 +14,7 @@ CATEGORIES = frozenset(('network_proxy', 'network_dns', 'network_tls', 'network_
     'local_usage_limit', 'timeout_unattributed', 'model_contract', 'unclassified', 'cancelled', 'local_run_deadline'))
 PHASES = frozenset(('audit_start', 'tool_contract', 'provider_binding', 'model_loop',
     'response_validation', 'audit_completion', 'completed', 'persistence_claim', 'history_read', 'sdk_dispatch', 'persistence_finish'))
+PERSISTENCE_PHASES = frozenset(('persistence_claim', 'history_read', 'sdk_dispatch', 'persistence_finish'))
 SIGNALS = frozenset(('UNAVAILABLE', 'DEADLINE_EXCEEDED', 'RESOURCE_EXHAUSTED', 'INTERNAL',
     'INVALID_ARGUMENT', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'NOT_FOUND'))
 LIMITS = frozenset(('request_limit', 'tool_calls_limit', 'input_tokens_limit', 'output_tokens_limit', 'total_tokens_limit'))
@@ -35,7 +36,7 @@ def valid_packet(value):
     try:
         if type(value['run_id']) is not str or str(UUID(value['run_id'])) != value['run_id']:
             return False
-        if value['outcome'] not in ('completed', 'failed') or value['phase'] not in PHASES:
+        if value['outcome'] not in ('completed', 'failed', 'cancelled') or value['phase'] not in PHASES:
             return False
         if any(type(value[key]) is not int or not 0 <= value[key] <= 3600000 for key in ('model_requests', 'model_ms', 'elapsed_ms', 'tool_calls')):
             return False
@@ -78,7 +79,8 @@ def for_runtime(runtime, *, local_development):
         if sum(1 for entry in directory.iterdir() if entry.suffix == '.json') >= MAX_REPORTS:
             return
         # Exclusive create never replaces a previous report or follows a file link.
-        with (directory / (packet['run_id'] + '.json')).open('xb') as target:
+        suffix = '.persistence.json' if packet['phase'] in PERSISTENCE_PHASES else '.json'
+        with (directory / (packet['run_id'] + suffix)).open('xb') as target:
             target.write(data)
     return write
 
@@ -94,12 +96,17 @@ def read_packets(root, request_ids):
         try:
             if type(request) is not str or str(UUID(request)) != request:
                 continue
-            path = directory / (request + '.json')
-            if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_BYTES:
-                continue
-            packet = json.loads(path.read_bytes())
-            if valid_packet(packet) and packet['run_id'] == request:
-                result.append(packet)
-        except (OSError, ValueError, TypeError, RecursionError):
+        except (ValueError, TypeError):
             continue
+        for suffix in ('.json', '.persistence.json'):
+            try:
+                path = directory / (request + suffix)
+                if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_BYTES:
+                    continue
+                packet = json.loads(path.read_bytes())
+                if (valid_packet(packet) and packet['run_id'] == request
+                        and (packet['phase'] in PERSISTENCE_PHASES) == (suffix == '.persistence.json')):
+                    result.append(packet)
+            except (OSError, ValueError, TypeError, RecursionError):
+                continue
     return result

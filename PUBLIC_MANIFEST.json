@@ -519,7 +519,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "13bc9e794f129d2a8e56846451d0a85c7f82609624bb39f91ca1e042f74c836b"
+      "sha256": "7b63e59ddd79621ffb71975f4db29d0a69be8779d47f063153ae0b7415290190"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2972,7 +2972,7 @@
       "sha256": "031293ba4d6364d5bb18b895a5caf65e5ad8a4db01e9affe134d3f70ba68ffe7"
     },
     "backend/tests/test_workspace_chat_runtime.py": {
-      "sha256": "5a77c005a1d23bf09504174163b4873dc32d998205a1414f8b975b8c6cc9028a"
+      "sha256": "797fca772a26e04550ecb9baba5cb78f536a0a3fb3ac4a0c9ea4326eb38b54c7"
     },
     "backend/tests/test_workspace_chat_storage.py": {
       "sha256": "1ec38c5ed6543c31817d08ea8524e5f99bee989a359662f6cd00c71ea3e147a6"
@@ -3017,7 +3017,7 @@
       "sha256": "5440b56eb3b1314ac2d9dc75c38de860e35a695b3b52b2b02bf9d605098371c0"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "19e8ea93435b2bb81b41ca076fd9d84f9780c7c7fd7198a064ee9ecf71286609"
+      "sha256": "44be828de8a2f0eff5db60db6837cb80164d64674e9a4df6b5f4b066322fb1a9"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3289,7 +3289,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "800afd1677100e9f112963be9c758aff7394605a0d05156189d9e64f02410b7c"
+      "sha256": "4ba355e179b36ec96052e9b575ef21dea69dce19f021b616c9d5209cb221eb2c"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "a7137afba069ad1dc863a7c13ad770977ded5c8898e75515453c69b8c4d953ab"
@@ -3319,10 +3319,10 @@
       "sha256": "4ba7d8a380656897fad744297fd78820397ba090701ced515f1e3bbb788da60f"
     },
     "backend/src/class_os/infrastructure/operator_run_metadata.py": {
-      "sha256": "60bc587e137604746cd82875987c5894151710433a9724dada865700e231b96f"
+      "sha256": "21739a54b6c79df4d64627c25d0d67fb79d4c9fccf247a81cdbb8c01a5d054cb"
     },
     "backend/tests/test_operator_run_metadata.py": {
-      "sha256": "abe9322e5873bbb4a006136500c325bff1ccc09c3aae28d27cf3afbbba1d2a92"
+      "sha256": "c25f0aa5e9024e19f1cb9b42d09f7baabbad0862aa1ab1d46daf8b02350847c8"
     }
   }
 }

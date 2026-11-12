@@ -88,6 +88,32 @@ def test_real_observer_serializes_no_exception_body(tmp_path, monkeypatch):
     assert rows[0]['category'] == 'upstream_http' and 'synthetic-private-content' not in json.dumps(rows)
 
 
+def test_completed_model_cannot_hide_later_persistence_failure(tmp_path, monkeypatch):
+    monkeypatch.setenv('CLASSMATTER_OPERATOR_METADATA', '1')
+    sink = metadata.for_runtime(SimpleNamespace(root=tmp_path, profile='classroom-work-d4'), local_development=True)
+    request = uuid4()
+    RunDiagnostics(sink, request).finish('completed', phase='completed')
+    RunDiagnostics(sink, request).finish('failed', RuntimeError('synthetic-private-content'), phase='persistence_finish')
+    rows = metadata.read_packets(tmp_path, [str(request)])
+    assert [(row['outcome'], row['phase']) for row in rows] == [('completed', 'completed'), ('failed', 'persistence_finish')]
+    assert rows[-1]['category'] == 'unclassified' and 'synthetic-private-content' not in json.dumps(rows)
+    assert len(list((tmp_path / metadata.DIRECTORY).iterdir())) == 2
+    RunDiagnostics(sink, request).finish('failed', RuntimeError('later'), phase='persistence_finish')
+    assert metadata.read_packets(tmp_path, [str(request)]) == rows
+    (tmp_path / metadata.DIRECTORY / (str(request) + '.json')).write_text('{incomplete', encoding='utf-8')
+    assert metadata.read_packets(tmp_path, [str(request)]) == [rows[-1]]
+
+
+def test_sdk_cancellation_retains_its_actual_outcome(tmp_path, monkeypatch):
+    from asyncio import CancelledError
+    monkeypatch.setenv('CLASSMATTER_OPERATOR_METADATA', '1')
+    sink = metadata.for_runtime(SimpleNamespace(root=tmp_path, profile='classroom-work-d4'), local_development=True)
+    request = uuid4()
+    RunDiagnostics(sink, request).finish('cancelled', CancelledError())
+    row, = metadata.read_packets(tmp_path, [str(request)])
+    assert row['outcome'] == row['category'] == 'cancelled'
+
+
 def test_directory_link_cannot_redirect_metadata(tmp_path, monkeypatch):
     monkeypatch.setenv('CLASSMATTER_OPERATOR_METADATA', '1')
     other = tmp_path / 'outside'; other.mkdir()
