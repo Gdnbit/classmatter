@@ -135,6 +135,10 @@ def tools(capture, query, credentials, context, execute, missing_class):
                         and capture.user_messages[-1:] == ('继续完成上面的任务，只处理尚未完成的步骤。',)):
                     return {'status': 'read-source-first',
                         'instruction': 'This continuation has verified saved ordinary records. Before preparing a follow-up, call read_class_records and copy the intended source fact_text and full student name into source_fact/student_name. Do not silently drop the requested source. If the next task is independent, ask the user to confirm that in a new message; do not attach an unrelated record just to pass.'}
+                if (source_fact and capture.committed_record_ids and 'read_class_records' not in capture.completed_tools
+                        and capture.user_messages[-1:] == ('继续完成上面的任务，只处理尚未完成的步骤。',)):
+                    return {'status': 'read-source-first',
+                        'instruction': 'Read read_class_records before preparing this linked continuation. Copy the exact current fact_text and full student name returned by that read, not a recalled or paraphrased quote. No candidate was prepared.'}
                 student, source = None, None
                 if source_fact and not student_name:
                     return {'status': 'needs-information', 'question': '这条记录属于哪位学生？'}
@@ -145,6 +149,9 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 if source_fact:
                     matches = [row for row in records(current, student.student_id) if row['fact_text'] == source_fact]
                     if len(matches) != 1:
+                        if (capture.committed_record_ids and capture.user_messages[-1:] == ('继续完成上面的任务，只处理尚未完成的步骤。',)
+                                and any(str(row['record_id']) in capture.committed_record_ids for row in records(current, student.student_id))):
+                            raise ModelRetry('The source_fact does not exactly match the saved fact for this continuation. Copy the complete fact_text and full student name returned by read_class_records. Do not ask the teacher to re-enter information already saved, guess a source or drop the link.')
                         return {'status': 'needs-disambiguation', 'question': '没有找到唯一的已保存记录，请核对内容。'}
                     source = matches[0]['record_id']
                 return capture.propose(CreateTask('task.create', uuid4(), current.class_id, current.term_id, title,

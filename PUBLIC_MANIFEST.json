@@ -519,7 +519,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "0ea8f149b7e730427e953d22371598b2cbec5c842c7d6fc50def33bc5ea7ef7b"
+      "sha256": "d597a94a75ad65f0ae8166e4e18147affe25c9ba4b7de0fb27486b7d25311889"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3017,7 +3017,7 @@
       "sha256": "5440b56eb3b1314ac2d9dc75c38de860e35a695b3b52b2b02bf9d605098371c0"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "6414602d4db0be05ae9d00cfe58fb2cae80dd1da75b9d52e35651e697adff8d4"
+      "sha256": "11e3a6ff1ccfb0e0da1c6202f9ef3ca643f4d394fd5dc208acb757e0ab036783"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3289,7 +3289,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "ca2b291801189b0b713017899e61554df40a2cc16e804b5644e261e051f69abc"
+      "sha256": "a897802778e31ea4b2dbd9cef54e32aaa7e29803ca458d224227f7340eefbee5"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "d18d302a2a1320454bb0b66c843b01b8a545f844186fecd7b1be66e8931abc52"
@@ -3301,13 +3301,13 @@
       "sha256": "c429b07321ae86b33c6a802a44ff4edf5fd7896a772721095b0ec3a44a6546ba"
     },
     "backend/src/class_os/infrastructure/activity_actions.py": {
-      "sha256": "3d1e52bfc6c3aa16e887f19cc15a779aaeab436b0f2eda49ec16b5c11325eebb"
+      "sha256": "d4907e908567487b0bbd9766bffd1c1fc8de47bd35510bcd38f123036fe8618b"
     },
     "backend/tests/test_activity_actions_web.py": {
       "sha256": "07d43770f476cf336979a5692bd4002be3aedba1364ac70591ecc92b27d0d049"
     },
     "backend/tests/test_activity_actions.py": {
-      "sha256": "a936529a570af44730f0e4c75211f54cc66edbe4fabcaed537dbab1c32cbb5ca"
+      "sha256": "ab0101fda29fa7aa4e06a1207ed8abd76b12d6b1ed4ffc8f00b8dd00ed01a2e4"
     },
     "backend/tests/test_chat_note_recall.py": {
       "sha256": "ed31a8be72b2eb9ec9ba1ab7bcbbf8a278dadb14e40e6f4d01ab25bcb785dd54"
