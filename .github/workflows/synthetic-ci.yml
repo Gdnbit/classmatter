@@ -96,7 +96,7 @@ jobs:
           sudo curl --fail --silent --show-error --output /usr/share/postgresql-common/pgdg/class-os-postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           sudo install -m 0644 infra/ci/pgdg.sources /etc/apt/sources.list.d/class-os-pgdg.sources
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y postgresql-18=18.6-1.pgdg24.04+2
+          sudo apt-get install --no-install-recommends -y postgresql-18=18.6-1.pgdg24.04+2 postgresql-client-18=18.6-1.pgdg24.04+2
           ci_pg_version=$(/usr/lib/postgresql/18/bin/postgres --version)
           [[ "$ci_pg_version" == "postgres (PostgreSQL) 18.6"* ]]
       - name: Existing Playwright Chromium (Linux only)
