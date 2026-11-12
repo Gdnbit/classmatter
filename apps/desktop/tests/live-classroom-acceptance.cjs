@@ -218,7 +218,7 @@ async function confirm(command){
   rows.push({case:'same original fact/receipt and failed continuation preserved; no reset',prior_failure:true,thread_id:resumeThread,failed_requests:history.turns.filter(t=>t.state==='failed').map(t=>t.request_id),passed:true});save();
  }else{
   await page.getByRole('button',{name:'新对话',exact:true}).click();
-  result=await turn('这是合成测试，只回复：准备好了。');assert.equal(result.last.candidate,null);assert.deepEqual(rows.at(-1).tools,[]);
+  result=await turn('这是合成测试，只回复：准备好了。');assert.equal(result.last.candidate,null);assert.deepEqual(rows.filter(row=>row.request_id).at(-1).tools,[]);
  }
  if(scenario==='daily-work'||dailyRecovery){
   const fact='合成学生甲交来展示作品',title='合成作品核对';
