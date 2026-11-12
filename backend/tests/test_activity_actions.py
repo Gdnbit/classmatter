@@ -69,6 +69,9 @@ async def test_continuation_tool_precondition_blocks_unverified_repeated_record_
     reused = await tools['prepare_record'](student_name='合成学生0', fact_text=fact, occurred_now=True)
     assert reused['status'] == 'existing-record' and reused['record_id'] == str(record.record_id)
     assert capture.proposed is None
+    narrower = await tools['prepare_record'](student_name='合成学生0', fact_text='交来展示作品', occurred_now=True)
+    assert narrower['status'] == 'read-source-first' and capture.proposed is None
+    assert 'record_id' not in narrower  # A partial quote is not an automatic source match.
     missing_source = await tools['prepare_task'](action='create', title='合成核对任务')
     assert missing_source['status'] == 'read-source-first' and capture.proposed is None
     with pytest.raises(CallDeferred):

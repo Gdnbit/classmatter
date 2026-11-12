@@ -72,6 +72,12 @@ def tools(capture, query, credentials, context, execute, missing_class):
                     return {'status': 'existing-record', 'record_id': str(row['record_id']), 'version': row['version'],
                         'student': student.name, 'fact_text': row['fact_text'], 'occurred_at': row['occurred_at'].isoformat(),
                         'instruction': 'This exact ordinary fact is already saved. Reuse its verified source for the next unfinished requested step. No new record was prepared; do not ask for its time again.'}
+                overlapping = [row for row in records(current, student.student_id)
+                    if str(row['record_id']) in capture.committed_record_ids
+                    and (fact_text in row['fact_text'] or row['fact_text'] in fact_text)]
+                if overlapping:
+                    return {'status': 'read-source-first',
+                        'instruction': 'This quote overlaps a fact already verified by this chat receipt. No new record was prepared and no source was substituted. Call read_class_records, use the exact saved fact_text for the requested follow-up, and do not invent a new occurrence time. If another distinct event is intended, clarify it with the user.'}
             when = None
             if occurred_now and not occurred_at and any(marker in capture.user_messages[-1] for marker in ('现在', '刚刚')):
                 when = query.clock()
