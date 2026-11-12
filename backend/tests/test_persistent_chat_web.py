@@ -128,6 +128,7 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
         '生成文档合成班级小结': ('prepare_document', {'action': 'create', 'title': '合成班级小结', 'body': '合成小结正文，待核对。'}),
         '给合成班级小结追加合成补充段落': ('prepare_document', {'action': 'edit', 'edit_mode': 'append', 'title': '合成班级小结', 'body': '合成补充段落'}),
     }
+    failed_once = set()
     def factory(request):
         def respond(messages, info):
             returned = [part for part in messages[-1].parts if isinstance(part, ToolReturnPart)]
@@ -140,6 +141,12 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
             repair = any(isinstance(part, RetryPromptPart) for part in messages[-1].parts)
             if not repair:
                 calls.append(request.text)
+                if request.text in (next(iter(mapping)), '生成文档合成班级小结', '给合成班级小结追加合成补充段落', '合成陈旧失败') and request.text not in failed_once:
+                    failed_once.add(request.text)
+                    if request.text.startswith('给'):
+                        raise httpx.ReadTimeout('synthetic response-read fault')
+                    from pydantic_ai.exceptions import ModelHTTPError
+                    raise ModelHTTPError(503, 'synthetic', body={'error': {'status': 'UNAVAILABLE'}})
                 if request.text in mapping:
                     return ModelResponse(parts=[TextPart('已为你准备好这项修改，请在对话中核对确认。')])
             if request.text == '继续完成上面的任务，只处理尚未完成的步骤。':
@@ -175,11 +182,14 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
             text=True, encoding='utf-8', timeout=240, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         (root / 'test-results/ui-v3-browser-details.log').write_text(result.stdout + result.stderr, encoding='utf-8')
         assert result.returncode == 0, result.stdout + result.stderr
-        assert len(calls) == len(mapping) + 3
+        assert len(calls) == len(mapping) + 7
+        assert len(failed_once) == 4
         assert sdk.active == 0
         with owner.transaction(read_only=True) as connection:
             assert connection.execute(text('SELECT count(*) FROM class_os.workspace_chat_thread')).scalar_one() == 1
             assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='completed'")).scalar_one() == len(mapping) + 3
+            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='failed'")).scalar_one() == 4
+            assert connection.execute(text("SELECT count(*) FROM class_os.workspace_chat_turn WHERE state='cancelled'")).scalar_one() == 1
             assert connection.execute(text('SELECT count(*) FROM class_os.school_class')).scalar_one() == 1
             assert connection.execute(text('SELECT count(*) FROM class_os.student')).scalar_one() == 1
             assert connection.execute(text('SELECT count(*) FROM class_os.manual_task')).scalar_one() == 1
