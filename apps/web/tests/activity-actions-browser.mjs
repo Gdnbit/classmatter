@@ -4,10 +4,19 @@ import { comparisonContent } from './change-comparison-content.mjs';
 
 const base = process.env.CLASS_OS_TEST_URL;
 const expect = defaultExpect.configure({ timeout: 30000 });
+const voice = process.env.CLASSMATTER_SYNTHETIC_VOICE === '1';
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
-const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
+const browser = await chromium.launch({ headless: true, args: voice ? ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] : [], ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [];
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, ...(voice ? { permissions: ['microphone'] } : {}) }), errors = [], external = [];
+  if (voice) await page.addInitScript(() => {
+    const start = MediaRecorder.prototype.start;
+    MediaRecorder.prototype.start = function(...args) {
+      window.__voiceBytes = 0;
+      this.addEventListener('dataavailable', event => { window.__voiceBytes += event.data.size; });
+      return start.apply(this, args);
+    };
+  });
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => { if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url()); });
   await page.goto(base);
@@ -44,7 +53,16 @@ try {
     assert.deepEqual(await comparisonContent(comparison.getByLabel('修改前', { exact: true })), before);
     assert.deepEqual(await comparisonContent(comparison.getByLabel('已保存的结果', { exact: true })), { ...after, heading: '已保存' });
   }
-  await send('刚刚合成学生0交来展示作品，记下来，再根据这条记录建立合成作品核对任务');
+  if (voice) {
+    await page.getByRole('button', { name: '语音转文字', exact: true }).click();
+    await page.getByRole('button', { name: '完成录音并转文字', exact: true }).waitFor();
+    await page.waitForFunction(() => window.__voiceBytes > 0);
+    await page.getByRole('button', { name: '完成录音并转文字', exact: true }).click();
+    await expect(input).toHaveValue('刚刚合成学生0交来展示作品，记下来，再根据这条记录建立合成作品核对任务。今晚我还要整理自己的书架。');
+    await state({ records: 0, tasks: 0, status: null, version: null, documents: 0 });
+    await expect(cards).toHaveCount(0);
+    await page.getByRole('button', { name: '发送消息', exact: true }).click();
+  } else await send('刚刚合成学生0交来展示作品，记下来，再根据这条记录建立合成作品核对任务');
   await expect(cards).toHaveCount(1).catch(async error => { throw new Error(await page.locator('body').innerText(), { cause: error }); });
   await state({ records: 0, tasks: 0, status: null, version: null, documents: 0 });
   await save(0, '记录事实');

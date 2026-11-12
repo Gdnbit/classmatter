@@ -3,7 +3,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 import pytest
-from pydantic_ai import CallDeferred
+from pydantic_ai import CallDeferred, ModelRetry
 from sqlalchemy import text
 
 from class_os.application.roster import CommandRejected
@@ -21,7 +21,117 @@ async def prepare(query, auth, message, name, arguments):
         answer = await tools[name](**arguments)
     except CallDeferred:
         answer = {'question': capture.clarification}
+    except ModelRetry:
+        answer = {'repair': 'invalid-model-quote'}
     return capture.proposed, answer
+
+
+@pytest.mark.db
+async def test_shortened_model_name_requires_one_explicit_canonical_user_name(classroom_work):
+    _, query, auth, _, _, _, _, _, _, students = classroom_work
+    fact = '合成学生0交来展示作品'
+    proposed, _ = await prepare(query, auth, '刚刚' + fact, 'prepare_record',
+        {'student_name': '学生0', 'fact_text': fact, 'occurred_now': True})
+    assert proposed['student_id'] == str(students[0])
+    for message, short_name, quote in [
+        ('刚刚学生0交来展示作品', '学生0', '交来展示作品'),
+        ('刚刚合成学生0和合成学生1交来展示作品', '学生', '交来展示作品'),
+        ('刚刚合成学生0交来展示作品', '不存在', fact),
+    ]:
+        proposed, _ = await prepare(query, auth, message, 'prepare_record',
+            {'student_name': short_name, 'fact_text': quote, 'occurred_now': True})
+        assert proposed is None
+
+
+@pytest.mark.db
+async def test_continuation_tool_precondition_blocks_unverified_repeated_record_then_allows_linked_task(classroom_work):
+    business, query, auth, _, clock, store, commit, c, t, students = classroom_work
+    fact = '合成学生0交来展示作品'
+    record = CreateRecord('record.create', uuid4(), c, t, students[0], 'ordinary_fact', clock[0], fact, '')
+    chats = WorkspaceChatBusinessGateway(business.identity, store, clock=lambda: clock[0])
+    history = WorkspaceChatQueryGateway(query.identity, store, clock=lambda: clock[0])
+    thread, request = uuid4(), uuid4()
+    chats.send(auth, thread, request, '刚刚' + fact + '，建立合成核对任务')
+    chats.finish(auth, chats.claim(auth, thread, request), 'completed', '请核对。', record.canonical())
+    commit(record)
+    progress_calls = []
+    def progress():
+        progress_calls.append(True)
+        return history.history(auth, thread)
+    capture = WorkspaceActionCapture(('刚刚' + fact + '，建立合成核对任务', '继续完成上面的任务，只处理尚未完成的步骤。'),
+        progress_reader=progress, classroom_enabled=True)
+    tools = {tool.__name__: tool for tool in capture.tools(query, auth, lambda: None, lambda *a, **k: None)}
+    denied = await tools['prepare_record'](student_name='合成学生0', fact_text=fact, occurred_now=True)
+    assert denied['status'] == 'read-progress-first' and capture.proposed is None
+    assert not capture.reads and not progress_calls
+    await tools['read_task_progress']()
+    assert capture.committed_record_ids == {str(record.record_id)}
+    reused = await tools['prepare_record'](student_name='合成学生0', fact_text=fact, occurred_now=True)
+    assert reused['status'] == 'existing-record' and reused['record_id'] == str(record.record_id)
+    assert capture.proposed is None
+    narrower = await tools['prepare_record'](student_name='合成学生0', fact_text='交来展示作品', occurred_now=True)
+    assert narrower['status'] == 'read-source-first' and capture.proposed is None
+    assert 'record_id' not in narrower  # A partial quote is not an automatic source match.
+    missing_source = await tools['prepare_task'](action='create', title='合成核对任务')
+    assert missing_source['status'] == 'read-source-first' and capture.proposed is None
+    unread_source = await tools['prepare_task'](action='create', title='合成核对任务', student_name='合成学生0', source_fact=fact)
+    assert unread_source['status'] == 'read-source-first' and capture.proposed is None
+    await tools['read_class_records']()
+    with pytest.raises(ModelRetry):
+        await tools['prepare_task'](action='create', title='合成核对任务', student_name='合成学生0', source_fact='交来展示作品')
+    assert capture.proposed is None
+    with pytest.raises(CallDeferred):
+        await tools['prepare_task'](action='create', title='合成核对任务', student_name='合成学生0', source_fact=fact)
+    assert progress_calls == [True] and capture.proposed['command'] == 'task.create'
+    assert capture.proposed['source_record_id'] == str(record.record_id)
+    value = query.projection(*auth, c, t)
+    assert len(value['records']) == 1 and not value['tasks']
+    unrelated = WorkspaceActionCapture(capture.user_messages, progress_reader=lambda: {'turns': [], 'next_before': None}, classroom_enabled=True)
+    other = {tool.__name__: tool for tool in unrelated.tools(query, auth, lambda: None, lambda *a, **k: None)}
+    await other['read_task_progress']()
+    with pytest.raises(CallDeferred):
+        await other['prepare_record'](student_name='合成学生0', fact_text=fact, occurred_now=True)
+    assert unrelated.clarification == '这件事是什么时候发生的？' and unrelated.proposed is None
+    standalone = WorkspaceActionCapture(('另外建立独立任务合成独立任务',), progress_reader=progress, classroom_enabled=True)
+    separate = {tool.__name__: tool for tool in standalone.tools(query, auth, lambda: None, lambda *a, **k: None)}
+    await separate['read_task_progress']()
+    with pytest.raises(CallDeferred):
+        await separate['prepare_task'](action='create', title='合成独立任务')
+    assert standalone.proposed['source_record_id'] is None
+
+
+@pytest.mark.db
+@pytest.mark.parametrize('keeps_failing', [False, True])
+async def test_sdk_repairs_its_bad_quote_without_asking_teacher_to_repeat_or_saving(classroom_work, keeps_failing):
+    from pydantic_ai.messages import ModelResponse, ToolCallPart, RetryPromptPart
+    from pydantic_ai.models.function import FunctionModel
+    from class_os.infrastructure.agent import PydanticAgentRuntime
+    from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
+    business, query, auth, _, clock, store, _, c, t, _ = classroom_work
+    calls = []
+    fact = '合成学生0交来展示作品'
+    def respond(messages, info):
+        if calls:
+            assert any(isinstance(part, RetryPromptPart) and 'exact quote' in str(part.content) for part in messages[-1].parts)
+        calls.append(True)
+        return ModelResponse(parts=[ToolCallPart('prepare_record', {'student_name': '合成学生0',
+            'fact_text': '模型改写了内容' if len(calls) == 1 or keeps_failing else fact, 'occurred_now': True})])
+    chats = WorkspaceChatBusinessGateway(business.identity, store, clock=lambda: clock[0])
+    history = WorkspaceChatQueryGateway(query.identity, store, clock=lambda: clock[0])
+    runtime = WorkspaceChatRuntime(chats, history, PydanticAgentRuntime(query, model_factory=lambda _: FunctionModel(respond)))
+    thread, request = uuid4(), uuid4()
+    chats.send(auth, thread, request, '刚刚' + fact + '，记下来')
+    events = [event async for event in runtime.stream_queued(auth, thread, request)]
+    turn = history.turn(auth, thread, request)[1]
+    assert len(calls) == 2
+    if keeps_failing:
+        assert not any(event.type in ('run.completed', 'message.delta', 'draft.available') for event in events)
+        assert turn['candidate'] is turn['assistant_text'] is turn['change_preview'] is None
+    else:
+        assert any(event.type == 'run.completed' for event in events), runtime.sdk.last_failure_type
+        assert turn['candidate']['fact_text'] == fact and turn['change_preview'] is not None
+    assert turn['action_receipt'] is None
+    assert not query.projection(*auth, c, t)['records']
 
 
 @pytest.mark.db

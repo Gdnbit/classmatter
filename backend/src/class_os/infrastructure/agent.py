@@ -236,7 +236,8 @@ class PydanticAgentRuntime:
                     raise AgentRejected()
                 native_tools = []
                 for function, contract in zip(tools, expected, strict=True):
-                    native = Tool(function)
+                    native = Tool(function, max_retries=1 if (_workspace_actions is not None
+                        and _workspace_actions.classroom_enabled and function.__name__ in ('prepare_record', 'prepare_task')) else None)
                     definition = native.tool_def
                     if (definition.name != contract["name"] or definition.description != contract["description"]
                             or definition.parameters_json_schema != contract["parameters_json_schema"]
@@ -260,6 +261,8 @@ class PydanticAgentRuntime:
                         agent.instrument = False
                         if _workspace_actions is not None:
                             agent.instructions(lambda: "For multi-step tasks, first read_task_progress to check actual receipts, then read current data and work on the next unfinished step. Assistant history is not evidence of execution. Never repeat a committed action. Prepare at most one change for human confirmation, explain what remains, or conclude when all requested steps are complete. If history is truncated and intent is unclear, ask rather than inventing missing steps.")
+                            if _workspace_actions.classroom_enabled:
+                                agent.instructions(lambda: "A follow-up task's progress, waiting state, completion or cancellation belongs to prepare_task (action edit/complete/cancel), not prepare_record. Read current tasks to identify the existing title. Keep an explicitly quoted follow-up note in evidence; never turn task workflow notes into a new student fact. prepare_record is only for a new already-occurred ordinary student event. Neither tool saves anything: show the actual candidate for human review, never say that a state or note was already saved.")
                             @agent.output_validator
                             def confirmed_candidate_exists(ctx: RunContext[None], output):
                                 # A textual promise cannot stand in for the actual card,
@@ -280,7 +283,9 @@ class PydanticAgentRuntime:
                         result = await agent.run(request.text, message_history=conversation.history,
                                                  conversation_id=str(conversation.conversation_id), run_id=str(run_id),
                                                  usage_limits=UsageLimits(request_limit=10 if _workspace_actions else 4, tool_calls_limit=8 if _workspace_actions else 2,
-                                                                          total_tokens_limit=16000 if _workspace_actions else 6000))
+                                                                          # The reviewed classroom catalog is ~3.2k input tokens per
+                                                                          # request; five necessary steps exceeded the old 16k cap.
+                                                                          total_tokens_limit=(32000 if _workspace_actions.classroom_enabled else 16000) if _workspace_actions else 6000))
                 phase = "response_validation"
                 if result.response.state != "complete" or result.response.finish_reason in ("length", "content_filter", "error"):
                     raise AgentRejected()

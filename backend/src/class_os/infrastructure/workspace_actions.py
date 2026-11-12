@@ -30,6 +30,7 @@ class WorkspaceActionCapture:
     clarification: str | None = None
     pending_commands: set[str] = field(default_factory=set)
     recall_reader: Callable | None = None
+    committed_record_ids: set[str] = field(default_factory=set)
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -56,6 +57,12 @@ class WorkspaceActionCapture:
     def tools(self, query, credentials, current_memory, emit):
         async def execute(tool, operation):
             current_memory(); emit("tool.started", tool=tool)
+            if (self.classroom_enabled and self.user_messages[-1:] == ('继续完成上面的任务，只处理尚未完成的步骤。',)
+                    and tool != 'read_task_progress' and 'read_task_progress' not in self.completed_tools):
+                # A provider may ignore tool_choice. Keep the prerequisite in
+                # the actual tool boundary, not just in model settings/prose.
+                operation = lambda: {'status': 'read-progress-first',
+                    'instruction': 'Call read_task_progress now, inspect actual saved receipts and pending actions, then select the next unfinished requested step. This attempted operation did not execute.'}
             result = await anyio.to_thread.run_sync(operation)
             self.completed_tools.append(tool)
             current_memory(); emit("tool.completed", tool=tool)
@@ -96,6 +103,7 @@ class WorkspaceActionCapture:
                 history = self.progress_reader()
                 actions = []
                 self.pending_commands.clear()
+                self.committed_record_ids.clear()
                 for row in history["turns"]:
                     value = row["candidate"]
                     if row["state"] != "completed" or value is None:
@@ -103,6 +111,8 @@ class WorkspaceActionCapture:
                     receipt = row["action_receipt"]
                     if receipt is None:
                         self.pending_commands.add(value['command'])
+                    elif value['command'] == 'record.create':
+                        self.committed_record_ids.add(str(receipt['resource_id']))
                     actions.append({"command": value["command"], "name": value.get("name"), "title": value.get("title"),
                         "status": "committed" if receipt else "awaiting-confirmation",
                         "resource_id": str(receipt["resource_id"]) if receipt else None,
