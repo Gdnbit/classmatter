@@ -42,11 +42,13 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 return {'status': 'needs-disambiguation', 'question': '没有找到唯一的学生，请确认姓名。'}
             names = {row.student_id: row.name for row in query.roster(*credentials, current.class_id, current.term_id)}
             rows = [row for row in records(current, student.student_id if student else None) if not search or search in row['fact_text']]
-            return {'class_name': current.name, 'items': [
+            result = {'class_name': current.name, 'items': [
                 {'record_id': str(row['record_id']), 'version': row['version'], 'student': names.get(row['student_id'], '历史学生'),
                  'fact_text': row['fact_text'], 'occurred_at': row['occurred_at'].isoformat()} for row in rows[:30]],
                 'truncated': len(rows) > 30, 'scope': 'ordinary-facts-only',
                 'instruction': 'Cite the returned student, fact and date in readable language. Retain source IDs/versions for verification; do not display internal IDs. Report scope and missing data honestly.'}
+            capture.record_read_scopes.add((current.class_id, current.term_id))
+            return result
         return await execute('read_class_records', read)
 
     async def prepare_record(student_name: str, fact_text: str, occurred_at: str = '', occurred_now: bool = False) -> dict:
@@ -105,7 +107,7 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 return missing_class
             if not capture.mentioned(title) or new_title and not capture.mentioned(new_title):
                 return {'status': 'needs-information', 'question': '任务的新标题是什么？' if capture.mentioned(title) else '要处理哪项任务？'}
-            quoted_notes = re.findall(r'(?:跟进记录|跟进情况|完成结果|取消原因|备注)(?:原文)?[为:：\s]*[“"]([^”"\n]{1,500})[”"]', latest_request())
+            quoted_notes = re.findall(r'(?:跟进记录|跟进情况|完成结果|实际结果|取消原因|备注)(?:原文)?[为:：\s]*[“"]([^”"\n]{1,500})[”"]', latest_request())
             if action != 'create' and len(quoted_notes) == 1 and evidence != quoted_notes[0]:
                 # Validate an explicitly labelled quote; never extract it into
                 # a command or silently replace the model's chosen arguments.

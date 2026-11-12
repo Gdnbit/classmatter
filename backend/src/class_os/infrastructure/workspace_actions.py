@@ -26,6 +26,8 @@ class WorkspaceActionCapture:
     input_tokens: int | None = None
     output_tokens: int | None = None
     document_reads: set = field(default_factory=set)
+    record_read_scopes: set = field(default_factory=set)
+    task_read_scopes: set = field(default_factory=set)
     completed_tools: list[str] = field(default_factory=list)
     clarification: str | None = None
     pending_commands: set[str] = field(default_factory=set)
@@ -148,6 +150,7 @@ class WorkspaceActionCapture:
                                "evidence": row["evidence"], "task_id": str(row["task_id"]),
                                "source_record_id": str(row["source_record_id"]) if row["source_record_id"] else None}
                               for row in rows if not search or search in row["title"]]
+                    self.task_read_scopes.add((current.class_id, current.term_id))
                 else:
                     rows = query.documents(*credentials, current.class_id, current.term_id)
                     values = [{"title": row["title"], "status": row["status"], "version": row["version"]} for row in rows if not search or search in row["title"]]
@@ -243,6 +246,13 @@ class WorkspaceActionCapture:
                 current = context()
                 if current is None:
                     return missing_class
+                scope = (current.class_id, current.term_id)
+                if self.classroom_enabled and scope in self.record_read_scopes and scope not in self.task_read_scopes:
+                    # Receipt progress proves saves, not the current task's
+                    # actual result. Keep sourced document drafts in this turn
+                    # behind the existing QG read, without asking for a form.
+                    return {'status': 'read-task-source-first',
+                        'instruction': 'Before preparing this fact-based document, call read_class_work(kind="tasks") in this turn. Copy actual task status and result from that source; read_task_progress receipts and assistant history are not a substitute. Then prepare the document. Nothing was prepared or saved by this attempt.'}
                 if not self.mentioned(title) or new_title and not self.mentioned(new_title):
                     return {"status": "needs-information", "question": "文档的新标题是什么？" if self.mentioned(title) else "要处理哪份文档？", "instruction": "Ask for the document title. Explain that generated prose needs review."}
                 if action == "create":
