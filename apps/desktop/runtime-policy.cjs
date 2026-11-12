@@ -10,6 +10,13 @@ function exitDownload(origin,value,mime,size) {
   const url=new URL(value),id='[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}';
   return !url.search && !url.hash && new RegExp('^/api/workspaces/'+id+'/(?:conversation-d1/)?exit/'+id+'/download$').test(url.pathname);
 }
+function officeDownload(origin,value,mime,size) {
+  if(!allowed(origin,value)||!Number.isSafeInteger(size)||size<=0||size>4*1024*1024)return false;
+  const url=new URL(value),id='[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}';
+  const match=url.pathname.match(new RegExp('^/api/workspaces/'+id+'/classes/'+id+'/terms/'+id+'/documents/'+id+'/exports/([1-9][0-9]{0,9})/(docx|pptx)$'));
+  if(url.search||url.hash||!match||Number(match[1])>2147483647)return false;
+  return mime===({docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',pptx:'application/vnd.openxmlformats-officedocument.presentationml.presentation'}[match[2]]);
+}
 function clipboardWrite(origin,permission,details) {
   return permission==='clipboard-sanitized-write' && details?.isMainFrame===true && allowed(origin,details.requestingUrl);
 }
@@ -20,4 +27,4 @@ function microphoneRequest(origin,permission,details) {
 function microphoneCheck(origin,permission,details) {
   return permission==='media' && details?.isMainFrame===true && allowed(origin,details.requestingUrl) && details.mediaType==='audio';
 }
-module.exports={allowed,CSP,exitDownload,clipboardWrite,microphoneRequest,microphoneCheck};
+module.exports={allowed,CSP,exitDownload,officeDownload,clipboardWrite,microphoneRequest,microphoneCheck};

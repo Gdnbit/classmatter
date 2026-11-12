@@ -1,5 +1,13 @@
 # 实现与验收台账
 
+## 2026-11-13 已保存教案/小结的可编辑Word与PPT导出
+
+复用既有MIT锁定python-docx1.2.0/python-pptx1.0.2，在原文档页加入Word/PPT操作及固定QG同版本下载，原聊天可准备文字教案/课件正文，保存后再导出，不新建工作台/表/业务写工具。实现为`application/document_artifacts.py`小端口、`infrastructure/office_artifacts.py`适配器、原documents路由/客户端及`DocumentExportActions`；桌面沿原Save对话框增加精确Office路由/MIME/4MiB白名单，仍拒绝blob/远程/任意路径，不增加IPC。
+
+实际生成/编辑回读/HTTP/PG6项29.88秒、原网页1项18.07秒、Windows原生桌面1项57.74秒通过。Word/PPT从同一文档版本导出，中文长文本完整、PPT超150张明确拒绝；未保存不导出，版本变化409、限长413、服务503不下载错误文件；导出读取不锁其他导航，离开页面取消，不清草稿、不新增业务版本。Web90项/类型检查/构建、桌面策略15项通过，保留原构建分块大小提示。失败记录包括测试驱动require上下文错误及重复错误提示，均已修复并保留首次失败；测试产物只在本机非C目录，未上传Office二进制/本机描述文件。
+
+详细设计与撤回方式见[原聊天办理设计](design/workspace-chat-and-actions.md)，结果/缺口见[场景登记](product/scenario-run-results.md)。本单元为Shared Capability工程增量，不修改冻结R1、正式Requirement/Eval/Task/Gate及真实数据权限；回滚不需数据库迁移，也不删除用户文档/下载文件。复杂主题、图片/图表、在线PPT逐元素编辑、原生Office视觉及教师净省时仍待验证，不以文字导出冒充全部课件能力。精确head完整CI/独立PR另留证，模型与写字机单元继续推进。
+
 ## 2026-11-12 原聊天失败重试完整闭环
 
 用户已将免费模型的开发验收口径调整为“允许失败，有限重试后完整成功”，不再将偶发API失败独立列作工程推进阻塞。基线PR #80合并后的main；不重新定义R1或修改正式Requirement/Eval/Task/Gate，沿FR-AGT-001/003/004/006、T-RPLT-001及现有文档/课堂工作工程验证追溯。实现限于原聊天控制器、原失败轮次入口及原浏览器/桌面验收脚本，不新增工作台、业务命令、Schema、模型默认或Agent写入口。

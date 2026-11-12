@@ -6,6 +6,7 @@ import { documentClient, type DocumentCommand, type DocumentMetadata, type Docum
 import { R1Dialog } from "./R1Dialog"
 import "./documents-workspace.css"
 import { userMessage } from "./user-facing"
+import { DocumentExportActions } from './DocumentExportActions'
 
 export type DocumentDraftContent = Readonly<{ title: string; body: string; format: "plain-text" | "markdown" }>
 type Props = {
@@ -192,6 +193,8 @@ export function DocumentsWorkspace(props: Props) {
     <div className="r1-toolbar">
       <button disabled={!props.canEdit || dirty || busy} onClick={() => props.onSelect("new")}>新建文档</button>
       <button disabled={dirty || busy || loading} onClick={() => setRefresh(value => value + 1)}>重新读取文档</button>
+      {current && <DocumentExportActions key={current.document_id + ':' + current.version} value={current} api={api}
+        enabled={props.canEdit && !dirty && !busy && !loading && !reading} unsaved={dirty} onError={props.onError} />}
       {edited && !pending && <button disabled={busy} onClick={() => { setEdited(false); setRefresh(value => value + 1) }}>放弃本地编辑并重新读取</button>}
     </div>
     <div className="document-layout">

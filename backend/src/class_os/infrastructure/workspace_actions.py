@@ -225,7 +225,7 @@ class WorkspaceActionCapture:
             return await execute("prepare_task", prepare)
 
         async def prepare_document(action: Literal["create", "edit"], title: str, body: str, new_title: str = "", format: Literal["plain-text", "markdown"] = "markdown", edit_mode: Literal["replace", "append"] = "replace") -> dict:
-            """Prepare a working document or revise one unique title. Read its current body before replacing it, or append without losing old text. Generated prose is unverified. Never saves."""
+            """Prepare a working document or revise one unique title. Saved documents can be exported as editable Word or text-only PPT; use Markdown headings for slide sections. A file is not created until the user saves and exports. Read the current body before replacement or append without losing text. Generated prose is unverified. Never saves."""
             def prepare():
                 current = context()
                 if current is None:

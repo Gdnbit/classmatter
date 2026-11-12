@@ -129,7 +129,7 @@ class LocalBoundary:
 
 
 def create_app(settings: Settings, *, identity=None, business=None, query=None, readiness=None, agent=None,
-               model_controller=None, document_business=None, document_query=None, agent_workspace_only=False):
+               model_controller=None, document_business=None, document_query=None, agent_workspace_only=False, document_renderer=None):
     app = FastAPI(debug=False, docs_url=None, redoc_url=None, openapi_url=None)
     app.add_middleware(LocalBoundary, settings=settings)
 
@@ -171,7 +171,12 @@ def create_app(settings: Settings, *, identity=None, business=None, query=None, 
             raise ValueError('Document composition requires the same identity and both document Gateways')
         from .documents import router as document_router
         from class_os.application.roster import CommandRejected
-        app.include_router(document_router(document_business, document_query))
+        if document_renderer is None:
+            # Trusted composition default; transports only see the renderer
+            # port. Neither requests nor Agent tools can replace this callable.
+            from class_os.infrastructure.office_artifacts import render_office
+            document_renderer = render_office
+        app.include_router(document_router(document_business, document_query, renderer=document_renderer))
         app.state.document_commands_enabled = True
 
         @app.exception_handler(CommandRejected)

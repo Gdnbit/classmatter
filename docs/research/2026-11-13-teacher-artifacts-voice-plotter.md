@@ -33,3 +33,7 @@
 既有`ChangeComparison`/`SeatLayoutPreview`已承载座位真实前后渲染，应复验并复用。其他Artifact通过封闭类型组件接入，不把模型生成的任意JavaScript或设备命令直接执行。
 
 语音沿现有Capture入口复用模型与转写；长叙述先分为观察/他人陈述/计划/个人随记和待澄清对象，生成可编辑候选。正式记录、任务、小结分别通过原领域规则与BCG；会话文本/ASR输出不直接成为事实或长期记忆。记忆仅保存明确必要、范围正确且可更正/退出的内容，不新建万能Memory/Fact表。
+
+## 文书导出本轮采用结果
+
+优先复用项目已锁定的python-docx1.2.0及python-pptx1.0.2，没有再安装同类框架。两者对应版本的[python-docx许可证](https://raw.githubusercontent.com/python-openxml/python-docx/v1.2.0/LICENSE)及[python-pptx许可证](https://raw.githubusercontent.com/scanny/python-pptx/v1.0.2/LICENSE)均为MIT，已有依赖原始通知保留。按[官方Word用法](https://python-docx.readthedocs.io/en/latest/user/quickstart.html)和[官方PPT用法](https://python-pptx.readthedocs.io/en/latest/user/quickstart.html)生成可编辑段落/文本框，不用截图冒充可编辑文件。实际采用范围为已保存工作文档的DOCX与基础文字PPTX派生导出；PptxGenJS仍为复杂模板/图表等后续候选，未新增运行依赖或外部生成服务。代码、原界面测试、失败和边界见场景结果及实现台账。
