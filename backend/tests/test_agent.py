@@ -70,7 +70,8 @@ async def test_agent_early_event_abort_timeout_and_concurrent_rejection(roster):
             cancelled.set()
             raise
         return ModelResponse(parts=[TextPart("not reached")])
-    runtime = PydanticAgentRuntime(query, model_factory=lambda request: FunctionModel(slow), timeout=.3)
+    diagnostics = []
+    runtime = PydanticAgentRuntime(query, model_factory=lambda request: FunctionModel(slow), timeout=.3, diagnostics=diagnostics.append)
     conversation = runtime.conversation(credentials)
     turn = AgentRequest(conversation.conversation_id, "合成慢请求", Mode.CHAT)
     async with aclosing(runtime.stream(credentials, turn)) as stream:
@@ -82,6 +83,8 @@ async def test_agent_early_event_abort_timeout_and_concurrent_rejection(roster):
     assert cancelled.is_set() and not conversation.active and runtime.active == 0 and not conversation.history
     events = [event async for event in runtime.stream(credentials, turn)]
     assert events[-1].type == "run.failed" and runtime.active == 0
+    assert [report['outcome'] for report in diagnostics] == ['cancelled', 'failed']
+    assert diagnostics[-1]['category'] == 'local_run_deadline'
 
 
 @pytest.mark.db
@@ -94,12 +97,16 @@ async def test_agent_terminal_audit_outage_releases_no_answer_or_draft(roster, m
             raise RuntimeError("injected")
         original(credentials, run, status, classroom, term)
     monkeypatch.setattr(query, "agent_audit", broken)
-    runtime = PydanticAgentRuntime(query)
+    diagnostics = []
+    runtime = PydanticAgentRuntime(query, diagnostics=diagnostics.append)
     conversation = runtime.conversation(credentials)
     events = [event async for event in runtime.stream(credentials, AgentRequest(conversation.conversation_id, "合成草稿", Mode.DRAFT))]
     assert events[-1].type == "run.failed"
     assert not any(event.type in ("message.delta", "draft.available") for event in events)
     assert not conversation.history
+    assert diagnostics[0]['phase'] == 'audit_completion'
+    assert diagnostics[0]['outcome'] == 'failed'
+    assert diagnostics[0]['category'] == 'unclassified'
 
 
 @pytest.mark.db

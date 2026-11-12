@@ -16,6 +16,30 @@ from test_workspace_chat_storage import workspace_chat, roster, identity
 
 
 @pytest.mark.db
+async def test_persistence_failure_is_distinct_from_model_success(workspace_chat, monkeypatch):
+    business, history, auth, _, _, clock, store, boundary = workspace_chat
+    query = WorkbenchQueryGateway(boundary, store, clock=lambda: clock[0])
+    reports = []
+    sdk = PydanticAgentRuntime(query, diagnostics=reports.append,
+        model_factory=lambda _: FunctionModel(lambda messages, info: ModelResponse(parts=[TextPart('Hello')])))
+    runtime = WorkspaceChatRuntime(business, history, sdk)
+    thread, request = uuid4(), uuid4()
+    business.send(auth, thread, request, 'Hello')
+    original = business.finish
+    def fail_completed(credentials, ticket, state, *args, **kwargs):
+        if state == 'completed':
+            raise RuntimeError('private persistence detail')
+        return original(credentials, ticket, state, *args, **kwargs)
+    monkeypatch.setattr(business, 'finish', fail_completed)
+    events = [event async for event in runtime.stream_queued(auth, thread, request)]
+    assert not any(event.type in ('run.completed', 'message.delta', 'draft.available') for event in events)
+    assert history.history(auth, thread)['turns'][0]['state'] == 'unknown'
+    assert [report['outcome'] for report in reports] == ['completed', 'failed']
+    assert reports[-1]['phase'] == 'persistence_finish'
+    assert reports[-1]['run_id'] == str(request)
+
+
+@pytest.mark.db
 async def test_multistep_uses_receipts_and_current_reads_across_restarted_runtimes(workspace_chat):
     business, history, auth, owner, _, clock, store, boundary = workspace_chat
     commands = WorkbenchBusinessGateway(boundary, store, clock=lambda: clock[0])
@@ -236,7 +260,8 @@ async def test_repeating_multistep_tools_exhausts_budget_without_writes(workspac
     def respond(messages, info):
         calls.append(1)
         return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
-    sdk = PydanticAgentRuntime(query, model_factory=lambda _: FunctionModel(respond))
+    diagnostics = []
+    sdk = PydanticAgentRuntime(query, model_factory=lambda _: FunctionModel(respond), diagnostics=diagnostics.append)
     runtime = WorkspaceChatRuntime(business, history, sdk)
     thread, request = uuid4(), uuid4()
     business.send(auth, thread, request, '合成循环故障，不应无限执行。')
@@ -245,6 +270,10 @@ async def test_repeating_multistep_tools_exhausts_budget_without_writes(workspac
     row = history.history(auth, thread)['turns'][0]
     assert row['state'] == 'failed' and row['candidate'] is None and row['assistant_text'] is None
     assert 1 < len(calls) <= 10 and sdk.active == 0
+    assert len(diagnostics) == 1
+    assert diagnostics[0]['run_id'] == str(request)
+    assert diagnostics[0]['category'] == 'local_usage_limit'
+    assert diagnostics[0]['model_requests'] == len(calls)
     assert [event async for event in runtime.stream_queued(auth, thread, request)] == []
     with owner.transaction(read_only=True) as connection:
         assert connection.execute(text('SELECT count(*) FROM class_os.school_class')).scalar_one() == 0
