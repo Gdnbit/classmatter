@@ -6,7 +6,7 @@ import sys
 import pytest
 
 
-@pytest.mark.parametrize('arguments', [[], ['--live'], ['--scenario', 'full-workbench'], ['--live', '--scenario', 'full-workbench'], ['--scenario', 'classroom-documents'], ['--live', '--scenario', 'classroom-documents']])
+@pytest.mark.parametrize('arguments', [[], ['--live'], ['--scenario', 'daily-work'], ['--live', '--scenario', 'daily-work'], ['--scenario', 'full-workbench'], ['--live', '--scenario', 'full-workbench'], ['--scenario', 'classroom-documents'], ['--live', '--scenario', 'classroom-documents']])
 def test_live_classroom_operator_denies_incomplete_invocation_before_io(tmp_path, arguments):
     entry = Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py'
     result = subprocess.run([sys.executable, str(entry), *arguments], cwd=tmp_path,
@@ -26,13 +26,25 @@ def test_live_classroom_operator_does_not_echo_an_accidental_key(tmp_path):
     assert list(tmp_path.iterdir()) == []
 
 
-def test_full_workbench_refuses_resume_before_reading_credentials_or_creating_files(tmp_path):
+@pytest.mark.parametrize('root', ['relative', 'C:/synthetic-not-created', '//fixture.invalid/share'])
+def test_live_operator_refuses_system_relative_or_remote_artifact_roots_before_io(tmp_path, root):
     entry = Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py'
-    result = subprocess.run([sys.executable, str(entry), '--live', '--scenario', 'full-workbench',
+    result = subprocess.run([sys.executable, str(entry), '--live', '--provider', 'zhipu',
+        '--source-runtime-root', str(tmp_path/'source'), '--pg-root', str(tmp_path/'pg'), '--artifacts-root', root],
+        cwd=tmp_path, capture_output=True, text=True, timeout=15)
+    assert result.returncode == 2 and json.loads(result.stdout)['requests'] == 0
+    assert json.loads(result.stdout)['reason'] == 'non_system_local_artifacts_root_required'
+    assert result.stderr == '' and list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('scenario,reason', [('full-workbench', 'full_workbench_requires_fresh_fixture'), ('daily-work', 'daily_work_requires_fresh_fixture')])
+def test_full_workbench_refuses_resume_before_reading_credentials_or_creating_files(tmp_path, scenario, reason):
+    entry = Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py'
+    result = subprocess.run([sys.executable, str(entry), '--live', '--scenario', scenario,
         '--source-runtime-root', str(tmp_path/'source'), '--pg-root', str(tmp_path/'pg'), '--resume-runtime-root', str(tmp_path/'old')],
         cwd=tmp_path, capture_output=True, text=True, timeout=15)
     assert result.returncode == 2
-    assert json.loads(result.stdout) == {'status': 'blocked', 'reason': 'full_workbench_requires_fresh_fixture', 'requests': 0}
+    assert json.loads(result.stdout) == {'status': 'blocked', 'reason': reason, 'requests': 0}
     assert result.stderr == '' and list(tmp_path.iterdir()) == []
 
 

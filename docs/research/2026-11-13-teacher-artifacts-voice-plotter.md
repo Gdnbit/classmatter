@@ -39,4 +39,6 @@
 
 ## 文书导出本轮采用结果
 
+语音协议采用结果：继续复用现有Capture、Pydantic AI与Google原生SDK，没有安装另一套ASR或自动下载模型。[Google音频官方文档](https://ai.google.dev/gemini-api/docs/audio)说明音频理解/转写用途；本项目实际仍固定已登记模型，不跟随网页样例自动更换新型号。WebM/WAV/MP3的实际SDK序列化与文字返回已离线核验，包含MIME与原字节一致、无工具/业务写、取消释放；不能代替真实供应商转写准确率。智谱[官方模型概览](https://docs.bigmodel.cn/cn/guide/start/model-overview)本次仍将GLM-4-Flash-250414标为免费文本模型，故仅复测其文字工具链，不拿它冒充语音模型，也不自动启用付费ASR。
+
 优先复用项目已锁定的python-docx1.2.0及python-pptx1.0.2，没有再安装同类框架。两者对应版本的[python-docx许可证](https://raw.githubusercontent.com/python-openxml/python-docx/v1.2.0/LICENSE)及[python-pptx许可证](https://raw.githubusercontent.com/scanny/python-pptx/v1.0.2/LICENSE)均为MIT，已有依赖原始通知保留。按[官方Word用法](https://python-docx.readthedocs.io/en/latest/user/quickstart.html)和[官方PPT用法](https://python-pptx.readthedocs.io/en/latest/user/quickstart.html)生成可编辑段落/文本框，不用截图冒充可编辑文件。实际采用范围为已保存工作文档的DOCX与基础文字PPTX派生导出；PptxGenJS仍为复杂模板/图表等后续候选，未新增运行依赖或外部生成服务。代码、原界面测试、失败和边界见场景结果及实现台账。

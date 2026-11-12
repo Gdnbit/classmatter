@@ -8,6 +8,7 @@ import asyncio
 from contextlib import asynccontextmanager
 import json
 import os
+import re
 from pathlib import Path
 import shutil
 import socket
@@ -31,23 +32,34 @@ def main():
     parser.add_argument('--live', action='store_true')
     parser.add_argument('--source-runtime-root', type=Path)
     parser.add_argument('--pg-root', type=Path)
+    parser.add_argument('--artifacts-root', type=Path, help='Optional absolute non-system local drive for fresh synthetic acceptance artifacts')
     parser.add_argument('--resume-runtime-root', type=Path, help='Prior isolated fixture only; each scenario validates its declared business checkpoint without resetting data')
     parser.add_argument('--resume-thread-id', type=UUID, help='Existing synthetic conversation for the explicit classroom-recovery scenario only')
     parser.add_argument('--provider', choices=('google', 'zhipu'), default='google', help='Explicit registered free model only; never an automatic fallback')
     parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed turns; all attempts remain in the report')
     parser.add_argument('--turn-interval-seconds', type=int, choices=(0, 15, 65), default=0, help='Explicit test-only pacing for free provider rate limits; not application latency or automatic retry')
-    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench'), default='classroom', help='Recovery verifies prior document/exam/score receipts in the same conversation before continuing its unfinished seating steps')
+    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; recovery checks prior receipts before unfinished seating')
     args = parser.parse_args()
     if not args.live or not args.source_runtime_root or not args.pg_root:
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_live_source_and_pg_required', 'requests': 0}))
         return 2
-    if args.scenario == 'full-workbench' and args.resume_runtime_root:
-        print(json.dumps({'status': 'blocked', 'reason': 'full_workbench_requires_fresh_fixture', 'requests': 0}))
+    if args.scenario in ('full-workbench', 'daily-work') and args.resume_runtime_root:
+        print(json.dumps({'status': 'blocked', 'reason': 'daily_work_requires_fresh_fixture' if args.scenario == 'daily-work' else 'full_workbench_requires_fresh_fixture', 'requests': 0}))
         return 2
     if (args.scenario == 'classroom-recovery' and (not args.resume_runtime_root or not args.resume_thread_id)
             or args.resume_thread_id and args.scenario != 'classroom-recovery'):
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_recovery_fixture_and_thread_required', 'requests': 0}))
         return 2
+    if args.artifacts_root is not None:
+        try:
+            valid_artifacts = (args.artifacts_root.is_absolute()
+                and re.fullmatch(r'[D-Zd-z]:', args.artifacts_root.drive) is not None
+                and re.fullmatch(r'[D-Zd-z]:', args.artifacts_root.resolve().drive) is not None)
+        except (OSError, RuntimeError, ValueError):
+            valid_artifacts = False
+        if not valid_artifacts:
+            print(json.dumps({'status': 'blocked', 'reason': 'non_system_local_artifacts_root_required', 'requests': 0}))
+            return 2
     if os.name != 'nt':
         return 2
     os.environ['PYDANTIC_AI_NO_BANNER'] = '1'
@@ -60,17 +72,18 @@ def main():
     from class_os.infrastructure.local_model_activation import LocalModelActivation
     from class_os.infrastructure.agent import PydanticAgentRuntime
     from class_os.domain.roster import CreateClass, CreateStudent
-    source = LocalRuntime(args.source_runtime_root, profile='classroom-work-d4')
     services = setup = target_services = runtime = None
     phase = 'source-preflight'
-    output = ROOT / 'test-results/live-classroom' / uuid4().hex
+    artifacts = args.artifacts_root or ROOT / 'test-results/live-classroom'
+    output = artifacts / uuid4().hex
     output.mkdir(parents=True)
     try:
-        setup = NativeSetup(source, development=True)
-        cookies = setup.handle({'operation': 'development_access'})['cookies']
-        services = open_services(source, local_development=True)
-        auth = (cookies['session'], cookies['client'], cookies['csrf'], services.restrictions.workspace_id)
         if args.provider == 'google':
+            source = LocalRuntime(args.source_runtime_root, profile='classroom-work-d4')
+            setup = NativeSetup(source, development=True)
+            cookies = setup.handle({'operation': 'development_access'})['cookies']
+            services = open_services(source, local_development=True)
+            auth = (cookies['session'], cookies['client'], cookies['csrf'], services.restrictions.workspace_id)
             row = services.query.model_configuration(auth)
             selected = LocalModelActivation(source.root, auth[3]).read()
             if not row or not selected or (str(row['candidate_id']), row['version']) != (selected['candidate_id'], selected['version']):
@@ -81,6 +94,7 @@ def main():
             key = services.worker.store.model_secrets.open(auth[3], row['candidate_id'], row['version'], profile, bytes(row['sealed']))
             proxy = selected['proxy']
         else:
+            phase = 'registered-provider-preflight'
             # Fixed free model listed in the supplier's model overview. Reuse
             # the user's registered standard key without changing their UI selection.
             from class_os.infrastructure.local_runtime import protect
@@ -95,12 +109,14 @@ def main():
             profile = ModelConfiguration(Protocol.CHAT, 'glm-4-flash-250414', packet['base_url'])
             key, proxy = SecretStr(packet['api_key']), None
             del packet
-        services.close(); services = None
-        setup.close(); setup = None
+        if services is not None:
+            services.close(); services = None
+        if setup is not None:
+            setup.close(); setup = None
         phase = 'isolated-preparation'
         if args.resume_runtime_root:
             resume = args.resume_runtime_root.resolve()
-            if not resume.is_relative_to((ROOT / 'test-results/live-classroom').resolve()) or resume.name != 'runtime':
+            if not resume.is_relative_to(artifacts.resolve()) or resume.name != 'runtime':
                 raise ValueError('Only a prior isolated acceptance root may resume')
             runtime = LocalRuntime(resume, profile='classroom-work-d4')
             runtime.start()
@@ -126,7 +142,7 @@ def main():
                 raise ValueError('Resume cannot reset or overwrite classroom work')
             if args.scenario == 'classroom-documents' and target_services.query.documents(*auth, c, t):
                 raise ValueError('Resume cannot reset or overwrite documents')
-        elif args.scenario in ('classroom', 'classroom-documents'):
+        elif args.scenario in ('classroom', 'classroom-documents', 'daily-work'):
             c, t = uuid4(), uuid4()
             commit(CreateClass(c, t, '合成联测班', '合成联测学期', date(2026, 9, 1), date(2027, 1, 30)))
             for name in ('合成学生甲', '合成学生乙'):

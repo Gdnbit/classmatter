@@ -152,7 +152,7 @@
     },
     {
       "name": "prepare_task",
-      "description": "Prepare one manual task, never save/send/delegate. Complete/cancel requires the user's quoted result/reason. For linked creation resolve one confirmed ordinary fact by student and exact text. Deadline must be an explicit ISO timestamp, never invented. Only edits may change an existing deadline; change_due_date with empty due_at explicitly removes it.",
+      "description": "Prepare one manual task, never save/send/delegate. Complete/cancel requires the user's quoted result/reason. For linked creation FIRST read_class_records and copy one confirmed ordinary fact's full student name and exact fact_text into source_fact. Never paraphrase the source. Deadline must be an explicit ISO timestamp, never invented. Only edits may change an existing deadline; change_due_date with empty due_at explicitly removes it.",
       "parameters_json_schema": {
         "additionalProperties": false,
         "properties": {
@@ -301,7 +301,7 @@
     },
     {
       "name": "prepare_record",
-      "description": "Prepare one already-occurred ordinary student fact quoted from the user's account, not a plan or interpretation. Use an explicitly stated ISO timestamp, or occurred_now only for explicit 现在/刚刚. Never infer diagnoses, responsibility or personal-life memory; never saves.",
+      "description": "Prepare one already-occurred ordinary student fact. Copy fact_text as an EXACT contiguous quote from the latest meaningful user request, with no paraphrase or added punctuation; keep unrelated plans/personal notes out. Copy the full student name. For explicit 现在/刚刚 set occurred_now=true and leave occurred_at empty; otherwise use an ISO timestamp explicitly quoted by the user. Never infer time, diagnoses, responsibility or permanent memory; never saves.",
       "parameters_json_schema": {
         "additionalProperties": false,
         "properties": {

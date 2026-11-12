@@ -7,7 +7,7 @@ const attempts=Number(process.env.CLASSMATTER_LIVE_ATTEMPTS||'1');
 const turnInterval=Number(process.env.CLASSMATTER_LIVE_TURN_INTERVAL||'0');
 if(![0,15,65].includes(turnInterval))throw Error('Bounded explicit test pacing required');
 const scenario=process.env.CLASSMATTER_LIVE_SCENARIO||'classroom';
-if(!['classroom','classroom-documents','classroom-recovery','full-workbench'].includes(scenario))throw Error('Explicit supported scenario required');
+if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work'].includes(scenario))throw Error('Explicit supported scenario required');
 const recovery=scenario==='classroom-recovery',resumeThread=process.env.CLASSMATTER_LIVE_THREAD;
 if(recovery&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
 const verifyWorld=scenario!=='classroom';
@@ -17,6 +17,11 @@ if(!stage||!report||!path.isAbsolute(stage)||!path.isAbsolute(report))throw Erro
 const {_electron:electron}=require('playwright-core');
 let app,page,lastResult,recoveredLayout=false,recoveredSeating=false;const rows=[],errors=[];
 function save(){fs.writeFileSync(report,JSON.stringify({live:true,model,scenario,resumed_isolated_fixture:process.env.CLASSMATTER_LIVE_RESUMED==='1',test_attempt_limit:attempts,test_turn_interval_seconds:turnInterval,rows,errors},null,2));}
+async function closeOwnedApp(){
+ const owned=app;app=null;if(!owned)return;const child=owned.process();let timer;
+ try{await Promise.race([owned.close(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Owned fixture close timeout')),10000);})]);}
+ catch(error){if(child&&child.exitCode===null)child.kill();throw error;}finally{clearTimeout(timer);}
+}
 async function launch(){
  const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
  app=await electron.launch({executablePath:require('electron'),args:[stage,'--classmatter-development-no-password'],env,timeout:60000});
@@ -48,12 +53,13 @@ async function world(){
  if(!context)return {context:null};
  const base=`/classes/${context.class_id}/terms/${context.term_id}`;
  const students=(await read(base+'/students')).data,term=await read(base+'/metadata');
- const tasks=(await read('/conversation-d1'+base+'/activity')).data.tasks.map(({task_id,title,status,version})=>({task_id,title,status,version}));
+ const activity=(await read('/conversation-d1'+base+'/activity')).data;
+ const tasks=activity.tasks.map(({task_id,title,status,version,evidence,source_record_id})=>({task_id,title,status,version,evidence,source_record_id}));
  const docs=(await read(base+'/documents')).data,documents=[];
  for(const doc of docs){const d=(await read(base+'/documents/'+doc.document_id)).data;documents.push({document_id:d.document_id,title:d.title,body:d.body,format:d.format,status:d.status,version:d.version});}
  const exams=(await read(base+'/exams')).exams,results=[];
  for(const exam of exams)results.push(await read(base+'/exams/'+exam.exam_id));
- return {context,term,students,tasks,documents,exams,results,seating:(await read(base+'/seating')).layout};
+ return {context,term,students,tasks,records:activity.records,documents,exams,results,seating:(await read(base+'/seating')).layout};
 }
 function assertSaved(candidate,before,after,receipt){
  const c=candidate,cmd=c.command;
@@ -61,7 +67,8 @@ function assertSaved(candidate,before,after,receipt){
  if(cmd==='class.update')assert.equal(after.context.name,c.name);
  if(cmd==='term.update'){assert.equal(after.term.name,c.name);assert.equal(after.term.start_date,c.start_date);assert.equal(after.term.end_date,c.end_date);}
  if(cmd.startsWith('student.')){const student=after.students.find(s=>s.student_id===c.student_id);assert(student);assert.equal(student.name,c.name);assert.equal(student.version,receipt.version);assert.equal(after.students.length,before.students.length+(cmd==='student.create'?1:0));}
- if(cmd.startsWith('task.')){const task=after.tasks.find(t=>t.task_id===c.task_id);assert(task);assert.equal(task.title,c.title);assert.equal(task.version,receipt.version);if(c.status)assert.equal(task.status,c.status);assert.equal(after.tasks.length,before.tasks.length+(cmd==='task.create'?1:0));}
+ if(cmd==='record.create'){const record=after.records.find(r=>r.record_id===c.record_id);assert(record);assert.equal(record.fact_text,c.fact_text);assert.equal(record.student_id,c.student_id);assert.equal(record.version,receipt.version);assert.equal(after.records.length,before.records.length+1);}
+ if(cmd.startsWith('task.')){const task=after.tasks.find(t=>t.task_id===c.task_id);assert(task);assert.equal(task.title,c.title??before.tasks.find(t=>t.task_id===c.task_id).title);assert.equal(task.version,receipt.version);if(c.status)assert.equal(task.status,c.status);if(c.evidence!==undefined)assert.equal(task.evidence,c.evidence);assert.equal(after.tasks.length,before.tasks.length+(cmd==='task.create'?1:0));}
  if(cmd.startsWith('document.')){const doc=after.documents.find(d=>d.document_id===c.document_id);assert(doc);assert.equal(doc.title,c.title);assert.equal(doc.body,c.body);assert.equal(doc.format,c.format);assert.equal(doc.version,receipt.version);assert.equal(after.documents.length,before.documents.length+(cmd==='document.create'?1:0));}
  if(cmd==='exam.create'){const exam=after.exams.find(e=>e.exam_id===c.exam_id);assert(exam);assert.equal(exam.title,c.title);assert.equal(exam.subject,c.subject);assert.equal(Number(exam.maximum_score),Number(c.maximum_score));}
  if(cmd==='score.record'){const exam=after.results.find(e=>e.exam_id===c.exam_id);assert(exam);const result=exam.results.find(r=>r.student_id===c.student_id);assert(result);assert.equal(result.status,c.status);assert.equal(result.score===null?null:Number(result.score),c.score===null?null:Number(c.score));assert.equal(result.version,receipt.version);}
@@ -84,7 +91,7 @@ async function assertDialog(candidate,before,dialog){
   if(candidate.command==='document.revise'){const doc=before.documents.find(d=>d.document_id===candidate.document_id);assert.equal(old['标题'],doc.title);assert.equal(old['正文'],doc.body);}
   if(candidate.command==='score.record'){const prior=before.results.find(e=>e.exam_id===candidate.exam_id).results.find(r=>r.student_id===candidate.student_id);assert.equal(old['成绩'],prior?.score??'—');}
  }
- const labels={name:'名称',term_name:'学期',start_date:'开始日期',end_date:'结束日期',title:'标题',body:'正文',reason:hasComparison?'更正原因':'原因',subject:'科目',...(!hasComparison?{rows:'排数',columns:'每排座位数',row:'目标排',column:'目标座位',first_row:'原座位排',first_column:'原座位号',second_row:'目标排',second_column:'目标座位号'}:{})};
+ const labels={name:'名称',term_name:'学期',start_date:'开始日期',end_date:'结束日期',title:'标题',body:'正文',fact_text:'事实',evidence:'跟进记录',reason:hasComparison?'更正原因':'原因',subject:'科目',...(!hasComparison?{rows:'排数',columns:'每排座位数',row:'目标排',column:'目标座位',first_row:'原座位排',first_column:'原座位号',second_row:'目标排',second_column:'目标座位号'}:{})};
  for(const [key,label]of Object.entries(labels))if(candidate[key]!==undefined&&candidate[key]!==''&&candidate[key]!==null)assert.equal(fields[label],String(candidate[key]),`Preview field ${key}`);
  for(const [key,label]of [['score',hasComparison?'成绩':'分数'],['maximum_score','满分']])if(candidate[key]!==undefined&&candidate[key]!==null)assert.equal(Number(fields[label]),Number(candidate[key]),`Preview field ${key}`);
  if(candidate.student_id&&before.students&&!candidate.command.startsWith('seat.')&&candidate.command!=='student.update_name'){const name=before.students.find(s=>s.student_id===candidate.student_id)?.name;if(name)assert.equal(fields['学生'],name,'Student target must be visible');}
@@ -130,7 +137,7 @@ async function turn(text,continuation=false,attempt=1){
  assert(last,'Accepted request missing from durable history');
  await page.waitForFunction(id=>Object.hasOwn(window.__liveToolEvents,id),request,{timeout:6000});
  const tools=await page.evaluate(id=>window.__liveToolEvents[id],request);assert(Array.isArray(tools),'Tool stream observation must complete');
- rows.push({request_id:request,prompt:text||'continue',attempt,state:last.state,candidate:last.candidate?.command??null,tools,input_tokens:last.input_tokens,output_tokens:last.output_tokens,ms:Date.now()-start});save();
+ rows.push({request_id:request,prompt:text||'continue',attempt,state:last.state,candidate:last.candidate?.command??null,answer:last.assistant_text,tools,input_tokens:last.input_tokens,output_tokens:last.output_tokens,ms:Date.now()-start});save();
  await page.waitForURL(url=>url.pathname===`/chats/${thread}`);
  await page.waitForFunction(()=>!document.querySelector('[aria-label="停止回复"]'));
  if(attempt>1){assert.equal(await page.getByLabel('输入消息').inputValue(),'合成重试保留的未发送草稿');await page.getByLabel('输入消息').fill('');rows.push({case:'explicit retry retained unsent draft',passed:true});save();}
@@ -198,6 +205,33 @@ async function confirm(command){
  }else{
   await page.getByRole('button',{name:'新对话',exact:true}).click();
   result=await turn('这是合成测试，只回复：准备好了。');assert.equal(result.last.candidate,null);assert.deepEqual(rows.at(-1).tools,[]);
+ }
+ if(scenario==='daily-work'){
+  const fact='合成学生甲交来展示作品',title='合成作品核对';
+  const note=`刚刚${fact}，记下来，再根据这条记录建立名为“${title}”的任务。今晚我还要整理自己的书架。每次只准备下一步，先让我确认。`;
+  result=await turn(note);
+  if(!result.last.candidate&&['要记录哪位学生的哪件事？','这件事是什么时候发生的？'].includes(result.last.assistant_text)){
+   rows.push({case:'necessary explicit fact clarification',passed:true});save();
+   result=await turn(`学生是合成学生甲。事实原文为“${fact}”，刚刚发生。先记录这条事实，再根据这条记录建立名为“${title}”的任务；不要把个人随记写入。`);
+  }
+  assert.equal(result.last.candidate?.command,'record.create');assert(note.includes(result.last.candidate.fact_text)&&result.last.candidate.fact_text.includes('交来展示作品'));assert(!result.last.candidate.fact_text.includes('书架'));assert.equal(result.last.candidate.student_id,(await world()).students.find(s=>s.name==='合成学生甲').student_id);await confirm('record.create');
+  result=await turn('',true);assert.equal(result.last.candidate?.command,'task.create');assert.equal(result.last.candidate.title,title);
+  assert.equal(result.last.candidate.source_record_id,(await world()).records[0].record_id);await confirm('task.create');
+  for(const [message,command,status,evidence]of [
+   [`${title}先等待，跟进记录原文为“班长正在收集”`,'task.update','waiting','班长正在收集'],
+   [`结束${title}，实际结果原文为“班长交齐，我已核对”`,'task.complete','done','班长交齐，我已核对'],
+  ]){result=await turn(message);assert.equal(result.last.candidate?.command,command);assert.equal(result.last.candidate.status,status);assert.equal(result.last.candidate.evidence,evidence);await confirm(command);}
+  result=await turn('根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。');
+  assert.equal(result.last.candidate?.command,'document.create');assert.equal(result.last.candidate.title,'合成工作小结');
+  const body=result.last.candidate.body;assert(body.includes('合成学生甲')&&body.includes('交来展示作品')&&body.includes('班长交齐')&&!body.includes('书架'));
+  const tools=rows.filter(row=>row.request_id).at(-1).tools;assert(tools.includes('read_class_records')&&tools.includes('read_class_work'));
+  await confirm('document.create');
+  const accepted=await world();assert.equal(accepted.records.length,1);assert.equal(accepted.tasks.length,1);assert.equal(accepted.tasks[0].status,'done');assert.equal(accepted.tasks[0].version,3);assert.equal(accepted.documents.length,1);
+  const chat=page.url(),thread=result.thread;
+  await closeOwnedApp();await launch();await page.goto(chat);await page.getByLabel('输入消息').waitFor();
+  assert.deepEqual(await world(),accepted,'Daily work persists across complete native/API restart');
+  const history=await read(`/workspace-chat/threads/${thread}`);assert.equal(history.turns.filter(t=>t.action_receipt).length,5);
+  rows.push({case:'fact→linked followup→waiting→end→sourced summary and complete restart',passed:true});assert.deepEqual(errors,[]);save();return;
  }
  if(scenario==='full-workbench'){
   assert.equal((await read('/context')).data,null,'No pre-seeded class or students');
@@ -284,10 +318,10 @@ async function confirm(command){
  if(scenario==='full-workbench')await corePages();
  if(scenario==='classroom-documents'||recovery)await documentPage();
  const accepted=verifyWorld?await world():null;
- await app.close();app=null;await launch();await page.goto(new URL(chat,page.url()).href);await page.getByLabel('输入消息').waitFor();
+ await closeOwnedApp();await launch();await page.goto(new URL(chat,page.url()).href);await page.getByLabel('输入消息').waitFor();
  scores=await read(`/classes/${context.class_id}/terms/${context.term_id}/exams/${exam.exam_id}`);assert.equal(scores.average,'88.50');
  assert.equal((await read(`/classes/${context.class_id}/terms/${context.term_id}/seating`)).layout.version,seats.version);
  const history=await read(`/workspace-chat/threads/${result.thread}`);assert(history.turns.some(t=>t.request_id===result.request&&t.assistant_text.includes('88.5')));
  if(verifyWorld){assert.deepEqual(await world(),accepted,'Complete native/API restart must preserve every domain');await classroomPages();if(scenario==='full-workbench')await corePages();else await documentPage();}
  rows.push({case:'real native API restart, chat/grades/seats persisted',passed:true});assert.deepEqual(errors,[]);save();console.log(recoveredSeating?'PASS remaining business operations; prior failed terminal replies retained':'PASS real provider/native conversation/classroom chain');
-}catch(error){rows.push({case:'failed',type:error.name,message:String(error.message).slice(0,1200)});save();if(page&&!page.isClosed())await page.screenshot({path:path.join(path.dirname(report),'failed.png')}).catch(()=>{});throw error;}finally{if(app)await app.close();}})().catch(e=>{console.error(e);process.exitCode=1;});
+}catch(error){rows.push({case:'failed',type:error.name,message:String(error.message).slice(0,1200)});save();if(page&&!page.isClosed())await page.screenshot({path:path.join(path.dirname(report),'failed.png')}).catch(()=>{});throw error;}finally{await closeOwnedApp().catch(error=>{rows.push({case:'owned fixture cleanup failed',type:error.name});save();process.exitCode=1;});}})().catch(e=>{console.error(e);process.exitCode=1;});

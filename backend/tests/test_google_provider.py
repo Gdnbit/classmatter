@@ -26,6 +26,37 @@ KEY = "synthetic-google-provider-canary"
 SIGNATURE = "c3ludGhldGljLXNpZ25hdHVyZQ=="
 
 
+@pytest.mark.parametrize('name,mime,data', [
+    ('note.webm', 'audio/webm', b'\x1aE\xdf\xa3synthetic-audio'),
+    ('note.wav', 'audio/wav', b'RIFF1234WAVEsynthetic-audio'),
+    ('note.mp3', 'audio/mp3', b'ID3synthetic-audio'),
+])
+async def test_recording_reaches_native_google_as_audio_without_tools_or_persistence(monkeypatch, name, mime, data):
+    import base64
+    from contextlib import asynccontextmanager
+    from class_os.infrastructure.composer_capture import capture_text
+    calls, audits = [], []
+    def reply(request):
+        body = json.loads(request.content); calls.append(body)
+        media = [part['inlineData'] for content in body['contents'] for part in content['parts'] if 'inlineData' in part]
+        assert media == [{'mime_type': mime, 'data': base64.b64encode(data).decode()}]
+        assert not body.get('tools')
+        return httpx.Response(200, json=packet([{'text': '合成口述文字，仍需核对。'}]))
+    clients, _ = intercept(monkeypatch, reply)
+    query = SimpleNamespace(agent_workspace_context=lambda *a: {}, agent_audit=lambda *a, **k: audits.append(a[2]))
+    async def status(credentials):
+        return {'mode': 'configured-api'}
+    @asynccontextmanager
+    async def context(credentials, request):
+        async with model_provider.configured_client(CONFIG, SecretStr(KEY)) as session:
+            yield model_provider.model_for_configuration(CONFIG, session)
+    runtime = SimpleNamespace(active=0)
+    controller = SimpleNamespace(status=status, context=context, runtime=runtime)
+    result = await capture_text(query, controller, (), name, base64.b64encode(data).decode(), 2000)
+    assert result == '合成口述文字，仍需核对。' and len(calls) == 1
+    assert audits == ['started', 'completed'] and runtime.active == 0 and all(client.is_closed for client in clients)
+
+
 @pytest.mark.parametrize('effort', ['low', 'medium', 'high'])
 async def test_composer_effort_reaches_native_google_wire(monkeypatch, effort):
     from class_os.infrastructure.reasoning import reasoning_settings

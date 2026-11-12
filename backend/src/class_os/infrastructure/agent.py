@@ -236,7 +236,8 @@ class PydanticAgentRuntime:
                     raise AgentRejected()
                 native_tools = []
                 for function, contract in zip(tools, expected, strict=True):
-                    native = Tool(function)
+                    native = Tool(function, max_retries=1 if (_workspace_actions is not None
+                        and _workspace_actions.classroom_enabled and function.__name__ == 'prepare_record') else None)
                     definition = native.tool_def
                     if (definition.name != contract["name"] or definition.description != contract["description"]
                             or definition.parameters_json_schema != contract["parameters_json_schema"]
