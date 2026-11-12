@@ -2972,7 +2972,7 @@
       "sha256": "031293ba4d6364d5bb18b895a5caf65e5ad8a4db01e9affe134d3f70ba68ffe7"
     },
     "backend/tests/test_workspace_chat_runtime.py": {
-      "sha256": "8cb8badac3eff6ecdf146db28130ffb1a3d3130604cb9305bf43f97b6d012f84"
+      "sha256": "5a77c005a1d23bf09504174163b4873dc32d998205a1414f8b975b8c6cc9028a"
     },
     "backend/tests/test_workspace_chat_storage.py": {
       "sha256": "1ec38c5ed6543c31817d08ea8524e5f99bee989a359662f6cd00c71ea3e147a6"
