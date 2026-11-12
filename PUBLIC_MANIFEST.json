@@ -615,7 +615,7 @@
       "sha256": "d8dcad82c27b6c219a79efef25b2e999b049c6798ddf90f24c430bc64c5944fe"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "274bde394ee51e564f67f507cbcdb564ea84c3a6546ae62357cf393dd0ce2e07"
+      "sha256": "6291345769188cdb6ed6812ce0267e85240dce9bfba0617de10f59441e3ca726"
     },
     ".gitignore": {
       "sha256": "c34bf3956a066550e5680221b82b4bfd8aaef7363305a1c5949b729a2d02b588"
@@ -1621,7 +1621,7 @@
       "sha256": "32fe60502d9b9587797f4022d9e50751f29eefa17b4087ae2cb31638a7d31796"
     },
     "scripts/tests/test_ci_workflow.py": {
-      "sha256": "44b7f200b2d35a33d59ddd2220de7871f50fbc4921f3ff5375dd5071ff8385ec"
+      "sha256": "0f5debaf456e939b636f6745f1e09462c7627f979e3da06c2aa69940fd3d60d4"
     },
     "scripts/tests/test_generate_synthetic_fixtures.py": {
       "sha256": "6c1074c4227fea921b9096e6b2f563499c2851bf80f0976b32655cf59b5ba478",
@@ -2594,7 +2594,7 @@
       "sha256": "339532c31fda00b2a65a17c5b27001815344c6fdab953a3d543d80ac94497903"
     },
     "docs/product/scenario-catalog.md": {
-      "sha256": "157a8ef9b04f8bb2415d2c4ebdfd6ea825cd846b8afeb414fa690ab38d951844"
+      "sha256": "286d975bdbe526bfe45d9906572b4aab6b43dcac20e3558c9a2908bc8085fd3d"
     },
     "docs/product/student-safety-and-duty-workflows.md": {
       "sha256": "5575daa767000efa787bbd93893ecb727bfa90df6cf4e81cfacdfa38fe245514"
@@ -2921,7 +2921,7 @@
       "sha256": "22223462d29e8dc7483a6e6e6f657266d500f0cab60cf754aeddc4cd41933941"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "00f3141d70f013010c765854d8de8fea7180a4e5d2d0a68930c8e389fbac7353"
+      "sha256": "3d53dd9d449d7a33e8753efac185f12eec0ed93cf922b48be38c2f4d5796ae55"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "237ec0345ad9ba05cadd3269100bd7c6231da2cd4e9f22f970a0b9d85ba49878"
@@ -3254,6 +3254,18 @@
     },
     "backend/tests/test_provider_stability_operator.py": {
       "sha256": "4349aa334d21c50556704a9f6db2a9413b453b42652ec85ee51d97c748a3cb65"
+    },
+    "docs/product/scenario-acceptance-playbook.md": {
+      "sha256": "580bd66d208cb6a359cda320292298619cc177a64a09e3fbc3d245fd20c79f61"
+    },
+    "backend/tests/test_chat_task_deadlines.py": {
+      "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
+    },
+    "docs/product/scenario-run-results.md": {
+      "sha256": "ffa0e3915c3c91fb4412d2e3f69262d1ca0dba958f9dc86182f396a3ea45c950"
+    },
+    "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
+      "sha256": "737956ca739960f28dacf80995cb6508b2628118d75137cb9075bf220bb912a8"
     }
   }
 }

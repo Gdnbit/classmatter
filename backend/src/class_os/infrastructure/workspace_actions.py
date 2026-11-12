@@ -132,7 +132,9 @@ class WorkspaceActionCapture:
                     values = [{"name": row.name, "version": row.version} for row in rows if not search or search in row.name]
                 elif kind == "tasks":
                     rows = query.projection(*credentials, current.class_id, current.term_id)["tasks"]
-                    values = [{"title": row["title"], "status": row["status"], "version": row["version"]} for row in rows if not search or search in row["title"]]
+                    values = [{"title": row["title"], "status": row["status"], "version": row["version"],
+                               "due_at": row["due_at"].isoformat() if row["due_at"] is not None else None}
+                              for row in rows if not search or search in row["title"]]
                 else:
                     rows = query.documents(*credentials, current.class_id, current.term_id)
                     values = [{"title": row["title"], "status": row["status"], "version": row["version"]} for row in rows if not search or search in row["title"]]

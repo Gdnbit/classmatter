@@ -42,6 +42,8 @@ def validate(document):
     required = ("--frozen-lockfile", "-Suite backend", "-Suite web", "-Suite db", "unittest discover", "task-graph", "development", "fixtures", "docs", "scripts/public_guard.py", "scripts/scan_public.py --history")
     if any(command not in runs for command in required):
         raise ValueError("Baseline verification missing")
+    if 'postgresql-client-18=18.6-1.pgdg24.04+2' not in runs:
+        raise ValueError("PostgreSQL server/client exact versions must match")
 
 
 class CiWorkflowTests(unittest.TestCase):
@@ -50,6 +52,14 @@ class CiWorkflowTests(unittest.TestCase):
 
     def test_readonly_cross_host_baseline(self):
         validate(self.document)
+
+    def test_postgres_client_does_not_float_to_newer_minor(self):
+        document = copy.deepcopy(self.document)
+        for step in document['jobs']['baseline']['steps']:
+            if 'run' in step:
+                step['run'] = step['run'].replace(' postgresql-client-18=18.6-1.pgdg24.04+2', '')
+        with self.assertRaises(ValueError):
+            validate(document)
 
     def test_full_regression_budget_is_explicit_and_bounded(self):
         self.assertEqual(45, self.document["jobs"]["baseline"]["timeout-minutes"])
