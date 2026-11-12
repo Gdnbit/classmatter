@@ -31,7 +31,7 @@ const development=app.commandLine.hasSwitch('classmatter-development-no-password
 if(development&&!d1)sourceInvalid=true;
 let window,service,quitting=false,origin,setupWindow;
 if(sourceInvalid) app.whenReady().then(()=>{
-  dialog.showErrorBox('运行环境尚未准备好','运行描述无效；未连接或接管其他实例。原数据未更改。');
+  dialog.showErrorBox('暂时无法打开工作区','应用文件不完整，请重新安装。已有内容未更改。');
   app.exit(1);
 });
 else if(!app.requestSingleInstanceLock()) app.quit();
@@ -147,7 +147,7 @@ else {
   }).catch(async()=>{
     if(service) await service.stop().catch(()=>{});
     // Static error only; never raw process output, local paths, keys or database details.
-    dialog.showErrorBox('运行环境尚未准备好','未连接业务服务；原数据未更改。请按桌面运行文档准备自有合成数据库并启动 PostgreSQL；如已有实例，请检查版本和8000端口。系统没有自动初始化、迁移或重放请求。');
+    dialog.showErrorBox('暂时无法打开工作区','无法连接，请重新打开应用。已有内容未更改。');
     app.exit(1);
   });
 }

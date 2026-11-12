@@ -62,6 +62,7 @@ try {
   const beforeCancel = requests.length;
   await page.getByRole('button', { name: '语音转文字', exact: true }).click();
   await page.getByRole('button', { name: '完成录音并转文字', exact: true }).waitFor();
+  page.once('dialog', dialog => { assert.match(dialog.message(), /无法恢复/); void dialog.accept(); });
   await page.getByRole('button', { name: '取消识别', exact: true }).click();
   await page.waitForTimeout(800);
   assert.equal(requests.length, beforeCancel);
