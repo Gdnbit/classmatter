@@ -44,12 +44,15 @@ async def test_multistep_uses_receipts_and_current_reads_across_restarted_runtim
     business, history, auth, owner, _, clock, store, boundary = workspace_chat
     commands = WorkbenchBusinessGateway(boundary, store, clock=lambda: clock[0])
     query = WorkbenchQueryGateway(boundary, store, clock=lambda: clock[0])
-    progress_seen, tools_seen = [], []
+    progress_seen, tools_seen, repairs = [], [], []
     original = '建立合成流程班，合成流程学期，2026-09-01至2027-01-30；然后添加合成流程学生，再建立文档合成流程小结。'
     def factory(request):
         completed = set()
         def respond(messages, info):
             assert not {'commit', 'approve', 'sql'} & {tool.name for tool in info.function_tools}
+            if any(isinstance(part, RetryPromptPart) for part in messages[-1].parts):
+                repairs.append(True)
+                return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
             returned = [part for part in messages[-1].parts if isinstance(part, ToolReturnPart)]
             if not returned:
                 return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
@@ -64,6 +67,9 @@ async def test_multistep_uses_receipts_and_current_reads_across_restarted_runtim
                 if 'class.create' not in completed:
                     return ModelResponse(parts=[ToolCallPart('prepare_class_create', {'name': '合成流程班', 'term_name': '合成流程学期', 'start_date': '2026-09-01', 'end_date': '2027-01-30'})])
                 if 'document.create' in completed:
+                    if repairs:
+                        assert len(value['actions']) == 3 and all(action['status'] == 'committed' for action in value['actions'])
+                        return ModelResponse(parts=[TextPart('根据已保存的回执，班级、学生与文档三步均已完成，没有重复创建。')])
                     return ModelResponse(parts=[TextPart('已完成三步，没有重复创建。')])
                 return ModelResponse(parts=[ToolCallPart('read_class_work', {'kind': 'class'})])
             if tool == 'read_class_work':
@@ -98,7 +104,7 @@ async def test_multistep_uses_receipts_and_current_reads_across_restarted_runtim
             commands.commit(*auth, proposal.proposal_id, uuid4(), approval)
         # Refresh/repeated dispatch never repeats a tool or business operation.
         assert [event async for event in runtime.stream_queued(auth, thread, key)] == []
-    assert len(progress_seen) == 5 and tools_seen.count('read_class_work') == 8
+    assert len(progress_seen) == 6 and repairs == [True] and tools_seen.count('read_class_work') == 8
     assert [action['status'] for action in progress_seen[1]['actions']] == ['awaiting-confirmation']
     assert [action['status'] for action in progress_seen[-1]['actions']] == ['committed'] * 3
     with owner.transaction(read_only=True) as connection:

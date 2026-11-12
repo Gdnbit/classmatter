@@ -2,6 +2,14 @@
 
 状态：2026-11-13进行中的选型/实施研究；不是全部功能已实现。下载统一使用非C盘。本轮未关闭杀毒、未发出设备运动命令、未将第三方可执行文件加入公开仓库。
 
+## 免费文本Provider交叉核验
+
+本日[官方定价](https://docs.bigmodel.cn/cn/guide/start/pricing)与[模型概览](https://docs.bigmodel.cn/cn/guide/start/model-overview)仍将GLM-4.7-Flash输入/输出标为免费，[型号文档](https://docs.bigmodel.cn/cn/guide/models/free/glm-4.7-flash)注明文本及Function Calling；不是免费多模态/ASR或付费FlashX。[官方思考模式](https://docs.bigmodel.cn/cn/guide/capabilities/thinking-mode)区分默认思考与关闭选项，不能套用于强制思考的新型号。现有SDK的extra_body即可传thinking.type=disabled，无需另装框架或新Key。
+
+实际2请求/1只读合成工具、409输入/15输出Token、2.772秒回合通过；另一次429及临时脚本度量错误留档。只证明当前标准Key/端点的有限协议可用性，不证明长期稳定、账号不限流、完整班务链或相对其他模型的质量优势。选择显式独立评测配置，原用户模型保持，业务权限不变；完整原生演练结果按场景登记，不以厂商基准宣传替代验收。
+
+原生续接的逐请求诊断进一步区分了8.367秒读取超时与HTTP429；只对该精确免费配置使用既有30秒有限单请求，45秒总期限保持。后续一次首请求成功/读进度、第二请求429，不以扩大预算掩盖限流，也不自动换付费模型。SDK已有prepare_tools可在声明的续接阶段仅开放必需只读工具，随后恢复原集合；实际Token只记录供应商正数报告值，缺失未知。这些是当前工程证据，不构成免费服务持续可用承诺。
+
 ## 奎享官方软件
 
 用户指定[奎享官网下载页](http://www.kvenjoy.com/#downloads)。浏览工具与本机HTTPS均访问异常；本机HTTP页面可读，静态引导文件为`kvenjoyweb/kvenjoyweb.nocache.js`。从该站实际发布的GWT资源中找到Aliyun HTTPS下载地址，选取名称为“奎享雕刻(64位).exe”的链接下载，并非第三方下载站替代包。

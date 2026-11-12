@@ -13,7 +13,7 @@ const dailyRecovery=scenario==='daily-work-recovery';
 if((recovery||dailyRecovery)&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
 const verifyWorld=scenario!=='classroom';
 if(![1,2,3].includes(attempts))throw Error('Bounded explicit test attempts required');
-if(!['gemini-3.1-flash-lite','glm-4-flash-250414'].includes(model))throw Error('Explicit approved free model required');
+if(!['gemini-3.1-flash-lite','glm-4-flash-250414','glm-4.7-flash'].includes(model))throw Error('Explicit approved free model required');
 if(!stage||!report||!path.isAbsolute(stage)||!path.isAbsolute(report))throw Error('Explicit isolated stage/report required');
 const {_electron:electron}=require('playwright-core');
 let app,page,lastResult,recoveredLayout=false,recoveredSeating=false;const rows=[],errors=[];
