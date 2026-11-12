@@ -34,6 +34,13 @@ def test_closed_failure_classification(error, category):
     assert 'private' not in json.dumps(classify_failure(error))
 
 
+@pytest.mark.parametrize('limit', ['request_limit', 'tool_calls_limit', 'input_tokens_limit', 'output_tokens_limit', 'total_tokens_limit'])
+def test_usage_diagnostics_retains_only_known_limit_name_without_private_message(limit):
+    result = classify_failure(UsageLimitExceeded(f'private-user-message: exceeded {limit} with private-token-data'))
+    assert result == {'category': 'local_usage_limit', 'limit': limit}
+    assert 'private' not in json.dumps(result)
+
+
 def test_http_signal_is_not_an_invented_provider_root_cause():
     error = ModelHTTPError(504, 'private-model', body='<html>private proxy</html>')
     assert classify_failure(error) == {'category': 'upstream_http', 'http_status': 504}

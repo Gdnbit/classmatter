@@ -7,9 +7,10 @@ const attempts=Number(process.env.CLASSMATTER_LIVE_ATTEMPTS||'1');
 const turnInterval=Number(process.env.CLASSMATTER_LIVE_TURN_INTERVAL||'0');
 if(![0,15,65].includes(turnInterval))throw Error('Bounded explicit test pacing required');
 const scenario=process.env.CLASSMATTER_LIVE_SCENARIO||'classroom';
-if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work'].includes(scenario))throw Error('Explicit supported scenario required');
+if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work','daily-work-recovery'].includes(scenario))throw Error('Explicit supported scenario required');
 const recovery=scenario==='classroom-recovery',resumeThread=process.env.CLASSMATTER_LIVE_THREAD;
-if(recovery&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
+const dailyRecovery=scenario==='daily-work-recovery';
+if((recovery||dailyRecovery)&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
 const verifyWorld=scenario!=='classroom';
 if(![1,2,3].includes(attempts))throw Error('Bounded explicit test attempts required');
 if(!['gemini-3.1-flash-lite','glm-4-flash-250414'].includes(model))throw Error('Explicit approved free model required');
@@ -117,13 +118,13 @@ async function assertDialog(candidate,before,dialog){
  }
  if(candidate.command==='seat.layout.create')assert.equal(await dialog.getByRole('cell').count(),candidate.rows*candidate.columns);
 }
-async function turn(text,continuation=false,attempt=1){
+async function turn(text,continuation=false,attempt=1,retryExisting=false){
  if(turnInterval)await new Promise(resolve=>setTimeout(resolve,turnInterval*1000));
  const before=verifyWorld?await world():null;
  const start=Date.now();
  const [response]=await Promise.all([
   page.waitForResponse(r=>r.request().method()==='POST'&&/\/workspace-chat\/threads\/[^/]+\/turns$/.test(new URL(r.url()).pathname)),
-  (async()=>{if(attempt>1){await page.getByLabel('输入消息').fill('合成重试保留的未发送草稿');await page.getByRole('region',{name:'已保存的对话'}).getByRole('button',{name:'重试回复',exact:true}).click();}
+  (async()=>{if(attempt>1||retryExisting){await page.getByLabel('输入消息').fill('合成重试保留的未发送草稿');await page.getByRole('region',{name:'已保存的对话'}).getByRole('button',{name:'重试回复',exact:true}).click();}
    else if(continuation)await page.getByRole('button',{name:'继续任务',exact:true}).last().click();
    else{await page.getByLabel('输入消息').fill(text);await page.getByRole('button',{name:'发送消息',exact:true}).click();}})(),
  ]);assert.equal(response.status(),200);
@@ -137,10 +138,10 @@ async function turn(text,continuation=false,attempt=1){
  assert(last,'Accepted request missing from durable history');
  await page.waitForFunction(id=>Object.hasOwn(window.__liveToolEvents,id),request,{timeout:6000});
  const tools=await page.evaluate(id=>window.__liveToolEvents[id],request);assert(Array.isArray(tools),'Tool stream observation must complete');
- rows.push({request_id:request,prompt:text||'continue',attempt,state:last.state,candidate:last.candidate?.command??null,answer:last.assistant_text,tools,input_tokens:last.input_tokens,output_tokens:last.output_tokens,ms:Date.now()-start});save();
+ rows.push({thread_id:thread,request_id:request,prompt:text||'continue',attempt,retry_existing_failure:retryExisting,state:last.state,candidate:last.candidate?.command??null,answer:last.assistant_text,tools,input_tokens:last.input_tokens,output_tokens:last.output_tokens,ms:Date.now()-start});save();
  await page.waitForURL(url=>url.pathname===`/chats/${thread}`);
  await page.waitForFunction(()=>!document.querySelector('[aria-label="停止回复"]'));
- if(attempt>1){assert.equal(await page.getByLabel('输入消息').inputValue(),'合成重试保留的未发送草稿');await page.getByLabel('输入消息').fill('');rows.push({case:'explicit retry retained unsent draft',passed:true});save();}
+ if(attempt>1||retryExisting){assert.equal(await page.getByLabel('输入消息').inputValue(),'合成重试保留的未发送草稿');await page.getByLabel('输入消息').fill('');rows.push({case:'explicit retry retained unsent draft',passed:true});save();}
  if(last.state==='failed'&&attempt<attempts){
   assert.equal(last.candidate,null);assert.equal(last.action_receipt,null);
   // Explicit user retry uses the original UI, a new request in this conversation.
@@ -202,20 +203,36 @@ async function confirm(command){
   assert.equal(exam.title,'合成联测月考');assert.equal(exam.subject,'数学');assert.equal(Number(exam.maximum_score),100);assert.equal(exam.exam_id,committed[2].action_receipt.resource_id);
   const score=initial.results[0].results.find(s=>s.student_id===student.student_id);assert.equal(score.score,'80.00');assert.equal(score.version,committed[3].action_receipt.version);assert.equal(committed[3].candidate.exam_id,exam.exam_id);assert.equal(committed[3].candidate.student_id,student.student_id);
   rows.push({case:'same-thread prior receipts and current document/80-score verified; no reset',thread_id:resumeThread,prior_commands:committed.map(t=>t.candidate.command),passed:true});save();
+ }else if(dailyRecovery){
+  await page.goto(new URL(`/chats/${resumeThread}`,page.url()).href);await page.getByLabel('输入消息').waitFor();
+  const history=await read(`/workspace-chat/threads/${resumeThread}`),initial=await world();
+  assert.equal(history.thread.status,'active');assert.equal(history.next_before,null);
+  assert.equal(initial.records.length,1);assert.equal(initial.tasks.length,0);assert.equal(initial.documents.length,0);assert.equal(initial.exams.length,0);assert.equal(initial.seating,null);
+  const committed=history.turns.filter(t=>t.action_receipt);assert.equal(committed.length,1);assert.equal(committed[0].candidate.command,'record.create');assert.equal(committed[0].action_receipt.resource_id,initial.records[0].record_id);
+  const last=history.turns.at(-1);assert.equal(last.user_text,'继续完成上面的任务，只处理尚未完成的步骤。');
+  if(last.state==='completed'){
+   assert.equal(last.candidate?.command,'task.create');assert.equal(last.candidate.title,'合成作品核对');assert.equal(last.candidate.source_record_id,initial.records[0].record_id);assert.equal(last.candidate.student_id,initial.records[0].student_id);assert.equal(last.action_receipt,null);
+   assert(last.input_tokens>0&&last.output_tokens>0,'The resumed candidate must retain real provider usage');
+   lastResult={thread:resumeThread,last,request:last.request_id,before:initial};result=lastResult;
+  }else assert.equal(last.state,'failed');
+  rows.push({case:'same original fact/receipt and failed continuation preserved; no reset',prior_failure:true,thread_id:resumeThread,failed_requests:history.turns.filter(t=>t.state==='failed').map(t=>t.request_id),passed:true});save();
  }else{
   await page.getByRole('button',{name:'新对话',exact:true}).click();
   result=await turn('这是合成测试，只回复：准备好了。');assert.equal(result.last.candidate,null);assert.deepEqual(rows.at(-1).tools,[]);
  }
- if(scenario==='daily-work'){
+ if(scenario==='daily-work'||dailyRecovery){
   const fact='合成学生甲交来展示作品',title='合成作品核对';
   const note=`刚刚${fact}，记下来，再根据这条记录建立名为“${title}”的任务。今晚我还要整理自己的书架。每次只准备下一步，先让我确认。`;
-  result=await turn(note);
-  if(!result.last.candidate&&['要记录哪位学生的哪件事？','这件事是什么时候发生的？'].includes(result.last.assistant_text)){
-   rows.push({case:'necessary explicit fact clarification',passed:true});save();
-   result=await turn(`学生是合成学生甲。事实原文为“${fact}”，刚刚发生。先记录这条事实，再根据这条记录建立名为“${title}”的任务；不要把个人随记写入。`);
+  if(!dailyRecovery){
+   result=await turn(note);
+   if(!result.last.candidate&&['要记录哪位学生的哪件事？','这件事是什么时候发生的？'].includes(result.last.assistant_text)){
+    rows.push({case:'necessary explicit fact clarification',passed:true});save();
+    result=await turn(`学生是合成学生甲。事实原文为“${fact}”，刚刚发生。先记录这条事实，再根据这条记录建立名为“${title}”的任务；不要把个人随记写入。`);
+   }
+   assert.equal(result.last.candidate?.command,'record.create');assert(note.includes(result.last.candidate.fact_text)&&result.last.candidate.fact_text.includes('交来展示作品'));assert(!result.last.candidate.fact_text.includes('书架'));assert.equal(result.last.candidate.student_id,(await world()).students.find(s=>s.name==='合成学生甲').student_id);await confirm('record.create');
   }
-  assert.equal(result.last.candidate?.command,'record.create');assert(note.includes(result.last.candidate.fact_text)&&result.last.candidate.fact_text.includes('交来展示作品'));assert(!result.last.candidate.fact_text.includes('书架'));assert.equal(result.last.candidate.student_id,(await world()).students.find(s=>s.name==='合成学生甲').student_id);await confirm('record.create');
-  result=await turn('',true);assert.equal(result.last.candidate?.command,'task.create');assert.equal(result.last.candidate.title,title);
+  if(!dailyRecovery||!result?.last?.candidate)result=dailyRecovery?await turn('继续完成上面的任务，只处理尚未完成的步骤。',false,1,true):await turn('',true);
+  assert.equal(result.last.candidate?.command,'task.create');assert.equal(result.last.candidate.title,title);
   assert.equal(result.last.candidate.source_record_id,(await world()).records[0].record_id);await confirm('task.create');
   for(const [message,command,status,evidence]of [
    [`${title}先等待，跟进记录原文为“班长正在收集”`,'task.update','waiting','班长正在收集'],

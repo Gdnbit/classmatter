@@ -17,18 +17,21 @@ FALSE_READY = '第三步已准备就绪：建立一个2排3座的座位表。请
 @pytest.mark.parametrize('case', ['repair', 'exhausted', 'ordinary'])
 async def test_continuation_needs_a_real_candidate_and_repairs_are_bounded(classroom_work, case):
     business, query, auth, owner, clock, store, commit, c, t, students = classroom_work
-    attempts, repairs = [], []
+    attempts, repairs, progress_reads = [], [], []
     def factory(request):
         def respond(messages, info):
             if request.text == '以后帮我建立2排3座的座位表。':
                 return ModelResponse(parts=[TextPart('收到。')])
             attempts.append(True)
+            if case == 'repair' and any(isinstance(part, ToolReturnPart) and part.tool_name == 'read_task_progress' for part in messages[-1].parts):
+                progress_reads.append(True)
+                return ModelResponse(parts=[ToolCallPart('prepare_seat_layout', {'rows': 2, 'columns': 3})])
             if any(isinstance(part, ToolReturnPart) for part in messages[-1].parts):
                 return ModelResponse(parts=[TextPart(FALSE_READY)])
             if any(isinstance(part, RetryPromptPart) for part in messages[-1].parts):
                 repairs.append(True)
                 if case == 'repair':
-                    return ModelResponse(parts=[ToolCallPart('prepare_seat_layout', {'rows': 2, 'columns': 3})])
+                    return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
             return ModelResponse(parts=[TextPart(FALSE_READY)])
         return FunctionModel(respond)
     sdk = PydanticAgentRuntime(query, model_factory=factory, timeout=45)
@@ -44,7 +47,7 @@ async def test_continuation_needs_a_real_candidate_and_repairs_are_bounded(class
         row = (await client.get(prefix)).json()['turns'][-1]
         if case == 'repair':
             assert row['state'] == 'completed' and row['candidate']['command'] == 'seat.layout.create'
-            assert len(attempts) == 2 and len(repairs) == 1
+            assert len(attempts) == 3 and len(repairs) == 1 and progress_reads == [True]
         elif case == 'exhausted':
             assert row['state'] == 'failed' and row['candidate'] is None and row['assistant_text'] is None
             assert 'message.delta' not in wire.text and len(attempts) == 2 and len(repairs) == 1

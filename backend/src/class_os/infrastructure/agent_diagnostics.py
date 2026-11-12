@@ -3,6 +3,7 @@ import asyncio
 import json
 import socket
 import ssl
+import re
 from time import monotonic
 
 import httpx
@@ -50,7 +51,14 @@ def classify_failure(error):
                 result["provider_status"] = signal
             return result
     if isinstance(error, UsageLimitExceeded):
-        return {"category": "local_usage_limit"}
+        result = {"category": "local_usage_limit"}
+        # Emit only a known SDK limit name, never the exception text/counts.
+        detail = str(error)[:1024]
+        for limit in ('request_limit', 'tool_calls_limit', 'input_tokens_limit', 'output_tokens_limit', 'total_tokens_limit'):
+            if re.search(r'\b' + limit + r'\b', detail):
+                result['limit'] = limit
+                break
+        return result
     if isinstance(error, TimeoutError):
         return {"category": "timeout_unattributed"}
     if isinstance(error, UnexpectedModelBehavior):

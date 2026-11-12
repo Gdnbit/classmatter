@@ -27,6 +27,28 @@ class OperatorParser(argparse.ArgumentParser):
         super().error('Invalid acceptance options; use --help.')
 
 
+def daily_recovery_checkpoint(history, world, documents):
+    """Accept only the original saved fact and its failed/pending linked follow-up."""
+    if (history['thread']['status'] != 'active' or history['next_before'] is not None
+            or not history['turns'] or len(world['records']) != 1 or world['tasks'] or documents):
+        return False
+    saved = [turn for turn in history['turns'] if turn['action_receipt']]
+    if (len(saved) != 1 or saved[0]['candidate']['command'] != 'record.create'
+            or str(world['records'][0]['record_id']) != str(saved[0]['action_receipt']['resource_id'])):
+        return False
+    last = history['turns'][-1]
+    if last['user_text'] != '继续完成上面的任务，只处理尚未完成的步骤。':
+        return False
+    pending = [turn for turn in history['turns'] if turn['candidate'] and not turn['action_receipt']]
+    if last['state'] == 'failed':
+        return not pending
+    candidate = last['candidate']
+    return (last['state'] == 'completed' and isinstance(candidate, dict) and pending == [last]
+        and candidate['command'] == 'task.create' and candidate['title'] == '合成作品核对'
+        and str(candidate['source_record_id']) == str(world['records'][0]['record_id'])
+        and str(candidate['student_id']) == str(world['records'][0]['student_id']))
+
+
 def main():
     parser = OperatorParser(description=__doc__)
     parser.add_argument('--live', action='store_true')
@@ -34,11 +56,11 @@ def main():
     parser.add_argument('--pg-root', type=Path)
     parser.add_argument('--artifacts-root', type=Path, help='Optional absolute non-system local drive for fresh synthetic acceptance artifacts')
     parser.add_argument('--resume-runtime-root', type=Path, help='Prior isolated fixture only; each scenario validates its declared business checkpoint without resetting data')
-    parser.add_argument('--resume-thread-id', type=UUID, help='Existing synthetic conversation for the explicit classroom-recovery scenario only')
+    parser.add_argument('--resume-thread-id', type=UUID, help='Existing synthetic conversation for an explicit recovery scenario only')
     parser.add_argument('--provider', choices=('google', 'zhipu'), default='google', help='Explicit registered free model only; never an automatic fallback')
     parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed turns; all attempts remain in the report')
     parser.add_argument('--turn-interval-seconds', type=int, choices=(0, 15, 65), default=0, help='Explicit test-only pacing for free provider rate limits; not application latency or automatic retry')
-    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; recovery checks prior receipts before unfinished seating')
+    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-recovery'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; explicit recovery verifies its original saved checkpoint')
     args = parser.parse_args()
     if not args.live or not args.source_runtime_root or not args.pg_root:
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_live_source_and_pg_required', 'requests': 0}))
@@ -46,8 +68,8 @@ def main():
     if args.scenario in ('full-workbench', 'daily-work') and args.resume_runtime_root:
         print(json.dumps({'status': 'blocked', 'reason': 'daily_work_requires_fresh_fixture' if args.scenario == 'daily-work' else 'full_workbench_requires_fresh_fixture', 'requests': 0}))
         return 2
-    if (args.scenario == 'classroom-recovery' and (not args.resume_runtime_root or not args.resume_thread_id)
-            or args.resume_thread_id and args.scenario != 'classroom-recovery'):
+    if (args.scenario in ('classroom-recovery', 'daily-work-recovery') and (not args.resume_runtime_root or not args.resume_thread_id)
+            or args.resume_thread_id and args.scenario not in ('classroom-recovery', 'daily-work-recovery')):
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_recovery_fixture_and_thread_required', 'requests': 0}))
         return 2
     if args.artifacts_root is not None:
@@ -142,6 +164,12 @@ def main():
                 raise ValueError('Resume cannot reset or overwrite classroom work')
             if args.scenario == 'classroom-documents' and target_services.query.documents(*auth, c, t):
                 raise ValueError('Resume cannot reset or overwrite documents')
+            if args.scenario == 'daily-work-recovery':
+                from class_os.application.workspace_chat import WorkspaceChatQueryGateway
+                history = WorkspaceChatQueryGateway(target_services.query.identity, target_services.query.store).history(auth, args.resume_thread_id)
+                world = target_services.query.projection(*auth, c, t)
+                if not daily_recovery_checkpoint(history, world, target_services.query.documents(*auth, c, t)):
+                    raise ValueError('Only the original failed-followup checkpoint may resume')
         elif args.scenario in ('classroom', 'classroom-documents', 'daily-work'):
             c, t = uuid4(), uuid4()
             commit(CreateClass(c, t, '合成联测班', '合成联测学期', date(2026, 9, 1), date(2027, 1, 30)))
