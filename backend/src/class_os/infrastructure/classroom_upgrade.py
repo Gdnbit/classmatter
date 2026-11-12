@@ -5,6 +5,7 @@ from sqlalchemy import text
 from .local_runtime import LocalRuntime
 from .operator_backup import SyntheticBackup, encoded
 from .persistence.database import Database, migrate
+from .persistence.schema_inventory import schema_profile
 from .workspace_local_runtime import surface
 from .workbench_upgrade import (UpgradeRejected, descriptor, load_plan, save_plan, digest, business_digest,
     known_service_stopped, native_anchor, no_clients, read_bytes, publish_manifest)
@@ -81,9 +82,36 @@ def upgrade_classroom(runtime):
                         raise UpgradeRejected()
                 if current.profile == 'classroom-work-d4':
                     return current
-                head = '0030'
+                head = schema_profile('classroom-work-d4')[0]
+            if head == '0030':
+                # Same columns/ACLs, wider *closed* candidate list. Verify a
+                # full prior-revision restore before altering the constraint.
+                if plan is None or plan['owner_id'] != str(row['owner_id']) or plan['workspace_id'] != str(row['workspace_id']):
+                    raise UpgradeRejected()
+                backup = SyntheticBackup(current, profile='classroom-work-d4', checkpoint_revision='0030')
+                artifact = backup.create()
+                backup.check_current_restrictions(artifact, restrictions)
+                packet, _ = backup._open(artifact)
+                activity_journal = 'chat-activity-upgrade.dpapi'
+                prior = load_plan(current, source, target, journal=activity_journal, kind='classmatter.chat-activity-upgrade.v1')
+                save_plan(current, {'kind': 'classmatter.chat-activity-upgrade.v1', 'root': digest(str(current.root).encode('utf-8')),
+                    'source': digest(source), 'target': digest(target), 'attempt_id': str(uuid4()), 'backup_id': str(artifact),
+                    'business': business_digest(packet['inventory']), 'owner_id': str(row['owner_id']), 'workspace_id': str(row['workspace_id'])},
+                    prior, journal=activity_journal)
+                with connection.begin():
+                    no_clients(connection); native_anchor(connection, current)
+                    if SyntheticBackup._inventory(connection, profile='classroom-work-d4') != packet['inventory']:
+                        raise UpgradeRejected()
+                    target_database = Database(database.engine.url, migration=True, profile='classroom-work-d4')
+                    migrate(target_database, connection=connection)
+                    surface(connection, profile='classroom-work-d4')
+                    after = SyntheticBackup._inventory(connection, profile='classroom-work-d4')
+                    after['alembic_version'] = packet['inventory']['alembic_version']
+                    if after != packet['inventory']:
+                        raise UpgradeRejected()
+                head = schema_profile('classroom-work-d4')[0]
             with connection.begin():
-                if head == '0030':
+                if head == schema_profile('classroom-work-d4')[0]:
                     surface(connection, profile='classroom-work-d4')
                     if plan is None or plan['owner_id'] != str(row['owner_id']) or plan['workspace_id'] != str(row['workspace_id']):
                         raise UpgradeRejected()

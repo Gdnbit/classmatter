@@ -14,8 +14,9 @@ export type ChatCandidate =
   | (Scope & { command: "term.update"; expected_version: number; previous_name: string; name: string; previous_start_date: string; start_date: string; previous_end_date: string; end_date: string })
   | (Scope & { command: "student.create"; student_id: string; expected_class_version: number; name: string })
   | (Scope & { command: "student.update_name"; student_id: string; expected_version: number; previous_name: string; name: string })
+  | (Scope & { command: 'record.create'; record_id: string; student_id: string; kind: string; occurred_at: string; fact_text: string; observation_text: string; related_record_id: string | null })
   | (Scope & { command: "task.create"; task_id: string; title: string; due_at: string | null; student_id: string | null; source_record_id: string | null })
-  | (Scope & { command: "task.update"; task_id: string; expected_version: number; status: string; evidence: string; title?: string | null; due_at?: string | null; change_due_date?: boolean })
+  | (Scope & { command: "task.update" | "task.complete" | "task.cancel"; task_id: string; expected_version: number; status: string; evidence: string; title?: string | null; due_at?: string | null; change_due_date?: boolean })
   | (Scope & { command: "document.create"; document_id: string; title: string; body: string; format: "plain-text" | "markdown" })
   | (Scope & { command: "document.revise"; document_id: string; expected_version: number; title: string; body: string; format: "plain-text" | "markdown" })
 export type ChatThread = { thread_id: string; title: string; status: "active" | "archived" | "cleared"; version: number; created_at: string; updated_at: string; cleared_at: string | null }

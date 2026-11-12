@@ -184,3 +184,61 @@ def test_d4_native_chat_grades_seats_survive_application_restart(owned_upgrade):
         env=dict(os.environ, CLASSMATTER_TEST_RUNTIME_ROOT=str(current.root), CLASSMATTER_TEST_SERVICE_PORT=str(port), CLASSMATTER_TEST_PROFILE='classroom-work-d4'),
         capture_output=True, text=True, encoding='utf-8', timeout=180, creationflags=flags)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.db
+@pytest.mark.skipif(os.name != 'nt', reason='Owned Windows DPAPI checkpoint')
+def test_revision30_activity_upgrade_is_checkpointed_atomic_and_retryable(owned_upgrade, monkeypatch):
+    from sqlalchemy import text
+    from class_os.infrastructure import classroom_upgrade as upgrade
+    from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
+    current = upgrade_classroom(upgrade_workspace_chat(owned_upgrade.runtime))
+    native = NativeSetup(current, development=True)
+    try:
+        cookies = native.handle({'operation': 'development_access'})['cookies']
+    finally:
+        native.close()
+    auth = cookies['session'], cookies['client'], cookies['csrf'], owned_upgrade.workspace_id
+    services = open_services(current, local_development=True)
+    thread, request = uuid4(), uuid4()
+    try:
+        chats = WorkspaceChatBusinessGateway(services.worker.identity, services.worker.store)
+        chats.send(auth, thread, request, '合成0030原聊天')
+        chats.finish(auth, chats.claim(auth, thread, request), 'completed', '合成原回答')
+    finally:
+        services.close()
+    owner = current.database('migrator')
+    try:
+        # Reconstruct the exact old candidate guard in this disposable fixture.
+        with owner.transaction() as connection:
+            connection.execute(text('ALTER TABLE class_os.workspace_chat_turn DROP CONSTRAINT workspace_chat_candidate_command_check'))
+            connection.execute(text("""ALTER TABLE class_os.workspace_chat_turn ADD CONSTRAINT workspace_chat_candidate_command_check
+                CHECK(candidate IS NULL OR (jsonb_typeof(candidate)='object' AND octet_length(candidate::text)<=440000
+                AND candidate->>'command' IN ('class.create','class.update','term.update','student.create','student.update_name',
+                'task.create','task.update','document.create','document.revise','exam.create','score.record','seat.layout.create','seat.assign','seat.swap')))"""))
+            connection.execute(text("UPDATE class_os.alembic_version SET version_num='0030'"))
+        checkpoint = SyntheticBackup(current, profile='classroom-work-d4', checkpoint_revision='0030')
+        artifact = checkpoint.create()
+        assert checkpoint.check(artifact)['snapshot_integrity_verified']
+        migrate = upgrade.migrate
+        def fail_after_migration(*args, **kwargs):
+            migrate(*args, **kwargs)
+            raise RuntimeError('Synthetic interrupted activity upgrade')
+        monkeypatch.setattr(upgrade, 'migrate', fail_after_migration)
+        with pytest.raises(UpgradeRejected):
+            upgrade_classroom(current)
+        with owner.transaction(read_only=True) as connection:
+            assert connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() == '0030'
+        monkeypatch.setattr(upgrade, 'migrate', migrate)
+        assert upgrade_classroom(current).root == current.root
+        assert upgrade_classroom(current).root == current.root
+        services = open_services(current, local_development=True)
+        try:
+            row = WorkspaceChatQueryGateway(services.query.identity, services.query.store).turn(auth, thread, request)[1]
+            assert row['assistant_text'] == '合成原回答' and row['change_preview'] is None
+            backup = SyntheticBackup(current, profile='classroom-work-d4')
+            assert backup.check_current_restrictions(backup.create(), services.restrictions)['snapshot_integrity_verified']
+        finally:
+            services.close()
+    finally:
+        owner.close()

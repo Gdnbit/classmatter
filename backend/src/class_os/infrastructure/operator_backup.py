@@ -51,7 +51,7 @@ def encoded(value):
 
 
 class SyntheticBackup:
-    def __init__(self, runtime, *, codec=protect, profile="r1", legacy_classroom=False):
+    def __init__(self, runtime, *, codec=protect, profile="r1", legacy_classroom=False, checkpoint_revision=None):
         if profile not in ("r1", "conversation-d1", "workbench-d2", "workspace-chat-d3", "classroom-work-d4"):
             raise ValueError("Unsupported checkpoint profile")
         self.head, self.tables = schema_profile(profile)
@@ -60,6 +60,11 @@ class SyntheticBackup:
         self.legacy_classroom = legacy_classroom
         if legacy_classroom:
             self.head = '0029'
+        if checkpoint_revision is not None:
+            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision != '0030':
+                raise ValueError('Explicit prior D4 checkpoint revision required')
+            self.head = checkpoint_revision
+        self.checkpoint_revision = checkpoint_revision
         self.profile = profile
         self.kind = {"r1": "class-os.owned-synthetic-backup.v1",
                      "conversation-d1": "classmatter.owned-conversation-backup.v1",
@@ -138,12 +143,16 @@ class SyntheticBackup:
             raise BackupRejected() from None
 
     @staticmethod
-    def _state(connection, *, profile="r1", legacy_classroom=False):
+    def _state(connection, *, profile="r1", legacy_classroom=False, checkpoint_revision=None):
         head, _ = schema_profile(profile)
         if legacy_classroom:
             if profile != 'classroom-work-d4':
                 raise BackupRejected()
             head = '0029'
+        if checkpoint_revision is not None:
+            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision != '0030':
+                raise BackupRejected()
+            head = checkpoint_revision
         validate_surface(connection, complete=True, profile=profile)
         if (connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != head
                 or connection.execute(text("SELECT data_mode FROM class_os.database_state WHERE singleton=true")).scalar_one() != "synthetic-only"):
@@ -213,7 +222,7 @@ class SyntheticBackup:
                 connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
                 if not connection.execute(text("SELECT pg_try_advisory_xact_lock_shared(607103003)")).scalar_one():
                     raise BackupRejected()
-                self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom)
+                self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom, checkpoint_revision=self.checkpoint_revision)
                 if connection.execute(text("SELECT pg_database_size(current_database())")).scalar_one() > 32 * MIB:
                     raise BackupRejected()
                 snapshot = connection.execute(text("SELECT pg_export_snapshot()")).scalar_one()
@@ -302,7 +311,7 @@ class SyntheticBackup:
         from .conversation_integrity import restriction_head, validate_restriction_snapshot
         with database.transaction(read_only=True) as connection:
             connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
-            self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom)
+            self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom, checkpoint_revision=self.checkpoint_revision)
             head = restriction_head(connection, restrictions.workspace_id)
             compared = restrictions.compare(head)
             if compared.state != "aligned":
@@ -329,7 +338,7 @@ class SyntheticBackup:
             restored = Database(database.engine.url.set(database=temporary), migration=True, profile=self.profile)
             try:
                 with restored.transaction(read_only=True) as connection:
-                    self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom)
+                    self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom, checkpoint_revision=self.checkpoint_revision)
                     if self._inventory(connection, profile=self.profile) != packet["inventory"]:
                         raise BackupRejected()
                     if current is not None:

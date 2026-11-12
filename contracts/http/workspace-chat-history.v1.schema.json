@@ -230,6 +230,9 @@
               "$ref": "#/$defs/StudentNameBody"
             },
             {
+              "$ref": "#/$defs/RecordBody"
+            },
+            {
               "$ref": "#/$defs/TaskBody"
             },
             {
@@ -677,7 +680,9 @@
             "maximum_score",
             "score",
             "reason",
-            "evidence"
+            "evidence",
+            "fact_text",
+            "occurred_at"
           ],
           "title": "Field",
           "type": "string"
@@ -713,6 +718,94 @@
         "after"
       ],
       "title": "FieldChange",
+      "type": "object"
+    },
+    "RecordBody": {
+      "additionalProperties": false,
+      "properties": {
+        "command": {
+          "const": "record.create",
+          "title": "Command",
+          "type": "string"
+        },
+        "record_id": {
+          "format": "uuid",
+          "title": "Record Id",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "student_id": {
+          "format": "uuid",
+          "title": "Student Id",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "attendance_late_fact",
+            "attendance_absent_fact",
+            "leave_requested_fact",
+            "leave_approved_fact",
+            "leave_returned_fact",
+            "homework_missing_fact",
+            "homework_submitted_fact",
+            "ordinary_fact",
+            "teacher_observation",
+            "discipline_fact",
+            "conversation_fact"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "fact_text": {
+          "maxLength": 2000,
+          "title": "Fact Text",
+          "type": "string"
+        },
+        "observation_text": {
+          "maxLength": 2000,
+          "title": "Observation Text",
+          "type": "string"
+        },
+        "related_record_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Related Record Id"
+        }
+      },
+      "required": [
+        "command",
+        "record_id",
+        "class_id",
+        "term_id",
+        "student_id",
+        "kind",
+        "occurred_at",
+        "fact_text",
+        "observation_text"
+      ],
+      "title": "RecordBody",
       "type": "object"
     },
     "ScoreRecord": {
@@ -1229,7 +1322,11 @@
       "additionalProperties": false,
       "properties": {
         "command": {
-          "const": "task.update",
+          "enum": [
+            "task.update",
+            "task.complete",
+            "task.cancel"
+          ],
           "title": "Command",
           "type": "string"
         },

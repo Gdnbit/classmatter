@@ -51,7 +51,7 @@ SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
                                    "conversation-d1": ("0026", REGISTERED_TABLES | D1_TABLES),
                                    "workbench-d2": ("0027", REGISTERED_TABLES | D1_TABLES | D2_TABLES),
                                    "workspace-chat-d3": ("0028", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS)),
-                                   "classroom-work-d4": ("0030", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS))})
+                                   "classroom-work-d4": ("0031", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS))})
 
 
 def schema_profile(value="r1"):
