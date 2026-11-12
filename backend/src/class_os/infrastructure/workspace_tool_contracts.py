@@ -12,6 +12,6 @@ def catalog(classroom=False):
     value = json.loads(path.read_text(encoding="utf-8"))
     if (type(value) is not dict or set(value) != {"schema_version", "tools"}
             or value["schema_version"] != ("classmatter.classroom-tools.v1" if classroom else "classmatter.workspace-tools.v1")
-            or tuple(item["name"] for item in value["tools"]) != NAMES + (("read_class_records", "prepare_record", "read_classroom_work", "prepare_exam", "prepare_score", "prepare_seat_layout", "prepare_seat_assignment", "prepare_seat_swap") if classroom else ())):
+            or tuple(item["name"] for item in value["tools"]) != NAMES + (("read_class_records", "prepare_record", "read_classroom_work", "prepare_exam", "prepare_score", "prepare_seat_layout", "prepare_seat_assignment", "prepare_seat_swap", "recall_this_chat") if classroom else ())):
         raise ValueError("Workspace tool snapshot mismatch")
     return tuple(value["tools"])

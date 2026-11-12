@@ -63,6 +63,7 @@ class WorkspaceChatRuntime:
             intent = [row['user_text'] for row in history['turns'] if row['ordinal'] < ticket['ordinal'] and row['state'] == 'completed']
             capture = WorkspaceActionCapture(tuple(intent + [ticket["user_text"]]),
                 progress_reader=lambda: self.query.history(credentials, thread_id),
+                recall_reader=lambda keyword: self.query.recall(credentials, thread_id, keyword, before=ticket['ordinal']),
                 classroom_enabled=self.business.store.database.profile == 'classroom-work-d4')
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket["user_text"], Mode.CHAT)
