@@ -114,7 +114,7 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
         reasoning={s.reasoning} onReasoning={s.setReasoning}
         onManage={onManageModels} onPreview={onPreviewModel} onVerified={onModelVerified} onError={onError} />
       <button type="button" className={`composer-icon${capture.recording ? ' composer-recording' : ''}`} aria-label={capture.recording ? '完成录音并转文字' : '语音转文字'}
-        title={capture.recording ? '完成录音并转文字' : '语音转文字'} disabled={capture.busy} onClick={() => void capture.microphone()}>{capture.recording ? <Square size={17} /> : <Mic size={19} />}</button>
+        title={capture.recording ? '完成录音并转文字' : '语音转文字'} disabled={capture.busy || !!s.recordingFile} onClick={() => void capture.microphone()}>{capture.recording ? <Square size={17} /> : <Mic size={19} />}</button>
       {s.lastActive ? <button type="button" className="composer-send" aria-label="停止回复" onClick={() => void s.stop()}><X size={18} /></button>
         : <button className="composer-send" aria-label="发送消息" disabled={!s.canSend || !s.text.trim() || capture.busy || capture.recording}><ArrowUp size={19} /></button>}
     </div>
@@ -123,6 +123,10 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
     {(capture.busy || capture.recording || capture.status) && <div className={capture.busy || capture.recording ? 'composer-feedback' : 'sr-only'} role="status">{capture.recording ? `正在录音 ${Math.floor(capture.seconds / 60)}:${String(capture.seconds % 60).padStart(2, '0')}` : capture.status}
       {(capture.busy || capture.recording) && <button type="button" onClick={capture.cancel} aria-label="取消识别">取消</button>}</div>}
     {capture.error && <p className="composer-error" role="alert">{capture.error}</p>}
+    {s.recordingFile && !capture.busy && !capture.recording && <div className="composer-feedback" role="group" aria-label="待识别录音">
+      <button type="button" onClick={capture.retryRecording}>识别录音</button>
+      <button type="button" onClick={capture.discardRecording}>丢弃录音</button>
+    </div>}
     {dragging && <p className="composer-drop-hint">松开以添加内容</p>}
   </form>
 }

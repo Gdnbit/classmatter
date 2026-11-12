@@ -120,7 +120,8 @@ async def test_capture_original_d4_http_requires_identity_but_not_class(classroo
 
 
 @pytest.mark.db
-def test_composer_original_ui_import_dictation_and_draft_isolation(classroom_work):
+@pytest.mark.parametrize('driver', ['composer-input-browser.mjs', 'recording-recovery-browser.mjs'])
+def test_composer_original_ui_import_dictation_and_draft_isolation(classroom_work, driver):
     """Real HTTP/PG/UI with an explicitly synthetic media provider, no external calls."""
     from class_os.interfaces.http.web import mount_web
     business, query, auth, owner, clock, store, commit, c, t, students = classroom_work
@@ -159,10 +160,10 @@ def test_composer_original_ui_import_dictation_and_draft_isolation(classroom_wor
         while not server.started:
             assert thread.is_alive() and time.monotonic() < deadline
             time.sleep(.05)
-        result = subprocess.run(['node', 'tests/composer-input-browser.mjs'], cwd=root / 'apps/web',
+        result = subprocess.run(['node', 'tests/' + driver], cwd=root / 'apps/web',
             env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}'), capture_output=True, text=True, encoding='utf-8',
             timeout=180, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-        (root / 'test-results/composer-browser-details.log').write_text(result.stdout + result.stderr, encoding='utf-8')
+        (root / ('test-results/' + driver + '.log')).write_text(result.stdout + result.stderr, encoding='utf-8')
         assert result.returncode == 0, result.stdout + result.stderr
         assert sdk.active == 0
     finally:

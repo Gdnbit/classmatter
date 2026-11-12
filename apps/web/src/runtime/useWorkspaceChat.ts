@@ -8,7 +8,7 @@ import { supportsReasoning, type Reasoning } from './composer-capture'
 type Props = { enabled: boolean; session: Session | null; threadId: string; canInteract: boolean; refreshSignal: unknown;
   onSelect: (id: string) => void; onSaved: (id: string) => void; onBusy: (busy: boolean) => void; onDraft: (dirty: boolean) => void; onError: (error: unknown) => void; onPreview: (preview: ChatPreview) => void }
 const active = (turn?: ChatTurn) => !!turn && (turn.state === "queued" || turn.state === "running")
-type LocalThread = { text: string; reasoning: Reasoning; editVersion: number; busy: boolean; saving: boolean; status: string; pending: {thread: string; request: string; text: string; editVersion: number} | null; stream: AbortController | null }
+type LocalThread = { text: string; reasoning: Reasoning; editVersion: number; busy: boolean; saving: boolean; status: string; recordingFile: File | null; recordingActive: boolean; pending: {thread: string; request: string; text: string; editVersion: number} | null; stream: AbortController | null }
 function clearSentDraft(state: LocalThread, sent: { text: string; editVersion: number }) {
   if (state.text === sent.text && state.editVersion === sent.editVersion) { state.text = ""; state.editVersion++ }
 }
@@ -21,7 +21,7 @@ export function useWorkspaceChat(props: Props) {
   const changed = () => redraw(value => value + 1)
   function local(thread = selected.current) {
     let state = threads.current.get(thread)
-    if (!state) { state = { text: "", reasoning: 'default', editVersion: 0, busy: false, saving: false, status: "", pending: null, stream: null }; threads.current.set(thread, state) }
+    if (!state) { state = { text: "", reasoning: 'default', editVersion: 0, busy: false, saving: false, status: "", recordingFile: null, recordingActive: false, pending: null, stream: null }; threads.current.set(thread, state) }
     return state
   }
   const [history, setHistory] = useState<ChatHistory | null>(null), [listing, setListing] = useState<ChatListing | null>(null)
@@ -78,7 +78,7 @@ export function useWorkspaceChat(props: Props) {
   }
   const state = local(), { text, busy: working, status, pending: pendingSend } = state
   const anyWorking = [...threads.current.values()].some(item => item.busy)
-  const anyDraft = [...threads.current.values()].some(item => !!item.text.trim() || !!item.pending)
+  const anyDraft = [...threads.current.values()].some(item => !!item.text.trim() || !!item.pending || !!item.recordingFile || item.recordingActive)
   useEffect(() => { latest.current.onBusy(anyWorking) }, [anyWorking, identity])
   useEffect(() => { latest.current.onDraft(anyDraft) }, [anyDraft, identity])
   useLayoutEffect(() => {
@@ -142,6 +142,8 @@ export function useWorkspaceChat(props: Props) {
     if (!selected.current) {
       local(target.thread).text = text; local(target.thread).editVersion = target.editVersion
       local(target.thread).reasoning = local('').reasoning
+      local(target.thread).recordingFile = local('').recordingFile
+      local('').recordingFile = null
       local("").text = ""; local("").editVersion++
       selected.current = target.thread; view.current++; reader.current?.abort(); setHistory(null); setFresh(false)
     }
@@ -201,10 +203,32 @@ export function useWorkspaceChat(props: Props) {
     catch (error) { if (generation === epoch.current) report(error, thread) }
   }
   const setText = (value: string) => { const state = local(); state.text = value; state.editVersion++; changed() }
+  function recordingThread(key: string) {
+    const prefix = scopeRef.current + '/'
+    if (!scopeRef.current || !key.startsWith(prefix)) return null
+    const thread = key.slice(prefix.length)
+    if (thread && !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(thread)) return null
+    return local(thread)
+  }
   const pendingThreads = [...threads.current.entries()].flatMap(([id, item]) => id && item.pending && !listing?.data.some(row => row.thread_id === id)
     ? [{ thread_id: id, title: item.pending.text.slice(0, 40) }] : [])
   return { history, listing, pendingThreads, model, text, setText, working, anyWorking, listingBusy: listingLoading.current, fresh: freshScope, status, pendingSend, send, lastActive: active(last),
     draftKey: identity + '/' + selected.current, reasoning: state.reasoning,
+    recordingFile: state.recordingFile,
+    markRecording: (key: string, value: boolean) => {
+      const target = recordingThread(key)
+      if (!target || value && (target.recordingFile || target.recordingActive || [...threads.current.values()].filter(item => item.recordingFile || item.recordingActive).length >= 5)) return false
+      target.recordingActive = value; changed(); return true
+    },
+    retainRecording: (file: File, key: string) => {
+      const target = recordingThread(key)
+      if (!target || !file.size || file.size > 2 * 1024 * 1024 || target.recordingFile) return false
+      target.recordingFile = file; target.recordingActive = false; changed(); return true
+    },
+    clearRecording: (key: string, file: File) => {
+      const target = recordingThread(key)
+      if (target?.recordingFile === file) { target.recordingFile = null; changed() }
+    },
     setReasoning: (value: Reasoning) => { if (!anyWorking && !pendingSend && !active(last)) { local().reasoning = value; changed() } },
     inputSnapshot: () => ({ key: scopeRef.current + '/' + selected.current, text: local().text }),
     appendInput: (value: string, key: string) => {
