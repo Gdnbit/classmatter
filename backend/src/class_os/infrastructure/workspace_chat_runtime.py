@@ -10,6 +10,7 @@ from class_os.application.agent import AgentRequest, AgentRejected, Mode, Runtim
 from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
 from .agent import PydanticAgentRuntime
 from .workspace_actions import WorkspaceActionCapture
+from .agent_diagnostics import RunDiagnostics
 
 
 class WorkspaceChatRuntime:
@@ -22,7 +23,12 @@ class WorkspaceChatRuntime:
         self.business, self.query, self.sdk = business, query, sdk
 
     async def stream_queued(self, credentials, thread_id, request_id, *, reasoning=None):
-        ticket = await anyio.to_thread.run_sync(lambda: self.business.claim(credentials, thread_id, request_id))
+        diagnostic = RunDiagnostics(self.sdk.diagnostics, request_id)
+        try:
+            ticket = await anyio.to_thread.run_sync(lambda: self.business.claim(credentials, thread_id, request_id))
+        except Exception as error:
+            diagnostic.finish("failed", error, phase="persistence_claim")
+            raise
         if ticket is None:
             return  # GET/reconnect/repeated start never redispatches.
         started, conversation, capture, settled, cursor = monotonic(), None, None, False, 0
@@ -37,6 +43,7 @@ class WorkspaceChatRuntime:
                 duration_ms=min(2147483647, int((monotonic() - started) * 1000)),
                 input_tokens=capture.input_tokens if capture else None, output_tokens=capture.output_tokens if capture else None))
 
+        phase = "history_read"
         try:
             history = await anyio.to_thread.run_sync(lambda: self.query.history(credentials, thread_id))
             current = next((row for row in history["turns"] if row["request_id"] == request_id), None)
@@ -59,7 +66,9 @@ class WorkspaceChatRuntime:
                 classroom_enabled=self.business.store.database.profile == 'classroom-work-d4')
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket["user_text"], Mode.CHAT)
-            async with aclosing(self.sdk.stream(credentials, request, _workspace_actions=capture, _reasoning=reasoning)) as stream:
+            phase = "sdk_dispatch"
+            async with aclosing(self.sdk.stream(credentials, request, _workspace_actions=capture, _reasoning=reasoning,
+                                               _diagnostic_run_id=request_id)) as stream:
                 async for item in stream:
                     if item.type in ("message.delta", "draft.available", "run.completed"):
                         pending.append(item); completed = completed or item.type == "run.completed"
@@ -68,6 +77,7 @@ class WorkspaceChatRuntime:
                     else:
                         yield event(item.type, item.payload)
             answers = [item.payload["text"] for item in pending if item.type == "message.delta"]
+            phase = "persistence_finish"
             if not completed or len(answers) != 1:
                 await finish("failed"); settled = True
                 yield event("run.failed", {"code": "agent_unavailable"}); return
@@ -86,7 +96,8 @@ class WorkspaceChatRuntime:
                 await finish("cancelled")
             settled = True
             raise
-        except Exception:
+        except Exception as error:
+            diagnostic.finish("failed", error, phase=phase)
             with suppress(Exception):
                 await finish("unknown"); settled = True
             yield event("run.failed", {"code": "run_unavailable"})
