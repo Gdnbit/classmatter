@@ -2594,7 +2594,7 @@
       "sha256": "339532c31fda00b2a65a17c5b27001815344c6fdab953a3d543d80ac94497903"
     },
     "docs/product/scenario-catalog.md": {
-      "sha256": "157a8ef9b04f8bb2415d2c4ebdfd6ea825cd846b8afeb414fa690ab38d951844"
+      "sha256": "286d975bdbe526bfe45d9906572b4aab6b43dcac20e3558c9a2908bc8085fd3d"
     },
     "docs/product/student-safety-and-duty-workflows.md": {
       "sha256": "5575daa767000efa787bbd93893ecb727bfa90df6cf4e81cfacdfa38fe245514"
@@ -3254,6 +3254,9 @@
     },
     "backend/tests/test_provider_stability_operator.py": {
       "sha256": "4349aa334d21c50556704a9f6db2a9413b453b42652ec85ee51d97c748a3cb65"
+    },
+    "docs/product/scenario-acceptance-playbook.md": {
+      "sha256": "580bd66d208cb6a359cda320292298619cc177a64a09e3fbc3d245fd20c79f61"
     }
   }
 }
