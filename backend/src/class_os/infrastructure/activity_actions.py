@@ -1,5 +1,6 @@
 """D4 fixed ordinary-fact and follow-up tools. No write/approval/store handles."""
 from datetime import datetime
+import re
 from typing import Literal
 from uuid import uuid4
 from pydantic_ai import ModelRetry
@@ -104,6 +105,11 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 return missing_class
             if not capture.mentioned(title) or new_title and not capture.mentioned(new_title):
                 return {'status': 'needs-information', 'question': '任务的新标题是什么？' if capture.mentioned(title) else '要处理哪项任务？'}
+            quoted_notes = re.findall(r'(?:跟进记录|跟进情况|完成结果|取消原因|备注)(?:原文)?[为:：\s]*[“"]([^”"\n]{1,500})[”"]', latest_request())
+            if action != 'create' and len(quoted_notes) == 1 and evidence != quoted_notes[0]:
+                # Validate an explicitly labelled quote; never extract it into
+                # a command or silently replace the model's chosen arguments.
+                raise ModelRetry('The user supplied one explicitly quoted follow-up/result/reason. Copy that complete exact quote into evidence; do not omit, shorten or paraphrase it. Re-read the user request and current task. Nothing was saved by this failed preparation.')
             if (evidence and not capture.mentioned(evidence)
                     or action in ('complete', 'cancel') and (not evidence.strip() or evidence not in latest_request())):
                 return {'status': 'needs-information', 'question': '请补充实际完成结果。' if action == 'complete' else '请补充跟进情况或取消原因。'}

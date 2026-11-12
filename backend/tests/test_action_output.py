@@ -20,8 +20,8 @@ def test_workflow_claims_cannot_replace_actual_candidates(answer):
 
 
 @pytest.mark.db
-@pytest.mark.parametrize('wrong_creation,keeps_failing', [(False, False), (True, False), (True, True)])
-async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candidate(classroom_work, wrong_creation, keeps_failing):
+@pytest.mark.parametrize('mistake,keeps_failing', [('prose', False), ('create', False), ('create', True), ('missing-note', False), ('short-note', False), ('missing-note', True)])
+async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candidate(classroom_work, mistake, keeps_failing):
     from class_os.domain.activity import CreateTask
     from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
     from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
@@ -33,7 +33,9 @@ async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candi
         calls.append(True)
         if not keeps_failing and any(isinstance(part, RetryPromptPart) for part in messages[-1].parts):
             return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': 'edit', 'title': '合成作品核对', 'status': 'waiting', 'evidence': '班长正在收集'})])
-        return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': 'create', 'title': '合成作品核对', 'status': 'waiting', 'evidence': '班长正在收集'}) if wrong_creation else TextPart('已记录“班长正在收集”这一事实，并将“合成作品核对”任务暂时搁置。请确认是否继续下一步操作。')])
+        part = (TextPart('已记录“班长正在收集”这一事实，并将“合成作品核对”任务暂时搁置。请确认是否继续下一步操作。') if mistake == 'prose' else
+            ToolCallPart('prepare_task', {'action': 'create' if mistake == 'create' else 'edit', 'title': '合成作品核对', 'status': 'waiting', 'evidence': '' if mistake == 'missing-note' else '班长' if mistake == 'short-note' else '班长正在收集'}))
+        return ModelResponse(parts=[part])
     sdk = PydanticAgentRuntime(query, timeout=45, model_factory=lambda _: FunctionModel(respond))
     chats = WorkspaceChatBusinessGateway(business.identity, store, clock=lambda: clock[0])
     history = WorkspaceChatQueryGateway(query.identity, store, clock=lambda: clock[0])
