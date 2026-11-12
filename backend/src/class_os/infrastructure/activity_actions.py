@@ -97,7 +97,7 @@ def tools(capture, query, credentials, context, execute, missing_class):
     async def prepare_task(action: Literal['create', 'edit', 'complete', 'cancel'], title: str, new_title: str = '',
                            status: Literal['not-started', 'in-progress', 'waiting'] | None = None, evidence: str = '',
                            student_name: str = '', source_fact: str = '', due_at: str = '', change_due_date: bool = False) -> dict:
-        """Prepare one manual task, never save/send/delegate. Complete/cancel requires the user's quoted result/reason. For linked creation FIRST read_class_records and copy one confirmed ordinary fact's full student name and exact fact_text into source_fact. Never paraphrase the source. Deadline must be an explicit ISO timestamp, never invented. Only edits may change an existing deadline; change_due_date with empty due_at explicitly removes it."""
+        """Prepare one manual task, never save/send/delegate. action=create is only for a NEW title; for an EXISTING task use edit to change progress/waiting/evidence, or complete/cancel to end it. Read current tasks first. Complete/cancel requires the user's quoted result/reason. For linked creation FIRST read_class_records and copy one confirmed ordinary fact's full student name and exact fact_text into source_fact. Never paraphrase the source. Deadline must be an explicit ISO timestamp, never invented. Only edits may change an existing deadline; change_due_date with empty due_at explicitly removes it."""
         def prepare():
             current = context()
             if current is None:
@@ -119,6 +119,8 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 return {'status': 'needs-information', 'question': '先核对结束结果，其他修改请单独处理。'}
             rows = query.projection(*credentials, current.class_id, current.term_id)['tasks']
             if action == 'create':
+                if (new_title or status is not None or evidence or change_due_date) and any(row['title'] == title for row in rows):
+                    raise ModelRetry('This task title already exists. Do not create it again or ask the teacher to establish it. Read current tasks, then use action=edit for progress/waiting/evidence, or complete/cancel for a quoted ending. Recheck the actual state; never infer that a failed preparation saved anything.')
                 if new_title or status is not None or evidence or change_due_date:
                     return {'status': 'needs-information', 'question': '先建立待办，再记录跟进情况。'}
                 if any(row['title'] == title for row in rows):

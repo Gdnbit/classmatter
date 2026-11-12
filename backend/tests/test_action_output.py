@@ -20,7 +20,8 @@ def test_workflow_claims_cannot_replace_actual_candidates(answer):
 
 
 @pytest.mark.db
-async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candidate(classroom_work):
+@pytest.mark.parametrize('wrong_creation,keeps_failing', [(False, False), (True, False), (True, True)])
+async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candidate(classroom_work, wrong_creation, keeps_failing):
     from class_os.domain.activity import CreateTask
     from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
     from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
@@ -30,9 +31,9 @@ async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candi
     calls = []
     def respond(messages, info):
         calls.append(True)
-        if any(isinstance(part, RetryPromptPart) for part in messages[-1].parts):
+        if not keeps_failing and any(isinstance(part, RetryPromptPart) for part in messages[-1].parts):
             return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': 'edit', 'title': '合成作品核对', 'status': 'waiting', 'evidence': '班长正在收集'})])
-        return ModelResponse(parts=[TextPart('已记录“班长正在收集”这一事实，并将“合成作品核对”任务暂时搁置。请确认是否继续下一步操作。')])
+        return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': 'create', 'title': '合成作品核对', 'status': 'waiting', 'evidence': '班长正在收集'}) if wrong_creation else TextPart('已记录“班长正在收集”这一事实，并将“合成作品核对”任务暂时搁置。请确认是否继续下一步操作。')])
     sdk = PydanticAgentRuntime(query, timeout=45, model_factory=lambda _: FunctionModel(respond))
     chats = WorkspaceChatBusinessGateway(business.identity, store, clock=lambda: clock[0])
     history = WorkspaceChatQueryGateway(query.identity, store, clock=lambda: clock[0])
@@ -41,12 +42,16 @@ async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candi
     chats.send(auth, thread, request, '合成作品核对先等待，跟进记录原文为“班长正在收集”')
     events = [event async for event in runtime.stream_queued(auth, thread, request)]
     row = history.turn(auth, thread, request)[1]
-    assert row['state'] == 'completed' and len(calls) == 2
-    assert row['candidate']['command'] == 'task.update' and row['candidate']['status'] == 'waiting'
-    assert row['candidate']['evidence'] == '班长正在收集' and row['action_receipt'] is None
+    assert len(calls) == 2 and row['action_receipt'] is None
+    if keeps_failing:
+        assert row['state'] == 'failed' and row['candidate'] is row['assistant_text'] is None
+        assert not any(event.type in ('message.delta', 'draft.available') for event in events)
+    else:
+        assert row['state'] == 'completed' and row['candidate']['command'] == 'task.update' and row['candidate']['status'] == 'waiting'
+        assert row['candidate']['evidence'] == '班长正在收集'
     current = query.projection(*auth, c, t)
     assert not current['records'] and len(current['tasks']) == 1 and current['tasks'][0]['version'] == 1
-    assert any(event.type == 'draft.available' for event in events)
+    assert any(event.type == 'draft.available' for event in events) is not keeps_failing
 
 
 @pytest.mark.parametrize('message', ['创建班级合成班', '学期更正为合成学期', '添加学生合成甲', '把班名改为合成班',
