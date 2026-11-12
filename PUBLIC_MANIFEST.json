@@ -3304,7 +3304,7 @@
       "sha256": "d4907e908567487b0bbd9766bffd1c1fc8de47bd35510bcd38f123036fe8618b"
     },
     "backend/tests/test_activity_actions_web.py": {
-      "sha256": "07d43770f476cf336979a5692bd4002be3aedba1364ac70591ecc92b27d0d049"
+      "sha256": "bb5b76a0f40b0de935491ac0c94128a32d028dc070bc0fd7526ead8274a16aa4"
     },
     "backend/tests/test_activity_actions.py": {
       "sha256": "ab0101fda29fa7aa4e06a1207ed8abd76b12d6b1ed4ffc8f00b8dd00ed01a2e4"

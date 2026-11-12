@@ -56,11 +56,15 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
             if '结束' in request.text:
                 return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': 'complete', 'title': title,
                     'evidence': '班长交齐，我已核对' if '班长交齐' in request.text else ''})])
+            if last.tool_name == 'read_class_records':
+                source = last.content['items'][0]
+                return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': 'create', 'title': title,
+                    'student_name': source['student'], 'source_fact': source['fact_text']})])
             committed = {row['command'] for row in last.content['actions'] if row['status'] == 'committed'}
             if 'record.create' not in committed:
                 return ModelResponse(parts=[ToolCallPart('prepare_record', {'student_name': '合成学生0', 'fact_text': fact, 'occurred_now': True})])
             if 'task.create' not in committed:
-                return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': 'create', 'title': title, 'student_name': '合成学生0', 'source_fact': fact})])
+                return ModelResponse(parts=[ToolCallPart('read_class_records', {'student_name': '合成学生0'})])
             return ModelResponse(parts=[TextPart('记录和跟进已保存。')])
         return FunctionModel(respond)
     sdk = PydanticAgentRuntime(query, model_factory=factory, timeout=45)
