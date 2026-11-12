@@ -27,12 +27,14 @@ async function launch(){
  // Passive same-origin response clone only: no request/output mocking. Capture
  // metadata before Chromium discards CDP response bodies on route transitions.
  const observe=()=>{
-  window.__liveToolEvents={};const original=window.fetch.bind(window);
+  window.__liveToolEvents={};window.__livePreviews={};const original=window.fetch.bind(window);
   window.fetch=async(...args)=>{const response=await original(...args);const url=new URL(response.url);
    if(/\/turns\/[^/]+\/events$/.test(url.pathname)){
     const request=url.pathname.split('/').at(-2);
     void response.clone().text().then(text=>{window.__liveToolEvents[request]=text.split('\n').filter(line=>line.startsWith('data:')).map(line=>JSON.parse(line.slice(5))).filter(event=>event.type==='tool.started').map(event=>event.payload.tool);}).catch(()=>{window.__liveToolEvents[request]=null;});
-   }return response;
+   }
+   if(/\/turns\/[^/]+\/proposal$/.test(url.pathname)&&response.ok){const request=url.pathname.split('/').at(-2);void response.clone().json().then(value=>{window.__livePreviews[request]=value;}).catch(()=>{window.__livePreviews[request]=null;});}
+   return response;
   };
  };
  await page.addInitScript(observe);await page.evaluate(observe);
@@ -114,7 +116,8 @@ async function turn(text,continuation=false,attempt=1){
  const start=Date.now();
  const [response]=await Promise.all([
   page.waitForResponse(r=>r.request().method()==='POST'&&/\/workspace-chat\/threads\/[^/]+\/turns$/.test(new URL(r.url()).pathname)),
-  (async()=>{if(continuation)await page.getByRole('button',{name:'继续任务',exact:true}).last().click();
+  (async()=>{if(attempt>1){await page.getByLabel('输入消息').fill('合成重试保留的未发送草稿');await page.getByRole('region',{name:'已保存的对话'}).getByRole('button',{name:'重试回复',exact:true}).click();}
+   else if(continuation)await page.getByRole('button',{name:'继续任务',exact:true}).last().click();
    else{await page.getByLabel('输入消息').fill(text);await page.getByRole('button',{name:'发送消息',exact:true}).click();}})(),
  ]);assert.equal(response.status(),200);
  const thread=new URL(response.url()).pathname.split('/').at(-2),request=response.request().postDataJSON().request_id;
@@ -130,10 +133,11 @@ async function turn(text,continuation=false,attempt=1){
  rows.push({request_id:request,prompt:text||'continue',attempt,state:last.state,candidate:last.candidate?.command??null,tools,input_tokens:last.input_tokens,output_tokens:last.output_tokens,ms:Date.now()-start});save();
  await page.waitForURL(url=>url.pathname===`/chats/${thread}`);
  await page.waitForFunction(()=>!document.querySelector('[aria-label="停止回复"]'));
+ if(attempt>1){assert.equal(await page.getByLabel('输入消息').inputValue(),'合成重试保留的未发送草稿');await page.getByLabel('输入消息').fill('');rows.push({case:'explicit retry retained unsent draft',passed:true});save();}
  if(last.state==='failed'&&attempt<attempts){
   assert.equal(last.candidate,null);assert.equal(last.action_receipt,null);
-  // Test-only explicit user resend, a new request in the same conversation.
-  // Never replay a commit, clear failures or retry inside the application.
+  // Explicit user retry uses the original UI, a new request in this conversation.
+  // Never replay a commit, clear failures or automatically retry in production.
   await new Promise(resolve=>setTimeout(resolve,2000));return turn(text||'继续完成上面的任务，只处理尚未完成的步骤。',false,attempt+1);
  }
  assert.equal(last.state,'completed',JSON.stringify(rows.at(-1)));assert(last.input_tokens>0&&last.output_tokens>0,'Real provider usage required');
@@ -144,7 +148,9 @@ async function confirm(command){
  const card=page.getByRole('region',{name:'对话中的操作候选'}).last();
  if(verifyWorld){assert.deepEqual(await world(),lastResult.before,'Preparation must not change business state');await page.reload();await card.getByRole('button',{name:'预览这项操作',exact:true}).waitFor();assert.deepEqual(await world(),lastResult.before,'Refreshing a candidate must not save it');await assertDialog(lastResult.last.candidate,lastResult.before,card);}
  const [preview]=await Promise.all([page.waitForResponse(r=>r.request().method()==='POST'&&/\/turns\/[^/]+\/proposal$/.test(new URL(r.url()).pathname)),card.getByRole('button',{name:'预览这项操作',exact:true}).click()]);
- assert.equal(preview.status(),200);assert.deepEqual((await preview.json()).payload,lastResult.last.candidate,'Dialog proposal must equal the durable candidate');
+ assert.equal(preview.status(),200);await page.waitForFunction(id=>Object.hasOwn(window.__livePreviews,id),lastResult.request);
+ const captured=await page.evaluate(id=>window.__livePreviews[id],lastResult.request);
+ assert(captured,'Actual proposal response must be captured');assert.deepEqual(captured.payload,lastResult.last.candidate,'Dialog proposal must equal the durable candidate');
  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:/^(确认提交|明确批准并提交)$/}).waitFor();assert.equal(await dialog.locator('input,textarea,select').count(),0);
  if(verifyWorld){await assertDialog(lastResult.last.candidate,lastResult.before,dialog);assert.deepEqual(await world(),lastResult.before,'Preview must not save business data');await page.screenshot({path:path.join(path.dirname(report),`${rows.filter(r=>r.case==='confirmed').length+1}-${command}.png`)});}
  await dialog.getByRole('button',{name:/^(确认提交|明确批准并提交)$/}).click();await dialog.waitFor({state:'hidden'});

@@ -57,6 +57,8 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
         {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
         {turn.state !== "completed" && <p className="r1-muted" role={turn.state === 'queued' || turn.state === 'running' ? 'status' : undefined}>{turn.state === 'queued' && s.working ? states.running : states[turn.state]}</p>}
         {turn.state === "queued" && !s.working && <button disabled={!s.fresh} onClick={() => void s.startQueued(turn)}>继续回复</button>}
+        {turn.state === 'failed' && turn.request_id === s.history?.turns.at(-1)?.request_id && turn.user_text && !turn.candidate && !turn.action_receipt
+          && <button aria-label="重试回复" disabled={s.working || !s.fresh || s.history?.thread.status !== 'active'} onClick={() => void s.retryFailed(turn)}>重试</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{labels[turn.candidate.command]}</h2>
           {turn.change_preview ? <ChangeComparison preview={turn.change_preview} saved={!!turn.action_receipt} /> : <CandidateContent value={turn.candidate} />}

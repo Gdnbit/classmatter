@@ -135,7 +135,7 @@ export function useWorkspaceChat(props: Props) {
       }
     } finally { if (state.stream === controller) state.stream = null }
   }
-  async function send(continuation?: string) {
+  async function send(continuation?: string, retry?: ChatTurn) {
     const message = continuation ?? text
     if (!props.canInteract || model?.mode === "stale" || !freshScope || local().busy || pendingSend || active(last) || !navigator.onLine || !message.trim() || history?.thread.status && history.thread.status !== "active") return
     const target = { thread: selected.current || crypto.randomUUID(), request: crypto.randomUUID(), text: message, editVersion: continuation === undefined ? local().editVersion : -1 }
@@ -146,6 +146,15 @@ export function useWorkspaceChat(props: Props) {
       selected.current = target.thread; view.current++; reader.current?.abort(); setHistory(null); setFresh(false)
     }
     await operate(async (generation, thread, api, state) => {
+      if (retry) {
+        // A retry is a new model attempt, never a replay of an uncertain save.
+        const saved = await api.history(thread), current = saved.turns.at(-1)
+        if (generation !== epoch.current) return
+        if (saved.thread.status !== 'active' || current?.request_id !== retry.request_id || current.state !== 'failed'
+            || current.candidate || current.action_receipt || current.user_text !== target.text) {
+          await refreshAfter(thread, generation); return
+        }
+      }
       state.pending = target; state.saving = true; state.status = "正在发送…"; changed()
       if (!props.threadId) latest.current.onSaved(target.thread)
       let savedInput = false
@@ -207,6 +216,10 @@ export function useWorkspaceChat(props: Props) {
     continueTask: (turn: ChatTurn) => {
       if (turn.turn_id === history?.turns.at(-1)?.turn_id && turn.action_receipt && !active(last))
         return send("继续完成上面的任务，只处理尚未完成的步骤。")
+    },
+    retryFailed: (turn: ChatTurn) => {
+      if (turn.request_id === history?.turns.at(-1)?.request_id && turn.state === 'failed'
+          && turn.user_text && !turn.candidate && !turn.action_receipt) return send(turn.user_text, turn)
     },
     select: (thread: string) => latest.current.onSelect(thread),
     newChat: () => latest.current.onSelect(""),

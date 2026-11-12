@@ -7,11 +7,12 @@ const base = process.env.CLASS_OS_TEST_URL;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
 const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [], starts = [];
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [], starts = [], commits = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {
     if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url());
     if (request.method() === 'POST' && request.url().endsWith('/events')) starts.push(request.url());
+    if (request.method() === 'POST' && request.url().endsWith('/commands/commit')) commits.push(request.postDataJSON().idempotency_key);
   });
   await page.goto(base);
   await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
@@ -115,8 +116,24 @@ try {
   const changes = [];
   for (const [message, title] of messages) {
     await input.fill(message); await page.getByRole('button', { name: '发送消息', exact: true }).click();
+    if (['建立班级与学期', '创建工作文档', '修改工作文档'].includes(title)) {
+      const retry = history.getByRole('button', { name: '重试回复', exact: true });
+      await expect(retry).toBeEnabled();
+      const retainedDraft = title === '修改工作文档' ? message : '保留下一条未发送草稿';
+      await input.fill(retainedDraft);
+      const beforeRetry = starts.length;
+      // A rapid second activation cannot start another generation.
+      await retry.evaluate(button => { button.click(); button.click(); });
+      await expect.poll(() => starts.length).toBe(beforeRetry + 1);
+      await expect(input).toHaveValue(retainedDraft);
+    }
     const card = history.getByRole('region', { name: '对话中的操作候选' }).filter({ has: page.getByRole('heading', { name: title, exact: true }) });
     await card.getByRole('heading', { name: title, exact: true }).waitFor();
+    if (['建立班级与学期', '创建工作文档', '修改工作文档'].includes(title)) {
+      await expect(input).toHaveValue(title === '修改工作文档' ? message : '保留下一条未发送草稿');
+      await input.fill('');
+      assert.equal(await history.getByRole('button', { name: '重试回复', exact: true }).count(), 0);
+    }
     const comparison = card.getByRole('region', { name: '变更前后对比', exact: true });
     await comparison.waitFor();
     const oldContent = await comparisonContent(comparison.getByLabel('修改前', { exact: true }));
@@ -153,7 +170,17 @@ try {
     }
     assert(!/payload_hash|expected_version|schema_version|[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/.test(await dialog.innerText()));
     assert.equal(await dialog.locator('input,textarea,select').count(), 0);
+    if (title === '创建工作文档') {
+      // The actual BCG commits, but its response is lost. Reconcile the receipt;
+      // never submit a new proposal or silently retry the business mutation.
+      await page.route('**/commands/commit', async route => { await route.fetch(); await route.abort('failed'); }, { times: 1 });
+    }
     await dialog.getByRole('button', { name: /^(确认提交|明确批准并提交)$/ }).click();
+    if (title === '创建工作文档') {
+      await dialog.getByRole('alert').waitFor();
+      await expect(dialog.getByRole('button', { name: '核对提交结果', exact: true })).toBeEnabled();
+      await dialog.getByRole('button', { name: '核对提交结果', exact: true }).click();
+    }
     await dialog.waitFor({ state: 'hidden', timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify({ message, dialog: await dialog.innerText(), errors }), { cause: error }); });
     await card.getByRole('status').filter({ hasText: '已保存' }).waitFor();
     await page.reload();
@@ -190,13 +217,36 @@ try {
   await settings.getByRole('button', { name: '关闭设置', exact: true }).click();
   await page.goto(base + path);
   await history.getByText('合成普通聊天已回复，不需要班级。', { exact: true }).first().waitFor();
-  assert.equal(starts.length, messages.length + 2);
+  assert.equal(starts.length, messages.length + 5);
   await input.fill('继续任务时保留的未发送草稿');
   await history.getByRole('button', { name: '继续任务', exact: true }).click();
   await history.getByText('继续完成上面的任务，只处理尚未完成的步骤。', { exact: true }).waitFor();
   await page.waitForFunction(() => document.querySelectorAll('article.assistant').length === 11);
   assert.equal(await input.inputValue(), '继续任务时保留的未发送草稿');
-  assert.equal(starts.length, messages.length + 3);
+  assert.equal(starts.length, messages.length + 6);
+  assert.equal(commits.length, messages.length);
+  assert.equal(new Set(commits).size, messages.length);
+  // A different client advances this thread while the retry's fresh read is
+  // held. It must invalidate the old failed target without sending anything.
+  await input.fill('合成陈旧失败'); await page.getByRole('button', { name: '发送消息', exact: true }).click();
+  const staleRetry = history.getByRole('button', { name: '重试回复', exact: true });
+  await expect(staleRetry).toBeEnabled(); await input.fill('并发核对时保留的草稿');
+  const identity = await (await page.request.get(base + '/api/identity/session')).json();
+  const threadUrl = `${base}/api/workspaces/${identity.subject.workspace_id}/workspace-chat/threads/${path.split('/').at(-1)}`;
+  const headers = { origin: base, 'x-class-os-csrf': identity.csrf_token };
+  let releaseRead, markRead;
+  const heldRead = new Promise(resolve => { releaseRead = resolve; }), readStarted = new Promise(resolve => { markRead = resolve; });
+  await page.route(threadUrl, async route => { markRead(); await heldRead; await route.fulfill({ response: await route.fetch() }); }, { times: 1 });
+  const beforeStaleRetry = starts.length;
+  await staleRetry.click(); await readStarted;
+  const otherId = crypto.randomUUID();
+  const other = await page.request.post(threadUrl + '/turns', { headers, data: { request_id: otherId, text: '合成已撤回新消息' } });
+  assert.equal(other.status(), 200);
+  assert.equal((await page.request.post(threadUrl + `/turns/${otherId}/cancel`, { headers, data: { expected_version: (await other.json()).turn.version } })).status(), 200);
+  releaseRead();
+  await expect(staleRetry).toHaveCount(0);
+  await expect(input).toHaveValue('并发核对时保留的草稿');
+  assert.equal(starts.length, beforeStaleRetry); assert.equal(commits.length, messages.length);
   await input.fill('');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: '切换模型', exact: true }).click();

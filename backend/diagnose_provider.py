@@ -11,10 +11,6 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend/src'))
-from pydantic import SecretStr
-from class_os.domain.model_configuration import ModelConfiguration, Protocol, validate_model_proxy
-from class_os.infrastructure.model_provider import GOOGLE_COMPAT_BASE, configured_client, model_for_configuration
-from class_os.infrastructure.provider_diagnostics import evaluate, compare
 
 
 class DiagnosticParser(argparse.ArgumentParser):
@@ -40,6 +36,7 @@ def main():
     if args.command == 'compare':
         if not args.before or not args.after:
             parser.error('compare requires both reports')
+        from class_os.infrastructure.provider_diagnostics import compare
         result = compare(json.loads(args.before.read_text(encoding='utf-8')), json.loads(args.after.read_text(encoding='utf-8')))
         print(json.dumps(result))
         return 2 if result['regressions'] else 0
@@ -48,6 +45,12 @@ def main():
     live = args.command == 'live'
     if live and not args.confirm_free_tier:
         parser.error('live requires explicit --confirm-free-tier; never enables billing')
+    # Reject invalid/unconfirmed calls before importing the full model SDK.
+    # This keeps the opt-in boundary fast even under cold-cache/resource pressure.
+    from pydantic import SecretStr
+    from class_os.domain.model_configuration import ModelConfiguration, Protocol, validate_model_proxy
+    from class_os.infrastructure.model_provider import GOOGLE_COMPAT_BASE, configured_client, model_for_configuration
+    from class_os.infrastructure.provider_diagnostics import evaluate
     validate_model_proxy(args.proxy)
     # Explicit selection only: no automatic cross-provider fallback or paid model.
     model = 'gemini-3.1-flash-lite' if args.provider == 'google' else 'glm-4.7-flash'
