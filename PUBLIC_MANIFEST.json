@@ -2921,7 +2921,7 @@
       "sha256": "22223462d29e8dc7483a6e6e6f657266d500f0cab60cf754aeddc4cd41933941"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "00f3141d70f013010c765854d8de8fea7180a4e5d2d0a68930c8e389fbac7353"
+      "sha256": "3d53dd9d449d7a33e8753efac185f12eec0ed93cf922b48be38c2f4d5796ae55"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "237ec0345ad9ba05cadd3269100bd7c6231da2cd4e9f22f970a0b9d85ba49878"
@@ -3257,6 +3257,15 @@
     },
     "docs/product/scenario-acceptance-playbook.md": {
       "sha256": "580bd66d208cb6a359cda320292298619cc177a64a09e3fbc3d245fd20c79f61"
+    },
+    "backend/tests/test_chat_task_deadlines.py": {
+      "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
+    },
+    "docs/product/scenario-run-results.md": {
+      "sha256": "f4fcdf5d7187d35062d604eb01f64b295360af9f2311d06bbaf2dd90147a156a"
+    },
+    "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
+      "sha256": "737956ca739960f28dacf80995cb6508b2628118d75137cb9075bf220bb912a8"
     }
   }
 }
