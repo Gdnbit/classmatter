@@ -236,6 +236,7 @@ export function useWorkspaceChat(props: Props) {
       const target = local(); target.text += value; target.editVersion++; changed(); return true
     },
     canSend: props.canInteract && model?.mode !== "stale" && freshScope && !working && !pendingSend && !active(last) && (!history || history.thread.status === "active") && navigator.onLine,
+    canAct: props.canInteract && freshScope && !working && history?.thread.status === 'active',
     stop, refresh: () => void refreshRef.current().catch(report),
     continueTask: (turn: ChatTurn) => {
       if (turn.turn_id === history?.turns.at(-1)?.turn_id && turn.action_receipt && !active(last))
