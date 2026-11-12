@@ -74,6 +74,12 @@ async def test_continuation_tool_precondition_blocks_unverified_repeated_record_
     assert 'record_id' not in narrower  # A partial quote is not an automatic source match.
     missing_source = await tools['prepare_task'](action='create', title='合成核对任务')
     assert missing_source['status'] == 'read-source-first' and capture.proposed is None
+    unread_source = await tools['prepare_task'](action='create', title='合成核对任务', student_name='合成学生0', source_fact=fact)
+    assert unread_source['status'] == 'read-source-first' and capture.proposed is None
+    await tools['read_class_records']()
+    with pytest.raises(ModelRetry):
+        await tools['prepare_task'](action='create', title='合成核对任务', student_name='合成学生0', source_fact='交来展示作品')
+    assert capture.proposed is None
     with pytest.raises(CallDeferred):
         await tools['prepare_task'](action='create', title='合成核对任务', student_name='合成学生0', source_fact=fact)
     assert progress_calls == [True] and capture.proposed['command'] == 'task.create'
