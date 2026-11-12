@@ -6,7 +6,7 @@ const net = require('node:net');
 const http = require('node:http');
 const path = require('node:path');
 const { OwnedService, serviceURL, validProof } = require('../runtime-service.cjs');
-const { allowed, CSP, exitDownload } = require('../runtime-policy.cjs');
+const { allowed, CSP, exitDownload, officeDownload } = require('../runtime-policy.cjs');
 
 async function freePort() {
   const server = net.createServer();
@@ -41,6 +41,22 @@ test('only bounded JSON core or D1 exit receipt downloads may open a user Save d
   assert.ok(exitDownload(origin,d1,'application/json',100));
   for(const target of [d1+'?x=1',d1+'#x',d1.replace('/conversation-d1/','/conversation-d2/'),d1.replace('/download','/preview')])assert.equal(exitDownload(origin,target,'application/json',100),false);
   for(const [target,mime,size] of [[url+'?x=1','application/json',100],[url,'text/html',100],[url,'application/json',0],[url,'application/json',17*1024*1024],[origin+'/assets/index.js','application/json',100]])assert.equal(exitDownload(origin,target,mime,size),false);
+});
+test('only version-bound same-origin Office routes and matching MIME/size may download',()=>{
+  const origin='http://127.0.0.1:8000',id='12345678-1234-1234-1234-123456789012';
+  const path='/api/workspaces/'+id+'/classes/'+id+'/terms/'+id+'/documents/'+id+'/exports/1/';
+  const docx='application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  const pptx='application/vnd.openxmlformats-officedocument.presentationml.presentation';
+  assert.ok(officeDownload(origin,origin+path+'docx',docx,100));
+  assert.ok(officeDownload(origin,origin+path+'pptx',pptx,4*1024*1024));
+  for(const [url,mime,size] of [
+    [origin+path+'pptx',docx,100],[origin+path+'docx','application/json',100],[origin+path+'docx',docx,0],
+    [origin+path+'docx',docx,4*1024*1024+1],[origin+path+'docx',docx,1.2],
+    ['https://fixture.invalid'+path+'docx',docx,100],['blob:'+origin+'/'+id,docx,100],
+    [origin+path+'docx?x=1',docx,100],[origin+path+'docx#x',docx,100],
+    [origin+path+'docx.exe',docx,100],[origin+path.replace('/1/','/0/')+'docx',docx,100],
+    [origin+path.replace('/1/','/2147483648/')+'docx',docx,100],
+  ])assert.equal(officeDownload(origin,url,mime,size),false,url);
 });
 test('proof is exact, keyed and challenge-bound, not merely a green health response',()=>{
   const key='12'.repeat(32),challenge='34'.repeat(32);

@@ -15,6 +15,8 @@ export type RevisionMetadata = { version: number; status: DocumentMetadata["stat
   format: Content["format"]; operation: DocumentCommand["command"]; created_by: string; created_at: string }
 export type Revision = RevisionMetadata & { body: string }
 export type DocumentView = Scope & Revision & { updated_at: string }
+export type OfficeFormat = 'docx' | 'pptx'
+const officeMedia = { docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' }
 export type DocumentPage<T> = { workspace_id: string; class_id: string; term_id: string;
   data: T[]; snapshot: string; next_offset: number | null }
 export type DocumentPreview = { schema_version: "classmatter.document-preview.v1"; proposal_id: string;
@@ -106,6 +108,32 @@ export function documentClient(session: Session, classroom: Pick<Classroom, "cla
     return value
   }
   return {
+    async exportFile(documentId: string, number: number, format: OfficeFormat, signal?: AbortSignal) {
+      signal?.throwIfAborted()
+      if (!Object.prototype.hasOwnProperty.call(officeMedia, format)) throw mismatch()
+      const path = `${collection}/${id(documentId)}/exports/${version(number)}/${format}`
+      const response = await fetch(path, { credentials: 'same-origin', cache: 'no-store', redirect: 'error', signal })
+      if (!response.ok) throw new ApiError(response.status, response.headers.get('x-request-id') || '')
+      if (response.headers.get('content-type') !== officeMedia[format] || response.headers.get('x-classmatter-document-id') !== documentId
+        || response.headers.get('x-classmatter-document-version') !== String(number) || !response.body) throw mismatch()
+      const reader = response.body.getReader(), chunks: Uint8Array[] = []
+      let count = 0
+      try {
+        while (true) {
+          const item = await reader.read(); signal?.throwIfAborted()
+          if (item.done) break
+          count += item.value.byteLength
+          if (count > 4 * 1024 * 1024) throw mismatch()
+          chunks.push(item.value)
+        }
+      } finally { await reader.cancel().catch(() => {}); reader.releaseLock() }
+      signal?.throwIfAborted()
+      const bytes = new Uint8Array(count)
+      let offset = 0
+      for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength }
+      if (bytes[0] !== 0x50 || bytes[1] !== 0x4b || count < 4) throw mismatch()
+      return { blob: new Blob([bytes], { type: officeMedia[format] }), path }
+    },
     async list(page?: { offset: number; snapshot: string }, signal?: AbortSignal) {
       const result = await json<DocumentPage<DocumentMetadata>>("listing", pagePath(collection, page), session, undefined, signal)
       const ids = new Set<string>()

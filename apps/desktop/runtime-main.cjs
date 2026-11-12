@@ -3,7 +3,7 @@ const {app,BrowserWindow,Menu,session,ipcMain,dialog}=require('electron');
 const fs=require('node:fs');
 const path=require('node:path');
 const {desktopService}=require('./runtime-service.cjs');
-const {allowed,CSP,exitDownload,clipboardWrite,microphoneRequest,microphoneCheck}=require('./runtime-policy.cjs');
+const {allowed,CSP,exitDownload,officeDownload,clipboardWrite,microphoneRequest,microphoneCheck}=require('./runtime-policy.cjs');
 const {networkFromSwitches,validateNetwork}=require('./model-network.cjs');
 let source,d1=false,sourceInvalid=false;
 let modelNetwork;
@@ -89,7 +89,13 @@ else {
     isolated.webRequest.onBeforeRequest((details,callback)=>callback({cancel:!allowed(origin,details.url)}));
     isolated.webRequest.onHeadersReceived((details,callback)=>callback({responseHeaders:{...details.responseHeaders,'Content-Security-Policy':[CSP],'X-Content-Type-Options':['nosniff']}}));
     isolated.on('will-download',(event,item,contents)=>{
-      if(!window || contents!==window.webContents || !exitDownload(origin,item.getURL(),item.getMimeType(),item.getTotalBytes())){event.preventDefault();return;}
+      const office=officeDownload(origin,item.getURL(),item.getMimeType(),item.getTotalBytes());
+      if(!window || contents!==window.webContents || !(office||exitDownload(origin,item.getURL(),item.getMimeType(),item.getTotalBytes()))){event.preventDefault();return;}
+      if(office){
+        const extension=item.getMimeType().endsWith('wordprocessingml.document')?'docx':'pptx';
+        item.setSaveDialogOptions({title:'保存工作文档',defaultPath:item.getFilename(),filters:[{name:extension==='docx'?'Word':'PowerPoint',extensions:[extension]}]});
+        return;
+      }
       // Only the existing authorized JSON receipt route; native Save dialog
       // leaves the destination to the user. Never set an arbitrary save path.
       item.setSaveDialogOptions({title:d1?'保存已批准的合成证据退出包':'保存已批准的合成核心退出包',defaultPath:d1?'ClassMatter-synthetic-conversation-v6.json':'ClassMatter-synthetic-core.json',filters:[{name:'JSON',extensions:['json']}]});

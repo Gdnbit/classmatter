@@ -220,7 +220,7 @@
     },
     {
       "name": "prepare_document",
-      "description": "Prepare a working document or revise one unique title. Read its current body before replacing it, or append without losing old text. Generated prose is unverified. Never saves.",
+      "description": "Prepare a working document or revise one unique title. Saved documents can be exported as editable Word or text-only PPT; use Markdown headings for slide sections. A file is not created until the user saves and exports. Read the current body before replacement or append without losing text. Generated prose is unverified. Never saves.",
       "parameters_json_schema": {
         "additionalProperties": false,
         "properties": {

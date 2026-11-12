@@ -145,3 +145,32 @@ test('bounded response, invalid UTF-8, HTTP failure and abort never retry', asyn
     await assert.rejects(client.read('../escape'), /范围、版本或契约/);
   } finally { globalThis.fetch = original; }
 });
+
+test('Office export binds exact document version/type, is bounded and never writes or retries', async () => {
+  const original = globalThis.fetch, calls = [];
+  const mime = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+  const headers = { 'content-type': mime, 'x-classmatter-document-id': documentId, 'x-classmatter-document-version': '1' };
+  try {
+    globalThis.fetch = async (path, options) => { calls.push({ path, options }); return new Response(new Uint8Array([80, 75, 3, 4]), { headers }); };
+    const result = await client.exportFile(documentId, 1, 'docx');
+    assert(result.path.endsWith(`/documents/${documentId}/exports/1/docx`));
+    assert.equal(result.blob.type, mime); assert.equal(result.blob.size, 4);
+    assert.equal(calls.length, 1); assert.equal(calls[0].options.body, undefined);
+    assert.equal(calls[0].options.credentials, 'same-origin'); assert.equal(calls[0].options.redirect, 'error');
+    for (const wrong of [
+      new Response('PKxx', { headers: { ...headers, 'x-classmatter-document-version': '2' } }),
+      new Response('PKxx', { headers: { ...headers, 'x-classmatter-document-id': randomUUID() } }),
+      new Response('PKxx', { headers: { ...headers, 'content-type': 'application/json' } }),
+      new Response('xxxx', { headers }), new Response('x'.repeat(4 * 1024 * 1024 + 1), { headers }),
+      new Response('{}', { status: 409 }),
+    ]) {
+      let count = 0; globalThis.fetch = async () => { count++; return wrong; };
+      await assert.rejects(client.exportFile(documentId, 1, 'docx')); assert.equal(count, 1);
+    }
+    globalThis.fetch = async () => { throw new Error('must not dispatch'); };
+    await assert.rejects(client.exportFile(documentId, 1, 'pdf'));
+    await assert.rejects(client.exportFile('../escape', 1, 'docx'));
+    const signal = new AbortController(); signal.abort();
+    await assert.rejects(client.exportFile(documentId, 1, 'docx', signal.signal), error => error.name === 'AbortError');
+  } finally { globalThis.fetch = original; }
+});

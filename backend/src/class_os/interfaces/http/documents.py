@@ -2,11 +2,14 @@
 from datetime import datetime
 from typing import Annotated, Literal
 from uuid import UUID
+from urllib.parse import quote
 
 from fastapi import APIRouter, HTTPException, Path, Request
 from pydantic import Field, model_validator
+from starlette.responses import Response
 
 from class_os.domain.documents import decode_document
+from class_os.application.document_artifacts import OfficeRenderer, OfficeArtifact, ArtifactTooLarge, MEDIA, MAX_BYTES
 from .contracts import WireModel
 from .roster import ApprovalBody, ProposalBody, CommitBody, ReceiptResponse, CommandStatusResponse, credentials
 
@@ -140,7 +143,7 @@ Snapshot = Annotated[str, Path(pattern=r'^[a-f0-9]{64}$')]
 Version = Annotated[int, Path(ge=1, le=2147483647)]
 
 
-def router(business, query):
+def router(business, query, *, renderer: OfficeRenderer):
     routes = APIRouter(prefix='/api/workspaces/{workspace_id}')
 
     @routes.post('/document-commands/preview', response_model=DocumentPreview)
@@ -187,6 +190,29 @@ def router(business, query):
     def document(workspace_id: UUID, class_id: UUID, term_id: UUID, document_id: UUID, request: Request):
         return {'workspace_id': workspace_id,
                 'data': query.document(*credentials(request, workspace_id), class_id, term_id, document_id)}
+
+    @routes.get(base + '/{document_id}/exports/{version}/{format}', responses={200: {'content': {
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': {},
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation': {}}}}, response_class=Response)
+    def export(workspace_id: UUID, class_id: UUID, term_id: UUID, document_id: UUID, version: Version,
+               format: Literal['docx', 'pptx'], request: Request):
+        value = query.document(*credentials(request, workspace_id), class_id, term_id, document_id)
+        if value['version'] != version:
+            raise HTTPException(409)
+        try:
+            artifact = renderer(value['title'], value['body'], value['format'], format)
+        except ArtifactTooLarge:
+            raise HTTPException(413) from None
+        if (type(artifact) is not OfficeArtifact or type(artifact.content) is not bytes or not artifact.content.startswith(b'PK')
+                or not 1 <= len(artifact.content) <= MAX_BYTES or artifact.media_type != MEDIA[format]
+                or type(artifact.filename) is not str or not 1 <= len(artifact.filename) <= 100
+                or not artifact.filename.endswith('.' + format)
+                or any(ord(char) < 32 or char in '/\\' for char in artifact.filename)):
+            raise HTTPException(503)
+        return Response(artifact.content, media_type=artifact.media_type, headers={
+            'content-disposition': "attachment; filename*=UTF-8''" + quote(artifact.filename, safe=''),
+            'x-classmatter-document-id': str(document_id), 'x-classmatter-document-version': str(version),
+            'cache-control': 'no-store', 'x-content-type-options': 'nosniff'})
 
     @routes.get(base + '/{document_id}/history', response_model=RevisionPage)
     def history(workspace_id: UUID, class_id: UUID, term_id: UUID, document_id: UUID, request: Request):

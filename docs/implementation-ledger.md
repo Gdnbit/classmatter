@@ -1,5 +1,15 @@
 # 实现与验收台账
 
+## 2026-11-13 已保存教案/小结的可编辑Word与PPT导出
+
+复用既有MIT锁定python-docx1.2.0/python-pptx1.0.2，在原文档页加入Word/PPT操作及固定QG同版本下载，原聊天可准备文字教案/课件正文，保存后再导出，不新建工作台/表/业务写工具。实现为`application/document_artifacts.py`小端口、`infrastructure/office_artifacts.py`适配器、原documents路由/客户端及`DocumentExportActions`；桌面沿原Save对话框增加精确Office路由/MIME/4MiB白名单，仍拒绝blob/远程/任意路径，不增加IPC。
+
+实际生成/编辑回读/HTTP/PG6项29.88秒、原网页1项18.07秒、Windows原生桌面1项57.74秒通过。Word/PPT从同一文档版本导出，中文长文本完整、PPT超150张明确拒绝；未保存不导出，版本变化409、限长413、服务503不下载错误文件；导出读取不锁其他导航，离开页面取消，不清草稿、不新增业务版本。Web90项/类型检查/构建、桌面策略15项通过，保留原构建分块大小提示。失败记录包括测试驱动require上下文错误及重复错误提示，均已修复并保留首次失败；测试产物只在本机非C目录，未上传Office二进制/本机描述文件。
+
+详细设计与撤回方式见[原聊天办理设计](design/workspace-chat-and-actions.md)，结果/缺口见[场景登记](product/scenario-run-results.md)。本单元为Shared Capability工程增量，不修改冻结R1、正式Requirement/Eval/Task/Gate及真实数据权限；回滚不需数据库迁移，也不删除用户文档/下载文件。复杂主题、图片/图表、在线PPT逐元素编辑、原生Office视觉及教师净省时仍待验证，不以文字导出冒充全部课件能力。精确head完整CI/独立PR另留证，模型与写字机单元继续推进。
+
+与记事/跟进单元合并复验：底层/完整17类比较/Office/任务共12项116.98秒通过，两个原网页闭环2项119.59秒通过，原生桌面Office1项84.56秒通过；工具快照与HTTP生成契约、Web90项/类型/构建、79文档核对通过。单独Office基线非DB896通过/4项既有跳过（133.14秒），并未将这次结果冒称最终合并head完整CI。合并保留两单元全部需求/失败/验收及原公开审核例外，重新按真实字节核验SHA；没有覆盖另一分支内容。
+
 ## 2026-11-13 场景演练：普通事实→关联跟进→等待→结束→小结
 
 承接PR #82基线，复用D4原Record/Task/Document及QG/BCG/ISB，新增`activity_actions.py`固定读取/候选工具，不给模型保存或审批能力，不改原界面/导航。0031仅扩展原聊天候选白名单；R1/D3目标和正式Requirement/Eval/Task/Gate不变。记录显示学生/事实/明确时间，结束任务显示原状态/依据与新状态/依据；来源必须是已确认、未作废的唯一普通学生事实，模型推断和个人随记不进入此事实路径。完整设计与回滚约束见[原聊天办理设计](design/workspace-chat-and-actions.md)。
