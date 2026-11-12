@@ -7,11 +7,12 @@ const base = process.env.CLASS_OS_TEST_URL;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
 const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [], starts = [], commits = [];
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [], starts = [], commits = [], sends = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {
     if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url());
     if (request.method() === 'POST' && request.url().endsWith('/events')) starts.push(request.url());
+    if (request.method() === 'POST' && /\/workspace-chat\/threads\/[^/]+\/turns$/.test(new URL(request.url()).pathname)) sends.push(request.postDataJSON().request_id);
     if (request.method() === 'POST' && request.url().endsWith('/commands/commit')) commits.push(request.postDataJSON().idempotency_key);
   });
   await page.goto(base);
@@ -115,20 +116,43 @@ try {
   ];
   const changes = [];
   for (const [message, title] of messages) {
+    let retried = null;
     await input.fill(message); await page.getByRole('button', { name: '发送消息', exact: true }).click();
     if (['建立班级与学期', '创建工作文档', '修改工作文档'].includes(title)) {
       const retry = history.getByRole('button', { name: '重试回复', exact: true });
-      await expect(retry).toBeEnabled();
+      await retry.click({ trial: true });
       const retainedDraft = title === '修改工作文档' ? message : '保留下一条未发送草稿';
       await input.fill(retainedDraft);
       const beforeRetry = starts.length;
+      const beforeSends = sends.length;
+      if (title === '创建工作文档') {
+        // Input is persisted before model dispatch. A slow accepted reply is
+        // not a missing retry; it must still preserve the next draft.
+        await page.route(savePath, async route => {
+          const accepted = await route.fetch();
+          await page.waitForTimeout(6000);
+          await route.fulfill({ response: accepted });
+        }, { times: 1 });
+      }
+      await retry.click({ trial: true });
       // A rapid second activation cannot start another generation.
-      await retry.evaluate(button => { button.click(); button.click(); });
-      await expect.poll(() => starts.length).toBe(beforeRetry + 1);
+      const [accepted] = await Promise.all([
+        page.waitForResponse(response => response.request().method() === 'POST' && /\/workspace-chat\/threads\/[^/]+\/turns$/.test(new URL(response.url()).pathname)),
+        page.waitForRequest(request => request.method() === 'POST' && request.url().endsWith('/events')),
+        retry.evaluate(button => { button.click(); button.click(); }),
+      ]);
+      assert.equal(accepted.status(), 200);
+      assert.equal(sends.length, beforeSends + 1);
+      assert.equal(starts.length, beforeRetry + 1);
+      retried = { beforeRetry, beforeSends };
       await expect(input).toHaveValue(retainedDraft);
     }
     const card = history.getByRole('region', { name: '对话中的操作候选' }).filter({ has: page.getByRole('heading', { name: title, exact: true }) });
     await card.getByRole('heading', { name: title, exact: true }).waitFor();
+    if (retried) {
+      assert.equal(starts.length, retried.beforeRetry + 1);
+      assert.equal(sends.length, retried.beforeSends + 1);
+    }
     if (['建立班级与学期', '创建工作文档', '修改工作文档'].includes(title)) {
       await expect(input).toHaveValue(title === '修改工作文档' ? message : '保留下一条未发送草稿');
       await input.fill('');
