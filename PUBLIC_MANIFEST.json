@@ -519,7 +519,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "ca1d41b211ac1e37dcd8f1fe5a7c4bdc57621c9e89f7f9c7fc7563ed586b9b67"
+      "sha256": "7881d2f4f0deefa653c158d8d5d13c4cf91608e81c181f971ea2ae8717e65688"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3128,10 +3128,10 @@
       "sha256": "afbd08f4d56791a074a11ffbf8ad2a407f1e4d4787153698576cdd0f75e60695"
     },
     "apps/desktop/tests/live-classroom-acceptance.cjs": {
-      "sha256": "d061ea6f4da0b27dc442358cb32be7bca0f188114ca0d93707eee5ee5dba7e04"
+      "sha256": "a07c89612613c61d18c0298c3cbba1c0997ad19829a93f3939048a905b958bbf"
     },
     "backend/live_classroom_acceptance.py": {
-      "sha256": "4460fd3df72d9d449c0bd0eb68ca291a4d23e847ca8b4acf7511ed0565b71068"
+      "sha256": "9cf7e1c401ab9533696e203e8882c35868dc63ecb6d9460728d7a3fc115616e0"
     },
     "backend/tests/test_live_classroom_operator.py": {
       "sha256": "8540e9b514bd1f99738e2ad1457f288e0e66e30518b8b17a5d40985ec44dad0f"
@@ -3289,10 +3289,10 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "57bd822045bf1f3a7d011ae1e26dad30d2c2174df01ee6883b9dbb84df8d1e03"
+      "sha256": "1bde6b51e731c50b8f08e1a2d2d77885f04e68e9d13ea90af3d0e76759a05fe5"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
-      "sha256": "a7137afba069ad1dc863a7c13ad770977ded5c8898e75515453c69b8c4d953ab"
+      "sha256": "bc8293bdf3ded386485335642e0cc0259a890a56149a98662f469c0e0b8f69a5"
     },
     "apps/web/tests/activity-actions-browser.mjs": {
       "sha256": "69b8a50480f40a0be7225bf6c4e80a631e681d4cea2319f54c9411c79552b52d"

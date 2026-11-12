@@ -238,10 +238,13 @@ def main():
         (output / 'operator-metadata.json').write_text(json.dumps(metadata, indent=2), encoding='utf-8')
         metadata_complete = bool(request_ids) and {row['run_id'] for row in metadata} == request_ids
         passed = result.returncode == 0 and metadata_complete
+        retention = next((row for row in observed.get('rows', []) if row.get('case') == 'failed turns retained after restart'), None)
         print(json.dumps({'status': 'passed' if passed else 'failed', 'ui_passed': result.returncode == 0,
             'operator_metadata_complete': metadata_complete, 'failure_categories': sorted({row['category'] for row in metadata if row.get('category')}),
             'scenario': args.scenario, 'report': str(output / 'report.json'), 'test_attempt_limit': args.attempts_per_turn,
             'application_automatic_retry': False, 'resumed_isolated_fixture': bool(args.resume_runtime_root),
+            'failed_turns_retained': retention.get('passed') if retention else None,
+            'retained_failed_turn_count': retention.get('count') if retention else None,
             'prior_failures_retained': any(row.get('prior_failure') for row in observed.get('rows', []))}))
         return 0 if passed else 1
     except Exception as error:

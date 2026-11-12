@@ -248,6 +248,9 @@ async function confirm(command){
   await closeOwnedApp();await launch();await page.goto(chat);await page.getByLabel('输入消息').waitFor();
   assert.deepEqual(await world(),accepted,'Daily work persists across complete native/API restart');
   const history=await read(`/workspace-chat/threads/${thread}`);assert.equal(history.turns.filter(t=>t.action_receipt).length,5);
+  const failed=rows.filter(row=>row.request_id&&row.state==='failed');
+  for(const row of failed){const stored=history.turns.find(turn=>turn.request_id===row.request_id);assert.equal(stored?.state,'failed','A successful retry/restart must retain the original failed turn');assert.equal(stored.candidate,null);assert.equal(stored.action_receipt,null);}
+  rows.push({case:'failed turns retained after restart',count:failed.length,passed:true});
   rows.push({case:'fact→linked followup→waiting→end→sourced summary and complete restart',passed:true});assert.deepEqual(errors,[]);save();return;
  }
  if(scenario==='full-workbench'){
