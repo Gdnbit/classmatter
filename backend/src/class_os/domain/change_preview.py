@@ -9,7 +9,7 @@ class Presentation(BaseModel):
 
 class FieldChange(Presentation):
     field: Literal['name', 'term_name', 'start_date', 'end_date', 'title', 'due_at', 'status',
-                   'student', 'source', 'body', 'format', 'subject', 'maximum_score', 'score', 'reason', 'evidence']
+                   'student', 'source', 'body', 'format', 'subject', 'maximum_score', 'score', 'reason', 'evidence', 'fact_text', 'occurred_at']
     before: str | None = Field(max_length=220000)
     after: str | None = Field(max_length=220000)
 

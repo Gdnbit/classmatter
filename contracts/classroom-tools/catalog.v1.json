@@ -152,14 +152,16 @@
     },
     {
       "name": "prepare_task",
-      "description": "Prepare creating a task or editing one uniquely matching task title/status. No inferred deadline, student, completion or responsibility; never saves.",
+      "description": "Prepare one manual task, never save/send/delegate. Complete/cancel requires the user's quoted result/reason. For linked creation resolve one confirmed ordinary fact by student and exact text. Deadline must be an explicit ISO timestamp, never invented. Only edits may change an existing deadline; change_due_date with empty due_at explicitly removes it.",
       "parameters_json_schema": {
         "additionalProperties": false,
         "properties": {
           "action": {
             "enum": [
               "create",
-              "edit"
+              "edit",
+              "complete",
+              "cancel"
             ],
             "type": "string"
           },
@@ -185,6 +187,26 @@
               }
             ],
             "default": null
+          },
+          "evidence": {
+            "default": "",
+            "type": "string"
+          },
+          "student_name": {
+            "default": "",
+            "type": "string"
+          },
+          "source_fact": {
+            "default": "",
+            "type": "string"
+          },
+          "due_at": {
+            "default": "",
+            "type": "string"
+          },
+          "change_due_date": {
+            "default": false,
+            "type": "boolean"
           }
         },
         "required": [
@@ -252,6 +274,56 @@
       "parameters_json_schema": {
         "additionalProperties": false,
         "properties": {},
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "read_class_records",
+      "description": "Read confirmed ordinary student facts and source IDs/versions. This is not a complete school search; no health, disciplinary or inferred profiles. Never treats chat as a fact.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "student_name": {
+            "default": "",
+            "type": "string"
+          },
+          "search": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "prepare_record",
+      "description": "Prepare one already-occurred ordinary student fact quoted from the user's account, not a plan or interpretation. Use an explicitly stated ISO timestamp, or occurred_now only for explicit 现在/刚刚. Never infer diagnoses, responsibility or personal-life memory; never saves.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "student_name": {
+            "type": "string"
+          },
+          "fact_text": {
+            "type": "string"
+          },
+          "occurred_at": {
+            "default": "",
+            "type": "string"
+          },
+          "occurred_now": {
+            "default": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "student_name",
+          "fact_text"
+        ],
         "type": "object"
       },
       "kind": "function",

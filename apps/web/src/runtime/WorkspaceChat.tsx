@@ -10,7 +10,7 @@ import { SeatLayoutPreview } from './SeatLayoutPreview'
 import { ChangeComparison } from './ChangeComparison'
 
 const labels: Record<string, string> = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
-  "task.create": "建立任务", "task.update": "修改任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
+  "record.create": "记录事实", "task.create": "建立任务", "task.update": "修改任务", "task.complete": "结束任务", "task.cancel": "取消任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
 const states = { queued: "等待回复", running: "正在回复…", completed: "回复完成", failed: "回复失败，请稍后再试", cancelled: "已停止回复", unknown: "暂时无法确认回复结果" }
 Object.assign(labels, { 'exam.create': '建立考试', 'score.record': '记录成绩', 'seat.layout.create': '建立座位表', 'seat.assign': '安排座位', 'seat.swap': '交换座位' })
 function AnswerActions({ text, duration }: { text: string; duration: number | null }) {
@@ -42,7 +42,8 @@ function CandidateContent({ value }: { value: ChatCandidate }) {
     {value.command === 'seat.layout.create' && <SeatLayoutPreview rows={value.rows} columns={value.columns} />}
     {'row' in value && <p>目标：{value.row} 排 {value.column} 座</p>}
     {'first_row' in value && <p>{value.first_row} 排 {value.first_column} 座 ↔ {value.second_row} 排 {value.second_column} 座</p>}
-    {"status" in value && !('score' in value) && <p>状态：{value.status === "waiting" ? "等待别人" : value.status === "in-progress" ? "进行中" : "未开始"}</p>}
+    {"status" in value && !('score' in value) && <p>状态：{({ waiting: '等待别人', 'in-progress': '进行中', 'not-started': '未开始', done: '已完成', cancelled: '已取消' } as Record<string, string>)[value.status]}</p>}
+    {'fact_text' in value && <p>{value.fact_text}</p>}
     {"body" in value && <details open><summary>草稿正文</summary><p className="r1-document-draft">{value.body}</p></details>}
   </>
 }
