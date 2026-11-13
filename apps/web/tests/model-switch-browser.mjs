@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { chromium } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
 
 const base = process.env.CLASS_OS_TEST_URL;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
@@ -8,6 +9,8 @@ let page;
 try {
   page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
   const errors = [], starts = [];
+  const external = [];
+  page.on('request', r => { if (!r.url().startsWith(`${base}/`) && !r.url().startsWith('data:')) external.push(r.url()) });
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => { if (r.method() === 'POST' && r.url().endsWith('/events')) starts.push(r.url()) });
   await page.goto(base);
@@ -37,12 +40,30 @@ try {
   assert.equal(await answer.getByRole('heading', { name: '目标', exact: true }).count(), 1);
   assert.deepEqual(await answer.locator('li').allTextContents(), ['平均分', '说出一份']);
   assert.equal(await answer.locator('script,img,iframe').count(), 0);
+  assert.equal(await answer.locator('.katex-mathml math').count(), 4);
+  assert.equal(await answer.locator('.katex-display').count(), 2);
+  assert(await answer.locator('.katex-mathml mfrac').count() >= 4);
+  assert.deepEqual(await answer.locator('.katex-mathml mfrac').first().evaluate(el => [...el.children].map(node => node.textContent)), ['1', '2']);
+  const original = await answer.locator('annotation[encoding="application/x-tex"]').allTextContents();
+  await page.evaluate(() => document.fonts.ready);
+  assert(await page.evaluate(() => [...document.fonts].some(font => font.family.startsWith('KaTeX') && font.status === 'loaded')));
   assert.equal(await answer.getByRole('button', { name: '复制回答', exact: true }).count(), 1);
+  await mkdir('test-results', { recursive: true });
+  await answer.locator('.katex-display').first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'test-results/teaching-math-chat-wide.png' });
   const chat = page.url();await page.reload();
   await page.getByRole('article', { name: '助手回复' }).getByRole('heading', { name: '目标', exact: true }).waitFor();
+  const restored = page.getByRole('article', { name: '助手回复' });
+  assert.deepEqual(await restored.locator('annotation[encoding="application/x-tex"]').allTextContents(), original);
   assert.equal(page.url(), chat);
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  assert(await restored.locator('.katex-display').last().evaluate(el => el.scrollWidth > el.clientWidth));
+  assert(await restored.locator('.katex-display').last().evaluate(el => { el.scrollLeft = el.scrollWidth; return el.scrollLeft > 0 }));
+  assert.equal(await restored.locator('.katex-error').count(), 0);
+  await restored.locator('.katex-display').first().scrollIntoViewIfNeeded();
+  await page.screenshot({ path: 'test-results/teaching-math-chat-narrow.png' });
+  assert.deepEqual(external, []);
   assert.equal(starts.length, 1);
   assert.deepEqual(errors, []);
   console.log('PASS original composer: existing-key model switch via BCG, explicit probe+enable, draft preserved and subsequent SDK chat uses new model');

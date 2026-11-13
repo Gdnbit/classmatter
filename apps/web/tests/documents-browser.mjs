@@ -1,6 +1,7 @@
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { mkdir } from 'node:fs/promises';
 
 const base = process.env.CLASS_OS_TEST_URL, classroom = process.env.CLASS_OS_TEST_CLASS, term = process.env.CLASS_OS_TEST_TERM;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '') || !/^[a-f0-9-]{36}$/.test(classroom || '')
@@ -13,7 +14,7 @@ page.on('request', request => {
   if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url());
   if (request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/document-commands/commit')) commits.push(request.postDataJSON());
 });
-const body = '# 合成工作小结\n\n- 核对**展示作品**\n\n| 事项 | 结果 |\n| --- | --- |\n| 作品 | 已核对 |\n\n<script>throw new Error("untrusted body executed")</script>\n不作为正式事实。';
+const body = '# 合成工作小结\n\n- 核对**展示作品**\n\n| 事项 | 结果 |\n| --- | --- |\n| 作品 | 已核对 |\n\n认识分数 $\\frac{1}{2}$。\n\n<script>throw new Error("untrusted body executed")</script>\n不作为正式事实。';
 const editor = page.getByLabel('文档正文', { exact: true });
 const dialog = page.getByRole('dialog', { name: '确认文档变更', exact: true });
 const readReleases = [];
@@ -22,6 +23,8 @@ async function assertRendered(content) {
   assert.equal(await content.locator('li strong').textContent(), '展示作品');
   assert.equal(await content.getByRole('cell', { name: '已核对', exact: true }).count(), 1);
   assert.equal(await content.locator('script,img,iframe').count(), 0);
+  assert.equal(await content.locator('.katex-mathml mfrac').count(), 1);
+  assert.equal(await content.locator('annotation[encoding="application/x-tex"]').textContent(), '\\frac{1}{2}');
   assert((await content.innerText()).includes('<script>throw new Error("untrusted body executed")</script>'));
 }
 async function confirm() {
@@ -49,6 +52,8 @@ try {
   await page.getByRole('button', { name: '保存草稿', exact: true }).click();
   await dialog.waitFor();
   await assertRendered(dialog.locator('.document-text').last());
+  await mkdir('test-results', { recursive: true });
+  await page.screenshot({ path: `test-results/teaching-math-document-${process.env.CLASS_OS_TEST_LOST_REPLY === '1' ? 'lost' : 'normal'}.png` });
   const identity = await (await context.request.get(base + '/api/identity/session')).json();
   const prefix = `/api/workspaces/${identity.subject.workspace_id}`;
   const collection = `${prefix}/classes/${classroom}/terms/${term}/documents`;

@@ -2,3 +2,8 @@ minimumReleaseAgeExclude:
   - '@playwright/test@1.64.0'
   - playwright-core@1.64.0
   - playwright@1.64.0
+
+# The math plugins still declare 0.16; use the patched renderer and matching fonts.
+# https://github.com/KaTeX/KaTeX/security/advisories/GHSA-238p-pmpm-9mq7
+overrides:
+  katex: 0.19.1

@@ -47,3 +47,31 @@ test('each historical comparison uses its own before/after format, without mutat
   assert.match(html, /普通文本/); assert.match(html, /排版文本/); assert(!html.includes('Markdown'));
   assert.match(html, /已保存的结果/); assert.deepEqual(preview, original);
 });
+
+test('teaching fractions and block equations render accessible math without rewriting the source', () => {
+  const body = '# 认识分数\n\n每份是 $\\frac{1}{2}$。\n\n$$\n\\frac{1}{2} + \\frac{1}{4} = \\frac{3}{4}\n$$';
+  const html = render(body);
+  assert.match(html, /class="katex"/); assert.match(html, /class="katex-display"/);
+  assert.match(html, /<math/); assert.match(html, /<mfrac>/);
+  assert.match(html, /encoding="application\/x-tex"/);
+  assert.equal(body.includes('$\\frac{1}{2}$'), true);
+  const plain = render(body, 'plain-text');
+  assert(!plain.includes('class="katex')); assert.match(plain, /\$\\frac\{1\}\{2\}\$/);
+  const code = render('`$\\frac{1}{2}$`\n\n```text\n$\\frac{1}{2}$\n```');
+  assert(!code.includes('class="katex')); assert.match(code, /<code>\$\\frac/);
+});
+
+test('invalid formulas and bounded recursive macros cannot break the remaining answer or leak across renders', () => {
+  const html = render('$\\frac{1}{$\n\n后面的工作安排仍可阅读。\n\n$\\def\\loop{\\loop}\\loop$');
+  assert.match(html, /后面的工作安排仍可阅读/); assert.match(html, /katex-error/);
+  assert(!html.includes('title="ParseError'));
+  render('$\\gdef\\saved{SYNTHETICMACRO}\\saved$');
+  const next = render('$\\saved$');
+  assert(!next.includes('SYNTHETICMACRO')); assert.match(next, /<mtext>\\saved<\/mtext>/);
+});
+
+test('formula rendering cannot introduce external resources or model-supplied HTML attributes', () => {
+  const html = render('$\\includegraphics{https://example.invalid/a.png}$\n\n$\\href{https://example.invalid}{外链}$\n\n$\\htmlClass{synthetic-canary}{x}$\n\n$\\rule{9999em}{9999em}$');
+  assert(!/<img|<a\b|href=|src=|class="synthetic-canary"/.test(html));
+  assert(!/(?:style|width|height)="[^"]*9999em/.test(html)); assert.match(html, /<math/);
+});

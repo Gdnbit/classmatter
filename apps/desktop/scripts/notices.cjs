@@ -1,10 +1,11 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { createRequire } = require('node:module');
+const { createHash } = require('node:crypto');
 
 // Copy exact installed notices for the entire Web production dependency closure,
 // not build/test dependencies (which are not part of the distributed application).
-function collectNotices(web, stage) {
+function collectNotices(web, stage, thirdParty = path.resolve(__dirname, '../../../third_party')) {
   const entries = [];
   const visited = new Set();
   function visit(name, parent) {
@@ -19,11 +20,29 @@ function collectNotices(web, stage) {
     if (visited.has(key)) return;
     visited.add(key);
     const notices = fs.readdirSync(location).filter(file => /^(?:licen[cs]e|notice|copying)(?:[.-]|$)/i.test(file) && fs.statSync(path.join(location, file)).isFile());
-    if (!notices.length || !pkg.license) throw new Error(`License review required: ${key}`);
+    if (!pkg.license) throw new Error(`License review required: ${key}`);
+    let sources = notices.map(file => ({ file, source: path.join(location, file) }));
+    if (!sources.length) {
+      const review = JSON.parse(fs.readFileSync(path.join(thirdParty, 'supplemental-license-review.json'), 'utf8'));
+      const matches = review.upstream_release_notices.filter(item => item.name === pkg.name && item.version === pkg.version);
+      if (!matches.length) throw new Error(`License review required: ${key}`);
+      const root = fs.realpathSync(path.join(thirdParty, 'licenses/upstream'));
+      sources = matches.map(item => {
+        const source = fs.realpathSync(path.resolve(thirdParty, item.path));
+        const relative = path.relative(root, source);
+        if (!relative || relative.startsWith('..') || path.isAbsolute(relative)
+            || !/^[0-9a-f]{64}$/.test(item.sha256)
+            || createHash('sha256').update(fs.readFileSync(source)).digest('hex') !== item.sha256) {
+          throw new Error(`Reviewed notice mismatch: ${key}`);
+        }
+        return { file: path.basename(source), source };
+      });
+      if (new Set(sources.map(item => item.file.toLowerCase())).size !== sources.length) throw new Error(`Notice filename conflict: ${key}`);
+    }
     const directory = path.join(stage, 'third_party', key.replace(/[^A-Za-z0-9_.@-]/g, '_'));
     fs.mkdirSync(directory, { recursive: true });
-    for (const file of notices) fs.copyFileSync(path.join(location, file), path.join(directory, file));
-    entries.push({ name: pkg.name, version: pkg.version, license: pkg.license, notices: notices.map(file => path.relative(stage, path.join(directory, file)).split(path.sep).join('/')) });
+    for (const item of sources) fs.copyFileSync(item.source, path.join(directory, item.file));
+    entries.push({ name: pkg.name, version: pkg.version, license: pkg.license, notices: sources.map(item => path.relative(stage, path.join(directory, item.file)).split(path.sep).join('/')) });
     for (const dependency of Object.keys(pkg.dependencies || {})) visit(dependency, location);
   }
   const pkg = JSON.parse(fs.readFileSync(path.join(web, 'package.json'), 'utf8'));

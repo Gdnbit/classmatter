@@ -11,16 +11,17 @@ async function documentText(body, format) {
   if (!parser) parser = (async () => {
     const web = createRequire(path.resolve(__dirname, '../../web/package.json'));
     const dependencies = createRequire(web.resolve('react-markdown'));
-    const [{ unified }, { default: parse }, { default: gfm }, { default: rehype }, { defaultUrlTransform }] = await Promise.all([
+    const [{ unified }, { default: parse }, { default: gfm }, { default: math }, { default: rehype }, { defaultUrlTransform }] = await Promise.all([
       import(pathToFileURL(dependencies.resolve('unified')).href),
       import(pathToFileURL(dependencies.resolve('remark-parse')).href),
       import(pathToFileURL(web.resolve('remark-gfm')).href),
+      import(pathToFileURL(web.resolve('remark-math')).href),
       import(pathToFileURL(dependencies.resolve('remark-rehype')).href),
       import(pathToFileURL(web.resolve('react-markdown')).href),
     ]);
     // Preserve raw HTML as inert AST text for comparison. Never insert this
     // tree into a DOM or execute it; production Markdown escapes raw HTML.
-    return { processor: unified().use(parse).use(gfm).use(rehype, { allowDangerousHtml: true }), url: defaultUrlTransform };
+    return { processor: unified().use(parse).use(gfm).use(math).use(rehype, { allowDangerousHtml: true }), url: defaultUrlTransform };
   })();
   const { processor, url } = await parser;
   const tree = processor.runSync(processor.parse(body));
@@ -33,4 +34,16 @@ async function documentText(body, format) {
   // Block separation and soft line breaks are layout, not lost business text.
   return text(tree).replace(/\s+/g, '');
 }
-module.exports = { documentText };
+async function documentFields(locator) {
+  return locator.evaluateAll(nodes => Object.fromEntries(nodes.map(node => {
+    const content = node.querySelector('dd').cloneNode(true);
+    // Compare each actual rendered formula's source once, without its duplicate
+    // accessible/visual trees. Fraction rendering itself has separate DOM tests.
+    for (const math of content.querySelectorAll('.katex')) {
+      const source = math.querySelector('annotation[encoding="application/x-tex"]');
+      if (source) math.replaceWith(source.textContent);
+    }
+    return [node.querySelector('dt').textContent, content.textContent];
+  })));
+}
+module.exports = { documentText, documentFields };

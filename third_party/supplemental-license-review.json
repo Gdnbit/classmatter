@@ -6,6 +6,20 @@
   "status": "SUPPLEMENTED_FROM_EXACT_UPSTREAM_TAGS_NOT_A_BINARY_DISTRIBUTION_CLEARANCE",
   "upstream_release_notices": [
     {
+      "name": "rehype-katex",
+      "version": "7.0.1",
+      "url": "https://raw.githubusercontent.com/remarkjs/remark-math/88a9497e1ede93b958237c85edbf5651faeca7af/license",
+      "path": "licenses/upstream/rehype-katex-7.0.1/LICENSE.txt",
+      "sha256": "cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9"
+    },
+    {
+      "name": "remark-math",
+      "version": "6.0.0",
+      "url": "https://raw.githubusercontent.com/remarkjs/remark-math/d5d0660b150810a535bbb07eac6cc96a4510aa24/license",
+      "path": "licenses/upstream/remark-math-6.0.0/LICENSE.txt",
+      "sha256": "cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9"
+    },
+    {
       "name": "logfire-api",
       "version": "5.1.0",
       "url": "https://raw.githubusercontent.com/pydantic/logfire/v5.1.0/LICENSE",
