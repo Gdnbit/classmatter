@@ -522,7 +522,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "5c767c3bb1d0dfc715f0ee176bf5061cc76cc72c7f3c36bec29bf5034dd9ed60"
+      "sha256": "e2a39c174cf10344fbb414b46a11f938b99e597285d7e1e77087471766c3a1f6"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1074,7 +1074,7 @@
       "sha256": "75d4f30948937887e1bb8e3ab882156ac0edcf0cabfce509cbd9cded777effd0"
     },
     "backend/src/class_os/infrastructure/model_control.py": {
-      "sha256": "8092bd51c9e5242edde9f4d781d4d2a419f94c0171db64d80c880000ae89936d"
+      "sha256": "75131787b63a20b0d8db248b418d00316cf6c099690f325c92d4419c83bcb4b0"
     },
     "backend/src/class_os/infrastructure/model_provider.py": {
       "sha256": "2412d5248f19ba2485b500cf2dd33fba9ea65b84a5dbcf1ccbf408112da1f181"
@@ -1276,7 +1276,7 @@
       ]
     },
     "backend/tests/test_model_control.py": {
-      "sha256": "deec10dabde3288419b562fda794b82529fd7a1671cceafc4b191940acb5d773"
+      "sha256": "c201261dc56fd1a2147fad729ad7f6998977b164496dcfb1fa2c006190607030"
     },
     "backend/tests/test_model_secrets.py": {
       "sha256": "f10133f633b2cee4757fb8d46878fdaeadf23e420c05089c34ded07f473496c8"
@@ -3020,7 +3020,7 @@
       "sha256": "5440b56eb3b1314ac2d9dc75c38de860e35a695b3b52b2b02bf9d605098371c0"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "4855c4da84fbd10235539edbabdd3ee74f8af31274ef765715f63d820d550384"
+      "sha256": "d797c9a3409fbbcac3d9e2720c450058bdf1cd5eda2f6a6ca259c893eefa4eab"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3134,7 +3134,7 @@
       "sha256": "a07c89612613c61d18c0298c3cbba1c0997ad19829a93f3939048a905b958bbf"
     },
     "backend/live_classroom_acceptance.py": {
-      "sha256": "79bda56ed65e6c3b838c7b0a347ef90f4cddd9138ce8cc1139f9799dd6034884"
+      "sha256": "e87b9a57ed636cc1d4a1eb9dba95795d47cc73243e5ad04f05930036d919cf38"
     },
     "backend/tests/test_live_classroom_operator.py": {
       "sha256": "8540e9b514bd1f99738e2ad1457f288e0e66e30518b8b17a5d40985ec44dad0f"
@@ -3292,7 +3292,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "178cc3bfc33ca12079c0b493be3e8bde4a758a313f68eef39cf6f29d1e18a9ed"
+      "sha256": "1d3d3cafffa159032f50ef45e13f18d1f569326da530c614ec2cf271f4ccdfc7"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "bae496e88ba3625b1e243bec525fc856fd32523415d35041c969842e3ad88551"
@@ -3322,10 +3322,10 @@
       "sha256": "4ba7d8a380656897fad744297fd78820397ba090701ced515f1e3bbb788da60f"
     },
     "backend/src/class_os/infrastructure/operator_run_metadata.py": {
-      "sha256": "21739a54b6c79df4d64627c25d0d67fb79d4c9fccf247a81cdbb8c01a5d054cb"
+      "sha256": "a08a4ca1d66c8f307cca6763f9fa8e18a01ba0e73d059ef4e04eb7e41e6d18af"
     },
     "backend/tests/test_operator_run_metadata.py": {
-      "sha256": "c25f0aa5e9024e19f1cb9b42d09f7baabbad0862aa1ab1d46daf8b02350847c8"
+      "sha256": "11898bad50e3b5f48850374c5332469b00a3d537f42a8688b4f00a2dbe9cfddd"
     },
     "backend/tests/test_summary_source_reads.py": {
       "sha256": "d1e7a2eef0060b051a09516f848efee177aa23aff9ea8aa831e24ab1676a53e4"

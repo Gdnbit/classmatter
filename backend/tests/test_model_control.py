@@ -121,6 +121,7 @@ def test_model_configuration_bcg_approval_cas_and_atomic_audit_failure(roster, c
 @pytest.mark.parametrize("protocol", tuple(Protocol))
 async def test_model_test_enable_runtime_disable_and_no_secret_in_exit(roster, controlled, protocol):
     controller, vault, runtime, calls, clients, _ = controlled
+    reports = []; runtime.diagnostics = reports.append
     business, query, _, auth, _, _, clock = roster
     seed(roster)
     command, receipt = save(roster, vault, protocol)
@@ -129,8 +130,15 @@ async def test_model_test_enable_runtime_disable_and_no_secret_in_exit(roster, c
     request_id = uuid4()
     assert await controller.test(auth, command.candidate_id, 1, request_id)
     assert len(calls) == 2
+    from class_os.infrastructure.operator_run_metadata import valid_packet
+    assert len(reports) == 1 and valid_packet(reports[0])
+    assert reports[0]['run_id'] == str(request_id) and reports[0]['phase'] == 'protocol_probe'
+    assert reports[0]['outcome'] == 'completed' and reports[0]['model_requests'] == 2 and reports[0]['tool_calls'] == 1
+    assert [step['outcome'] for step in reports[0]['model_steps']] == ['completed', 'completed']
+    assert KEY not in str(reports) and 'class-os-synthetic-probe-ok' not in str(reports)
     assert await controller.test(auth, command.candidate_id, 1, request_id)
     assert len(calls) == 2, "Same test request must not trigger another paid attempt"
+    assert len(reports) == 1, 'Reading an idempotent result must not fabricate another probe'
     old = runtime.conversation(auth)
     await controller.enable(auth, command.candidate_id, 1)
     with pytest.raises(AgentRejected):
@@ -231,6 +239,7 @@ async def test_switch_model_reuses_only_current_provider_key_and_original_bcg(ro
 @pytest.mark.parametrize("fault", ("http-error", "unknown-tool", "truncated"))
 async def test_failed_protocol_probe_cannot_enable_or_retry_same_request(roster, controlled, fault):
     controller, vault, runtime, calls, clients, faults = controlled
+    reports = []; runtime.diagnostics = reports.append
     auth = roster[3]
     command, _ = save(roster, vault)
     faults["value"] = fault
@@ -243,11 +252,18 @@ async def test_failed_protocol_probe_cannot_enable_or_retry_same_request(roster,
         await controller.enable(auth, command.candidate_id, 1)
     assert (await controller.status(auth))["mode"] == "offline"
     assert all(client.is_closed() for client in clients)
+    from class_os.infrastructure.operator_run_metadata import valid_packet
+    assert len(reports) == 1 and valid_packet(reports[0]) and reports[0]['phase'] == 'protocol_probe'
+    assert reports[0]['outcome'] == 'failed' and reports[0]['model_requests'] == before
+    assert KEY not in str(reports) and 'synthetic-private-provider-error' not in str(reports)
+    if fault == 'http-error':
+        assert reports[0]['category'] == 'upstream_http' and reports[0]['http_status'] == 503
 
 
 @pytest.mark.db
 async def test_cancelled_probe_releases_slot_closes_client_and_keeps_offline(roster, controlled):
     controller, vault, runtime, calls, clients, faults = controlled
+    reports = []; runtime.diagnostics = reports.append
     auth = roster[3]
     command, _ = save(roster, vault)
     faults["value"] = "cancel"
@@ -260,6 +276,41 @@ async def test_cancelled_probe_releases_slot_closes_client_and_keeps_offline(ros
     assert not controller._testing and all(client.is_closed() for client in clients)
     assert not await controller.test(auth, command.candidate_id, 1, request_id)
     assert len(calls) == 1
+    assert len(reports) == 1 and reports[0]['outcome'] == reports[0]['category'] == 'cancelled'
+    assert reports[0]['model_requests'] == 1 and reports[0]['model_steps'][0]['outcome'] == 'cancelled'
+
+
+@pytest.mark.db
+async def test_probe_deadline_is_distinct_from_user_cancel_and_observer_failure_cannot_change_success(roster, controlled, monkeypatch):
+    from types import SimpleNamespace
+    from class_os.infrastructure import model_control
+    from class_os.infrastructure.operator_run_metadata import valid_packet
+    controller, vault, runtime, calls, clients, faults = controlled
+    auth = roster[3]; command, _ = save(roster, vault)
+    reports = []; runtime.diagnostics = reports.append
+    original_timeout = asyncio.timeout; budgets = []
+    def short_probe_timeout(seconds):
+        assert seconds == 10, 'Product probe budget remains unchanged'
+        budget = original_timeout(None); budgets.append(budget)
+        return budget
+    with monkeypatch.context() as patch:
+        patch.setattr(model_control, 'asyncio', SimpleNamespace(timeout=short_probe_timeout, CancelledError=asyncio.CancelledError))
+        faults['value'] = 'cancel'
+        pending = asyncio.create_task(controller.test(auth, command.candidate_id, 1, uuid4()))
+        await asyncio.wait_for(faults['entered'].wait(), 3)
+        budgets[0].reschedule(asyncio.get_running_loop().time())
+        assert not await pending
+    assert len(reports) == 1 and valid_packet(reports[0])
+    assert reports[0]['outcome'] == 'failed' and reports[0]['category'] == 'local_run_deadline'
+    assert reports[0]['model_steps'][0]['outcome'] == 'cancelled'
+    assert (await controller.status(auth))['mode'] == 'offline' and not controller._testing
+    assert all(client.is_closed() for client in clients)
+    def unavailable_sink(packet):
+        raise OSError('synthetic unavailable observer')
+    runtime.diagnostics = unavailable_sink; faults['value'] = None
+    assert await controller.test(auth, command.candidate_id, 1, uuid4())
+    assert len(calls) == 3 and not controller._testing
+    assert (await controller.status(auth))['test_passed'] and (await controller.status(auth))['mode'] == 'offline'
 
 
 @pytest.mark.db
