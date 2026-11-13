@@ -26,6 +26,48 @@ try {
     await dialog.waitFor({ state: 'hidden' });
   }
   const comparisons = [];
+  async function failedForegroundRead(card) {
+    const button = card.getByRole('button', { name: '预览这项操作', exact: true });
+    const historyPath = /\/workspace-chat\/threads\/[a-f0-9-]+$/;
+    let failed = false;
+    const rejectRead = async route => { failed = true; await route.fulfill({ status: 503, json: { detail: 'Synthetic query outage' } }); };
+    const proposals = writes.filter(url => url.endsWith('/proposal')).length;
+    await page.waitForTimeout(5100);
+    await page.route(historyPath, rejectRead);
+    try {
+      await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+      await expect.poll(() => failed).toBe(true);
+      await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'false');
+      await expect(button).toBeDisabled();
+      assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals);
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+    } finally { await page.unroute(historyPath, rejectRead); }
+    await page.getByRole('button', { name: '重试', exact: true }).click();
+    await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'true');
+    await expect(button).toBeEnabled();
+    assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals);
+  }
+  async function previewDuringForegroundRead(card) {
+    const button = card.getByRole('button', { name: '预览这项操作', exact: true });
+    const historyPath = /\/workspace-chat\/threads\/[a-f0-9-]+$/;
+    let release, held = false, delivered = Promise.resolve();
+    const barrier = new Promise(resolve => release = resolve);
+    const holdRead = route => { delivered = (async () => {
+      const response = await route.fetch(); assert.equal(response.status(), 200);
+      held = true; await barrier; await route.fulfill({ response });
+    })(); return delivered; };
+    // The foreground controller coalesces events for at most five seconds.
+    // Make a real revalidation overlap pointer down/up without a new timeout.
+    await page.waitForTimeout(5100);
+    await page.route(historyPath, holdRead);
+    await button.evaluate(node => node.addEventListener('pointerdown', () => window.dispatchEvent(new Event('focus')), { once: true }));
+    try {
+      await button.click({ delay: 600 });
+      await expect.poll(() => held).toBe(true);
+      await page.getByRole('dialog', { name: '确认这次变更', exact: true }).waitFor();
+      await expect(page.getByRole('dialog').getByRole('alert')).toHaveCount(0);
+    } finally { release(); await delivered; await page.unroute(historyPath, holdRead); }
+  }
   for (const title of ['建立考试', '记录成绩', '建立座位表', '安排座位', '安排座位', '交换座位']) {
     const card = page.getByRole('region', { name: '对话中的操作候选' }).filter({ has: page.getByRole('heading', { name: title, exact: true }) }).last();
     await card.getByRole('button', { name: '预览这项操作', exact: true }).waitFor();
@@ -33,7 +75,8 @@ try {
     await comparison.waitFor();
     const before = await comparisonContent(comparison.getByLabel('修改前', { exact: true }));
     const after = await comparisonContent(comparison.getByLabel('待确认的结果', { exact: true }));
-    await card.getByRole('button', { name: '预览这项操作', exact: true }).click().catch(async error => {
+    if (comparisons.length === 0) await failedForegroundRead(card);
+    await (comparisons.length === 0 ? previewDuringForegroundRead(card) : card.getByRole('button', { name: '预览这项操作', exact: true }).click()).catch(async error => {
       throw new Error(JSON.stringify({ title, body: await page.locator('body').innerText(), errors, runs }), { cause: error });
     });
     const dialogComparison = page.getByRole('dialog').getByRole('region', { name: '变更前后对比', exact: true });

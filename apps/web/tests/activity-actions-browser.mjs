@@ -255,14 +255,18 @@ try {
           try {
             await page.evaluate(() => window.dispatchEvent(new Event('focus')));
             await expect.poll(() => fetchedHistory).toBeGreaterThan(0);
-            // Hold every new matching read, including a legitimately superseded
-            // one, until the actual UI is visibly revalidating. This guarantees
-            // the overlap instead of inferring it from network observer timing.
-            await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'false');
+            // Genuine history is held, while the checked snapshot stays usable.
+            // An applied-read revision proves decoding after release; freshness
+            // no longer stands in for whether a background read is in progress.
+            const composer = page.locator('form.r1-composer');
+            const heldRevision = await composer.getAttribute('data-chat-refresh-revision');
+            assert(/^\d+$/.test(heldRevision || ''));
+            await expect(composer).toHaveAttribute('data-chat-fresh', 'true');
             await expect(cards.nth(index).getByRole('button', { name: label, exact: true })).toHaveText('导出中…');
             await expect(page.getByRole('button', { name: '新对话', exact: true })).toBeEnabled();
             mark('history-refresh-in-progress'); releaseHistory();
-            await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'true');
+            await expect.poll(() => composer.getAttribute('data-chat-refresh-revision')).not.toBe(heldRevision);
+            await expect(composer).toHaveAttribute('data-chat-fresh', 'true');
             await expect(cards.nth(index).getByLabel('已保存的结果', { exact: true })).toContainText('班长交齐，我已核对');
             mark('new-history-decoded');
           } finally { releaseHistory(); }
