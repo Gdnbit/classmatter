@@ -15,7 +15,7 @@
       "sha256": "e01f44601de9cfa360ead2d90a33a3eb8198e0f6f5b7d0d97f6e8a823263bd28"
     },
     "backend/src/class_os/infrastructure/office_artifacts.py": {
-      "sha256": "3f302839b9f22c663d859458d670328d2b6a4ae846a4098309174f6d87367b0c"
+      "sha256": "f36866c55f90e3994e66212aa4c9fb0e5d23a76d12fa5ec10b778e505003330d"
     },
     "backend/tests/test_office_artifacts_http.py": {
       "sha256": "b9687c57fd97c9783a8f553e7712cc5a4de8b3ba2910fe49f71038d36480605f"
@@ -27,7 +27,7 @@
       "sha256": "e6ebcee9d8bce9bda3ae6d1e40698ebc4e632076d14deb97dfbeb8b961b95d13"
     },
     "backend/tests/test_office_artifacts.py": {
-      "sha256": "18d27e0b62290509eb818792ff3934a30411b65db134b032f2301ddc668a7807"
+      "sha256": "8e33fa4ea2f6a0b4871a73a42bf52e91b39eea75a85cd4da31817e945ea833e0"
     },
     "apps/web/tests/workspace-chat-browser.mjs": {
       "sha256": "39b9cd178673ed943b70eb037454e44a12455645efe4deefad9f27af1b51b578"
@@ -519,7 +519,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "c4dca27ec8898a67d943c8b56f2042067769b68c4f0762656e56c4f3d9c1f258"
+      "sha256": "7f03bb6e369682b7759a6b51137f1065b9ae7c3e97dbf02e8c8b2db2d3e5eb6c"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -681,7 +681,7 @@
       "sha256": "f14b6fab4f65f7fb21a5712a64a4978df6baf878806af524a017c2011a9691af"
     },
     "THIRD_PARTY_NOTICES.md": {
-      "sha256": "7fd6996cf515d8ebdae9825c1d9dd344e94abab266a77e99ec6cc8236fba382d"
+      "sha256": "11744c9591986d5181d7ad42ebd10c51b97ee86108b08abb464c076c416a9962"
     },
     "apps/web/.figma/make/site.json": {
       "sha256": "ec98b717eb772e31d8a21ba072d45aa47561e4bc1b13f87f9cc71a54ad2435f9"
@@ -978,7 +978,7 @@
       "sha256": "7f81a753c72b340bfacda8aa57873e3a2173cc70767d5323113c6d2fd9380183"
     },
     "backend/pyproject.toml": {
-      "sha256": "40cb18035fde614f5587778a0a31834aa399ca5bd1bb9c734922d5c03bf6bb66"
+      "sha256": "b48738df07cb9fc4f38e8562d46225de8b45e5a40265133081810d391b7294c8"
     },
     "backend/run.ps1": {
       "sha256": "f8b8ceb9b9d23ca0dc8faf79ab2248da4447650154921c712e8be5adab9948ba"
@@ -1336,7 +1336,7 @@
       "sha256": "a08994631068002bc2ece8a2e4fa8784361046f84eb146d6683ee74e9d7e1bb4"
     },
     "backend/uv.lock": {
-      "sha256": "9f9cd691ada4f6f9facbf0e1bb0ff240d4969c7f9d7978f65dc8ed2d48bb8f04"
+      "sha256": "eef362909d5495bc2203df1b257c7837b9d7f35eda8c5d3d242dcf2a40085e55"
     },
     "backend/verify_exit.py": {
       "sha256": "2a40cda58ca4794149c7aeadf748ffdc592233519388af97d223b836e0b05b12"
@@ -1945,7 +1945,7 @@
       "sha256": "e10169a68b26cf7a2a4937d3460c4005e1b2985102f0606aefa804bb65ab12cf"
     },
     "third_party/dependency-licenses.json": {
-      "sha256": "bfab0c1915c2f2f1352ff9846030fbd6fd20e7e6ca39ce5ec04db85a65c3ac2b"
+      "sha256": "b2b95810969b10b7b9eeb45c9133e001a16d914e8eec9d1795ec467502a684fa"
     },
     "third_party/licenses/npm/_jridgewell_gen-mapping-0.3.13/LICENSE": {
       "sha256": "769d154fbde32a915af110b1123650bc79f4cbe675acc66e005265bf069c6c6c",
@@ -2786,7 +2786,7 @@
       "sha256": "98cee3358abd27af766e81687ef352c5f3c74eb4ff21b15927046b2c85dbbadd"
     },
     "docs/design/workbench-domain-packs.md": {
-      "sha256": "8bedd30d16f6c702782a0212987b13101e8f6b4e2722305046e996a92fd2c32a"
+      "sha256": "f1a2f745b6cfa8a7a6cd969ca1f4a772eeff91aebfe06f053338ec03917cf6e6"
     },
     "apps/web/scripts/generate-documents.mjs": {
       "sha256": "48c25cfb71666f49438e1d28fe951c21de529f98d72f146f131a95dd22f3736c"
@@ -3289,7 +3289,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "9b158a6d5df940bfca4d696468f78d27a8b9eec1df0f6f9f58571fa36b5a06f3"
+      "sha256": "7b8962ace0a866611f512e0c93e1dac7cd97bdad3a0b66be2299eb281458cf99"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "bc8293bdf3ded386485335642e0cc0259a890a56149a98662f469c0e0b8f69a5"
@@ -3329,6 +3329,18 @@
     },
     "apps/web/tests/recording-recovery-browser.mjs": {
       "sha256": "570a466e0f030c4e52b2249937c3854b530dcd9003d12ce4108e3764592cd75d"
+    },
+    "backend/src/class_os/infrastructure/office_markdown.py": {
+      "sha256": "3c85dc5c7e4b26ad71d098788d92a41cc3a623fcc7cb2be58d66911a94ff81e7"
+    },
+    "third_party/licenses/python/markdown-it-py-4.2.0/0.txt": {
+      "sha256": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484"
+    },
+    "third_party/licenses/python/markdown-it-py-4.2.0/1.txt": {
+      "sha256": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473"
+    },
+    "third_party/licenses/python/mdurl-0.1.2/0.txt": {
+      "sha256": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955"
     }
   }
 }
