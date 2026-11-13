@@ -32,8 +32,16 @@ async def test_ending_copies_the_whole_explicit_result_before_any_confirmation(c
     note, calls = '班长交齐，我已核对' if action == 'complete' else '计划已取消，不再需要收集', []
     def respond(messages, info):
         calls.append(True)
-        if len(calls) > 1:
+        if len(calls) == 2:
             assert any(isinstance(part, RetryPromptPart) for part in messages[-1].parts)
+            assert [tool.name for tool in info.function_tools] == ['read_task_progress']
+            if not keeps_failing:
+                return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
+        elif len(calls) == 3:
+            progress = next(part for part in messages[-1].parts if isinstance(part, ToolReturnPart))
+            assert progress.tool_name == 'read_task_progress'
+            assert any(task.title in request for request in progress.content['requests'])
+            assert 'prepare_task' in {tool.name for tool in info.function_tools}
         evidence = '' if keeps_failing else note.split('，')[0] if len(calls) == 1 else note
         return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': action, 'title': task.title, 'evidence': evidence})])
     sdk = PydanticAgentRuntime(query, timeout=45, model_factory=lambda _: FunctionModel(respond))
@@ -44,7 +52,7 @@ async def test_ending_copies_the_whole_explicit_result_before_any_confirmation(c
     chats.send(auth, thread, request, f'{"结束" if action == "complete" else "取消"}{task.title}，{label}原文为“{note}”')
     events = [event async for event in runtime.stream_queued(auth, thread, request)]
     row = history.turn(auth, thread, request)[1]
-    assert len(calls) == 2 and row['action_receipt'] is None
+    assert len(calls) == (2 if keeps_failing else 3) and row['action_receipt'] is None
     if keeps_failing:
         assert row['state'] == 'failed' and row['candidate'] is row['assistant_text'] is None
         assert not any(event.type in ('message.delta', 'draft.available') for event in events)
@@ -67,7 +75,16 @@ async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candi
     calls = []
     def respond(messages, info):
         calls.append(True)
-        if not keeps_failing and any(isinstance(part, RetryPromptPart) for part in messages[-1].parts):
+        repairing = any(isinstance(part, RetryPromptPart) for part in messages[-1].parts)
+        progress = next((part for part in messages[-1].parts if isinstance(part, ToolReturnPart) and part.tool_name == 'read_task_progress'), None)
+        if repairing and mistake != 'prose':
+            assert [tool.name for tool in info.function_tools] == ['read_task_progress']
+            if not keeps_failing:
+                return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
+        if progress:
+            assert any(task.title in request for request in progress.content['requests'])
+            assert 'prepare_task' in {tool.name for tool in info.function_tools}
+        if not keeps_failing and (repairing or progress):
             return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': 'edit', 'title': '合成作品核对', 'status': 'waiting', 'evidence': '班长正在收集'})])
         part = (TextPart('已记录“班长正在收集”这一事实，并将“合成作品核对”任务暂时搁置。请确认是否继续下一步操作。') if mistake == 'prose' else
             ToolCallPart('prepare_task', {'action': 'create' if mistake == 'create' else 'edit', 'title': '合成作品核对', 'status': 'waiting', 'evidence': '' if mistake == 'missing-note' else '班长' if mistake == 'short-note' else '班长正在收集'}))
@@ -80,7 +97,7 @@ async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candi
     chats.send(auth, thread, request, '合成作品核对先等待，跟进记录原文为“班长正在收集”')
     events = [event async for event in runtime.stream_queued(auth, thread, request)]
     row = history.turn(auth, thread, request)[1]
-    assert len(calls) == 2 and row['action_receipt'] is None
+    assert len(calls) == (2 if keeps_failing or mistake == 'prose' else 3) and row['action_receipt'] is None
     if keeps_failing:
         assert row['state'] == 'failed' and row['candidate'] is row['assistant_text'] is None
         assert not any(event.type in ('message.delta', 'draft.available') for event in events)
