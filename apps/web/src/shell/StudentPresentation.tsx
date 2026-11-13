@@ -10,15 +10,16 @@ export function StudentPageTitle({ title, description }: { title: string; descri
   </div>
 }
 
-export function StudentViewSwitcher({ current, onSelect, connected = false }: {
-  current: string; onSelect: (view: string) => void; connected?: boolean
+export function StudentViewSwitcher({ current, onSelect, connected = false, onOpenSeating }: {
+  current: string; onSelect: (view: string) => void; connected?: boolean; onOpenSeating?: () => void
 }) {
+  const unavailable = (view: string) => connected && !["清单", "表格"].includes(view) && !(view === "座位" && onOpenSeating)
   return <div className="view-switcher" role="tablist" aria-label="学生视图切换">
     {["清单", "表格", "座位", "宿舍", "小队", "画布"].map(view => <button key={view}
       role="tab" aria-selected={current === view} className={current === view ? "active" : ""}
-      disabled={connected && !["清单", "表格"].includes(view)}
-      title={connected && !["清单", "表格"].includes(view) ? "暂不可用" : undefined}
-      onClick={() => onSelect(view)}>{view}</button>)}
+      disabled={unavailable(view)}
+      title={unavailable(view) ? "暂不可用" : undefined}
+      onClick={() => view === "座位" && onOpenSeating ? onOpenSeating() : onSelect(view)}>{view}</button>)}
   </div>
 }
 

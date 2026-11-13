@@ -2,6 +2,9 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "apps/web/tests/student-seating-entry.mjs": {
+      "sha256": "fb3968aee1db4b19181cc3be6dd2fd562bf3eb5e4d3e51f64cd8053cde7efccf"
+    },
     "third_party/licenses/upstream/rehype-katex-7.0.1/LICENSE.txt": {
       "sha256": "cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9",
       "reviewed_pattern_exceptions": [
@@ -552,7 +555,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "b0f2a7f3413ecc7ea485bbf8b8013c6a53dd28f8dfa07b888a510bc0f6f298ae"
+      "sha256": "9ab1b2fcece1d5e95cf63fb2491ba8bf2ac32ea6f6caede385aa2b4f05529c60"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -729,7 +732,7 @@
       "sha256": "6857940a16627475250d8d98cf9711cf58e418459b8a7f97755f0c3180ed845f"
     },
     "apps/web/package.json": {
-      "sha256": "9310a6665439f51bb0a3bbb81055284dc27aabccbf4ae220708a68bbac83cfd8"
+      "sha256": "32bcbf96ff052dd13bf77095ce1bca156211f9b430a1734d37836d491d44b9f4"
     },
     "apps/web/pnpm-lock.yaml": {
       "sha256": "7dccf7c53b17963802df5854568d1eee6dcfaea4e165752c514d714594f1597c"
@@ -786,7 +789,7 @@
       "sha256": "a1eefaa3a1085e59a7857ab3d485491c465f9db63de095c9b7ac0f8408001b5c"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "17f67129cd2e28885ef8937b01586e8addebd1d82e7c13e4c090d7911d48d66f"
+      "sha256": "a142496648e5bfc50c6d6f516f3b9a0d4c98da5defbfe91b35d9bf6424f09da8"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "2bccc19ae001e98e669f3bbb7b6f3cd2b968893b2d85e27544e0ef6caca80fbe"
@@ -2792,7 +2795,7 @@
       "sha256": "fdab910f37d17107ef56baf3e588ad543f4f2ba0ceb3155ad21fe85262343098"
     },
     "apps/web/src/shell/StudentPresentation.tsx": {
-      "sha256": "d25dad0252e98966654c1f92cc9ef5db58771c40f33639e47088ca7772f46998"
+      "sha256": "97a6f2017916256ae891ebbc93000ba59102c7098e3ae1e5e14e10df0c90a907"
     },
     "apps/web/src/shell/WorkPresentation.tsx": {
       "sha256": "6136433418ed7b45ff8fd9f3cc6d2263abccc67b18b99e1c7f870af6ff60c1e5"
@@ -3101,7 +3104,7 @@
       "sha256": "85cca2acddaadd29aca547380b0bf0475fb16565b1c71029081e57affb8efbb2"
     },
     "apps/web/tests/classroom-work-browser.mjs": {
-      "sha256": "a5476d4800abae2ca385824e80a40bdb8546dd7be43e370a00c55abd8172abeb"
+      "sha256": "27cfa9747a3c1359db4f5093f9a59bf808be432eb8601c3db979198667fe29ad"
     },
     "apps/web/tests/classroom-work.mjs": {
       "sha256": "48d744c93faa1feaaa804c598284769118bb46523e2f903125bcb795618549f3"
@@ -3322,7 +3325,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "cc58ab2a515353b766a127d8cb4cb8495ad422fb9b23ae00c7a0fdf61fc457b1"
+      "sha256": "41e9dfb1e5cf57905dc75bdc0678884e6d4806fdff1c74ea2de7c963f7e5bdba"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "bae496e88ba3625b1e243bec525fc856fd32523415d35041c969842e3ad88551"
