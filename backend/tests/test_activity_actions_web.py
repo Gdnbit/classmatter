@@ -7,6 +7,7 @@ import socket
 import subprocess
 import threading
 import time
+import traceback
 
 import pytest
 import uvicorn
@@ -106,7 +107,19 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
             yield FunctionModel(respond)
         controller.status, controller.context = status, transcribe
     with socket.socket() as probe:
-        probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
+        # Windows may allocate a low ephemeral port (observed 6566) that
+        # Chromium refuses before loading the app. Keep this fixture in the
+        # dynamic/private range; do not disable the browser's port protection.
+        first = uuid4().int % 16384
+        for offset in range(32):
+            port = 49152 + (first + offset) % 16384
+            try:
+                probe.bind(('127.0.0.1', port))
+                break
+            except OSError:
+                continue
+        else:
+            pytest.fail('No available private-range browser fixture port')
     app = create_workspace_chat_app(Settings(port=port), worker=business, query=query, sdk=sdk, model_controller=controller)
     @app.get('/__fixture__/activity')
     def projection():
@@ -119,7 +132,22 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
     destination = tmp_path / 'chat-office'
     destination.mkdir()
     mount_web(app, root / 'apps/web/dist')
-    server = uvicorn.Server(uvicorn.Config(app, host='127.0.0.1', port=port, proxy_headers=False, access_log=False, log_level='error', timeout_graceful_shutdown=5))
+    backend_errors = []
+    async def observed_app(scope, receive, send):
+        try:
+            await app(scope, receive, send)
+        except Exception as error:
+            # Test-only closed diagnostics; never capture SQL, parameters,
+            # prompts, credentials, exception text or response bodies.
+            if len(backend_errors) < 5:
+                original = getattr(error, 'orig', None)
+                backend_errors.append({'type': type(error).__name__,
+                    'origin_type': type(original).__name__ if original else None,
+                    'sqlstate': getattr(original, 'sqlstate', None),
+                    'frames': [(Path(frame.filename).name, frame.name, frame.lineno)
+                        for frame in traceback.extract_tb(error.__traceback__)[-8:]]})
+            raise
+    server = uvicorn.Server(uvicorn.Config(observed_app, host='127.0.0.1', port=port, proxy_headers=False, access_log=False, log_level='error', timeout_graceful_shutdown=5))
     thread = threading.Thread(target=server.run, daemon=True); thread.start()
     try:
         deadline = time.monotonic() + 10
@@ -136,7 +164,7 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
             observation = destination / 'phase-observation.json'
             detail = observation.read_text(encoding='utf-8') if observation.is_file() and observation.stat().st_size <= 16384 else 'unavailable'
             raise AssertionError('Original 210s test deadline expired; closed phase snapshot: ' + detail) from error
-        assert result.returncode == 0, result.stdout + result.stderr + str(sdk.last_failure_type)
+        assert result.returncode == 0, result.stdout + result.stderr + str(sdk.last_failure_type) + repr(backend_errors)
         if preview_race in ('archived', 'history-failure', 'switch'):
             assert not failed and not observed and not captures and sdk.active == 0
             with owner.transaction(read_only=True) as connection:

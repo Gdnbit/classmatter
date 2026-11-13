@@ -95,6 +95,32 @@ async def test_media_uses_current_sdk_with_no_tools_and_releases_cancelled_capac
     assert runtime.active == 0 and audits[-1] == 'cancelled'
 
 
+async def test_audio_keeps_unverified_spoken_names_editable_without_lookup_or_business_tools():
+    from pydantic_ai import BinaryContent
+    from pydantic_ai.messages import UserPromptPart
+    import wave
+    audio = BytesIO()
+    with wave.open(audio, 'wb') as output:
+        output.setnchannels(1); output.setsampwidth(2); output.setframerate(16000); output.writeframes(b'\0\0' * 400)
+    data, audits, seen = audio.getvalue(), [], []
+    query = SimpleNamespace(agent_workspace_context=lambda *args: {}, agent_audit=lambda *args, **kwargs: audits.append(args[2]))
+    runtime = SimpleNamespace(active=0)
+    async def status(auth): return {'mode': 'configured-api'}
+    @asynccontextmanager
+    async def context(auth, request):
+        def answer(messages, info):
+            assert not info.function_tools
+            media = [value for message in messages for part in message.parts if isinstance(part, UserPromptPart)
+                     and isinstance(part.content, list) for value in part.content if isinstance(value, BinaryContent)]
+            assert len(media) == 1 and media[0].data == data and media[0].media_type == 'audio/wav'
+            seen.append(True)
+            return ModelResponse(parts=[TextPart('合成学生假 交来展示作品')])
+        yield FunctionModel(answer)
+    controller = SimpleNamespace(status=status, runtime=runtime, context=context)
+    assert await capture_text(query, controller, (), 'synthetic.wav', encoded(data), 100) == '合成学生假 交来展示作品'
+    assert seen == [True] and audits == ['started', 'completed'] and runtime.active == 0
+
+
 @pytest.mark.db
 async def test_capture_original_d4_http_requires_identity_but_not_class(classroom_work):
     business, query, auth, owner, clock, store, commit, c, t, students = classroom_work

@@ -29,6 +29,14 @@ class WorkspaceStepPolicy(AbstractCapability):
     def __init__(self, capture, continuation):
         self.capture, self.continuation, self.repair_step = capture, continuation, None
 
+    async def after_model_request(self, ctx, *, request_context, response):
+        # Observe the whole SDK tool batch before execution, including a read
+        # placed AFTER preparation. An intention to read is not source evidence.
+        if self.capture.classroom_enabled and any(isinstance(part, ToolCallPart)
+                and part.tool_name == 'read_class_records' for part in response.parts):
+            self.capture.record_read_requested = True
+        return response
+
     async def prepare_tools(self, ctx, tool_defs):
         # The SDK filters both the advertised schema and executable toolset.
         # Ground continuations and failed preparations in actual receipts,
@@ -247,8 +255,13 @@ class PydanticAgentRuntime:
                     raise AgentRejected()
                 native_tools = []
                 for function, contract in zip(tools, expected, strict=True):
+                    # Preparation reads turn-local source state. Use the SDK's
+                    # barrier so earlier source tools finish before this check;
+                    # model-emitted parallel calls must not race that boundary.
                     native = Tool(function, max_retries=1 if (_workspace_actions is not None
-                        and _workspace_actions.classroom_enabled and function.__name__ in ('prepare_record', 'prepare_task')) else None)
+                        and _workspace_actions.classroom_enabled and function.__name__ in ('prepare_record', 'prepare_task')) else None,
+                        sequential=bool(_workspace_actions is not None and _workspace_actions.classroom_enabled
+                                        and function.__name__.startswith('prepare_')))
                     definition = native.tool_def
                     if (definition.name != contract["name"] or definition.description != contract["description"]
                             or definition.parameters_json_schema != contract["parameters_json_schema"]
@@ -274,6 +287,7 @@ class PydanticAgentRuntime:
                             agent.instructions(lambda: "For multi-step tasks, first read_task_progress to check actual receipts, then read current data and work on the next unfinished step. Assistant history is not evidence of execution. Never repeat a committed action. Prepare at most one change for human confirmation, explain what remains, or conclude when all requested steps are complete. If history is truncated and intent is unclear, ask rather than inventing missing steps.")
                             if _workspace_actions.classroom_enabled:
                                 agent.instructions(lambda: "A follow-up task's progress, waiting state, completion or cancellation belongs to prepare_task (action edit/complete/cancel), not prepare_record. Read current tasks to identify the existing title. Keep an explicitly quoted follow-up note in evidence; never turn task workflow notes into a new student fact. prepare_record is only for a new already-occurred ordinary student event. Neither tool saves anything: show the actual candidate for human review, never say that a state or note was already saved.")
+                                agent.instructions(lambda: "Keep notes the user explicitly excluded out of generated documents, including footnotes or explanations that repeat the excluded content. Read current fact and task sources before drafting a factual work summary.")
                             @agent.output_validator
                             def confirmed_candidate_exists(ctx: RunContext[None], output):
                                 # A textual promise cannot stand in for the actual card,

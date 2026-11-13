@@ -33,6 +33,7 @@ def tools(capture, query, credentials, context, execute, missing_class):
 
     async def read_class_records(student_name: str = '', search: str = '') -> dict:
         """Read confirmed ordinary student facts and source IDs/versions. This is not a complete school search; no health, disciplinary or inferred profiles. Never treats chat as a fact."""
+        capture.record_read_requested = True
         def read():
             current = context()
             if current is None:
@@ -48,6 +49,7 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 'truncated': len(rows) > 30, 'scope': 'ordinary-facts-only',
                 'instruction': 'Cite the returned student, fact and date in readable language. Retain source IDs/versions for verification; do not display internal IDs. Report scope and missing data honestly.'}
             capture.record_read_scopes.add((current.class_id, current.term_id))
+            capture.source_identifiers.update(str(row['record_id']) for row in rows[:30])
             return result
         return await execute('read_class_records', read)
 
