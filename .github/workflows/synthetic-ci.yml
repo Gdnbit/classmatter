@@ -93,7 +93,8 @@ jobs:
           # Canonical DNS nor the Kernel Archives network is a sole dependency.
           sudo install -m 0644 infra/ci/ubuntu.mirrors /etc/apt/apt-mirrors.txt
           sudo install -d /usr/share/postgresql-common/pgdg
-          sudo curl --fail --silent --show-error --output /usr/share/postgresql-common/pgdg/class-os-postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          # Retry this idempotent GET only; keep TLS/HTTP failures visible and bounded.
+          sudo curl --fail --silent --show-error --connect-timeout 10 --max-time 30 --retry 3 --retry-all-errors --retry-delay 2 --retry-max-time 90 --output /usr/share/postgresql-common/pgdg/class-os-postgresql.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
           sudo install -m 0644 infra/ci/pgdg.sources /etc/apt/sources.list.d/class-os-pgdg.sources
           sudo apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=20 -o APT::Update::Error-Mode=any update
           sudo apt-get -o Acquire::Retries=2 -o Acquire::https::Timeout=20 install --no-install-recommends -y postgresql-18=18.6-1.pgdg24.04+2 postgresql-client-18=18.6-1.pgdg24.04+2

@@ -1,9 +1,15 @@
 """CI is a read-only engineering baseline, never synthetic release authority."""
 import copy
+import os
 from pathlib import Path
 import re
+import shlex
+import shutil
 import subprocess
+import tempfile
+import threading
 import unittest
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import yaml
 
@@ -51,6 +57,26 @@ def validate(document):
     if any(value in runs.lower() for value in ('allowunauthenticated', '--allow-unauthenticated', 'allowinsecurerepositories',
             'trusted=yes', 'trusted: yes', 'verify-peer=false', 'curl --insecure', 'curl -k ')):
         raise ValueError('Archive or TLS verification cannot be disabled')
+    key_download_arguments(document)
+
+
+def key_download_arguments(document):
+    runs = '\n'.join(step.get('run', '') for step in document['jobs']['baseline']['steps'])
+    commands = [shlex.split(line.strip()) for line in runs.splitlines()
+                if line.strip().startswith('sudo curl ')]
+    if len(commands) != 1:
+        raise ValueError('One official key download required')
+    args = commands[0][2:]
+    for option, value in (('--connect-timeout', '10'), ('--max-time', '30'), ('--retry', '3'),
+                          ('--retry-delay', '2'), ('--retry-max-time', '90'),
+                          ('--output', '/usr/share/postgresql-common/pgdg/class-os-postgresql.asc')):
+        if args.count(option) != 1 or args[args.index(option) + 1:args.index(option) + 2] != [value]:
+            raise ValueError('Bounded key download required')
+    if not {'--fail', '--silent', '--show-error', '--retry-all-errors'}.issubset(args):
+        raise ValueError('Transport failure must be retried and ultimately fail closed')
+    if args[-1] != 'https://www.postgresql.org/media/keys/ACCC4CF8.asc':
+        raise ValueError('Official HTTPS signing key source required')
+    return args
 
 
 class CiWorkflowTests(unittest.TestCase):
@@ -67,6 +93,64 @@ class CiWorkflowTests(unittest.TestCase):
                 step['run'] = step['run'].replace(' postgresql-client-18=18.6-1.pgdg24.04+2', '')
         with self.assertRaises(ValueError):
             validate(document)
+
+    def test_signing_key_transfer_limits_and_official_source_cannot_be_removed(self):
+        for before, after in (('--retry-all-errors', ''), ('--max-time 30', ''),
+                              ('--connect-timeout 10', ''), ('--retry 3', '--retry 99'),
+                              ('--retry-max-time 90', '--retry-max-time 0'),
+                              ('--retry-delay 2', '--retry-delay 0'),
+                              ('https://www.postgresql.org/media/keys/', 'http://example.invalid/')):
+            document = copy.deepcopy(self.document)
+            for step in document['jobs']['baseline']['steps']:
+                if 'run' in step:
+                    step['run'] = step['run'].replace(before, after)
+            with self.subTest(before=before), self.assertRaises(ValueError):
+                validate(document)
+
+    def test_actual_curl_recovers_partial_transfer_and_refuses_exhausted_failure(self):
+        executable = shutil.which('curl.exe' if os.name == 'nt' else 'curl')
+        self.assertIsNotNone(executable, 'CI transport prerequisite curl is required')
+        payload = b'synthetic transport fixture, not a trusted signing key\n'
+        for recover, expected_count in ((True, 2), (False, 4)):
+            calls = []
+
+            class Handler(BaseHTTPRequestHandler):
+                def do_GET(self):
+                    calls.append(self.path)
+                    if recover and len(calls) == 2:
+                        self.send_response(200)
+                        self.send_header('Content-Length', str(len(payload)))
+                        self.end_headers()
+                        self.wfile.write(payload)
+                    else:
+                        self.send_response(200)
+                        self.send_header('Content-Length', '1000')
+                        self.end_headers()
+                        self.wfile.write(b'partial must not prefix the recovered key')
+                        self.close_connection = True
+
+                def log_message(self, *args):
+                    pass
+
+            with self.subTest(recover=recover), ThreadingHTTPServer(('127.0.0.1', 0), Handler) as server, tempfile.TemporaryDirectory() as directory:
+                thread = threading.Thread(target=server.serve_forever, daemon=True)
+                thread.start()
+                try:
+                    args = key_download_arguments(self.document)
+                    args[-1] = f'http://127.0.0.1:{server.server_port}/synthetic-key'
+                    target = Path(directory) / 'key.asc'
+                    args[args.index('--output') + 1] = str(target)
+                    # The real command/limits are exercised; only destination is a loopback fixture.
+                    result = subprocess.run([executable, '-q', '--noproxy', '*', *args], capture_output=True, timeout=35)
+                    self.assertEqual(expected_count, len(calls))
+                    if recover:
+                        self.assertEqual(0, result.returncode, result.stderr.decode(errors='replace'))
+                        self.assertEqual(payload, target.read_bytes())
+                    else:
+                        self.assertNotEqual(0, result.returncode)
+                finally:
+                    server.shutdown()
+                    thread.join(timeout=5)
 
     def test_reviewed_mirror_list_uses_distinct_https_hosts_and_real_priorities(self):
         raw = (ROOT / 'infra/ci/ubuntu.mirrors').read_bytes()

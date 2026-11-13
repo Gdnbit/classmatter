@@ -540,7 +540,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "f82dc956c4b7d095c3bb445ae66028270e4d032ebcf145f870747c0b4b45d691"
+      "sha256": "d6fb2f91a082800969984bf4c91770873a2f3b406cb29f81cd2d7696483961df"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -663,7 +663,7 @@
       "sha256": "d8dcad82c27b6c219a79efef25b2e999b049c6798ddf90f24c430bc64c5944fe"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "c16ec3b4048e735e59aeeac8d23dcf785ab106130c5c0bb925749a5007bc9dca"
+      "sha256": "5b30dd56d56602f64da124c375cadd9653fe5873d82a54020b38e125b6309ed3"
     },
     ".gitignore": {
       "sha256": "c34bf3956a066550e5680221b82b4bfd8aaef7363305a1c5949b729a2d02b588"
@@ -1669,7 +1669,7 @@
       "sha256": "32fe60502d9b9587797f4022d9e50751f29eefa17b4087ae2cb31638a7d31796"
     },
     "scripts/tests/test_ci_workflow.py": {
-      "sha256": "e8a3153d06739416f6e0150d6593f3b79e3d4fcb44010709f473678b4199f37b"
+      "sha256": "98b2e89cd8a27620600719813b7b592f05bd100351ea8b44f2dea4dbd02b7719"
     },
     "scripts/tests/test_generate_synthetic_fixtures.py": {
       "sha256": "6c1074c4227fea921b9096e6b2f563499c2851bf80f0976b32655cf59b5ba478",
