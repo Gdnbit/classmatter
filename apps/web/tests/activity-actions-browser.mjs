@@ -115,9 +115,21 @@ try {
           await cards.nth(index).getByRole('button', { name: label, exact: true }).click();
           if (controlled) {
             await started;
-            const read = page.waitForResponse(response => /\/workspace-chat\/threads\/[a-f0-9-]+$/.test(response.url()) && response.status() === 200);
-            await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-            await (await read).json(); focusDuringExport = true; release();
+            const history = /\/workspace-chat\/threads\/[a-f0-9-]+$/, freshReads = new Set();
+            const track = request => { if (history.test(request.url()) && request.method() === 'GET') freshReads.add(request); };
+            page.on('request', track);
+            try {
+              // Superseded history fetches may have200 headers yet be aborted
+              // by normal revalidation. Wait for a NEW completed read and the
+              // app's decoded current view, not an obsolete CDP body handle.
+              const read = page.waitForResponse(async response => history.test(response.url()) && response.status() === 200
+                && freshReads.has(response.request()) && await response.finished() === null);
+              await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+              await read;
+              await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'true');
+              await expect(cards.nth(index).getByLabel('已保存的结果', { exact: true })).toContainText('班长交齐，我已核对');
+            } finally { page.off('request', track); }
+            focusDuringExport = true; release();
           }
         })()]);
       } finally { release(); if (controlled) await page.unroute('**/exports/1/docx'); }
