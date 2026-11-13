@@ -5,11 +5,12 @@ const base = process.env.CLASS_OS_TEST_URL;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
 const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [], runs = [];
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [], runs = [], writes = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {
     if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url());
     if (request.method() === 'POST' && request.url().endsWith('/events')) runs.push(request.url());
+    if (!['GET', 'HEAD'].includes(request.method())) writes.push(request.url());
   });
   await page.goto(base);
   await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
@@ -110,9 +111,17 @@ try {
   await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
   await grades.getByRole('row').filter({ hasText: '合成学生0' }).filter({ hasText: '86.00' }).waitFor();
   await page.screenshot({ path: '../../test-results/classroom-grades.png' });
-  await page.getByLabel('更多功能', { exact: true }).click();
-  await page.getByRole('button', { name: '座位', exact: true }).click();
+  const beforeSeatingNavigation = writes.length;
+  await page.getByRole('button', { name: '学生', exact: true }).click();
+  const views = page.getByRole('tablist', { name: '学生视图切换' });
+  const seatingEntry = views.getByRole('tab', { name: '座位', exact: true });
+  await expect(seatingEntry).toBeEnabled();
+  for (const name of ['宿舍', '小队', '画布']) assert(await views.getByRole('tab', { name, exact: true }).isDisabled());
+  await seatingEntry.click();
+  await page.waitForURL('**/views/seat');
   const seats = page.getByRole('region', { name: '座位图', exact: true });
+  await seats.getByRole('button', { name: '1排1座 合成学生1', exact: true }).waitFor();
+  assert.equal(writes.length, beforeSeatingNavigation, 'Opening the existing view must not write or invoke the model');
   await seats.getByRole('button', { name: '1排1座 合成学生1', exact: true }).click();
   await seats.getByRole('button', { name: '1排2座 合成学生0', exact: true }).click();
   await confirm();

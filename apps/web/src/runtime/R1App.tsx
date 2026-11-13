@@ -1232,6 +1232,7 @@ export default function R1App() {
                 actions={<button className="primary" disabled={!canEditStudent || busy} onClick={() => { setRecord(null); open("record") }}>添加记录</button>} />
                 : <StudentPageTitle title="学生" description="" />}
               {!selected && <StudentViewSwitcher current={studentView === "list" ? "清单" : "表格"} connected
+                onOpenSeating={classroomProfile && classroom ? () => setPage('seating') : undefined}
                 onSelect={view => setStudentView(view === "表格" ? "table" : "list")} />}
               {!selected && <div className="r1-toolbar student-search">
                 <input
