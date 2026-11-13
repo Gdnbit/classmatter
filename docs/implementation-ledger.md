@@ -34,7 +34,9 @@ PR #88的[Ubuntu完整CI](https://github.com/Gdnbit/classmatter/actions/runs/433
 
 最终原持久化聊天/文字与录音事实→跟进→等待→结束→来源小结组合5通过391.79秒，包含原保存/回执恢复和6秒故障注入；Web6+90、类型检查及构建通过。没有上调模型/工具/产品超时，没有删除幂等/保存前后状态/失败断言；阶段化等待使用原浏览器有限动作等待，不再把5秒events计数当综合链路SLA。新精确head完整CI另验，不能用本机通过覆盖旧CI失败。
 
-复用已合并、干净且无进程使用的旧公开审查checkout隔离修复，保留其旧分支引用；主开发checkout持续固定503811a全量数据库测试，没有切换或修改其源码。依赖复用既有非C盘node_modules，不重新安装或下载。托管worktree创建调用未返回，无新checkout登记；不把未观察到的创建算成功。沿现有LR-INT-001/LR-CTX-001和T-RPLT-001工程增量，无Requirement/Eval/Task/Gate、R1、Schema或权限变更；revert界面/测试补丁并重建即可回滚，业务数据不改。
+复用已合并、干净且无进程使用的旧公开审查checkout隔离修复，保留其旧分支引用；主开发checkout曾固定503811a运行扩展全量数据库诊断，没有切换或修改其源码。该旧版诊断后续主动停止，日志及interrupted_obsolete_diagnostic_not_passed标记保留，不计通过；只停止该次已核验的pytest与一次性PG，用户原库不动。当前08be215受影响Windows联合22项837.04秒通过，desktop54项通过，完整两平台CI另记。依赖复用既有非C盘node_modules，不重新安装或下载。托管worktree创建调用未返回，无新checkout登记；不把未观察到的创建算成功。沿现有LR-INT-001/LR-CTX-001和T-RPLT-001工程增量，无Requirement/Eval/Task/Gate、R1、Schema或权限变更；revert界面/测试补丁并重建即可回滚，业务数据不改。
+
+合并前检查全部check-runs发现：5edbade的PR触发CI两平台成功，但同提交[push CI](https://github.com/Gdnbit/classmatter/actions/runs/43331720963)Ubuntu723通过/35平台跳过、1项失败，不能只取成功的一次。失败在成绩/座位脚本刷新后未先等历史组件恢复便开始5秒内容比较，SDK无错误、只进入首个模型轮次。补显式组件出现等待，仍逐字段/座位严格相等；普通聊天同类位置一并补齐。首轮只延迟一次历史读取的注入没有覆盖完整恢复路径，断言失败保留；改为该次刷新全部同路径读取延迟6秒并确认延迟已生效，之后解除注入。真实PG/SDK/原页面4项308.66秒通过，保留六步、7次模型派发、前后冻结、刷新、丢回包、陈旧修改、草稿与重复次数断言。仅测试和本登记变更，无产品超时/实现/Schema/权限变化；新head全部CI仍须通过。
 
 ## 2026-11-13 显式免费GLM-4.7-Flash交叉评测（进行中）
 
