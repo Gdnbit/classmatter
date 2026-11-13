@@ -25,8 +25,9 @@ from test_classroom_work_storage import classroom_work, workspace_chat, roster, 
 
 
 @pytest.mark.db
-@pytest.mark.parametrize('voice', [False, True])
-def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work, voice, tmp_path):
+@pytest.mark.parametrize('voice,preview_race', [(False, 'reconnect'), (True, 'none'),
+    (False, 'archived'), (False, 'history-failure'), (False, 'switch')])
+def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work, voice, preview_race, tmp_path):
     business, query, auth, owner, clock, store, commit, c, t, students = classroom_work
     fact, title = '合成学生0交来展示作品', '合成作品核对'
     failed, observed = [], []
@@ -128,6 +129,7 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
         try:
             result = subprocess.run(['node', 'tests/activity-actions-browser.mjs'], cwd=root / 'apps/web',
                 env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}', CLASSMATTER_SYNTHETIC_VOICE='1' if voice else '0',
+                    CLASSMATTER_PREVIEW_RACE=preview_race,
                     CLASSMATTER_TEST_DOWNLOAD_ROOT=str(destination)), capture_output=True,
                 text=True, encoding='utf-8', timeout=210, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         except subprocess.TimeoutExpired as error:
@@ -135,6 +137,12 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
             detail = observation.read_text(encoding='utf-8') if observation.is_file() and observation.stat().st_size <= 16384 else 'unavailable'
             raise AssertionError('Original 210s test deadline expired; closed phase snapshot: ' + detail) from error
         assert result.returncode == 0, result.stdout + result.stderr + str(sdk.last_failure_type)
+        if preview_race in ('archived', 'history-failure', 'switch'):
+            assert not failed and not observed and not captures and sdk.active == 0
+            with owner.transaction(read_only=True) as connection:
+                for table in ('record_revision', 'manual_task', 'working_document_revision'):
+                    assert connection.execute(text(f'SELECT count(*) FROM class_os.{table}')).scalar_one() == 0
+            return
         assert len(failed) == len(observed) == 1 and sdk.active == 0
         assert len(captures) == (1 if voice else 0)
         assert observed[0][1]['status'] == 'done' and observed[0][1]['evidence'] == '班长交齐，我已核对'

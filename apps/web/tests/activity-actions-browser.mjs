@@ -7,6 +7,7 @@ import { comparisonContent } from './change-comparison-content.mjs';
 const base = process.env.CLASS_OS_TEST_URL;
 const expect = defaultExpect.configure({ timeout: 30000 });
 const voice = process.env.CLASSMATTER_SYNTHETIC_VOICE === '1';
+const previewRace = process.env.CLASSMATTER_PREVIEW_RACE || 'none';
 const slowExportPhase = voice || process.env.CLASSMATTER_EXPORT_SLOW_PHASE === '1';
 const destination = process.env.CLASSMATTER_TEST_DOWNLOAD_ROOT;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
@@ -25,7 +26,7 @@ function mark(phase) {
 const stalled = setTimeout(() => { snapshot(); console.error('Chat Office deadline observation', JSON.stringify(observation)); }, 190000);
 stalled.unref();
 function network(request, state, status = null) {
-  const kind = /\/exports\//.test(request.url()) ? 'office' : /\/workspace-chat\/threads\/[a-f0-9-]+$/.test(request.url()) ? 'history' : null;
+  const kind = /\/exports\//.test(request.url()) ? 'office' : /\/proposal$/.test(request.url()) ? 'proposal' : /\/workspace-chat\/threads\/[a-f0-9-]+$/.test(request.url()) ? 'history' : null;
   if (!kind) return;
   if (!requestIds.has(request)) requestIds.set(request, ++nextRequest);
   observation.network.push({ id: requestIds.get(request), kind, state, status, ms: Math.round(performance.now() - observedAt) });
@@ -71,6 +72,62 @@ try {
   async function state(expected) {
     await expect.poll(async () => (await page.request.get(base + '/__fixture__/activity')).json()).toEqual(expected);
   }
+  async function previewAfterReconnect(card) {
+    let release, ready = false, rejectedRead = false, deliveredProposal = Promise.resolve();
+    const historyRoute = /\/workspace-chat\/threads\/[a-f0-9-]+$/;
+    const rejectHistory = async route => { rejectedRead = true; await route.abort('failed'); };
+    const held = new Promise(resolve => release = resolve);
+    const holdProposal = route => { deliveredProposal = (async () => {
+      const response = await route.fetch();
+      assert.equal(response.status(), 200);
+      ready = true; mark('genuine-proposal-held'); await held;
+      await route.fulfill({ response });
+    })(); return deliveredProposal; };
+    await page.route('**/turns/*/proposal', holdProposal);
+    try {
+      await card.getByRole('button', { name: '预览这项操作', exact: true }).click();
+      await expect.poll(() => ready).toBe(true);
+      await page.context().setOffline(true);
+      await page.waitForFunction(() => !navigator.onLine);
+      await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'false');
+      await page.context().setOffline(false);
+      await page.waitForFunction(() => navigator.onLine);
+      if (previewRace === 'archived') {
+        const status = await page.evaluate(async () => {
+          const session = await (await fetch('/api/identity/session')).json();
+          const url = '/api/workspaces/' + session.subject.workspace_id + '/workspace-chat/threads/' + location.pathname.split('/').at(-1);
+          const history = await (await fetch(url)).json();
+          return (await fetch(url + '/archive', { method: 'POST', headers: { 'content-type': 'application/json', 'x-class-os-csrf': session.csrf_token },
+            body: JSON.stringify({ expected_version: history.thread.version }) })).status;
+        });
+        assert.equal(status, 200);
+      } else if (previewRace === 'history-failure') await page.route(historyRoute, rejectHistory);
+      else if (previewRace === 'switch') {
+        await page.getByRole('button', { name: '新对话', exact: true }).click();
+        await input.fill('尚未发送的新对话草稿');
+      }
+      const delivered = page.waitForResponse(response => /\/proposal$/.test(response.url()));
+      mark('proposal-reconnected'); release();
+      await (await delivered).finished();
+      const dialog = page.getByRole('dialog', { name: '确认这次变更', exact: true });
+      if (previewRace === 'reconnect') await expect(dialog).toBeVisible();
+      else {
+        if (previewRace === 'archived') {
+          await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'true');
+          await expect(card.getByRole('button', { name: '预览这项操作', exact: true })).toBeDisabled();
+        } else if (previewRace === 'history-failure') {
+          await expect.poll(() => rejectedRead).toBe(true);
+          await expect(page.getByRole('alert').first()).toBeVisible();
+          await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'false');
+        } else {
+          await expect(cards).toHaveCount(0);
+          await expect(input).toHaveValue('尚未发送的新对话草稿');
+        }
+        await expect(dialog).toHaveCount(0);
+      }
+      await state({ records: 0, tasks: 0, status: null, version: null, documents: 0 });
+    } finally { release(); await deliveredProposal; await page.unroute('**/turns/*/proposal', holdProposal); await page.unroute(historyRoute, rejectHistory); }
+  }
   async function save(index, heading, lostReply = false) {
     mark('preview-' + index);
     const card = cards.nth(index);
@@ -78,7 +135,8 @@ try {
     const comparison = card.getByRole('region', { name: '变更前后对比', exact: true });
     const before = await comparisonContent(comparison.getByLabel('修改前', { exact: true }));
     const after = await comparisonContent(comparison.getByLabel('待确认的结果', { exact: true }));
-    await card.getByRole('button', { name: '预览这项操作', exact: true }).click();
+    if (index === 0 && previewRace === 'reconnect') await previewAfterReconnect(card);
+    else await card.getByRole('button', { name: '预览这项操作', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: '确认这次变更', exact: true });
     await dialog.waitFor();
     if (heading === '结束任务') await expect(dialog).toContainText('结束后将移出待办，不能继续修改；记录会保留。');
@@ -111,6 +169,11 @@ try {
   } else await send('刚刚合成学生0交来展示作品，记下来，再根据这条记录建立合成作品核对任务');
   await expect(cards).toHaveCount(1).catch(async error => { throw new Error(await page.locator('body').innerText(), { cause: error }); });
   await state({ records: 0, tasks: 0, status: null, version: null, documents: 0 });
+  if (['archived', 'history-failure', 'switch'].includes(previewRace)) {
+    await previewAfterReconnect(cards.nth(0));
+    assert.deepEqual(errors, []); assert.deepEqual(external, []);
+    mark('invalidated-proposal-refused');
+  } else {
   await save(0, '记录事实');
   await cards.nth(0).getByRole('button', { name: '继续任务', exact: true }).click();
   await expect(cards).toHaveCount(2);
@@ -266,6 +329,7 @@ try {
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);
   mark('scenario-accepted');
+  }
 } catch (error) {
   let view = null;
   // Diagnostics must not wait for chat controls after navigation or replace
