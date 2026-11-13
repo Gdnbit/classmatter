@@ -84,6 +84,8 @@ def main():
             return 2
     if os.name != 'nt':
         return 2
+    from class_os.infrastructure.windows_platform import configure_windows_platform
+    configure_windows_platform(os.environ)
     os.environ['PYDANTIC_AI_NO_BANNER'] = '1'
     from class_os.infrastructure.local_runtime import LocalRuntime
     from class_os.infrastructure.native_setup import NativeSetup

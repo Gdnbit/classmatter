@@ -3,9 +3,11 @@ import os
 import sys
 from pathlib import Path
 
-import uvicorn
-
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+from class_os.infrastructure.windows_platform import configure_windows_platform
+configure_windows_platform(os.environ)
+
+import uvicorn
 from class_os.interfaces.http.app import create_app
 from class_os.interfaces.http.settings import Settings
 

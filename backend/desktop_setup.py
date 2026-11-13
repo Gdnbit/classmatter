@@ -30,6 +30,8 @@ def main():
     parser.add_argument('--profile', choices=('conversation-d1', 'workspace-chat-d3', 'classroom-work-d4'), default='conversation-d1')
     parser.add_argument('--development-no-password', action='store_true')
     args = parser.parse_args()
+    from class_os.infrastructure.windows_platform import configure_windows_platform
+    configure_windows_platform(os.environ)
     from class_os.infrastructure.local_runtime import LocalRuntime
     from class_os.infrastructure.native_setup import NativeSetup
     setup = NativeSetup(LocalRuntime(args.runtime_root, profile=args.profile), development=args.development_no_password)

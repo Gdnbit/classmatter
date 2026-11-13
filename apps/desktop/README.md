@@ -4,6 +4,12 @@ Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷�
 
 ## 当前成绩与座位开发入口（D4）
 
+### Windows 系统信息查询停顿排查
+
+仅在线程栈明确停在Python的`platform._wmi_query`时，在启动应用或运行测试的当前终端设置`$env:CLASSMATTER_WINDOWS_METADATA_FALLBACK='1'`。桌面服务、`serve.py`、手动联测及pytest入口在导入数据库适配器前选择标准库已有的真实Windows信息备用路径；项目适配层加载时也核对同一选项，覆盖不经过主入口的Windows spawn子进程。SQLAlchemy原生扩展仍开启。不安装全局hook，不修改系统服务、权限、杀毒、数据库、模型或超时；默认未设置或`0`不改变行为。只作用于新启动的本进程及其继承该变量的子进程，退出后可用`Remove-Item Env:CLASSMATTER_WINDOWS_METADATA_FALLBACK`撤销。不是模型请求超时或业务失败的通用修复。
+
+此方案依据[CPython维护者建议](https://github.com/python/cpython/issues/112278)，只覆盖当前锁定的Python3.13运行时；不支持该可选查询接口时明确拒绝，不编造系统版本。启用后的本机测试须在证据中注明，默认Windows/Ubuntu CI仍独立验收。保持现有启动参数、实例与模型网络配置，不重新prepare或迁移。
+
 ### 手动真实免费模型联测
 
 在仓库根目录执行下列命令；默认CI不执行真实调用。参数必须同时提供，缺少任一项在读取实例/凭据前拒绝。仅使用用户已授权免费模型，不开通付费，不传入密钥参数或环境变量，不修改原应用的模型选择或业务数据。

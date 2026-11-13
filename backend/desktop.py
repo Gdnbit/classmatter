@@ -25,6 +25,8 @@ def main():
     key = os.environ.pop("CLASSMATTER_DESKTOP_PROCESS_KEY", "")
     if not re.fullmatch(r"[a-f0-9]{64}", key):
         raise ValueError("Desktop process proof required")
+    from class_os.infrastructure.windows_platform import configure_windows_platform
+    configure_windows_platform(os.environ)
     # Credentials remain in the existing current-user DPAPI runtime; no new
     # owner/database is created and no migration or PostgreSQL lifecycle runs.
     from class_os.interfaces.http.settings import Settings
