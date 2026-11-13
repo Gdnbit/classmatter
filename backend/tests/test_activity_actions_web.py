@@ -125,10 +125,15 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
         while not server.started:
             assert thread.is_alive() and time.monotonic() < deadline
             time.sleep(.05)
-        result = subprocess.run(['node', 'tests/activity-actions-browser.mjs'], cwd=root / 'apps/web',
-            env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}', CLASSMATTER_SYNTHETIC_VOICE='1' if voice else '0',
-                CLASSMATTER_TEST_DOWNLOAD_ROOT=str(destination)), capture_output=True,
-            text=True, encoding='utf-8', timeout=210, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        try:
+            result = subprocess.run(['node', 'tests/activity-actions-browser.mjs'], cwd=root / 'apps/web',
+                env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}', CLASSMATTER_SYNTHETIC_VOICE='1' if voice else '0',
+                    CLASSMATTER_TEST_DOWNLOAD_ROOT=str(destination)), capture_output=True,
+                text=True, encoding='utf-8', timeout=210, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        except subprocess.TimeoutExpired as error:
+            observation = destination / 'phase-observation.json'
+            detail = observation.read_text(encoding='utf-8') if observation.is_file() and observation.stat().st_size <= 16384 else 'unavailable'
+            raise AssertionError('Original 210s test deadline expired; closed phase snapshot: ' + detail) from error
         assert result.returncode == 0, result.stdout + result.stderr + str(sdk.last_failure_type)
         assert len(failed) == len(observed) == 1 and sdk.active == 0
         assert len(captures) == (1 if voice else 0)
