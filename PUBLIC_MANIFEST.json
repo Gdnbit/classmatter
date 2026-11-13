@@ -420,7 +420,7 @@
       "sha256": "c78f002dd80c26cdae9631bc457b0c054add473b8ebe7198be8610200e0e1113"
     },
     "apps/web/tests/runtime-deadline-browser.mjs": {
-      "sha256": "4c2958421e641bb101ece226585cc6a0f7992252a83a7854a06ac896886f7760"
+      "sha256": "5dfad3b9fb6a7c770a42600e81b507d89d69f572daaa517a5e8862ca20b0ee5b"
     },
     "backend/tests/test_web_deadline.py": {
       "sha256": "dfa19a05d78f4661f2589e6fdaec2cd8bd5f7b201f8f211b82afeab0a3f927e4"
@@ -519,7 +519,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "7217a4f1395e0cd38b3c996975205e811701f5ef4e876643d5986f175616256f"
+      "sha256": "692443920cddd4da6eee59c26828acef48bc676d88c7ee689dd27b6c7b003471"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3289,10 +3289,10 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "7b8962ace0a866611f512e0c93e1dac7cd97bdad3a0b66be2299eb281458cf99"
+      "sha256": "431fde68d8e6c8e97161fe18b0fc7651902a8756be1fc63e01ac13a39ea8158b"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
-      "sha256": "bc8293bdf3ded386485335642e0cc0259a890a56149a98662f469c0e0b8f69a5"
+      "sha256": "bae496e88ba3625b1e243bec525fc856fd32523415d35041c969842e3ad88551"
     },
     "apps/web/tests/activity-actions-browser.mjs": {
       "sha256": "69b8a50480f40a0be7225bf6c4e80a631e681d4cea2319f54c9411c79552b52d"
