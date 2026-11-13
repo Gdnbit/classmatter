@@ -145,7 +145,9 @@ def test_waiting_recovery_requires_exact_original_confirmed_fact_and_task(case):
 @pytest.mark.parametrize('case', ['valid', 'open-task', 'wrong-version', 'wrong-result', 'wrong-source',
     'extra-task', 'extra-fact', 'document', 'pending', 'running', 'paged', 'wrong-request',
     'wrong-fact', 'wrong-student', 'wrong-receipt', 'wrong-receipt-version', 'wrong-waiting', 'archived'])
-def test_summary_recovery_accepts_only_the_original_four_receipts_and_failed_summary(case):
+@pytest.mark.parametrize('mode', ['failed', 'review', 'review-retry'])
+def test_summary_recovery_accepts_only_the_original_four_receipts_and_failed_summary(case, mode):
+    review = mode != 'failed'
     import importlib.util
     spec = importlib.util.spec_from_file_location('summary_checkpoint', Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py')
     module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
@@ -162,6 +164,12 @@ def test_summary_recovery_accepts_only_the_original_four_receipts_and_failed_sum
     failed = {'state': 'failed', 'candidate': None, 'action_receipt': None,
         'user_text': '根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。'}
     history = {'thread': {'status': 'active'}, 'next_before': None, 'turns': saved + [dict(failed), failed]}
+    if review:
+        failed.update(state='completed', candidate={'command': 'document.create', 'title': '合成工作小结',
+            'format': 'markdown', 'body': '合成学生甲交来展示作品；班长交齐。注：个人书架未纳入。'})
+    if mode == 'review-retry':
+        history['turns'].extend({'state': 'failed', 'candidate': None, 'action_receipt': None,
+            'user_text': module.SUMMARY_REVIEW_REQUEST} for _ in range(2))
     world, documents = {'records': [fact], 'tasks': [task]}, []
     if case == 'open-task': task['status'] = 'waiting'
     if case == 'wrong-version': task['version'] = 2
@@ -180,4 +188,5 @@ def test_summary_recovery_accepts_only_the_original_four_receipts_and_failed_sum
     if case == 'wrong-receipt-version': saved[3]['action_receipt']['version'] = 4
     if case == 'wrong-waiting': values[2]['evidence'] = '不同跟进'
     if case == 'archived': history['thread']['status'] = 'archived'
-    assert module.daily_summary_recovery_checkpoint(history, world, documents) is (case == 'valid')
+    checkpoint = module.daily_summary_review_checkpoint if review else module.daily_summary_recovery_checkpoint
+    assert checkpoint(history, world, documents) is (case == 'valid')

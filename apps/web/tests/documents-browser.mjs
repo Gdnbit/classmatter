@@ -13,10 +13,17 @@ page.on('request', request => {
   if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url());
   if (request.method() === 'POST' && new URL(request.url()).pathname.endsWith('/document-commands/commit')) commits.push(request.postDataJSON());
 });
-const body = '# 合成工作小结\n<script>throw new Error("untrusted body executed")</script>\n不作为正式事实。';
+const body = '# 合成工作小结\n\n- 核对**展示作品**\n\n| 事项 | 结果 |\n| --- | --- |\n| 作品 | 已核对 |\n\n<script>throw new Error("untrusted body executed")</script>\n不作为正式事实。';
 const editor = page.getByLabel('文档正文', { exact: true });
 const dialog = page.getByRole('dialog', { name: '确认文档变更', exact: true });
 const readReleases = [];
+async function assertRendered(content) {
+  await content.getByRole('heading', { name: '合成工作小结', exact: true }).waitFor();
+  assert.equal(await content.locator('li strong').textContent(), '展示作品');
+  assert.equal(await content.getByRole('cell', { name: '已核对', exact: true }).count(), 1);
+  assert.equal(await content.locator('script,img,iframe').count(), 0);
+  assert((await content.innerText()).includes('<script>throw new Error("untrusted body executed")</script>'));
+}
 async function confirm() {
   await dialog.getByRole('button', { name: '明确批准并保存', exact: true }).click();
   await dialog.waitFor({ state: 'hidden' });
@@ -41,6 +48,7 @@ try {
   assert.equal(await editor.inputValue(), body);
   await page.getByRole('button', { name: '保存草稿', exact: true }).click();
   await dialog.waitFor();
+  await assertRendered(dialog.locator('.document-text').last());
   const identity = await (await context.request.get(base + '/api/identity/session')).json();
   const prefix = `/api/workspaces/${identity.subject.workspace_id}`;
   const collection = `${prefix}/classes/${classroom}/terms/${term}/documents`;
@@ -61,6 +69,15 @@ try {
   const documentId = new URL(page.url()).pathname.split('/').at(-1);
   await page.reload();
   await editor.waitFor();
+  assert.equal(await editor.inputValue(), body);
+  const persisted = await (await context.request.get(base + collection + '/' + documentId, { headers })).json();
+  assert.equal(persisted.data.body, body); assert.equal(persisted.data.format, 'markdown');
+  await page.getByRole('button', { name: '原文', exact: true }).click();
+  await assertRendered(page.locator('.document-text').last());
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('button', { name: '修改后', exact: true }).click();
   assert.equal(await editor.inputValue(), body);
   assert.equal(commits.length, 1);
   let releaseRead, readReached, readFinished;
@@ -115,7 +132,9 @@ try {
   await page.getByRole('complementary', { name: '文档列表' }).getByRole('button', { name: /合成文档浏览器验收/ }).click();
   await editor.waitFor(); await page.getByRole('button', { name: '修订记录', exact: true }).click();
   await page.getByRole('region', { name: '已保存文档版本' }).getByRole('button', { name: /版本 1 · 新建/ }).click();
-  assert.equal(await page.locator('.document-text').last().innerText(), body);
+  await assertRendered(page.locator('.document-text').last());
+  const revision = await (await context.request.get(base + collection + '/' + documentId + '/revisions/1', { headers })).json();
+  assert.equal(revision.data.body, body); assert.equal(revision.data.format, 'markdown');
   await page.getByRole('button', { name: '修改后', exact: true }).click();
   await editor.fill('本地拟修改，不覆盖并发版本');
   await page.getByRole('button', { name: '保存草稿', exact: true }).click();

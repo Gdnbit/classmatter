@@ -22,7 +22,7 @@
     "check:runtime:d3": "node runtime-check.cjs --profile workspace-chat-d3",
     "open:runtime:d1": "node scripts/runtime-build.cjs --profile conversation-d1 && node scripts/runtime-launch.cjs --profile conversation-d1",
     "package": "node scripts/package.cjs",
-    "test": "node --test tests/policy.test.cjs tests/runtime-service.test.cjs tests/runtime-check.test.cjs tests/model-network.test.cjs tests/setup-service.test.cjs tests/live-chat-optin.test.cjs",
+    "test": "node --test tests/policy.test.cjs tests/runtime-service.test.cjs tests/runtime-check.test.cjs tests/model-network.test.cjs tests/setup-service.test.cjs tests/live-chat-optin.test.cjs tests/notices.test.cjs tests/document-text.test.cjs",
     "test:desktop": "node tests/smoke.cjs"
   },
   "devDependencies": {

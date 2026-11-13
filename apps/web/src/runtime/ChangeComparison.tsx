@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import type { ChangePreview } from './workspace-chat'
 import './change-comparison.css'
+import { DocumentBody } from './DocumentBody'
 
 const labels: Record<string, string> = { name: '名称', term_name: '学期', start_date: '开始日期', end_date: '结束日期',
   title: '标题', due_at: '截止时间', status: '状态', student: '学生', source: '来源', body: '正文', format: '格式',
@@ -10,7 +11,7 @@ const statuses: Record<string, string> = { open: '未开始', 'not-started': '�
 function display(field: string, value: string | null) {
   if (value === null || value === '') return '—'
   if (field === 'status') return statuses[value] || value
-  if (field === 'format') return value === 'markdown' ? 'Markdown' : '纯文本'
+  if (field === 'format') return value === 'markdown' ? '排版文本' : '普通文本'
   if (field === 'due_at' || field === 'occurred_at') return new Date(value).toLocaleString('zh-CN', { hour12: false })
   return value
 }
@@ -28,19 +29,25 @@ function Board({ board, other }: { board: NonNullable<ChangePreview['after_seats
   </div></div>
 }
 export function ChangeComparison({ preview, saved = false }: { preview: ChangePreview; saved?: boolean }) {
+  function content(field: ChangePreview['fields'][number], side: 'before' | 'after') {
+    const value = field[side]
+    return field.field === 'body' && value !== null && value !== ''
+      ? <DocumentBody body={value} format={preview.fields.find(item => item.field === 'format')?.[side] || 'plain-text'} />
+      : display(field.field, value)
+  }
   return <section className="change-comparison" aria-label="变更前后对比">
     <div className="change-side" aria-label="修改前"><h3>修改前</h3>
       {preview.kind === 'create' || preview.kind === 'seating' && !preview.before_seats ? <p className="change-empty">尚未创建</p>
         : preview.before_seats ? <Board board={preview.before_seats} other={preview.after_seats} />
           : <dl>{preview.fields.map(field => <div key={field.field} className={field.before !== field.after ? 'changed' : ''}>
-            <dt>{labels[field.field]}</dt><dd>{display(field.field, field.before)}</dd>
+            <dt>{labels[field.field]}</dt><dd>{content(field, 'before')}</dd>
           </div>)}</dl>}
     </div>
     <ArrowRight className="change-arrow" size={20} aria-label="变更为" />
     <div className="change-side" aria-label={saved ? '已保存的结果' : '待确认的结果'}><h3>{saved ? '已保存' : '调整后'}</h3>
       {preview.after_seats ? <Board board={preview.after_seats} other={preview.before_seats} />
         : <dl>{preview.fields.map(field => <div key={field.field} className={field.before !== field.after ? 'changed' : ''}>
-          <dt>{labels[field.field]}</dt><dd>{display(field.field, field.after)}</dd>
+          <dt>{labels[field.field]}</dt><dd>{content(field, 'after')}</dd>
         </div>)}</dl>}
     </div>
   </section>

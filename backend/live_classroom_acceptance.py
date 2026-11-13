@@ -23,6 +23,7 @@ sys.path.insert(0, str(ROOT / 'backend/src'))
 
 SYNTHETIC_AUDIO_NOTE = ('刚刚合成学生甲交来展示作品，记下来，再根据这条记录建立名为合成作品核对的任务。'
     '今晚我还要整理自己的书架。每次只准备下一步，先让我确认。')
+SUMMARY_REVIEW_REQUEST = '重新准备文档合成工作小结，只用已有正式事实和任务，引用原文及实际结束结果。删除个人随记的整句备注，也不要解释删除；不要出现“书架”。只用中文表示任务状态。原草稿不要保存。'
 
 
 def synthetic_note_audio(output):
@@ -114,12 +115,11 @@ def daily_waiting_recovery_checkpoint(history, world, documents):
         and last['user_text'] == '合成作品核对先等待，跟进记录原文为“班长正在收集”')
 
 
-def daily_summary_recovery_checkpoint(history, world, documents):
-    """Only the original four confirmed daily changes before a failed summary."""
+def daily_summary_business_checkpoint(history, world, documents):
+    """Shared immutable business checkpoint, never a change to a turn's state."""
     if (history['thread']['status'] != 'active' or history['next_before'] is not None or not history['turns']
             or len(world['records']) != 1 or len(world['tasks']) != 1 or documents
-            or any(turn['state'] in ('queued', 'running', 'unknown')
-                or turn['candidate'] and not turn['action_receipt'] for turn in history['turns'])):
+            or any(turn['state'] in ('queued', 'running', 'unknown') for turn in history['turns'])):
         return False
     fact, task = world['records'][0], world['tasks'][0]
     saved = [turn for turn in history['turns'] if turn['action_receipt']]
@@ -140,9 +140,36 @@ def daily_summary_recovery_checkpoint(history, world, documents):
             or saved[2]['candidate']['status'] != 'waiting' or saved[2]['candidate']['evidence'] != '班长正在收集'
             or saved[3]['candidate']['status'] != 'done' or saved[3]['candidate']['evidence'] != task['evidence']):
         return False
+    return True
+
+
+def daily_summary_recovery_checkpoint(history, world, documents):
+    """Only the original four confirmed daily changes before a failed summary."""
+    if (not daily_summary_business_checkpoint(history, world, documents)
+            or any(turn['candidate'] and not turn['action_receipt'] for turn in history['turns'])):
+        return False
     last = history['turns'][-1]
     return (last['state'] == 'failed' and last['candidate'] is last['action_receipt'] is None
         and last['user_text'] == '根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。')
+
+
+def daily_summary_review_checkpoint(history, world, documents):
+    """Explicit review of the one known rejected synthetic draft, no reset."""
+    if not daily_summary_business_checkpoint(history, world, documents):
+        return False
+    pending = [turn for turn in history['turns'] if turn['candidate'] and not turn['action_receipt']]
+    if len(pending) != 1:
+        return False
+    original = pending[0]
+    candidate = original['candidate']
+    after = history['turns'][history['turns'].index(original) + 1:]
+    return (original['state'] == 'completed' and original['action_receipt'] is None
+        and all(turn['state'] == 'failed' and turn['candidate'] is turn['action_receipt'] is None
+                and turn['user_text'] == SUMMARY_REVIEW_REQUEST for turn in after)
+        and isinstance(candidate, dict) and candidate.get('command') == 'document.create'
+        and candidate.get('title') == '合成工作小结' and candidate.get('format') == 'markdown'
+        and isinstance(candidate.get('body'), str) and '书架' in candidate['body']
+        and original['user_text'] == '根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。')
 
 
 def main():
@@ -156,7 +183,7 @@ def main():
     parser.add_argument('--provider', choices=('google', 'zhipu', 'zhipu-flash47'), default='google', help='Explicit registered free model only; never an automatic fallback')
     parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed chat turns or audio capture HTTP responses; unknown outcomes are not retried; all attempts remain in the report')
     parser.add_argument('--turn-interval-seconds', type=int, choices=(0, 15, 65), default=0, help='Explicit test-only pacing for free provider rate limits; not application latency or automatic retry')
-    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-audio', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; audio uses fixed offline synthetic speech; explicit recovery verifies its original saved checkpoint')
+    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-audio', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery', 'daily-work-summary-review'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; audio uses fixed offline synthetic speech; explicit recovery/review verifies its original saved checkpoint')
     args = parser.parse_args()
     if not args.live or not args.source_runtime_root or not args.pg_root:
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_live_source_and_pg_required', 'requests': 0}))
@@ -167,8 +194,8 @@ def main():
     if args.scenario == 'daily-work-audio' and args.provider != 'google':
         print(json.dumps({'status': 'blocked', 'reason': 'approved_audio_provider_required', 'requests': 0}))
         return 2
-    if (args.scenario in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery') and (not args.resume_runtime_root or not args.resume_thread_id)
-            or args.resume_thread_id and args.scenario not in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery')):
+    if (args.scenario in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery', 'daily-work-summary-review') and (not args.resume_runtime_root or not args.resume_thread_id)
+            or args.resume_thread_id and args.scenario not in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery', 'daily-work-summary-review')):
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_recovery_fixture_and_thread_required', 'requests': 0}))
         return 2
     if args.artifacts_root is not None:
@@ -276,15 +303,20 @@ def main():
                 raise ValueError('Resume cannot reset or overwrite classroom work')
             if args.scenario == 'classroom-documents' and target_services.query.documents(*auth, c, t):
                 raise ValueError('Resume cannot reset or overwrite documents')
-            if args.scenario in ('daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery'):
+            if args.scenario in ('daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery', 'daily-work-summary-review'):
                 from class_os.application.workspace_chat import WorkspaceChatQueryGateway
                 history = WorkspaceChatQueryGateway(target_services.query.identity, target_services.query.store).history(auth, args.resume_thread_id)
                 world = target_services.query.projection(*auth, c, t)
                 checkpoint = {'daily-work-recovery': daily_recovery_checkpoint,
                     'daily-work-waiting-recovery': daily_waiting_recovery_checkpoint,
-                    'daily-work-summary-recovery': daily_summary_recovery_checkpoint}[args.scenario]
+                    'daily-work-summary-recovery': daily_summary_recovery_checkpoint,
+                    'daily-work-summary-review': daily_summary_review_checkpoint}[args.scenario]
                 if not checkpoint(history, world, target_services.query.documents(*auth, c, t)):
                     raise ValueError('Only the original failed-followup checkpoint may resume')
+                if args.scenario == 'daily-work-summary-review':
+                    pending = next(turn['candidate'] for turn in history['turns'] if turn['candidate'] and not turn['action_receipt'])
+                    if (pending.get('class_id'), pending.get('term_id')) != (str(c), str(t)):
+                        raise ValueError('Original reviewed draft scope required')
         elif args.scenario in ('classroom', 'classroom-documents', 'daily-work', 'daily-work-audio'):
             c, t = uuid4(), uuid4()
             commit(CreateClass(c, t, '合成联测班', '合成联测学期', date(2026, 9, 1), date(2027, 1, 30)))

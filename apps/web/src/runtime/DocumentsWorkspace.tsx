@@ -7,6 +7,7 @@ import { R1Dialog } from "./R1Dialog"
 import "./documents-workspace.css"
 import { userMessage } from "./user-facing"
 import { DocumentExportActions } from './DocumentExportActions'
+import { DocumentBody } from './DocumentBody'
 
 export type DocumentDraftContent = Readonly<{ title: string; body: string; format: "plain-text" | "markdown" }>
 type Props = {
@@ -222,12 +223,13 @@ export function DocumentsWorkspace(props: Props) {
           <div className="doc-tabs" aria-label="文档视图">{["原文", "修改后", "修订记录"].map(value => <button key={value}
             className={tab === value ? "active" : ""} onClick={() => setTab(value)}>{value}</button>)}</div>
           {anchor && <p className="document-anchor">当前章节：{anchor.title}</p>}
-          {tab === "原文" && <><h2>{current?.title || "尚未保存"}</h2><pre className="document-text">{current ? current.body : "尚无已保存原文。"}</pre></>}
+          {tab === "原文" && <><h2>{current?.title || "尚未保存"}</h2><div className="document-text">{current
+            ? <DocumentBody body={current.body} format={current.format} /> : "尚无已保存原文。"}</div></>}
           {tab === "修改后" && <>
             <label>文档标题<input aria-label="文档标题" value={title} maxLength={80} readOnly={!writable}
               onChange={event => { setTitle(event.target.value); setEdited(true) }} /></label>
             <label>正文格式<select aria-label="正文格式" value={format} disabled={!writable} onChange={event => { setFormat(event.target.value as typeof format); setEdited(true) }}>
-              <option value="plain-text">纯文本</option><option value="markdown">Markdown 文本</option></select></label>
+              <option value="plain-text">普通文本</option><option value="markdown">排版文本</option></select></label>
             <label>文档正文<textarea ref={textEditor} aria-label="文档正文" value={body} maxLength={100000} readOnly={!writable}
               onChange={event => { setBody(event.target.value); setAnchor(null); setEdited(true) }} /></label>
             <p className="r1-muted">{body.length} / 100000 字符 · 离开前请保存。</p>
@@ -245,7 +247,8 @@ export function DocumentsWorkspace(props: Props) {
                 throw new Error("版本分页出现重复或错序，未拼接结果，请重新读取。")
               setHistory({ ...next, data: [...history.data, ...next.data] })
             })}>更多版本</button>}
-            {historical && <><h2>{historical.title} · 版本 {historical.version}</h2><pre className="document-text">{historical.body}</pre></>}
+            {historical && <><h2>{historical.title} · 版本 {historical.version}</h2><div className="document-text">
+              <DocumentBody body={historical.body} format={historical.format} /></div></>}
           </section>}
         </>}
       </article>
@@ -264,9 +267,11 @@ export function DocumentsWorkspace(props: Props) {
       {notice && <p role="status">{notice}</p>}
       {pending.unknown && <p role="status">保存结果尚未确认，请先核对，避免重复保存。</p>}
       <p>有效至 {time(pending.proposal.expires_at)}</p>
-      <h3>已保存内容</h3><pre className="document-text">{current ? `${current.title}\n${current.body}` : "尚无已保存原文。"}</pre>
-      <h3>拟保存内容</h3><pre className="document-text">{"body" in pending.proposal.payload
-        ? `${pending.proposal.payload.title}\n${pending.proposal.payload.body}` : `${current?.title} · ${operations[pending.proposal.payload.command]}`}</pre>
+      <h3>已保存内容</h3><div className="document-text">{current ? <><strong>{current.title}</strong>
+        <DocumentBody body={current.body} format={current.format} /></> : "尚无已保存原文。"}</div>
+      <h3>拟保存内容</h3><div className="document-text">{"body" in pending.proposal.payload
+        ? <><strong>{pending.proposal.payload.title}</strong><DocumentBody body={pending.proposal.payload.body} format={pending.proposal.payload.format} /></>
+        : `${current?.title} · ${operations[pending.proposal.payload.command]}`}</div>
       <div className="r1-toolbar"><button disabled={busy || pending.unknown} onClick={() => void run(reject)}>放弃文档预览</button>
         <button disabled={busy} onClick={() => void run(check)}>核对原文档提交</button>
         <button disabled={busy || pending.unknown || !props.canWrite} onClick={() => void run(commit)}>明确批准并保存</button></div>
