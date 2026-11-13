@@ -49,6 +49,7 @@
 .connected-runtime .r1-messages article.user{width:fit-content;max-width:min(76%,76ch);margin:0 0 26px auto;padding:12px 18px;overflow-wrap:anywhere}
 .connected-runtime .r1-messages article.assistant{max-width:92ch;margin:0 auto 30px 0;overflow-wrap:anywhere}
 .connected-runtime .r1-messages article p{margin:0}
+.connected-runtime .r1-messages article.assistant .document-markdown p + p{margin-top:.65em}
 .connected-runtime .r1-answer-actions{display:flex;align-items:center;gap:14px;margin-top:14px;color:#7a857e;font-size:12px;white-space:normal}
 .connected-runtime .r1-answer-actions button{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:inherit;padding:4px 0;font-size:12px}
 .connected-runtime .r1-answer-actions button:hover{color:#356f60;background:transparent}

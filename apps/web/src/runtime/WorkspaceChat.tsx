@@ -10,6 +10,7 @@ import { SeatLayoutPreview } from './SeatLayoutPreview'
 import { ChangeComparison } from './ChangeComparison'
 import { DocumentExportActions } from './DocumentExportActions'
 import { documentClient } from './documents'
+import { DocumentBody } from './DocumentBody'
 
 const labels: Record<string, string> = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "record.create": "记录事实", "task.create": "建立任务", "task.update": "修改任务", "task.complete": "结束任务", "task.cancel": "取消任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
@@ -70,7 +71,7 @@ export function WorkspaceChatHistory({ state: s, documentExports }: { state: Wor
       {s.pendingSend && !s.history?.turns.some(turn => turn.request_id === s.pendingSend?.request) && <article className="user" aria-label="你的消息"><p>{s.pendingSend.text}</p></article>}
       {s.history?.turns.map(turn => <div key={turn.turn_id}>
         {turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
-        {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
+        {turn.assistant_text && <article className="assistant" aria-label="助手回复"><DocumentBody body={turn.assistant_text} format="markdown" /><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
         {turn.state !== "completed" && <p className="r1-muted" role={turn.state === 'queued' || turn.state === 'running' ? 'status' : undefined}>{turn.state === 'queued' && s.working ? states.running : states[turn.state]}</p>}
         {turn.state === "queued" && !s.working && <button disabled={!s.canAct} onClick={() => void s.startQueued(turn)}>继续回复</button>}
         {turn.state === 'failed' && turn.request_id === s.history?.turns.at(-1)?.request_id && turn.user_text && !turn.candidate && !turn.action_receipt

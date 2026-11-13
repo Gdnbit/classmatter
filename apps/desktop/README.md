@@ -4,6 +4,8 @@ Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷�
 
 ## 当前成绩与座位开发入口（D4）
 
+首次普通聊天可用显式合成演练`--scenario teacher-intro`，其它来源/PG/非C产物参数与下述联测相同。只接受全新空班级实例、不接受恢复根目录；原输入框直接请求“认识分数”教学导入，要求目标/讲解/练习、零班级工具和业务候选/提交、回答可读且可复制。刷新与完整桌面/API重启后原始回答及失败记录仍在，班级列表仍空。使用现有已授权免费模型，不因此生成正式教案文档或通过教学质量审查；默认CI只运行离线准入/受控合成Provider测试。
+
 ### Windows 系统信息查询停顿排查
 
 仅在线程栈明确停在Python的`platform._wmi_query`时，在启动应用或运行测试的当前终端设置`$env:CLASSMATTER_WINDOWS_METADATA_FALLBACK='1'`。桌面服务、`serve.py`、手动联测及pytest入口在导入数据库适配器前选择标准库已有的真实Windows信息备用路径；项目适配层加载时也核对同一选项，覆盖不经过主入口的Windows spawn子进程。SQLAlchemy原生扩展仍开启。不安装全局hook，不修改系统服务、权限、杀毒、数据库、模型或超时；默认未设置或`0`不改变行为。只作用于新启动的本进程及其继承该变量的子进程，退出后可用`Remove-Item Env:CLASSMATTER_WINDOWS_METADATA_FALLBACK`撤销。不是模型请求超时或业务失败的通用修复。

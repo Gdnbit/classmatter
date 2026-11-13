@@ -8,7 +8,7 @@ const attempts=Number(process.env.CLASSMATTER_LIVE_ATTEMPTS||'1');
 const turnInterval=Number(process.env.CLASSMATTER_LIVE_TURN_INTERVAL||'0');
 if(![0,15,65].includes(turnInterval))throw Error('Bounded explicit test pacing required');
 const scenario=process.env.CLASSMATTER_LIVE_SCENARIO||'classroom';
-if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work','daily-work-audio','daily-work-recovery','daily-work-waiting-recovery','daily-work-summary-recovery','daily-work-summary-review'].includes(scenario))throw Error('Explicit supported scenario required');
+if(!['classroom','classroom-documents','classroom-recovery','full-workbench','teacher-intro','daily-work','daily-work-audio','daily-work-recovery','daily-work-waiting-recovery','daily-work-summary-recovery','daily-work-summary-review'].includes(scenario))throw Error('Explicit supported scenario required');
 const dailyAudio=scenario==='daily-work-audio',audioFile=process.env.CLASSMATTER_LIVE_AUDIO;
 if(dailyAudio){
  if(!audioFile||!path.isAbsolute(audioFile)||path.resolve(audioFile)!==path.join(path.dirname(report),'synthetic-note.wav'))throw Error('Owned synthetic audio required');
@@ -205,6 +205,28 @@ async function confirm(command){
 }
 (async()=>{try{
  await launch();
+ if(scenario==='teacher-intro'){
+  assert.deepEqual(await world(),{context:null});assert.deepEqual((await read('/classes')).data,[]);
+  const writes=[];page.on('request',request=>{if(request.method()==='POST'&&/\/(?:commands|document-commands)\/(?:preview|approve|commit)$/.test(new URL(request.url()).pathname))writes.push(request.url());});
+  await page.getByRole('button',{name:'新对话',exact:true}).click();
+  const result=await turn('这是合成验收。请直接写一份小学数学“认识分数”的5分钟教学导入，分成目标、讲解、练习三个小标题。不创建班级，不保存班务记录，无需查询任何班级数据。');
+  const answer=result.last.assistant_text;assert.equal(result.last.candidate,null);assert.equal(result.last.action_receipt,null);
+  assert(answer.length>=70&&['目标','讲解','练习','分数'].every(value=>answer.includes(value)),'Useful class-free teaching content required');
+  assert.deepEqual(rows.filter(row=>row.request_id).at(-1).tools,[]);assert.deepEqual(writes,[]);
+  const response=page.getByRole('article',{name:'助手回复'}).last();
+  if(/^#{1,6}\s/m.test(answer))assert(await response.getByRole('heading').count()>0,'Actual Markdown headings must render');
+  assert.equal(await response.getByRole('button',{name:'复制回答',exact:true}).count(),1);
+  await captureOwnedFrame(path.join(path.dirname(report),'teacher-intro.png'));
+  const chat=page.url();await page.reload();await page.getByLabel('输入消息').waitFor();
+  assert.equal((await read(`/workspace-chat/threads/${result.thread}`)).turns.find(t=>t.request_id===result.request).assistant_text,answer);
+  await closeOwnedApp();await launch();await page.goto(chat);await page.getByLabel('输入消息').waitFor();
+  const history=await read(`/workspace-chat/threads/${result.thread}`),stored=history.turns.find(t=>t.request_id===result.request);
+  assert.equal(stored.assistant_text,answer);assert.equal(stored.candidate,null);assert.equal(stored.action_receipt,null);
+  assert(history.turns.every(t=>!t.candidate&&!t.action_receipt));assert.deepEqual(await world(),{context:null});assert.deepEqual((await read('/classes')).data,[]);
+  const failed=rows.filter(row=>row.request_id&&row.state==='failed');for(const row of failed)assert.equal(history.turns.find(t=>t.request_id===row.request_id)?.state,'failed');
+  rows.push({case:'failed turns retained after restart',count:failed.length,passed:true});
+  rows.push({case:'class-free teaching intro, readable answer, exact refresh/restart and zero business writes',passed:true});assert.deepEqual(errors,[]);save();return;
+ }
  if(dailyAudio){
   const initial=await world();
   assert(initial.context&&initial.context.name==='合成联测班','Declared synthetic class must exist before audio or business model calls');
