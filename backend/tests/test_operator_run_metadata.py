@@ -114,6 +114,22 @@ def test_sdk_cancellation_retains_its_actual_outcome(tmp_path, monkeypatch):
     assert row['outcome'] == row['category'] == 'cancelled'
 
 
+def test_protocol_probe_cannot_overwrite_chat_or_persistence_reports(tmp_path, monkeypatch):
+    monkeypatch.setenv('CLASSMATTER_OPERATOR_METADATA', '1')
+    sink = metadata.for_runtime(SimpleNamespace(root=tmp_path, profile='classroom-work-d4'), local_development=True)
+    request = uuid4()
+    for phase in ('completed', 'persistence_finish', 'protocol_probe'):
+        RunDiagnostics(sink, request).finish('completed', phase=phase)
+    rows = metadata.read_packets(tmp_path, [str(request)])
+    assert [row['phase'] for row in rows] == ['completed', 'persistence_finish', 'protocol_probe']
+    probe = tmp_path / metadata.DIRECTORY / (str(request) + '.probe.json')
+    before = probe.read_bytes()
+    RunDiagnostics(sink, request).finish('failed', RuntimeError('private'), phase='protocol_probe')
+    assert probe.read_bytes() == before
+    probe.write_text(json.dumps(dict(rows[-1], phase='completed')), encoding='utf-8')
+    assert metadata.read_packets(tmp_path, [str(request)]) == rows[:-1]
+
+
 def test_directory_link_cannot_redirect_metadata(tmp_path, monkeypatch):
     monkeypatch.setenv('CLASSMATTER_OPERATOR_METADATA', '1')
     other = tmp_path / 'outside'; other.mkdir()

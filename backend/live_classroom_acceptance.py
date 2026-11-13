@@ -97,10 +97,21 @@ def main():
     from class_os.infrastructure.agent import PydanticAgentRuntime
     from class_os.domain.roster import CreateClass, CreateStudent
     services = setup = target_services = runtime = None
+    probe_request_id = None
     phase = 'source-preflight'
     artifacts = args.artifacts_root or ROOT / 'test-results/live-classroom'
     output = artifacts / uuid4().hex
     output.mkdir(parents=True)
+    def record_probe():
+        if runtime is None or probe_request_id is None:
+            return []
+        from class_os.infrastructure.operator_run_metadata import read_packets
+        rows = read_packets(runtime.root, [str(probe_request_id)])
+        try:
+            (output / 'protocol-probe-metadata.json').write_text(json.dumps(rows, indent=2), encoding='utf-8')
+        except OSError:
+            pass
+        return rows
     try:
         if args.provider == 'google':
             source = LocalRuntime(args.source_runtime_root, profile='classroom-work-d4')
@@ -177,7 +188,11 @@ def main():
             commit(CreateClass(c, t, '合成联测班', '合成联测学期', date(2026, 9, 1), date(2027, 1, 30)))
             for name in ('合成学生甲', '合成学生乙'):
                 commit(CreateStudent(uuid4(), c, t, target_services.query.context(*auth).version, name))
-        sdk = PydanticAgentRuntime(target_services.query)
+        from class_os.infrastructure.operator_run_metadata import for_runtime
+        # This process is already an explicit free-provider/synthetic opt-in.
+        # Default application and CI invocations keep their existing policy.
+        os.environ['CLASSMATTER_OPERATOR_METADATA'] = '1'
+        sdk = PydanticAgentRuntime(target_services.query, diagnostics=for_runtime(runtime, local_development=True))
         from class_os.infrastructure.model_provider import configured_client
         @asynccontextmanager
         async def observed_client(configuration, secret, *, proxy=None):
@@ -192,6 +207,7 @@ def main():
             allowed_bases=(profile.base_url,), proxy=proxy,
             client_factory=observed_client,
             activation=LocalModelActivation(runtime.root, auth[3], proxy=proxy))
+        probe_request_id = uuid4()
         async def activate():
             if args.resume_runtime_root:
                 state = await controller.status(auth)
@@ -199,17 +215,18 @@ def main():
                 if controller.profile(saved) != profile:
                     raise ValueError('Prior enabled fixture model required')
                 if state['mode'] != 'configured-api':
-                    if not await controller.test(auth, saved['candidate_id'], saved['version'], uuid4()):
+                    if not await controller.test(auth, saved['candidate_id'], saved['version'], probe_request_id):
                         raise ValueError('Real model protocol probe failed')
                     await controller.enable(auth, saved['candidate_id'], saved['version'])
                 return
             command = await controller.stage(auth, profile, key.get_secret_value(), 0)
             commit(command)
-            if not await controller.test(auth, command.candidate_id, 1, uuid4()):
+            if not await controller.test(auth, command.candidate_id, 1, probe_request_id):
                 raise ValueError('Real model protocol probe failed')
             await controller.enable(auth, command.candidate_id, 1)
         phase = 'protocol-probe'
         asyncio.run(activate())
+        record_probe()
         del key
         target_services.close(); target_services = None
         setup.close(); setup = None
@@ -250,7 +267,11 @@ def main():
             'prior_failures_retained': any(row.get('prior_failure') for row in observed.get('rows', []))}))
         return 0 if passed else 1
     except Exception as error:
-        print(json.dumps({'status': 'blocked-or-failed', 'phase': phase, 'error_type': type(error).__name__, 'report_directory': str(output), 'automatic_retry': False}))
+        probe_rows = record_probe()
+        print(json.dumps({'status': 'blocked-or-failed', 'phase': phase, 'error_type': type(error).__name__,
+            'report_directory': str(output), 'automatic_retry': False,
+            'probe_metadata_available': bool(probe_rows),
+            'probe_failure_categories': sorted({row['category'] for row in probe_rows if row.get('category')})}))
         return 1
     finally:
         for item in (target_services, services, setup):

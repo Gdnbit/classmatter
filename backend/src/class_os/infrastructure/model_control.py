@@ -14,6 +14,7 @@ from pydantic_ai.usage import UsageLimits
 from class_os.domain.model_configuration import ConfigurationRejected, ModelConfiguration, Protocol
 from .model_provider import configured_client, model_for_configuration
 from .agent import fake_model
+from .agent_diagnostics import RunDiagnostics
 
 
 class ModelController:
@@ -113,14 +114,14 @@ class ModelController:
         self._testing = True
         self._proofs.pop(binding, None)
         self._attempts[identity] = (now + timedelta(minutes=10), None)
-        passed = False
+        passed, called, failure, probe_budget = False, False, None, None
+        diagnostic = RunDiagnostics(self.runtime.diagnostics, request_id)
         try:
             row = await self._row(credentials, "model.test.started")
             if self.signature(row) != (candidate, version):
                 raise ConfigurationRejected()
             profile = self.profile(row)
             key = self.secrets.open(credentials[3], candidate, version, profile, bytes(row["sealed"]))
-            called = False
             def class_os_probe() -> str:
                 """Call this exactly once to validate this synthetic tool protocol."""
                 nonlocal called
@@ -132,10 +133,10 @@ class ModelController:
             # Keep request/token limits and cancellation; never retry silently.
             from .model_provider import request_timeout
             probe_timeout = 35 if request_timeout(profile) == 30 else 10
-            async with asyncio.timeout(probe_timeout):
+            async with asyncio.timeout(probe_timeout) as probe_budget:
                 async with self.client_factory(profile, key) as client:
                     probe = Agent(model_for_configuration(profile, client), tools=[class_os_probe], retries=0,
-                                  model_settings={"max_tokens": 1024})
+                                  model_settings={"max_tokens": 1024}, capabilities=[diagnostic])
                     probe.instrument = False
                     result = await probe.run("Synthetic connectivity test only: call class_os_probe once, then reply OK.",
                                              usage_limits=UsageLimits(request_limit=2, tool_calls_limit=1, total_tokens_limit=6000))
@@ -146,17 +147,22 @@ class ModelController:
                 raise ConfigurationRejected()
             self._proofs[binding] = self.clock() + timedelta(minutes=10)
             passed = True
-        except asyncio.CancelledError:
+        except asyncio.CancelledError as error:
+            failure = error
             with suppress(Exception):
                 await self._row(credentials, "model.test.failed")
             raise
-        except Exception:
+        except Exception as error:
+            failure = error
             self._proofs.pop(binding, None)
             with suppress(Exception):
                 await self._row(credentials, "model.test.failed")
         finally:
             self._attempts[identity] = (self.clock() + timedelta(minutes=10), passed)
             self._testing = False
+            diagnostic.finish('completed' if passed else 'cancelled' if isinstance(failure, asyncio.CancelledError) else 'failed',
+                failure, phase='protocol_probe', tool_calls=int(called),
+                deadline_expired=bool(probe_budget is not None and probe_budget.expired()))
         return passed
 
     async def enable(self, credentials, candidate, version):

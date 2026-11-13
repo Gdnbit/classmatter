@@ -13,7 +13,7 @@ CATEGORIES = frozenset(('network_proxy', 'network_dns', 'network_tls', 'network_
     'network_read', 'network_write', 'network_protocol', 'upstream_rate_limit', 'upstream_http',
     'local_usage_limit', 'timeout_unattributed', 'model_contract', 'unclassified', 'cancelled', 'local_run_deadline'))
 PHASES = frozenset(('audit_start', 'tool_contract', 'provider_binding', 'model_loop',
-    'response_validation', 'audit_completion', 'completed', 'persistence_claim', 'history_read', 'sdk_dispatch', 'persistence_finish'))
+    'response_validation', 'audit_completion', 'completed', 'persistence_claim', 'history_read', 'sdk_dispatch', 'persistence_finish', 'protocol_probe'))
 PERSISTENCE_PHASES = frozenset(('persistence_claim', 'history_read', 'sdk_dispatch', 'persistence_finish'))
 SIGNALS = frozenset(('UNAVAILABLE', 'DEADLINE_EXCEEDED', 'RESOURCE_EXHAUSTED', 'INTERNAL',
     'INVALID_ARGUMENT', 'PERMISSION_DENIED', 'UNAUTHENTICATED', 'NOT_FOUND'))
@@ -65,6 +65,12 @@ def _directory(root):
     return directory
 
 
+def _suffix(packet):
+    if packet['phase'] == 'protocol_probe':
+        return '.probe.json'
+    return '.persistence.json' if packet['phase'] in PERSISTENCE_PHASES else '.json'
+
+
 def for_runtime(runtime, *, local_development):
     if not local_development or runtime.profile != 'classroom-work-d4' or os.environ.get('CLASSMATTER_OPERATOR_METADATA') != '1':
         return None
@@ -79,7 +85,7 @@ def for_runtime(runtime, *, local_development):
         if sum(1 for entry in directory.iterdir() if entry.suffix == '.json') >= MAX_REPORTS:
             return
         # Exclusive create never replaces a previous report or follows a file link.
-        suffix = '.persistence.json' if packet['phase'] in PERSISTENCE_PHASES else '.json'
+        suffix = _suffix(packet)
         with (directory / (packet['run_id'] + suffix)).open('xb') as target:
             target.write(data)
     return write
@@ -98,14 +104,14 @@ def read_packets(root, request_ids):
                 continue
         except (ValueError, TypeError):
             continue
-        for suffix in ('.json', '.persistence.json'):
+        for suffix in ('.json', '.persistence.json', '.probe.json'):
             try:
                 path = directory / (request + suffix)
                 if path.is_symlink() or not path.is_file() or path.stat().st_size > MAX_BYTES:
                     continue
                 packet = json.loads(path.read_bytes())
                 if (valid_packet(packet) and packet['run_id'] == request
-                        and (packet['phase'] in PERSISTENCE_PHASES) == (suffix == '.persistence.json')):
+                        and _suffix(packet) == suffix):
                     result.append(packet)
             except (OSError, ValueError, TypeError, RecursionError):
                 continue
