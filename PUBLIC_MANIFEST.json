@@ -507,7 +507,7 @@
       "sha256": "76790a6d71164f6d12b5b97b87411b1e1879e90e461ae199e2f84dbadb733c1b"
     },
     "backend/desktop.py": {
-      "sha256": "5bc0ce232ab1d2a02b41953e8277987a518d2c78d39d36d83e0f8796782d8c34"
+      "sha256": "bd72a3cd7d7d41421d8cac1fbcf30cd2ac4af61df72bdb7f2dd925a2cc21e806"
     },
     "backend/src/class_os/interfaces/http/desktop_host.py": {
       "sha256": "f3ed0b1108e4883dda54174e40947f96abccd5d99460227a21dbab41e8def150"
@@ -522,7 +522,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "da658a13cb54b5b251381b078eaab750b49eb5f53e39048840def12e172ba225"
+      "sha256": "5c767c3bb1d0dfc715f0ee176bf5061cc76cc72c7f3c36bec29bf5034dd9ed60"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -570,7 +570,7 @@
       "sha256": "965221fa76dece9b20108c4fad5aa21534d08ec8c8cb43faf14bcb86b1bbb714"
     },
     "apps/desktop/README.md": {
-      "sha256": "e6e4812f616e5d9e06196233d2966f2d530267913de8b992bcb81777a8b4e023"
+      "sha256": "8c11adfbaddf12a34be49df1b6963f1aafe4f5251237dbebb479bb67b6e4f341"
     },
     "apps/desktop/scripts/build.cjs": {
       "sha256": "586d17fa8f21ce2eda947c78a55d2139f4c979fd6110a9f0336d585fb777b7fc"
@@ -987,7 +987,7 @@
       "sha256": "f8b8ceb9b9d23ca0dc8faf79ab2248da4447650154921c712e8be5adab9948ba"
     },
     "backend/serve.py": {
-      "sha256": "19911404a24bed2173ca7e9baf1b4107c87d3a509cbc3581cc9ee2c858b32e8d"
+      "sha256": "7fb3e87cfcea9bef5afd0b2e4c0f2b98e0fb60ada3d92008faa1d3fb49fa9025"
     },
     "backend/src/class_os/__init__.py": {
       "sha256": "e8d127e488d4b15ec32102c623efba4a9e59b819cf3349ef2753584660fc1b03"
@@ -1050,7 +1050,7 @@
       "sha256": "0b97854dfd38021c201aaa2ebf0772762f10f9a66a6bde5131138a439c45e473"
     },
     "backend/src/class_os/infrastructure/__init__.py": {
-      "sha256": "97c8fbe4061e4afa3c841e150f437f6e64ac9630cb90c35a36f7f03851d3f35b"
+      "sha256": "332b722f3eb82e669951f8f19f4afde417ff0afc8b5da3b028476dd925c4ee30"
     },
     "backend/src/class_os/infrastructure/activity.py": {
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
@@ -1146,7 +1146,7 @@
       "sha256": "da1f283ce87c1b60b8c8a6deb3cd591a22eeccca9a3398da16d087b367ea36a6"
     },
     "backend/tests/conftest.py": {
-      "sha256": "b166727713170044769b89bdcc6ee661df8d2f155ceee4e00bc7d8da05223588"
+      "sha256": "51064ad95f733137ce78715849165c564a30a6af2b3b6a774bd20c0a206e4cef"
     },
     "backend/tests/test_0015_to_0016_upgrade.py": {
       "sha256": "0f4269e0768e23b91438285f560cfcf0696856d59ce68784871f61509a9282d4"
@@ -2750,7 +2750,7 @@
       "sha256": "a56d9f6617fbcee4743d6527821545712e102bed9225c0725d1276172dd6f6b2"
     },
     "backend/desktop_setup.py": {
-      "sha256": "a818a7c8a03649fc54394c134103dda4f4f91c3699b7ea7e0583e87e28ea18e4"
+      "sha256": "e99a0012cfde7db440d127a28b11371ec8264f48c237bb31248c57a6fb095e88"
     },
     "backend/src/class_os/infrastructure/native_setup.py": {
       "sha256": "4bbd34452f77e4d84fad489d4452751a701c3b37d2b09680879e205e505ec0c1"
@@ -3134,7 +3134,7 @@
       "sha256": "a07c89612613c61d18c0298c3cbba1c0997ad19829a93f3939048a905b958bbf"
     },
     "backend/live_classroom_acceptance.py": {
-      "sha256": "9cf7e1c401ab9533696e203e8882c35868dc63ecb6d9460728d7a3fc115616e0"
+      "sha256": "79bda56ed65e6c3b838c7b0a347ef90f4cddd9138ce8cc1139f9799dd6034884"
     },
     "backend/tests/test_live_classroom_operator.py": {
       "sha256": "8540e9b514bd1f99738e2ad1457f288e0e66e30518b8b17a5d40985ec44dad0f"
@@ -3292,7 +3292,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "ed3ce105951ef8072a7e61073c6d529b210df7667ec741bea7ee7469c56b7240"
+      "sha256": "178cc3bfc33ca12079c0b493be3e8bde4a758a313f68eef39cf6f29d1e18a9ed"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "bae496e88ba3625b1e243bec525fc856fd32523415d35041c969842e3ad88551"
@@ -3344,6 +3344,12 @@
     },
     "third_party/licenses/python/mdurl-0.1.2/0.txt": {
       "sha256": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955"
+    },
+    "backend/src/class_os/infrastructure/windows_platform.py": {
+      "sha256": "c670765a17e5bca2ba8192ad57505c67baebb803547c537fce15e16092082b42"
+    },
+    "backend/tests/test_windows_platform.py": {
+      "sha256": "d162f47e8522e1c2184c3c1a19a40a029d0c145e6df937562a7c797039c4d980"
     }
   }
 }

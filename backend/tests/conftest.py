@@ -1,10 +1,14 @@
 """Only creates disposable local test databases; never accepts an existing DSN."""
 from contextlib import contextmanager
 from pathlib import Path
+import os
 import socket
 import subprocess
 import tempfile
 from uuid import uuid4
+
+from class_os.infrastructure.windows_platform import configure_windows_platform
+configure_windows_platform(os.environ)
 
 import pytest
 import psycopg
