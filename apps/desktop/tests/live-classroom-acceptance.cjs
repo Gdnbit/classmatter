@@ -1,5 +1,6 @@
 // Explicit real-model acceptance; same native UI and APIs, isolated synthetic DB.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
+const {documentText}=require('./document-text.cjs');
 if(process.env.CLASSMATTER_RUN_LIVE_CLASSROOM!=='1')throw Error('Explicit live synthetic opt-in required');
 const stage=process.env.CLASSMATTER_LIVE_STAGE,report=process.env.CLASSMATTER_LIVE_REPORT;
 const model=process.env.CLASSMATTER_LIVE_MODEL||'gemini-3.1-flash-lite';
@@ -90,11 +91,14 @@ async function assertDialog(candidate,before,dialog){
   if(candidate.command==='term.update'){assert.equal(old['名称'],before.term.name);assert.equal(old['开始日期'],before.term.start_date);assert.equal(old['结束日期'],before.term.end_date);}
   if(candidate.command==='student.update_name')assert.equal(old['名称'],before.students.find(s=>s.student_id===candidate.student_id).name);
   if(candidate.command==='task.update')assert.equal(old['标题'],before.tasks.find(t=>t.task_id===candidate.task_id).title);
-  if(candidate.command==='document.revise'){const doc=before.documents.find(d=>d.document_id===candidate.document_id);assert.equal(old['标题'],doc.title);assert.equal(old['正文'],doc.body);}
+  if(candidate.command==='document.revise'){const doc=before.documents.find(d=>d.document_id===candidate.document_id);assert.equal(old['标题'],doc.title);assert.equal(doc.format==='markdown'?old['正文'].replace(/\s+/g,''):old['正文'],await documentText(doc.body,doc.format));}
   if(candidate.command==='score.record'){const prior=before.results.find(e=>e.exam_id===candidate.exam_id).results.find(r=>r.student_id===candidate.student_id);assert.equal(old['成绩'],prior?.score??'—');}
  }
  const labels={name:'名称',term_name:'学期',start_date:'开始日期',end_date:'结束日期',title:'标题',body:'正文',fact_text:'事实',evidence:'跟进记录',reason:hasComparison?'更正原因':'原因',subject:'科目',...(!hasComparison?{rows:'排数',columns:'每排座位数',row:'目标排',column:'目标座位',first_row:'原座位排',first_column:'原座位号',second_row:'目标排',second_column:'目标座位号'}:{})};
- for(const [key,label]of Object.entries(labels))if(candidate[key]!==undefined&&candidate[key]!==''&&candidate[key]!==null)assert.equal(fields[label],String(candidate[key]),`Preview field ${key}`);
+ for(const [key,label]of Object.entries(labels))if(candidate[key]!==undefined&&candidate[key]!==''&&candidate[key]!==null){
+  const formatted=key==='body'&&candidate.format==='markdown';
+  assert.equal(formatted?fields[label].replace(/\s+/g,''):fields[label],formatted?await documentText(candidate.body,candidate.format):String(candidate[key]),`Preview field ${key}`);
+ }
  for(const [key,label]of [['score',hasComparison?'成绩':'分数'],['maximum_score','满分']])if(candidate[key]!==undefined&&candidate[key]!==null)assert.equal(Number(fields[label]),Number(candidate[key]),`Preview field ${key}`);
  if(candidate.student_id&&before.students&&!candidate.command.startsWith('seat.')&&candidate.command!=='student.update_name'){const name=before.students.find(s=>s.student_id===candidate.student_id)?.name;if(name)assert.equal(fields['学生'],name,'Student target must be visible');}
  if(candidate.command==='score.record'){const exam=before.exams.find(e=>e.exam_id===candidate.exam_id);if(hasComparison){assert.equal(fields['标题'],exam.title);assert.equal(fields['科目'],exam.subject);}else assert.equal(fields['考试'],`${exam.title} · ${exam.subject}`,'Exam and subject must be visible');}

@@ -1,0 +1,22 @@
+.document-body { overflow-wrap: anywhere; line-height: 1.75; }
+.document-plain { white-space: pre-wrap; }
+.document-markdown { white-space: normal; }
+.document-markdown > :first-child { margin-top: 0; }
+.document-markdown > :last-child { margin-bottom: 0; }
+.document-markdown :is(h1, h2, h3, h4, h5, h6) { color: inherit; line-height: 1.45; margin: 1.1em 0 .5em; font-weight: 600; }
+.document-markdown h1 { font-size: 1.4em; }
+.document-markdown h2 { font-size: 1.2em; }
+.document-markdown :is(h3, h4, h5, h6) { font-size: 1.05em; }
+.document-markdown p { margin: .65em 0; }
+.document-markdown :is(ul, ol) { margin: .65em 0; padding-left: 1.6em; list-style-position: outside; }
+.document-markdown ul { list-style-type: disc; }
+.document-markdown ol { list-style-type: decimal; }
+.document-markdown li + li { margin-top: .25em; }
+.document-markdown blockquote { margin: .8em 0; padding-left: .8em; border-left: 3px solid #b4c5bc; }
+.document-markdown pre { white-space: pre-wrap; padding: .75em; background: #f3f6f4; border-radius: 6px; }
+.document-markdown code { font-size: .9em; }
+.document-markdown table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: .95em; }
+.document-markdown :is(th, td) { padding: .4em .6em; border: 1px solid #dde5df; text-align: left; min-width: 5em; }
+.document-markdown th { background: #f3f6f4; font-weight: 600; }
+.document-markdown .task-list-item { list-style-type: none; }
+.document-markdown input[type='checkbox'] { width: auto; margin-right: .4em; }

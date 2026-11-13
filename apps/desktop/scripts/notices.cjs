@@ -9,12 +9,11 @@ function collectNotices(web, stage) {
   const visited = new Set();
   function visit(name, parent) {
     const resolver = createRequire(path.join(parent, 'package.json'));
-    let location = path.dirname(resolver.resolve(name));
-    while (!fs.existsSync(path.join(location, 'package.json'))) {
-      const next = path.dirname(location);
-      if (next === location) throw new Error(`Package metadata missing: ${name}`);
-      location = next;
-    }
+    // Type-only packages have no JS entry; some JS entry subdirectories also
+    // contain package.json files that are not the package's license metadata.
+    const metadata = (resolver.resolve.paths(name) || []).map(base => path.join(base, name, 'package.json')).find(file => fs.existsSync(file));
+    if (!metadata) throw new Error(`Package metadata missing: ${name}`);
+    const location = fs.realpathSync(path.dirname(metadata));
     const pkg = JSON.parse(fs.readFileSync(path.join(location, 'package.json'), 'utf8'));
     const key = `${pkg.name}@${pkg.version}`;
     if (visited.has(key)) return;

@@ -160,6 +160,19 @@ try {
     }
     const comparison = card.getByRole('region', { name: '变更前后对比', exact: true });
     await comparison.waitFor();
+    if (title === '创建工作文档' || title === '修改工作文档') {
+      const formatted = comparison.getByLabel('待确认的结果', { exact: true });
+      await formatted.getByRole('heading', { name: '合成小结', exact: true }).waitFor();
+      assert.equal(await formatted.locator('li').first().textContent(), '合成小结正文，待核对。' + (title === '修改工作文档' ? '\n合成补充段落' : ''));
+      assert(!(await formatted.innerText()).includes('# 合成小结'));
+      await comparison.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: `../../test-results/document-comparison-${title === '创建工作文档' ? 'create' : 'edit'}-wide.png` });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await comparison.scrollIntoViewIfNeeded();
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      await page.screenshot({ path: `../../test-results/document-comparison-${title === '创建工作文档' ? 'create' : 'edit'}-mobile.png` });
+      await page.setViewportSize({ width: 1440, height: 1000 });
+    }
     const oldContent = await comparisonContent(comparison.getByLabel('修改前', { exact: true }));
     const newContent = await comparisonContent(comparison.getByLabel('待确认的结果', { exact: true }));
     changes.push({ oldContent, newContent: { ...newContent, heading: '已保存' } });

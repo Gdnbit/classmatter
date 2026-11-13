@@ -125,8 +125,8 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
         '将合成学生甲改名为合成学生乙': ('prepare_student', {'action': 'rename', 'name': '合成学生甲', 'new_name': '合成学生乙'}),
         '建立任务合成收集回执': ('prepare_task', {'action': 'create', 'title': '合成收集回执'}),
         '把任务合成收集回执改为合成收集签字回执': ('prepare_task', {'action': 'edit', 'title': '合成收集回执', 'new_title': '合成收集签字回执'}),
-        '生成文档合成班级小结': ('prepare_document', {'action': 'create', 'title': '合成班级小结', 'body': '合成小结正文，待核对。'}),
-        '给合成班级小结追加合成补充段落': ('prepare_document', {'action': 'edit', 'edit_mode': 'append', 'title': '合成班级小结', 'body': '合成补充段落'}),
+        '生成文档合成班级小结': ('prepare_document', {'action': 'create', 'title': '合成班级小结', 'body': '# 合成小结\n\n- 合成小结正文，待核对。', 'format': 'markdown'}),
+        '给合成班级小结追加合成补充段落': ('prepare_document', {'action': 'edit', 'edit_mode': 'append', 'title': '合成班级小结', 'body': '合成补充段落', 'format': 'markdown'}),
     }
     failed_once = set()
     def factory(request):
