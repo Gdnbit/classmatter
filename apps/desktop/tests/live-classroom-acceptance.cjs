@@ -8,7 +8,7 @@ const attempts=Number(process.env.CLASSMATTER_LIVE_ATTEMPTS||'1');
 const turnInterval=Number(process.env.CLASSMATTER_LIVE_TURN_INTERVAL||'0');
 if(![0,15,65].includes(turnInterval))throw Error('Bounded explicit test pacing required');
 const scenario=process.env.CLASSMATTER_LIVE_SCENARIO||'classroom';
-if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work','daily-work-audio','daily-work-recovery','daily-work-waiting-recovery','daily-work-summary-recovery'].includes(scenario))throw Error('Explicit supported scenario required');
+if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work','daily-work-audio','daily-work-recovery','daily-work-waiting-recovery','daily-work-summary-recovery','daily-work-summary-review'].includes(scenario))throw Error('Explicit supported scenario required');
 const dailyAudio=scenario==='daily-work-audio',audioFile=process.env.CLASSMATTER_LIVE_AUDIO;
 if(dailyAudio){
  if(!audioFile||!path.isAbsolute(audioFile)||path.resolve(audioFile)!==path.join(path.dirname(report),'synthetic-note.wav'))throw Error('Owned synthetic audio required');
@@ -19,7 +19,9 @@ const recovery=scenario==='classroom-recovery',resumeThread=process.env.CLASSMAT
 const dailyRecovery=scenario==='daily-work-recovery';
 const waitingRecovery=scenario==='daily-work-waiting-recovery',priorRecoveryFailures=[];
 const summaryRecovery=scenario==='daily-work-summary-recovery';
-if((recovery||dailyRecovery||waitingRecovery||summaryRecovery)&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
+const reviewRecovery=scenario==='daily-work-summary-review';let priorReview=null,reviewRetry=false;
+const reviewRequest='重新准备文档合成工作小结，只用已有正式事实和任务，引用原文及实际结束结果。删除个人随记的整句备注，也不要解释删除；不要出现“书架”。只用中文表示任务状态。原草稿不要保存。';
+if((recovery||dailyRecovery||waitingRecovery||summaryRecovery||reviewRecovery)&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
 const verifyWorld=scenario!=='classroom';
 if(![1,2,3].includes(attempts))throw Error('Bounded explicit test attempts required');
 if(!['gemini-3.1-flash-lite','glm-4-flash-250414','glm-4.7-flash'].includes(model))throw Error('Explicit approved free model required');
@@ -254,7 +256,7 @@ async function confirm(command){
    lastResult={thread:resumeThread,last,request:last.request_id,before:initial};result=lastResult;
   }else assert.equal(last.state,'failed');
   rows.push({case:'same original fact/receipt and failed continuation preserved; no reset',prior_failure:true,thread_id:resumeThread,failed_requests:history.turns.filter(t=>t.state==='failed').map(t=>t.request_id),passed:true});save();
- }else if(summaryRecovery){
+ }else if(summaryRecovery||reviewRecovery){
   await page.goto(new URL(`/chats/${resumeThread}`,page.url()).href);await page.getByLabel('输入消息').waitFor();
   const history=await read(`/workspace-chat/threads/${resumeThread}`),initial=await world();
   assert.equal(history.thread.status,'active');assert.equal(history.next_before,null);
@@ -264,11 +266,21 @@ async function confirm(command){
   assert.equal(committed[0].action_receipt.resource_id,initial.records[0].record_id);
   assert.deepEqual(committed.map(t=>t.action_receipt.version),[1,1,2,3]);
   for(const row of committed.slice(1))assert.equal(row.action_receipt.resource_id,task.task_id);
-  assert(!history.turns.some(t=>['queued','running','unknown'].includes(t.state)||t.candidate&&!t.action_receipt));
-  const last=history.turns.at(-1);assert.equal(last.state,'failed');assert.equal(last.candidate,null);assert.equal(last.action_receipt,null);
-  assert.equal(last.user_text,'根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。');
+  assert(!history.turns.some(t=>['queued','running','unknown'].includes(t.state)));
+  const last=history.turns.at(-1);assert.equal(last.action_receipt,null);
+  const pending=history.turns.filter(t=>t.candidate&&!t.action_receipt);
+  if(reviewRecovery){
+   assert.equal(pending.length,1);const original=pending[0];assert.equal(original.state,'completed');
+   assert.equal(original.candidate.command,'document.create');assert.equal(original.candidate.title,'合成工作小结');
+   assert.equal(original.candidate.class_id,initial.context.class_id);assert.equal(original.candidate.term_id,initial.context.term_id);
+   assert(original.candidate.body.includes('书架'),'Only the known rejected synthetic draft may enter this explicit review');
+   for(const turn of history.turns.slice(history.turns.indexOf(original)+1)){assert.equal(turn.state,'failed');assert.equal(turn.candidate,null);assert.equal(turn.action_receipt,null);assert.equal(turn.user_text,reviewRequest);}
+   priorReview={request_id:original.request_id,candidate_hash:original.candidate_hash,candidate:original.candidate};reviewRetry=last.state==='failed';
+   rows.push({case:'original rejected draft retained unconfirmed; explicit correction or retry only',prior_request_id:original.request_id,passed:true});save();
+  }else{assert.equal(last.state,'failed');assert.equal(last.candidate,null);assert.deepEqual(pending,[]);}
+  assert.equal((reviewRecovery?pending[0]:last).user_text,'根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。');
   priorRecoveryFailures.push(...history.turns.filter(t=>t.state==='failed').map(t=>t.request_id));
-  rows.push({case:'same original completed task v3 and failed summary verified; no reset',prior_failure:true,failed_requests:[...priorRecoveryFailures],passed:true});save();
+  rows.push({case:reviewRecovery?'same original completed task v3 and rejected draft verified; no reset':'same original completed task v3 and failed summary verified; no reset',prior_failure:!reviewRecovery,failed_requests:[...priorRecoveryFailures],passed:true});save();
  }else if(waitingRecovery){
   await page.goto(new URL(`/chats/${resumeThread}`,page.url()).href);await page.getByLabel('输入消息').waitFor();
   const history=await read(`/workspace-chat/threads/${resumeThread}`),initial=await world();
@@ -287,7 +299,7 @@ async function confirm(command){
   await page.getByRole('button',{name:'新对话',exact:true}).click();
   result=await turn('这是合成测试，只回复：准备好了。');assert.equal(result.last.candidate,null);assert.deepEqual(rows.filter(row=>row.request_id).at(-1).tools,[]);
  }
-  if(scenario==='daily-work'||dailyAudio||dailyRecovery||waitingRecovery||summaryRecovery){
+  if(scenario==='daily-work'||dailyAudio||dailyRecovery||waitingRecovery||summaryRecovery||reviewRecovery){
   const fact='合成学生甲交来展示作品',title='合成作品核对';
    let note=`刚刚${fact}，记下来，再根据这条记录建立名为“${title}”的任务。今晚我还要整理自己的书架。每次只准备下一步，先让我确认。`;
    if(dailyAudio){
@@ -324,7 +336,7 @@ async function confirm(command){
     assert.deepEqual(await world(),before,'Audio recognition only edits input, never business data');
     rows.push({case:'real synthetic WAV capture into editable input; no business writes',audio_bytes:fs.statSync(audioFile).size,http_status:response.status(),ms:Date.now()-started,passed:true});save();
    }
-  if(!dailyRecovery&&!waitingRecovery&&!summaryRecovery){
+  if(!dailyRecovery&&!waitingRecovery&&!summaryRecovery&&!reviewRecovery){
    result=await turn(note);
     if(!result.last.candidate&&['要记录哪位学生的哪件事？','这件事是什么时候发生的？','要处理哪个班级？'].includes(result.last.assistant_text)){
     rows.push({case:'necessary explicit fact clarification',passed:true});save();
@@ -332,18 +344,19 @@ async function confirm(command){
    }
    assert.equal(result.last.candidate?.command,'record.create');assert(note.includes(result.last.candidate.fact_text)&&result.last.candidate.fact_text.includes('交来展示作品'));assert(!result.last.candidate.fact_text.includes('书架'));assert.equal(result.last.candidate.student_id,(await world()).students.find(s=>s.name==='合成学生甲').student_id);await confirm('record.create');
   }
-  if(!waitingRecovery&&!summaryRecovery){
+  if(!waitingRecovery&&!summaryRecovery&&!reviewRecovery){
    if(!dailyRecovery||!result?.last?.candidate)result=dailyRecovery?await turn('继续完成上面的任务，只处理尚未完成的步骤。',false,1,true):await turn('',true);
    assert.equal(result.last.candidate?.command,'task.create');assert.equal(result.last.candidate.title,title);
    assert.equal(result.last.candidate.source_record_id,(await world()).records[0].record_id);await confirm('task.create');
   }
-  if(!summaryRecovery)for(const [message,command,status,evidence]of [
+  if(!summaryRecovery&&!reviewRecovery)for(const [message,command,status,evidence]of [
    [`${title}先等待，跟进记录原文为“班长正在收集”`,'task.update','waiting','班长正在收集'],
    [`结束${title}，实际结果原文为“班长交齐，我已核对”`,'task.complete','done','班长交齐，我已核对'],
   ]){result=await turn(message);assert.equal(result.last.candidate?.command,command);assert.equal(result.last.candidate.status,status);assert.equal(result.last.candidate.evidence,evidence);await confirm(command);}
-  result=await turn('根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。',false,1,summaryRecovery);
+  result=await turn(reviewRecovery?reviewRequest:'根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。',false,1,summaryRecovery||reviewRetry);
   assert.equal(result.last.candidate?.command,'document.create');assert.equal(result.last.candidate.title,'合成工作小结');
   const body=result.last.candidate.body;assert(body.includes('合成学生甲')&&body.includes('交来展示作品')&&body.includes('班长交齐')&&!body.includes('书架'));
+  if(reviewRecovery)assert(!/\b(?:done|not-started|waiting)\b/i.test(body),'The explicit Chinese-only review request must be respected');
   const sources=await world();for(const identifier of [sources.records[0].record_id,sources.tasks[0].task_id])assert(!body.toLowerCase().includes(identifier.split('-')[0].toLowerCase()),'Document source citations must be readable, without internal identifiers');
   const tools=rows.filter(row=>row.request_id).at(-1).tools;assert(tools.includes('read_class_records')&&tools.includes('read_class_work'));
   await confirm('document.create');
@@ -352,6 +365,12 @@ async function confirm(command){
   await closeOwnedApp();await launch();await page.goto(chat);await page.getByLabel('输入消息').waitFor();
   assert.deepEqual(await world(),accepted,'Daily work persists across complete native/API restart');
   const history=await read(`/workspace-chat/threads/${thread}`);assert.equal(history.turns.filter(t=>t.action_receipt).length,5);
+  if(priorReview){
+   const prior=history.turns.find(t=>t.request_id===priorReview.request_id);
+   assert.equal(prior.state,'completed');assert.equal(prior.action_receipt,null);assert.equal(prior.candidate_hash,priorReview.candidate_hash);assert.deepEqual(prior.candidate,priorReview.candidate);
+   assert.notEqual(accepted.documents[0].document_id,priorReview.candidate.document_id);
+   rows.push({case:'rejected draft unchanged/unconfirmed after restart; only corrected document saved',passed:true});save();
+  }
   const failed=rows.filter(row=>row.request_id&&row.state==='failed');
   for(const row of failed){const stored=history.turns.find(turn=>turn.request_id===row.request_id);assert.equal(stored?.state,'failed','A successful retry/restart must retain the original failed turn');assert.equal(stored.candidate,null);assert.equal(stored.action_receipt,null);}
   for(const request of priorRecoveryFailures){const stored=history.turns.find(turn=>turn.request_id===request);assert.equal(stored?.state,'failed');assert.equal(stored.candidate,null);assert.equal(stored.action_receipt,null);}
