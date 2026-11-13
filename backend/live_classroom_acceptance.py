@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--artifacts-root', type=Path, help='Optional absolute non-system local drive for fresh synthetic acceptance artifacts')
     parser.add_argument('--resume-runtime-root', type=Path, help='Prior isolated fixture only; each scenario validates its declared business checkpoint without resetting data')
     parser.add_argument('--resume-thread-id', type=UUID, help='Existing synthetic conversation for an explicit recovery scenario only')
-    parser.add_argument('--provider', choices=('google', 'zhipu'), default='google', help='Explicit registered free model only; never an automatic fallback')
+    parser.add_argument('--provider', choices=('google', 'zhipu', 'zhipu-flash47'), default='google', help='Explicit registered free model only; never an automatic fallback')
     parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed turns; all attempts remain in the report')
     parser.add_argument('--turn-interval-seconds', type=int, choices=(0, 15, 65), default=0, help='Explicit test-only pacing for free provider rate limits; not application latency or automatic retry')
     parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-recovery'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; explicit recovery verifies its original saved checkpoint')
@@ -128,7 +128,7 @@ def main():
             packet = json.loads(protect(registered.read_bytes(), decrypt=True))
             if packet.get('provider') != 'zhipu' or packet.get('base_url') != 'https://open.bigmodel.cn/api/paas/v4/':
                 raise ValueError('Registered standard provider binding required')
-            profile = ModelConfiguration(Protocol.CHAT, 'glm-4-flash-250414', packet['base_url'])
+            profile = ModelConfiguration(Protocol.CHAT, 'glm-4.7-flash' if args.provider == 'zhipu-flash47' else 'glm-4-flash-250414', packet['base_url'])
             key, proxy = SecretStr(packet['api_key']), None
             del packet
         if services is not None:
@@ -225,14 +225,25 @@ def main():
         config = json.loads(descriptor.read_text(encoding='utf-8'))
         config.update(runtimeRoot=str(runtime.root), servicePort=port)
         descriptor.write_text(json.dumps(config), encoding='utf-8')
-        env = dict(os.environ, CLASSMATTER_RUN_LIVE_CLASSROOM='1', CLASSMATTER_LIVE_STAGE=str(stage), CLASSMATTER_LIVE_REPORT=str(output / 'report.json'), CLASSMATTER_LIVE_MODEL=profile.model, CLASSMATTER_LIVE_ATTEMPTS=str(args.attempts_per_turn), CLASSMATTER_LIVE_SCENARIO=args.scenario, CLASSMATTER_LIVE_TURN_INTERVAL=str(args.turn_interval_seconds), CLASSMATTER_LIVE_RESUMED='1' if args.resume_runtime_root else '0', CLASSMATTER_LIVE_THREAD=str(args.resume_thread_id) if args.resume_thread_id else '')
+        env = dict(os.environ, CLASSMATTER_OPERATOR_METADATA='1', CLASSMATTER_RUN_LIVE_CLASSROOM='1', CLASSMATTER_LIVE_STAGE=str(stage), CLASSMATTER_LIVE_REPORT=str(output / 'report.json'), CLASSMATTER_LIVE_MODEL=profile.model, CLASSMATTER_LIVE_ATTEMPTS=str(args.attempts_per_turn), CLASSMATTER_LIVE_SCENARIO=args.scenario, CLASSMATTER_LIVE_TURN_INTERVAL=str(args.turn_interval_seconds), CLASSMATTER_LIVE_RESUMED='1' if args.resume_runtime_root else '0', CLASSMATTER_LIVE_THREAD=str(args.resume_thread_id) if args.resume_thread_id else '')
         phase = 'native-acceptance'
         result = subprocess.run(['node', 'tests/live-classroom-acceptance.cjs'], cwd=desktop, env=env,
             capture_output=True, text=True, encoding='utf-8', timeout=1500, creationflags=subprocess.CREATE_NO_WINDOW)
         (output / 'ui.log').write_text(result.stdout + result.stderr, encoding='utf-8')
-        observed = json.loads((output / 'report.json').read_bytes()) if result.returncode == 0 else {}
-        print(json.dumps({'status': 'passed' if result.returncode == 0 else 'failed', 'scenario': args.scenario, 'report': str(output / 'report.json'), 'test_attempt_limit': args.attempts_per_turn, 'application_automatic_retry': False, 'resumed_isolated_fixture': bool(args.resume_runtime_root), 'prior_failures_retained': any(row.get('prior_failure') for row in observed.get('rows', []))}))
-        return 0 if result.returncode == 0 else 1
+        report_path = output / 'report.json'
+        observed = json.loads(report_path.read_bytes()) if report_path.is_file() and report_path.stat().st_size <= 1024 * 1024 else {}
+        from class_os.infrastructure.operator_run_metadata import read_packets
+        request_ids = {row['request_id'] for row in observed.get('rows', []) if row.get('request_id')}
+        metadata = read_packets(runtime.root, sorted(request_ids))
+        (output / 'operator-metadata.json').write_text(json.dumps(metadata, indent=2), encoding='utf-8')
+        metadata_complete = bool(request_ids) and {row['run_id'] for row in metadata} == request_ids
+        passed = result.returncode == 0 and metadata_complete
+        print(json.dumps({'status': 'passed' if passed else 'failed', 'ui_passed': result.returncode == 0,
+            'operator_metadata_complete': metadata_complete, 'failure_categories': sorted({row['category'] for row in metadata if row.get('category')}),
+            'scenario': args.scenario, 'report': str(output / 'report.json'), 'test_attempt_limit': args.attempts_per_turn,
+            'application_automatic_retry': False, 'resumed_isolated_fixture': bool(args.resume_runtime_root),
+            'prior_failures_retained': any(row.get('prior_failure') for row in observed.get('rows', []))}))
+        return 0 if passed else 1
     except Exception as error:
         print(json.dumps({'status': 'blocked-or-failed', 'phase': phase, 'error_type': type(error).__name__, 'report_directory': str(output), 'automatic_retry': False}))
         return 1

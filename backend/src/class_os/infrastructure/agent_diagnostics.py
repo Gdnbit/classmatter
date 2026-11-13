@@ -80,8 +80,11 @@ class RunDiagnostics(AbstractCapability):
         self.requests += 1
         started = monotonic()
         outcome = 'completed'
+        usage = None
         try:
-            return await handler(request_context)
+            response = await handler(request_context)
+            usage = response.usage
+            return response
         except BaseException as error:
             self.request_failure = classify_failure(error)
             outcome = self.request_failure['category']
@@ -90,7 +93,15 @@ class RunDiagnostics(AbstractCapability):
             elapsed = int((monotonic() - started) * 1000)
             self.model_ms += elapsed
             if len(self.steps) < 10:
-                self.steps.append({'request': self.requests, 'ms': elapsed, 'outcome': outcome})
+                step = {'request': self.requests, 'ms': elapsed, 'outcome': outcome}
+                if usage is not None:
+                    for name in ('input_tokens', 'output_tokens'):
+                        value = getattr(usage, name, None)
+                        # SDKs can default omitted vendor usage to zero. Keep
+                        # only positive reported counts; absence stays unknown.
+                        if type(value) is int and value > 0:
+                            step[name] = value
+                self.steps.append(step)
 
     def finish(self, outcome, error=None, *, phase="model_loop", tool_calls=0, deadline_expired=False):
         packet = {"run_id": self.run_id, "outcome": outcome, "model_requests": self.requests,

@@ -109,3 +109,16 @@ async def test_concurrent_runs_do_not_share_failure_or_timing_state():
     assert by_run['first']['category'] == 'network_connect'
     assert 'category' not in by_run['second'] and by_run['second']['outcome'] == 'completed'
     assert all(report['model_requests'] == len(report['model_steps']) == 1 for report in reports)
+
+
+async def test_completed_request_usage_survives_later_failure_without_recording_content():
+    from pydantic_ai.usage import RequestUsage
+    reports = []; diagnostic = RunDiagnostics(reports.append, 'opaque-request')
+    agent = Agent(FunctionModel(lambda messages, info: ModelResponse(parts=[TextPart('private answer')],
+        usage=RequestUsage(input_tokens=7, output_tokens=3))), capabilities=[diagnostic])
+    agent.instrument = False
+    await agent.run('private prompt')
+    diagnostic.finish('failed', UnexpectedModelBehavior('private validation failure'))
+    step = reports[0]['model_steps'][0]
+    assert step['input_tokens'] == 7 and step['output_tokens'] == 3
+    assert reports[0]['category'] == 'model_contract' and 'private' not in json.dumps(reports)

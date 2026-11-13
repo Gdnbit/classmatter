@@ -29,6 +29,14 @@ class WorkspaceStepPolicy(AbstractCapability):
     def __init__(self, capture, continuation):
         self.capture, self.continuation, self.repair_step = capture, continuation, None
 
+    async def prepare_tools(self, ctx, tool_defs):
+        # The SDK filters both the advertised schema and executable toolset.
+        # This is the existing closed continuation prerequisite, not routing
+        # ordinary user intent or granting any additional capability.
+        if self.capture.classroom_enabled and self.continuation and 'read_task_progress' not in self.capture.completed_tools:
+            return [tool for tool in tool_defs if tool.name == 'read_task_progress']
+        return tool_defs
+
     def get_model_settings(self):
         def settings(ctx):
             if self.capture.proposed is not None:

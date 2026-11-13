@@ -30,7 +30,7 @@ def test_daily_recovery_requires_the_original_receipt_and_exact_unsaved_followup
     assert module.daily_recovery_checkpoint(history, world, documents) is (case in ('failed', 'pending'))
 
 
-@pytest.mark.parametrize('arguments', [[], ['--live'], ['--scenario', 'daily-work'], ['--live', '--scenario', 'daily-work'], ['--scenario', 'full-workbench'], ['--live', '--scenario', 'full-workbench'], ['--scenario', 'classroom-documents'], ['--live', '--scenario', 'classroom-documents']])
+@pytest.mark.parametrize('arguments', [[], ['--live'], ['--provider', 'zhipu-flash47'], ['--live', '--provider', 'zhipu-flash47'], ['--scenario', 'daily-work'], ['--live', '--scenario', 'daily-work'], ['--scenario', 'full-workbench'], ['--live', '--scenario', 'full-workbench'], ['--scenario', 'classroom-documents'], ['--live', '--scenario', 'classroom-documents']])
 def test_live_classroom_operator_denies_incomplete_invocation_before_io(tmp_path, arguments):
     entry = Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py'
     result = subprocess.run([sys.executable, str(entry), *arguments], cwd=tmp_path,

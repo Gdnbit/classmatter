@@ -25,7 +25,7 @@ def request_timeout(configuration):
     # the Agent's existing outer deadline still caps the complete run.
     if _google_configuration(configuration) or (
             configuration.base_url.rstrip('/') == 'https://open.bigmodel.cn/api/paas/v4'
-            and configuration.model == 'glm-4-flash-250414'):
+            and configuration.model in ('glm-4-flash-250414', 'glm-4.7-flash')):
         return 30
     return 8
 
@@ -78,7 +78,12 @@ def model_for_configuration(configuration, client):
         raise ConfigurationRejected()
     provider = OpenAIProvider(openai_client=client)
     if configuration.protocol is Protocol.CHAT:
-        return OpenAIChatModel(configuration.model, provider=provider)
+        # Explicit free interactive profile; the mature SDK owns serialization.
+        # Other providers/models retain their own defaults, including thinking.
+        settings = {'extra_body': {'thinking': {'type': 'disabled'}}} if (
+            configuration.base_url.rstrip('/') == 'https://open.bigmodel.cn/api/paas/v4'
+            and configuration.model == 'glm-4.7-flash') else None
+        return OpenAIChatModel(configuration.model, provider=provider, settings=settings)
     return OpenAIResponsesModel(configuration.model, provider=provider, settings={"openai_store": False})
 
 

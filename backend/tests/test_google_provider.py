@@ -166,6 +166,9 @@ async def test_native_cancellation_closes_client_without_followup(monkeypatch):
 
 @pytest.mark.parametrize('base,model,deadline', [
     ('https://open.bigmodel.cn/api/paas/v4/', 'glm-4-flash-250414', 30),
+    ('https://open.bigmodel.cn/api/paas/v4/', 'glm-4.7-flash', 30),
+    ('https://open.bigmodel.cn/api/paas/v4/', 'glm-4.7-flashx', 8),
+    ('https://fixture.invalid/v1/', 'glm-4.7-flash', 8),
     ('https://open.bigmodel.cn/api/paas/v4/', 'synthetic-other-model', 8),
     ('https://fixture.invalid/v1/', 'glm-4-flash-250414', 8),
 ])

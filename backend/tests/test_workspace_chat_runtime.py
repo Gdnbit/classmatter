@@ -13,6 +13,7 @@ from class_os.interfaces.http.workspace_chat import create_workspace_chat_app
 from class_os.interfaces.http.settings import Settings
 from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
 from test_workspace_chat_storage import workspace_chat, roster, identity
+from test_classroom_work_storage import classroom_work
 
 
 @pytest.mark.db
@@ -37,6 +38,35 @@ async def test_persistence_failure_is_distinct_from_model_success(workspace_chat
     assert [report['outcome'] for report in reports] == ['completed', 'failed']
     assert reports[-1]['phase'] == 'persistence_finish'
     assert reports[-1]['run_id'] == str(request)
+
+
+@pytest.mark.db
+async def test_owned_metadata_retains_real_sdk_success_and_failed_chat_save(classroom_work, tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
+    from class_os.infrastructure.operator_run_metadata import for_runtime, read_packets
+    worker, query, auth, _, clock, store, *_ = classroom_work
+    business = WorkspaceChatBusinessGateway(worker.identity, store, clock=lambda: clock[0])
+    history = WorkspaceChatQueryGateway(query.identity, store, clock=lambda: clock[0])
+    monkeypatch.setenv('CLASSMATTER_OPERATOR_METADATA', '1')
+    sink = for_runtime(SimpleNamespace(root=tmp_path, profile=store.database.profile), local_development=True)
+    sdk = PydanticAgentRuntime(query, diagnostics=sink,
+        model_factory=lambda _: FunctionModel(lambda messages, info: ModelResponse(parts=[TextPart('你好。')])))
+    runtime = WorkspaceChatRuntime(business, history, sdk)
+    thread, request = uuid4(), uuid4()
+    business.send(auth, thread, request, '你好')
+    original = business.finish
+    def fail_save(credentials, ticket, state, *args, **kwargs):
+        if state == 'completed': raise RuntimeError('synthetic-private-persistence-detail')
+        return original(credentials, ticket, state, *args, **kwargs)
+    monkeypatch.setattr(business, 'finish', fail_save)
+    events = [event async for event in runtime.stream_queued(auth, thread, request)]
+    assert not any(event.type in ('run.completed', 'message.delta', 'draft.available') for event in events)
+    assert history.history(auth, thread)['turns'][0]['state'] == 'unknown'
+    rows = read_packets(tmp_path, [str(request)])
+    assert [(row['outcome'], row['phase']) for row in rows] == [('completed', 'completed'), ('failed', 'persistence_finish')]
+    assert rows[0]['model_requests'] == 1 and rows[-1]['category'] == 'unclassified'
+    assert 'synthetic-private-persistence-detail' not in str(rows)
 
 
 @pytest.mark.db

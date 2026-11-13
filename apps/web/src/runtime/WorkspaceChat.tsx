@@ -57,14 +57,14 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
         {turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
         {turn.assistant_text && <article className="assistant" aria-label="助手回复"><p>{turn.assistant_text}</p><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
         {turn.state !== "completed" && <p className="r1-muted" role={turn.state === 'queued' || turn.state === 'running' ? 'status' : undefined}>{turn.state === 'queued' && s.working ? states.running : states[turn.state]}</p>}
-        {turn.state === "queued" && !s.working && <button disabled={!s.fresh} onClick={() => void s.startQueued(turn)}>继续回复</button>}
+        {turn.state === "queued" && !s.working && <button disabled={!s.canAct} onClick={() => void s.startQueued(turn)}>继续回复</button>}
         {turn.state === 'failed' && turn.request_id === s.history?.turns.at(-1)?.request_id && turn.user_text && !turn.candidate && !turn.action_receipt
-          && <button aria-label="重试回复" disabled={s.working || !s.fresh || s.history?.thread.status !== 'active'} onClick={() => void s.retryFailed(turn)}>重试</button>}
+          && <button aria-label="重试回复" disabled={!s.canSend} onClick={() => void s.retryFailed(turn)}>重试</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{labels[turn.candidate.command]}</h2>
           {turn.change_preview ? <ChangeComparison preview={turn.change_preview} saved={!!turn.action_receipt} /> : <CandidateContent value={turn.candidate} />}
-          {turn.action_receipt ? <><p role="status" className={turn.change_preview ? 'sr-only' : undefined}>已保存</p>{turn.turn_id === s.history?.turns.at(-1)?.turn_id && <button disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.continueTask(turn)}>继续任务</button>}</>
-            : <button className="r1-primary" disabled={s.working || !s.fresh || s.history?.thread.status !== "active"} onClick={() => void s.preview(turn)}>预览这项操作</button>}
+          {turn.action_receipt ? <><p role="status" className={turn.change_preview ? 'sr-only' : undefined}>已保存</p>{turn.turn_id === s.history?.turns.at(-1)?.turn_id && <button disabled={!s.canSend} onClick={() => void s.continueTask(turn)}>继续任务</button>}</>
+            : <button className="r1-primary" disabled={!s.canAct} onClick={() => void s.preview(turn)}>预览这项操作</button>}
         </section>}
       </div>)}
     </div>
