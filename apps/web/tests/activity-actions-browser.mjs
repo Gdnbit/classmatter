@@ -6,13 +6,33 @@ import { comparisonContent } from './change-comparison-content.mjs';
 const base = process.env.CLASS_OS_TEST_URL;
 const expect = defaultExpect.configure({ timeout: 30000 });
 const voice = process.env.CLASSMATTER_SYNTHETIC_VOICE === '1';
+const slowExportPhase = voice || process.env.CLASSMATTER_EXPORT_SLOW_PHASE === '1';
 const destination = process.env.CLASSMATTER_TEST_DOWNLOAD_ROOT;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
 if (!path.isAbsolute(destination || '')) throw new Error('Owned download directory required');
 const browser = await chromium.launch({ headless: true, args: voice ? ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] : [], ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
+const observation = { phase: 'start', export: null, steps: [], network: [], navigations: 0 };
+const observedAt = performance.now(), requestIds = new WeakMap(); let nextRequest = 0, observedPage;
+function mark(phase) {
+  observation.phase = phase; observation.steps.push({ phase, ms: Math.round(performance.now() - observedAt) });
+  if (observation.steps.length > 30) observation.steps.shift();
+}
+function network(request, state, status = null) {
+  const kind = /\/exports\//.test(request.url()) ? 'office' : /\/workspace-chat\/threads\/[a-f0-9-]+$/.test(request.url()) ? 'history' : null;
+  if (!kind) return;
+  if (!requestIds.has(request)) requestIds.set(request, ++nextRequest);
+  observation.network.push({ id: requestIds.get(request), kind, state, status, ms: Math.round(performance.now() - observedAt) });
+  if (observation.network.length > 40) observation.network.shift();
+}
 try {
   const page = await browser.newPage({ acceptDownloads: true, viewport: { width: 1440, height: 1000 }, ...(voice ? { permissions: ['microphone'] } : {}) }), errors = [], external = [], downloads = [];
-  page.on('download', value => downloads.push(value));
+  observedPage = page;
+  page.on('download', value => { downloads.push(value); mark('download-event'); });
+  page.on('request', request => network(request, 'started'));
+  page.on('response', response => network(response.request(), 'headers', response.status()));
+  page.on('requestfinished', request => network(request, 'finished'));
+  page.on('requestfailed', request => network(request, request.failure()?.errorText.includes('ERR_ABORTED') ? 'aborted' : 'failed'));
+  page.on('framenavigated', frame => { if (frame === page.mainFrame()) observation.navigations++; });
   if (voice) await page.addInitScript(() => {
     const start = MediaRecorder.prototype.start;
     MediaRecorder.prototype.start = function(...args) {
@@ -105,16 +125,21 @@ try {
       let release, reached;
       const held = new Promise(resolve => release = resolve), started = new Promise(resolve => reached = resolve);
       const controlled = !focusDuringExport && extension === 'docx';
+      observation.export = { index, version, extension, controlled, slowExportPhase, navigations: observation.navigations };
+      mark('export-start');
       if (controlled) await page.route('**/exports/1/docx', async route => {
-        const response = await route.fetch(); reached(); await held;
-        await route.fulfill({ response }).catch(() => {});
+        const response = await route.fetch(); mark('genuine-office-bytes-ready');
+        if (slowExportPhase) await new Promise(resolve => setTimeout(resolve, 11000));
+        reached(); mark('held-office-response'); await held;
+        await route.fulfill({ response }).catch(() => { mark('office-fulfill-cancelled'); });
       }, { times: 1 });
       let file;
       try {
-        [file] = await Promise.all([page.waitForEvent('download'), (async () => {
-          await cards.nth(index).getByRole('button', { name: label, exact: true }).click();
-          if (controlled) {
-            await started;
+        const beforeDownload = downloads.length;
+        await cards.nth(index).getByRole('button', { name: label, exact: true }).click();
+        if (controlled) {
+            await expect.poll(() => observation.steps.some(step => step.phase === 'held-office-response')).toBe(true);
+            await started; mark('focus-revalidation-start');
             const history = /\/workspace-chat\/threads\/[a-f0-9-]+$/, freshReads = new Set();
             const track = request => { if (history.test(request.url()) && request.method() === 'GET') freshReads.add(request); };
             page.on('request', track);
@@ -126,13 +151,24 @@ try {
                 && freshReads.has(response.request()) && await response.finished() === null);
               await page.evaluate(() => window.dispatchEvent(new Event('focus')));
               await read;
+              mark('new-history-network-finished');
               await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'true');
               await expect(cards.nth(index).getByLabel('已保存的结果', { exact: true })).toContainText('班长交齐，我已核对');
+              mark('new-history-decoded');
             } finally { page.off('request', track); }
-            focusDuringExport = true; release();
-          }
-        })()]);
-      } finally { release(); if (controlled) await page.unroute('**/exports/1/docx'); }
+            if (slowExportPhase) await new Promise(resolve => setTimeout(resolve, 20000));
+            await expect(page.getByRole('button', { name: '新对话', exact: true })).toBeEnabled();
+            assert.equal(downloads.length, beforeDownload, 'No file before the genuine held response is released');
+            assert.equal(observation.navigations, observation.export.navigations, 'No navigation during Office preflight');
+            focusDuringExport = true; mark('release-office-response'); release();
+        }
+        // The listener is installed for the entire test, so no early event is
+        // lost. Start the delivery budget AFTER our deliberate response hold,
+        // keeping the same 30s actual-file timeout and exact one-file assertion.
+        mark('waiting-for-released-file');
+        await expect.poll(() => downloads.length, { timeout: 30000 }).toBe(beforeDownload + 1);
+        file = downloads[beforeDownload]; mark('download-accepted');
+      } finally { mark('export-cleanup'); release(); if (controlled) await page.unroute('**/exports/1/docx'); }
       assert.equal(file.suggestedFilename(), '合成工作小结.' + extension);
       await file.saveAs(path.join(destination, `summary-v${version}.${extension}`));
       assert.equal(await file.failure(), null);
@@ -177,4 +213,11 @@ try {
   await expect(page.locator('.document-text')).toContainText('补充：明天继续展示。');
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);
+} catch (error) {
+  let view = null;
+  try { view = { fresh: await observedPage?.locator('form.r1-composer').getAttribute('data-chat-fresh'),
+    cardCount: await observedPage?.getByRole('region', { name: '对话中的操作候选', exact: true }).count(),
+    exporting: await observedPage?.getByRole('button', { name: '导出 Word', exact: true }).filter({ hasText: '导出中' }).count() }; } catch {}
+  console.error('Chat Office phase observation', JSON.stringify({ ...observation, view }));
+  throw error;
 } finally { await browser.close(); }
