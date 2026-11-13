@@ -264,7 +264,15 @@ export function useWorkspaceChat(props: Props) {
     startQueued: (turn: ChatTurn) => operate(async (generation, thread, api) => { if (props.canInteract && freshScope && turn.state === "queued" && history?.thread.status === "active") { await runSaved(thread, turn, generation, api); await refreshAfter(thread, generation) } }),
     preview: (turn: ChatTurn) => operate(async (generation, thread, api) => { if (props.canInteract && freshScope && history?.thread.status === "active" && turn.candidate && !turn.action_receipt) {
       const currentView = view.current, value = await api.preview(thread, turn)
-      if (generation === epoch.current && thread === selected.current && currentView === view.current) {
+      if (generation !== epoch.current || thread !== selected.current || !navigator.onLine) return
+      // Revalidation can supersede a view while a genuine proposal is in flight.
+      // Bind it to a fresh saved turn instead of silently dropping it or trusting
+      // an old view after reconnect, clearing, archiving or another confirmation.
+      const saved = currentView === view.current ? history : await refreshRef.current(thread)
+      const current = saved?.turns.find(row => row.request_id === turn.request_id)
+      if (generation === epoch.current && thread === selected.current && navigator.onLine
+          && saved?.thread.status === 'active' && current?.state === 'completed'
+          && current.candidate && current.candidate_hash === value.payload_hash && !current.action_receipt) {
         if (!turn.change_preview && value.change_preview) setHistory(current => current?.thread.thread_id === thread
           ? { ...current, turns: current.turns.map(row => row.request_id === turn.request_id && row.candidate_hash === value.payload_hash
             ? { ...row, change_preview: value.change_preview } : row) } : current)
