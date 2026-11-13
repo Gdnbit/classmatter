@@ -2,6 +2,9 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "infra/ci/ubuntu.mirrors": {
+      "sha256": "908eac5647cae6fc835ef4df2190aa6258dd95f507341ecd8cecd92660a18e04"
+    },
     "apps/desktop/tests/office-artifacts-integration.cjs": {
       "sha256": "5eb238bc97846b125c73bce41612b4cf9af9567113ee0abd68d793b1638d0d4f"
     },
@@ -642,7 +645,7 @@
       "sha256": "d8dcad82c27b6c219a79efef25b2e999b049c6798ddf90f24c430bc64c5944fe"
     },
     ".github/workflows/synthetic-ci.yml": {
-      "sha256": "6291345769188cdb6ed6812ce0267e85240dce9bfba0617de10f59441e3ca726"
+      "sha256": "c16ec3b4048e735e59aeeac8d23dcf785ab106130c5c0bb925749a5007bc9dca"
     },
     ".gitignore": {
       "sha256": "c34bf3956a066550e5680221b82b4bfd8aaef7363305a1c5949b729a2d02b588"
@@ -1621,7 +1624,7 @@
       "sha256": "abcc4867220f6ac9b417edba086f4a27fca0892766c4ee351d73bf83b5f14f8f"
     },
     "infra/README.md": {
-      "sha256": "444407eb25100692c9a0ab1ade08448b12fc098eb47b31c1811235d5e20dfa50"
+      "sha256": "16368fcfa9c67d3b22e04ad5cf33fdc627c24c6888193ce2ccf5e7c211ad7b1f"
     },
     "infra/ci/pgdg.sources": {
       "sha256": "c5ccebbfa6d96a72c5bb748070d21630150f5d6940dc53207b338943a4f6becc"
@@ -1648,7 +1651,7 @@
       "sha256": "32fe60502d9b9587797f4022d9e50751f29eefa17b4087ae2cb31638a7d31796"
     },
     "scripts/tests/test_ci_workflow.py": {
-      "sha256": "0f5debaf456e939b636f6745f1e09462c7627f979e3da06c2aa69940fd3d60d4"
+      "sha256": "e8a3153d06739416f6e0150d6593f3b79e3d4fcb44010709f473678b4199f37b"
     },
     "scripts/tests/test_generate_synthetic_fixtures.py": {
       "sha256": "6c1074c4227fea921b9096e6b2f563499c2851bf80f0976b32655cf59b5ba478",
