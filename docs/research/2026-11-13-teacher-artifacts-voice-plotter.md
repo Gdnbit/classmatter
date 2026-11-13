@@ -12,6 +12,8 @@
 
 ## 奎享官方软件
 
+补充核查[设备厂商软件下载与教程](https://www.paixikeji.com/support)：64位包同样指向drawfont官方发布域；教程要求机型、固件/驱动、纸面模板及笔尖原点匹配，不同设备和自动换纸版不能通用。本轮未找到可核实的公开官方自动化SDK/CLI契约；“没有找到”不等于厂商没有私有接口。继续以文档版本化/导出、纸面布局和轨迹预览、人确认及专用驱动分层，不把CNCDraw的mock设备演示当实际奎享集成。
+
 用户指定[奎享官网下载页](http://www.kvenjoy.com/#downloads)。浏览工具与本机HTTPS均访问异常；本机HTTP页面可读，静态引导文件为`kvenjoyweb/kvenjoyweb.nocache.js`。从该站实际发布的GWT资源中找到Aliyun HTTPS下载地址，选取名称为“奎享雕刻(64位).exe”的链接下载，并非第三方下载站替代包。
 
 - 原链接：`https://drawfont.oss-cn-beijing.aliyuncs.com/files/%E5%A5%8E%E4%BA%AB%E9%9B%95%E5%88%BB(64%E4%BD%8D).exe`。

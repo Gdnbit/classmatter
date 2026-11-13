@@ -14,11 +14,31 @@ try{
   await page.goto(base+'/');
   await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button',{name:'登录',exact:true}).click();
+  const scopePath='**/conversation-d1/classes/*/terms/*/conversations';
+  let delayedScopeRead=false;
+  const holdScope=async route=>{
+    assert.equal(route.request().method(),'GET');
+    const response=await route.fetch();
+    await new Promise(resolve=>setTimeout(resolve,6000));
+    delayedScopeRead=true;
+    await route.fulfill({response});
+  };
+  if(fault==='audit')await page.route(scopePath,holdScope);
   await page.getByLabel('对话方式').selectOption('class-chat');
+  // Audit/claim faults begin at explicit dispatch, after the authorized scope
+  // read. Do not type into an earlier scope while this setup is still pending.
+  await page.locator('[data-history-fresh="true"]').waitFor();
+  if(fault==='audit'){
+    assert.equal(delayedScopeRead,true);
+    await page.unroute(scopePath,holdScope);
+  }
   await page.getByLabel('输入消息').fill('synthetic '+fault+' user input');
   // Scope selection now performs a real class reread. Double-submit only
   // after the actual send control is eligible; never bypass its boundary.
-  await page.waitForFunction(()=>document.querySelector('button[aria-label="发送消息"]')?.disabled===false);
+  await page.waitForFunction(()=>document.querySelector('button[aria-label="发送消息"]')?.disabled===false).catch(async error=>{
+    throw new Error(JSON.stringify({fault,body:await page.locator('body').innerText(),input:await page.getByLabel('输入消息').inputValue(),
+      mode:await page.getByLabel('对话方式').inputValue(),fresh:await page.locator('[data-history-fresh]').getAttribute('data-history-fresh'),errors,starts}),{cause:error});
+  });
   // Two same-frame submissions must still produce only one user intent/run.
   await page.locator('form.r1-composer').evaluate(form=>{form.requestSubmit();form.requestSubmit();});
   const history=page.getByRole('region',{name:'已保存的对话'});
