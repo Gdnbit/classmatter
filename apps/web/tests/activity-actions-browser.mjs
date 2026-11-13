@@ -108,7 +108,10 @@ try {
       }
       const delivered = page.waitForResponse(response => /\/proposal$/.test(response.url()));
       mark('proposal-reconnected'); release();
-      await (await delivered).finished();
+      // Chromium can cancel the body after archive invalidates this view.
+      // The real headers and fulfilled route are sufficient; a cancelled
+      // Response.finished() is not a prerequisite for the refusal assertions.
+      await delivered; await deliveredProposal;
       const dialog = page.getByRole('dialog', { name: '确认这次变更', exact: true });
       if (previewRace === 'reconnect') await expect(dialog).toBeVisible();
       else {
