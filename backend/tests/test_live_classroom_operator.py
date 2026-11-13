@@ -30,7 +30,7 @@ def test_daily_recovery_requires_the_original_receipt_and_exact_unsaved_followup
     assert module.daily_recovery_checkpoint(history, world, documents) is (case in ('failed', 'pending'))
 
 
-@pytest.mark.parametrize('arguments', [[], ['--live'], ['--provider', 'zhipu-flash47'], ['--live', '--provider', 'zhipu-flash47'], ['--scenario', 'daily-work'], ['--live', '--scenario', 'daily-work'], ['--scenario', 'full-workbench'], ['--live', '--scenario', 'full-workbench'], ['--scenario', 'classroom-documents'], ['--live', '--scenario', 'classroom-documents'], ['--live', '--scenario', 'daily-work-waiting-recovery']])
+@pytest.mark.parametrize('arguments', [[], ['--live'], ['--provider', 'zhipu-flash47'], ['--live', '--provider', 'zhipu-flash47'], ['--scenario', 'daily-work'], ['--live', '--scenario', 'daily-work'], ['--scenario', 'daily-work-audio'], ['--live', '--scenario', 'daily-work-audio'], ['--scenario', 'full-workbench'], ['--live', '--scenario', 'full-workbench'], ['--scenario', 'classroom-documents'], ['--live', '--scenario', 'classroom-documents'], ['--live', '--scenario', 'daily-work-waiting-recovery']])
 def test_live_classroom_operator_denies_incomplete_invocation_before_io(tmp_path, arguments):
     entry = Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py'
     result = subprocess.run([sys.executable, str(entry), *arguments], cwd=tmp_path,
@@ -61,7 +61,7 @@ def test_live_operator_refuses_system_relative_or_remote_artifact_roots_before_i
     assert result.stderr == '' and list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize('scenario,reason', [('full-workbench', 'full_workbench_requires_fresh_fixture'), ('daily-work', 'daily_work_requires_fresh_fixture')])
+@pytest.mark.parametrize('scenario,reason', [('full-workbench', 'full_workbench_requires_fresh_fixture'), ('daily-work', 'daily_work_requires_fresh_fixture'), ('daily-work-audio', 'daily_work_requires_fresh_fixture')])
 def test_full_workbench_refuses_resume_before_reading_credentials_or_creating_files(tmp_path, scenario, reason):
     entry = Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py'
     result = subprocess.run([sys.executable, str(entry), '--live', '--scenario', scenario,
@@ -69,6 +69,17 @@ def test_full_workbench_refuses_resume_before_reading_credentials_or_creating_fi
         cwd=tmp_path, capture_output=True, text=True, timeout=15)
     assert result.returncode == 2
     assert json.loads(result.stdout) == {'status': 'blocked', 'reason': reason, 'requests': 0}
+    assert result.stderr == '' and list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.parametrize('provider', ['zhipu', 'zhipu-flash47'])
+def test_audio_operator_refuses_text_only_free_provider_before_any_io(tmp_path, provider):
+    entry = Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py'
+    result = subprocess.run([sys.executable, str(entry), '--live', '--scenario', 'daily-work-audio',
+        '--provider', provider, '--source-runtime-root', str(tmp_path/'source'), '--pg-root', str(tmp_path/'pg')],
+        cwd=tmp_path, capture_output=True, text=True, timeout=15)
+    assert result.returncode == 2
+    assert json.loads(result.stdout) == {'status': 'blocked', 'reason': 'approved_audio_provider_required', 'requests': 0}
     assert result.stderr == '' and list(tmp_path.iterdir()) == []
 
 
@@ -129,3 +140,44 @@ def test_waiting_recovery_requires_exact_original_confirmed_fact_and_task(case):
     if case == 'wrong-command': saved_task['candidate']['command'] = 'task.update'
     if case == 'cleared': history['thread']['status'] = 'cleared'
     assert module.daily_waiting_recovery_checkpoint(history, world, documents) is (case == 'valid')
+
+
+@pytest.mark.parametrize('case', ['valid', 'open-task', 'wrong-version', 'wrong-result', 'wrong-source',
+    'extra-task', 'extra-fact', 'document', 'pending', 'running', 'paged', 'wrong-request',
+    'wrong-fact', 'wrong-student', 'wrong-receipt', 'wrong-receipt-version', 'wrong-waiting', 'archived'])
+def test_summary_recovery_accepts_only_the_original_four_receipts_and_failed_summary(case):
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('summary_checkpoint', Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py')
+    module = importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+    fact = {'record_id': 'record-1', 'student_id': 'student-1', 'fact_text': '合成学生甲交来展示作品', 'kind': 'ordinary_fact'}
+    task = {'task_id': 'task-1', 'title': '合成作品核对', 'status': 'done', 'version': 3,
+        'evidence': '班长交齐，我已核对', 'source_record_id': 'record-1'}
+    values = [dict(command='record.create', fact_text=fact['fact_text'], student_id='student-1'),
+        dict(command='task.create', title=task['title'], source_record_id='record-1', student_id='student-1'),
+        dict(command='task.update', status='waiting', evidence='班长正在收集'),
+        dict(command='task.complete', status='done', evidence=task['evidence'])]
+    saved = [{'state': 'completed', 'candidate': value, 'action_receipt':
+        {'resource_id': 'record-1' if index == 0 else 'task-1', 'version': [1, 1, 2, 3][index]}}
+        for index, value in enumerate(values)]
+    failed = {'state': 'failed', 'candidate': None, 'action_receipt': None,
+        'user_text': '根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。'}
+    history = {'thread': {'status': 'active'}, 'next_before': None, 'turns': saved + [dict(failed), failed]}
+    world, documents = {'records': [fact], 'tasks': [task]}, []
+    if case == 'open-task': task['status'] = 'waiting'
+    if case == 'wrong-version': task['version'] = 2
+    if case == 'wrong-result': task['evidence'] = '其他结果'
+    if case == 'wrong-source': task['source_record_id'] = 'other-record'
+    if case == 'extra-task': world['tasks'].append(dict(task))
+    if case == 'extra-fact': world['records'].append(dict(fact))
+    if case == 'document': documents.append({'document_id': 'already-saved'})
+    if case == 'pending': history['turns'].insert(-1, dict(failed, state='completed', candidate={'command': 'document.create'}))
+    if case == 'running': history['turns'].insert(-1, dict(failed, state='running'))
+    if case == 'paged': history['next_before'] = 1
+    if case == 'wrong-request': failed['user_text'] = '不同请求'
+    if case == 'wrong-fact': fact['fact_text'] = '不同事实'
+    if case == 'wrong-student': values[1]['student_id'] = 'different-student'
+    if case == 'wrong-receipt': saved[2]['action_receipt']['resource_id'] = 'different-task'
+    if case == 'wrong-receipt-version': saved[3]['action_receipt']['version'] = 4
+    if case == 'wrong-waiting': values[2]['evidence'] = '不同跟进'
+    if case == 'archived': history['thread']['status'] = 'archived'
+    assert module.daily_summary_recovery_checkpoint(history, world, documents) is (case == 'valid')

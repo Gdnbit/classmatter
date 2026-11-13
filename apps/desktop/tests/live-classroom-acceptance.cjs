@@ -8,11 +8,18 @@ const attempts=Number(process.env.CLASSMATTER_LIVE_ATTEMPTS||'1');
 const turnInterval=Number(process.env.CLASSMATTER_LIVE_TURN_INTERVAL||'0');
 if(![0,15,65].includes(turnInterval))throw Error('Bounded explicit test pacing required');
 const scenario=process.env.CLASSMATTER_LIVE_SCENARIO||'classroom';
-if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work','daily-work-recovery','daily-work-waiting-recovery'].includes(scenario))throw Error('Explicit supported scenario required');
+if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work','daily-work-audio','daily-work-recovery','daily-work-waiting-recovery','daily-work-summary-recovery'].includes(scenario))throw Error('Explicit supported scenario required');
+const dailyAudio=scenario==='daily-work-audio',audioFile=process.env.CLASSMATTER_LIVE_AUDIO;
+if(dailyAudio){
+ if(!audioFile||!path.isAbsolute(audioFile)||path.resolve(audioFile)!==path.join(path.dirname(report),'synthetic-note.wav'))throw Error('Owned synthetic audio required');
+ const info=fs.lstatSync(audioFile);
+ if(!info.isFile()||info.isSymbolicLink()||info.size<=44||info.size>2*1024*1024)throw Error('Bounded synthetic audio required');
+}
 const recovery=scenario==='classroom-recovery',resumeThread=process.env.CLASSMATTER_LIVE_THREAD;
 const dailyRecovery=scenario==='daily-work-recovery';
 const waitingRecovery=scenario==='daily-work-waiting-recovery',priorRecoveryFailures=[];
-if((recovery||dailyRecovery||waitingRecovery)&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
+const summaryRecovery=scenario==='daily-work-summary-recovery';
+if((recovery||dailyRecovery||waitingRecovery||summaryRecovery)&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
 const verifyWorld=scenario!=='classroom';
 if(![1,2,3].includes(attempts))throw Error('Bounded explicit test attempts required');
 if(!['gemini-3.1-flash-lite','glm-4-flash-250414','glm-4.7-flash'].includes(model))throw Error('Explicit approved free model required');
@@ -48,9 +55,27 @@ async function launch(){
  await page.addInitScript(observe);await page.evaluate(observe);
 }
 async function read(relative){return await page.evaluate(async suffix=>{
- const s=await(await fetch('/api/identity/session')).json();const r=await fetch(`/api/workspaces/${s.subject.workspace_id}${suffix}`);
+ const session=await fetch('/api/identity/session');
+ if(!session.ok)throw Error(`Identity read failed ${session.status}`);
+ const s=await session.json();if(typeof s.subject?.workspace_id!=='string')throw Error('Invalid identity read');
+ const r=await fetch(`/api/workspaces/${s.subject.workspace_id}${suffix}`);
  if(!r.ok)throw Error(`Read failed ${r.status}`);return await r.json();
 },relative);}
+async function captureOwnedFrame(destination){
+ let timer;
+ try{
+  const captured=await Promise.race([app.evaluate(async({BrowserWindow},url)=>{
+   const windows=BrowserWindow.getAllWindows().filter(window=>window.webContents.getURL()===url);
+   if(windows.length!==1)throw Error('Unique owned native page required');
+   const image=await windows[0].webContents.capturePage(undefined,{stayAwake:true});
+   if(image.isEmpty())throw Error('Native frame is empty');
+   return {...image.getSize(),png:image.toPNG().toString('base64')};
+  },page.url()),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Native frame30s deadline')),30000);})]);
+  assert(captured.width>0&&captured.height>0);const bytes=Buffer.from(captured.png,'base64');
+  assert(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])));
+  fs.writeFileSync(destination,bytes,{flag:'wx'});
+ }finally{clearTimeout(timer);}
+}
 async function world(){
  const context=(await read('/context')).data;
  if(!context)return {context:null};
@@ -165,7 +190,7 @@ async function confirm(command){
  const captured=await page.evaluate(id=>window.__livePreviews[id],lastResult.request);
  assert(captured,'Actual proposal response must be captured');assert.deepEqual(captured.payload,lastResult.last.candidate,'Dialog proposal must equal the durable candidate');
  const dialog=page.getByRole('dialog');await dialog.getByRole('button',{name:/^(确认提交|明确批准并提交)$/}).waitFor();assert.equal(await dialog.locator('input,textarea,select').count(),0);
- if(verifyWorld){await assertDialog(lastResult.last.candidate,lastResult.before,dialog);assert.deepEqual(await world(),lastResult.before,'Preview must not save business data');await page.screenshot({path:path.join(path.dirname(report),`${rows.filter(r=>r.case==='confirmed').length+1}-${command}.png`)});}
+ if(verifyWorld){await assertDialog(lastResult.last.candidate,lastResult.before,dialog);assert.deepEqual(await world(),lastResult.before,'Preview must not save business data');await captureOwnedFrame(path.join(path.dirname(report),`${rows.filter(r=>r.case==='confirmed').length+1}-${command}.png`));}
  await dialog.getByRole('button',{name:/^(确认提交|明确批准并提交)$/}).click();await dialog.waitFor({state:'hidden'});
  await card.getByRole('status').filter({hasText:'已保存'}).waitFor();
  if(verifyWorld){
@@ -178,6 +203,14 @@ async function confirm(command){
 }
 (async()=>{try{
  await launch();
+ if(dailyAudio){
+  const initial=await world();
+  assert(initial.context&&initial.context.name==='合成联测班','Declared synthetic class must exist before audio or business model calls');
+  assert.deepEqual(initial.students.map(student=>student.name).sort(),['合成学生甲','合成学生乙'].sort());
+  for(const kind of ['records','tasks','documents','exams'])assert.deepEqual(initial[kind],[]);
+  assert.equal(initial.seating,null);
+  rows.push({case:'declared existing synthetic roster verified through QG; not Agent-created',passed:true});save();
+ }
  let result;
  if(recovery){
   await page.goto(new URL(`/chats/${resumeThread}`,page.url()).href);await page.getByLabel('输入消息').waitFor();
@@ -221,6 +254,21 @@ async function confirm(command){
    lastResult={thread:resumeThread,last,request:last.request_id,before:initial};result=lastResult;
   }else assert.equal(last.state,'failed');
   rows.push({case:'same original fact/receipt and failed continuation preserved; no reset',prior_failure:true,thread_id:resumeThread,failed_requests:history.turns.filter(t=>t.state==='failed').map(t=>t.request_id),passed:true});save();
+ }else if(summaryRecovery){
+  await page.goto(new URL(`/chats/${resumeThread}`,page.url()).href);await page.getByLabel('输入消息').waitFor();
+  const history=await read(`/workspace-chat/threads/${resumeThread}`),initial=await world();
+  assert.equal(history.thread.status,'active');assert.equal(history.next_before,null);
+  assert.equal(initial.records.length,1);assert.equal(initial.tasks.length,1);assert.equal(initial.documents.length,0);assert.equal(initial.exams.length,0);assert.equal(initial.seating,null);
+  const task=initial.tasks[0];assert.equal(task.title,'合成作品核对');assert.equal(task.status,'done');assert.equal(task.version,3);assert.equal(task.evidence,'班长交齐，我已核对');assert.equal(task.source_record_id,initial.records[0].record_id);
+  const committed=history.turns.filter(t=>t.action_receipt);assert.deepEqual(committed.map(t=>t.candidate.command),['record.create','task.create','task.update','task.complete']);
+  assert.equal(committed[0].action_receipt.resource_id,initial.records[0].record_id);
+  assert.deepEqual(committed.map(t=>t.action_receipt.version),[1,1,2,3]);
+  for(const row of committed.slice(1))assert.equal(row.action_receipt.resource_id,task.task_id);
+  assert(!history.turns.some(t=>['queued','running','unknown'].includes(t.state)||t.candidate&&!t.action_receipt));
+  const last=history.turns.at(-1);assert.equal(last.state,'failed');assert.equal(last.candidate,null);assert.equal(last.action_receipt,null);
+  assert.equal(last.user_text,'根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。');
+  priorRecoveryFailures.push(...history.turns.filter(t=>t.state==='failed').map(t=>t.request_id));
+  rows.push({case:'same original completed task v3 and failed summary verified; no reset',prior_failure:true,failed_requests:[...priorRecoveryFailures],passed:true});save();
  }else if(waitingRecovery){
   await page.goto(new URL(`/chats/${resumeThread}`,page.url()).href);await page.getByLabel('输入消息').waitFor();
   const history=await read(`/workspace-chat/threads/${resumeThread}`),initial=await world();
@@ -239,29 +287,64 @@ async function confirm(command){
   await page.getByRole('button',{name:'新对话',exact:true}).click();
   result=await turn('这是合成测试，只回复：准备好了。');assert.equal(result.last.candidate,null);assert.deepEqual(rows.filter(row=>row.request_id).at(-1).tools,[]);
  }
- if(scenario==='daily-work'||dailyRecovery||waitingRecovery){
+  if(scenario==='daily-work'||dailyAudio||dailyRecovery||waitingRecovery||summaryRecovery){
   const fact='合成学生甲交来展示作品',title='合成作品核对';
-  const note=`刚刚${fact}，记下来，再根据这条记录建立名为“${title}”的任务。今晚我还要整理自己的书架。每次只准备下一步，先让我确认。`;
-  if(!dailyRecovery&&!waitingRecovery){
+   let note=`刚刚${fact}，记下来，再根据这条记录建立名为“${title}”的任务。今晚我还要整理自己的书架。每次只准备下一步，先让我确认。`;
+   if(dailyAudio){
+    const input=page.getByLabel('输入消息'),before=await world(),started=Date.now();
+    const originalDraft=await input.inputValue();let response;
+    for(let captureAttempt=1;captureAttempt<=attempts;captureAttempt++){
+     // The existing media endpoint has a 45s model budget plus bounded audit
+     // and transport work. Keep ordinary UI waits at30s; unknown outcomes are
+     // terminal, never grounds for sending a second capture request.
+     const capture=page.waitForResponse(value=>value.request().method()==='POST'&&new URL(value.url()).pathname.endsWith('/composer/capture'),{timeout:60000});
+     const captureStart=Date.now();await page.getByLabel('选择内容文件').setInputFiles(audioFile);
+     response=await capture;
+     rows.push({case:'real audio capture attempt',attempt:captureAttempt,http_status:response.status(),ms:Date.now()-captureStart,passed:response.status()===200});save();
+     if(response.status()===200)break;
+     await page.waitForFunction(()=>!document.querySelector('[aria-label="添加附件"]').disabled);
+     assert.equal(await input.inputValue(),originalDraft,'A failed capture cannot discard the draft');
+     assert.deepEqual(await world(),before,'A failed capture cannot save business data');
+    }
+    assert.equal(response.status(),200,'Real audio capture must complete before any business run');
+    const value=await response.json();
+    rows.push({case:'raw synthetic audio transcription',text:value.text,http_status:response.status(),ms:Date.now()-started});save();
+    for(const text of ['展示作品','合成作品核对','书架'])assert(value.text.replace(/\s+/g,'').includes(text),'Raw synthetic ASR must retain the work and personal note');
+    await page.waitForFunction(text=>document.querySelector('textarea').value.includes(text),value.text);
+    note=await input.inputValue();
+    const spokenName=/合成\s*学生\s*[甲假]/g;
+    if(!note.includes('合成学生甲')&&spokenName.test(note)){
+     // The explicit synthetic reviewer knows the fixed spoken name. This is
+     // an actual input edit, not application auto-correction or ASR accuracy.
+     const from=note.match(spokenName);note=note.replace(spokenName,'合成学生甲');await input.fill(note);
+     rows.push({case:'explicit synthetic reviewer corrected name before sending',original_transcription:value.text,from,to:'合成学生甲',passed:true});save();
+    }
+    assert(note.includes('合成学生甲'),'Other unknown names need an explicit review, never a guessed business identity');
+    await input.fill(note+'\n');assert.equal(await input.inputValue(),note+'\n');
+    assert.deepEqual(await world(),before,'Audio recognition only edits input, never business data');
+    rows.push({case:'real synthetic WAV capture into editable input; no business writes',audio_bytes:fs.statSync(audioFile).size,http_status:response.status(),ms:Date.now()-started,passed:true});save();
+   }
+  if(!dailyRecovery&&!waitingRecovery&&!summaryRecovery){
    result=await turn(note);
-   if(!result.last.candidate&&['要记录哪位学生的哪件事？','这件事是什么时候发生的？'].includes(result.last.assistant_text)){
+    if(!result.last.candidate&&['要记录哪位学生的哪件事？','这件事是什么时候发生的？','要处理哪个班级？'].includes(result.last.assistant_text)){
     rows.push({case:'necessary explicit fact clarification',passed:true});save();
-    result=await turn(`学生是合成学生甲。事实原文为“${fact}”，刚刚发生。先记录这条事实，再根据这条记录建立名为“${title}”的任务；不要把个人随记写入。`);
+     result=await turn(`班级是${(await world()).context.name}，学生是合成学生甲。事实原文为“${fact}”，刚刚发生。先记录这条事实，再根据这条记录建立名为“${title}”的任务；不要把个人随记写入。`);
    }
    assert.equal(result.last.candidate?.command,'record.create');assert(note.includes(result.last.candidate.fact_text)&&result.last.candidate.fact_text.includes('交来展示作品'));assert(!result.last.candidate.fact_text.includes('书架'));assert.equal(result.last.candidate.student_id,(await world()).students.find(s=>s.name==='合成学生甲').student_id);await confirm('record.create');
   }
-  if(!waitingRecovery){
+  if(!waitingRecovery&&!summaryRecovery){
    if(!dailyRecovery||!result?.last?.candidate)result=dailyRecovery?await turn('继续完成上面的任务，只处理尚未完成的步骤。',false,1,true):await turn('',true);
    assert.equal(result.last.candidate?.command,'task.create');assert.equal(result.last.candidate.title,title);
    assert.equal(result.last.candidate.source_record_id,(await world()).records[0].record_id);await confirm('task.create');
   }
-  for(const [message,command,status,evidence]of [
+  if(!summaryRecovery)for(const [message,command,status,evidence]of [
    [`${title}先等待，跟进记录原文为“班长正在收集”`,'task.update','waiting','班长正在收集'],
    [`结束${title}，实际结果原文为“班长交齐，我已核对”`,'task.complete','done','班长交齐，我已核对'],
   ]){result=await turn(message);assert.equal(result.last.candidate?.command,command);assert.equal(result.last.candidate.status,status);assert.equal(result.last.candidate.evidence,evidence);await confirm(command);}
-  result=await turn('根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。');
+  result=await turn('根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。',false,1,summaryRecovery);
   assert.equal(result.last.candidate?.command,'document.create');assert.equal(result.last.candidate.title,'合成工作小结');
   const body=result.last.candidate.body;assert(body.includes('合成学生甲')&&body.includes('交来展示作品')&&body.includes('班长交齐')&&!body.includes('书架'));
+  const sources=await world();for(const identifier of [sources.records[0].record_id,sources.tasks[0].task_id])assert(!body.toLowerCase().includes(identifier.split('-')[0].toLowerCase()),'Document source citations must be readable, without internal identifiers');
   const tools=rows.filter(row=>row.request_id).at(-1).tools;assert(tools.includes('read_class_records')&&tools.includes('read_class_work'));
   await confirm('document.create');
   const accepted=await world();assert.equal(accepted.records.length,1);assert.equal(accepted.tasks.length,1);assert.equal(accepted.tasks[0].status,'done');assert.equal(accepted.tasks[0].version,3);assert.equal(accepted.documents.length,1);
@@ -273,6 +356,7 @@ async function confirm(command){
   for(const row of failed){const stored=history.turns.find(turn=>turn.request_id===row.request_id);assert.equal(stored?.state,'failed','A successful retry/restart must retain the original failed turn');assert.equal(stored.candidate,null);assert.equal(stored.action_receipt,null);}
   for(const request of priorRecoveryFailures){const stored=history.turns.find(turn=>turn.request_id===request);assert.equal(stored?.state,'failed');assert.equal(stored.candidate,null);assert.equal(stored.action_receipt,null);}
   if(waitingRecovery)rows.push({case:'all prior failed waiting attempts retained after complete restart',count:priorRecoveryFailures.length,passed:true});
+  if(summaryRecovery)rows.push({case:'all prior failed summary attempts retained after complete restart',count:priorRecoveryFailures.length,passed:true});
   rows.push({case:'failed turns retained after restart',count:new Set([...failed.map(row=>row.request_id),...priorRecoveryFailures]).size,passed:true});
   rows.push({case:'fact→linked followup→waiting→end→sourced summary and complete restart',passed:true});assert.deepEqual(errors,[]);save();return;
  }

@@ -5,6 +5,7 @@ keys, changes the source model selection, or runs in default tests/CI.
 """
 import argparse
 import asyncio
+import base64
 from contextlib import asynccontextmanager
 import json
 import os
@@ -19,6 +20,40 @@ from datetime import date
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'backend/src'))
+
+SYNTHETIC_AUDIO_NOTE = ('刚刚合成学生甲交来展示作品，记下来，再根据这条记录建立名为合成作品核对的任务。'
+    '今晚我还要整理自己的书架。每次只准备下一步，先让我确认。')
+
+
+def synthetic_note_audio(output):
+    """Existing offline Windows speech, fixed synthetic text, owned non-C output."""
+    target = output / 'synthetic-note.wav'
+    if (os.name != 'nt' or re.fullmatch(r'[D-Zd-z]:', output.resolve().drive) is None
+            or output.is_symlink() or target.exists() or target.is_symlink()):
+        raise ValueError('Fresh non-system synthetic audio destination required')
+    script = r"""$ErrorActionPreference='Stop'
+Add-Type -AssemblyName System.Speech
+$teacherVoice = New-Object System.Speech.Synthesis.SpeechSynthesizer
+try {
+  $installedVoice = $teacherVoice.GetInstalledVoices() | Where-Object { $_.Enabled -and $_.VoiceInfo.Culture.Name -eq 'zh-CN' -and $_.VoiceInfo.Name -like 'Microsoft *' } | Select-Object -First 1
+  if (-not $installedVoice) { throw 'Installed offline Chinese voice required' }
+  $teacherVoice.SelectVoice($installedVoice.VoiceInfo.Name)
+  $teacherVoice.SetOutputToWaveFile($env:CLASSMATTER_SYNTHETIC_AUDIO_OUTPUT)
+  $teacherVoice.Speak($env:CLASSMATTER_SYNTHETIC_AUDIO_TEXT)
+} finally { $teacherVoice.Dispose() }
+"""
+    executable = Path(os.environ['SystemRoot']) / 'System32/WindowsPowerShell/v1.0/powershell.exe'
+    result = subprocess.run([str(executable), '-NoLogo', '-NoProfile', '-NonInteractive', '-EncodedCommand',
+        base64.b64encode(script.encode('utf-16-le')).decode('ascii')], capture_output=True, timeout=60,
+        env=dict(os.environ, CLASSMATTER_SYNTHETIC_AUDIO_OUTPUT=str(target), CLASSMATTER_SYNTHETIC_AUDIO_TEXT=SYNTHETIC_AUDIO_NOTE),
+        creationflags=subprocess.CREATE_NO_WINDOW)
+    if result.returncode or not target.is_file() or not 44 < target.stat().st_size <= 2 * 1024 * 1024:
+        raise ValueError('Installed offline Chinese speech generation failed')
+    import wave
+    with wave.open(str(target), 'rb') as audio:
+        if not 0 < audio.getnframes() / audio.getframerate() <= 180:
+            raise ValueError('Bounded synthetic WAV required')
+    return target
 
 
 class OperatorParser(argparse.ArgumentParser):
@@ -79,6 +114,37 @@ def daily_waiting_recovery_checkpoint(history, world, documents):
         and last['user_text'] == '合成作品核对先等待，跟进记录原文为“班长正在收集”')
 
 
+def daily_summary_recovery_checkpoint(history, world, documents):
+    """Only the original four confirmed daily changes before a failed summary."""
+    if (history['thread']['status'] != 'active' or history['next_before'] is not None or not history['turns']
+            or len(world['records']) != 1 or len(world['tasks']) != 1 or documents
+            or any(turn['state'] in ('queued', 'running', 'unknown')
+                or turn['candidate'] and not turn['action_receipt'] for turn in history['turns'])):
+        return False
+    fact, task = world['records'][0], world['tasks'][0]
+    saved = [turn for turn in history['turns'] if turn['action_receipt']]
+    if (len(saved) != 4 or [turn['candidate']['command'] for turn in saved]
+            != ['record.create', 'task.create', 'task.update', 'task.complete']
+            or [turn['action_receipt']['version'] for turn in saved] != [1, 1, 2, 3]
+            or fact['kind'] != 'ordinary_fact' or fact['student_id'] is None
+            or task['title'] != '合成作品核对' or task['status'] != 'done' or task['version'] != 3
+            or task['evidence'] != '班长交齐，我已核对'
+            or str(task['source_record_id']) != str(fact['record_id'])
+            or str(saved[0]['action_receipt']['resource_id']) != str(fact['record_id'])
+            or saved[0]['candidate']['fact_text'] != fact['fact_text']
+            or str(saved[0]['candidate']['student_id']) != str(fact['student_id'])
+            or any(str(turn['action_receipt']['resource_id']) != str(task['task_id']) for turn in saved[1:])
+            or saved[1]['candidate']['title'] != task['title']
+            or str(saved[1]['candidate']['source_record_id']) != str(fact['record_id'])
+            or str(saved[1]['candidate']['student_id']) != str(fact['student_id'])
+            or saved[2]['candidate']['status'] != 'waiting' or saved[2]['candidate']['evidence'] != '班长正在收集'
+            or saved[3]['candidate']['status'] != 'done' or saved[3]['candidate']['evidence'] != task['evidence']):
+        return False
+    last = history['turns'][-1]
+    return (last['state'] == 'failed' and last['candidate'] is last['action_receipt'] is None
+        and last['user_text'] == '根据刚才已保存的普通事实和任务，生成文档合成工作小结，引用事实原文、实际来源和结果；个人书架随记不写进班级小结。')
+
+
 def main():
     parser = OperatorParser(description=__doc__)
     parser.add_argument('--live', action='store_true')
@@ -88,18 +154,21 @@ def main():
     parser.add_argument('--resume-runtime-root', type=Path, help='Prior isolated fixture only; each scenario validates its declared business checkpoint without resetting data')
     parser.add_argument('--resume-thread-id', type=UUID, help='Existing synthetic conversation for an explicit recovery scenario only')
     parser.add_argument('--provider', choices=('google', 'zhipu', 'zhipu-flash47'), default='google', help='Explicit registered free model only; never an automatic fallback')
-    parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed turns; all attempts remain in the report')
+    parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed chat turns or audio capture HTTP responses; unknown outcomes are not retried; all attempts remain in the report')
     parser.add_argument('--turn-interval-seconds', type=int, choices=(0, 15, 65), default=0, help='Explicit test-only pacing for free provider rate limits; not application latency or automatic retry')
-    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-recovery', 'daily-work-waiting-recovery'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; explicit recovery verifies its original saved checkpoint')
+    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-audio', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; audio uses fixed offline synthetic speech; explicit recovery verifies its original saved checkpoint')
     args = parser.parse_args()
     if not args.live or not args.source_runtime_root or not args.pg_root:
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_live_source_and_pg_required', 'requests': 0}))
         return 2
-    if args.scenario in ('full-workbench', 'daily-work') and args.resume_runtime_root:
-        print(json.dumps({'status': 'blocked', 'reason': 'daily_work_requires_fresh_fixture' if args.scenario == 'daily-work' else 'full_workbench_requires_fresh_fixture', 'requests': 0}))
+    if args.scenario in ('full-workbench', 'daily-work', 'daily-work-audio') and args.resume_runtime_root:
+        print(json.dumps({'status': 'blocked', 'reason': 'full_workbench_requires_fresh_fixture' if args.scenario == 'full-workbench' else 'daily_work_requires_fresh_fixture', 'requests': 0}))
         return 2
-    if (args.scenario in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery') and (not args.resume_runtime_root or not args.resume_thread_id)
-            or args.resume_thread_id and args.scenario not in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery')):
+    if args.scenario == 'daily-work-audio' and args.provider != 'google':
+        print(json.dumps({'status': 'blocked', 'reason': 'approved_audio_provider_required', 'requests': 0}))
+        return 2
+    if (args.scenario in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery') and (not args.resume_runtime_root or not args.resume_thread_id)
+            or args.resume_thread_id and args.scenario not in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery')):
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_recovery_fixture_and_thread_required', 'requests': 0}))
         return 2
     if args.artifacts_root is not None:
@@ -207,14 +276,16 @@ def main():
                 raise ValueError('Resume cannot reset or overwrite classroom work')
             if args.scenario == 'classroom-documents' and target_services.query.documents(*auth, c, t):
                 raise ValueError('Resume cannot reset or overwrite documents')
-            if args.scenario in ('daily-work-recovery', 'daily-work-waiting-recovery'):
+            if args.scenario in ('daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery'):
                 from class_os.application.workspace_chat import WorkspaceChatQueryGateway
                 history = WorkspaceChatQueryGateway(target_services.query.identity, target_services.query.store).history(auth, args.resume_thread_id)
                 world = target_services.query.projection(*auth, c, t)
-                checkpoint = daily_waiting_recovery_checkpoint if args.scenario == 'daily-work-waiting-recovery' else daily_recovery_checkpoint
+                checkpoint = {'daily-work-recovery': daily_recovery_checkpoint,
+                    'daily-work-waiting-recovery': daily_waiting_recovery_checkpoint,
+                    'daily-work-summary-recovery': daily_summary_recovery_checkpoint}[args.scenario]
                 if not checkpoint(history, world, target_services.query.documents(*auth, c, t)):
                     raise ValueError('Only the original failed-followup checkpoint may resume')
-        elif args.scenario in ('classroom', 'classroom-documents', 'daily-work'):
+        elif args.scenario in ('classroom', 'classroom-documents', 'daily-work', 'daily-work-audio'):
             c, t = uuid4(), uuid4()
             commit(CreateClass(c, t, '合成联测班', '合成联测学期', date(2026, 9, 1), date(2027, 1, 30)))
             for name in ('合成学生甲', '合成学生乙'):
@@ -261,6 +332,10 @@ def main():
         del key
         target_services.close(); target_services = None
         setup.close(); setup = None
+        audio = None
+        if args.scenario == 'daily-work-audio':
+            phase = 'synthetic-audio'
+            audio = synthetic_note_audio(output)
         phase = 'native-build'
         desktop = ROOT / 'apps/desktop'
         built = subprocess.run(['node', 'scripts/runtime-build.cjs', '--profile', 'classroom-work-d4'], cwd=desktop,
@@ -276,6 +351,9 @@ def main():
         config.update(runtimeRoot=str(runtime.root), servicePort=port)
         descriptor.write_text(json.dumps(config), encoding='utf-8')
         env = dict(os.environ, CLASSMATTER_OPERATOR_METADATA='1', CLASSMATTER_RUN_LIVE_CLASSROOM='1', CLASSMATTER_LIVE_STAGE=str(stage), CLASSMATTER_LIVE_REPORT=str(output / 'report.json'), CLASSMATTER_LIVE_MODEL=profile.model, CLASSMATTER_LIVE_ATTEMPTS=str(args.attempts_per_turn), CLASSMATTER_LIVE_SCENARIO=args.scenario, CLASSMATTER_LIVE_TURN_INTERVAL=str(args.turn_interval_seconds), CLASSMATTER_LIVE_RESUMED='1' if args.resume_runtime_root else '0', CLASSMATTER_LIVE_THREAD=str(args.resume_thread_id) if args.resume_thread_id else '')
+        env.pop('CLASSMATTER_LIVE_AUDIO', None)
+        if audio is not None:
+            env['CLASSMATTER_LIVE_AUDIO'] = str(audio)
         phase = 'native-acceptance'
         result = subprocess.run(['node', 'tests/live-classroom-acceptance.cjs'], cwd=desktop, env=env,
             capture_output=True, text=True, encoding='utf-8', timeout=1500, creationflags=subprocess.CREATE_NO_WINDOW)
