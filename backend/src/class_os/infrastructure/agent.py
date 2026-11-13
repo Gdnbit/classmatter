@@ -31,9 +31,10 @@ class WorkspaceStepPolicy(AbstractCapability):
 
     async def prepare_tools(self, ctx, tool_defs):
         # The SDK filters both the advertised schema and executable toolset.
-        # This is the existing closed continuation prerequisite, not routing
-        # ordinary user intent or granting any additional capability.
-        if self.capture.classroom_enabled and self.continuation and 'read_task_progress' not in self.capture.completed_tools:
+        # Ground continuations and failed preparations in actual receipts,
+        # without routing ordinary intent or granting another capability.
+        if self.capture.classroom_enabled and (self.capture.repair_requires_progress
+                or self.continuation and 'read_task_progress' not in self.capture.completed_tools):
             return [tool for tool in tool_defs if tool.name == 'read_task_progress']
         return tool_defs
 
@@ -41,6 +42,8 @@ class WorkspaceStepPolicy(AbstractCapability):
         def settings(ctx):
             if self.capture.proposed is not None:
                 return {'tool_choice': 'none'}
+            if self.capture.repair_requires_progress:
+                return {'tool_choice': ['read_task_progress']}
             if self.continuation and ctx.run_step == 1:
                 return {'tool_choice': ['read_task_progress']}
             if ctx.run_step == self.repair_step:

@@ -7,10 +7,11 @@ const attempts=Number(process.env.CLASSMATTER_LIVE_ATTEMPTS||'1');
 const turnInterval=Number(process.env.CLASSMATTER_LIVE_TURN_INTERVAL||'0');
 if(![0,15,65].includes(turnInterval))throw Error('Bounded explicit test pacing required');
 const scenario=process.env.CLASSMATTER_LIVE_SCENARIO||'classroom';
-if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work','daily-work-recovery'].includes(scenario))throw Error('Explicit supported scenario required');
+if(!['classroom','classroom-documents','classroom-recovery','full-workbench','daily-work','daily-work-recovery','daily-work-waiting-recovery'].includes(scenario))throw Error('Explicit supported scenario required');
 const recovery=scenario==='classroom-recovery',resumeThread=process.env.CLASSMATTER_LIVE_THREAD;
 const dailyRecovery=scenario==='daily-work-recovery';
-if((recovery||dailyRecovery)&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
+const waitingRecovery=scenario==='daily-work-waiting-recovery',priorRecoveryFailures=[];
+if((recovery||dailyRecovery||waitingRecovery)&&!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(resumeThread||''))throw Error('Explicit synthetic recovery thread required');
 const verifyWorld=scenario!=='classroom';
 if(![1,2,3].includes(attempts))throw Error('Bounded explicit test attempts required');
 if(!['gemini-3.1-flash-lite','glm-4-flash-250414','glm-4.7-flash'].includes(model))throw Error('Explicit approved free model required');
@@ -216,14 +217,28 @@ async function confirm(command){
    lastResult={thread:resumeThread,last,request:last.request_id,before:initial};result=lastResult;
   }else assert.equal(last.state,'failed');
   rows.push({case:'same original fact/receipt and failed continuation preserved; no reset',prior_failure:true,thread_id:resumeThread,failed_requests:history.turns.filter(t=>t.state==='failed').map(t=>t.request_id),passed:true});save();
+ }else if(waitingRecovery){
+  await page.goto(new URL(`/chats/${resumeThread}`,page.url()).href);await page.getByLabel('输入消息').waitFor();
+  const history=await read(`/workspace-chat/threads/${resumeThread}`),initial=await world();
+  assert.equal(history.thread.status,'active');assert.equal(history.next_before,null);
+  assert.equal(initial.records.length,1);assert.equal(initial.tasks.length,1);assert.equal(initial.documents.length,0);assert.equal(initial.exams.length,0);assert.equal(initial.seating,null);
+  const task=initial.tasks[0];assert.equal(task.title,'合成作品核对');assert.equal(task.status,'not-started');assert.equal(task.version,1);assert.equal(task.evidence,'');assert.equal(task.source_record_id,initial.records[0].record_id);
+  const committed=history.turns.filter(t=>t.action_receipt);assert.deepEqual(committed.map(t=>t.candidate.command),['record.create','task.create']);
+  assert.equal(committed[0].action_receipt.resource_id,initial.records[0].record_id);assert.equal(committed[1].action_receipt.resource_id,task.task_id);
+  assert.equal(committed[0].action_receipt.version,1);assert.equal(committed[1].action_receipt.version,1);
+  assert(!history.turns.some(t=>['queued','running','unknown'].includes(t.state)||t.candidate&&!t.action_receipt));
+  const last=history.turns.at(-1);assert.equal(last.state,'failed');assert.equal(last.candidate,null);assert.equal(last.action_receipt,null);
+  assert.equal(last.user_text,'合成作品核对先等待，跟进记录原文为“班长正在收集”');
+  priorRecoveryFailures.push(...history.turns.filter(t=>t.state==='failed').map(t=>t.request_id));
+  rows.push({case:'same original fact/task v1 and all failed waiting attempts verified; no reset',prior_failure:true,failed_requests:[...priorRecoveryFailures],passed:true});save();
  }else{
   await page.getByRole('button',{name:'新对话',exact:true}).click();
   result=await turn('这是合成测试，只回复：准备好了。');assert.equal(result.last.candidate,null);assert.deepEqual(rows.filter(row=>row.request_id).at(-1).tools,[]);
  }
- if(scenario==='daily-work'||dailyRecovery){
+ if(scenario==='daily-work'||dailyRecovery||waitingRecovery){
   const fact='合成学生甲交来展示作品',title='合成作品核对';
   const note=`刚刚${fact}，记下来，再根据这条记录建立名为“${title}”的任务。今晚我还要整理自己的书架。每次只准备下一步，先让我确认。`;
-  if(!dailyRecovery){
+  if(!dailyRecovery&&!waitingRecovery){
    result=await turn(note);
    if(!result.last.candidate&&['要记录哪位学生的哪件事？','这件事是什么时候发生的？'].includes(result.last.assistant_text)){
     rows.push({case:'necessary explicit fact clarification',passed:true});save();
@@ -231,9 +246,11 @@ async function confirm(command){
    }
    assert.equal(result.last.candidate?.command,'record.create');assert(note.includes(result.last.candidate.fact_text)&&result.last.candidate.fact_text.includes('交来展示作品'));assert(!result.last.candidate.fact_text.includes('书架'));assert.equal(result.last.candidate.student_id,(await world()).students.find(s=>s.name==='合成学生甲').student_id);await confirm('record.create');
   }
-  if(!dailyRecovery||!result?.last?.candidate)result=dailyRecovery?await turn('继续完成上面的任务，只处理尚未完成的步骤。',false,1,true):await turn('',true);
-  assert.equal(result.last.candidate?.command,'task.create');assert.equal(result.last.candidate.title,title);
-  assert.equal(result.last.candidate.source_record_id,(await world()).records[0].record_id);await confirm('task.create');
+  if(!waitingRecovery){
+   if(!dailyRecovery||!result?.last?.candidate)result=dailyRecovery?await turn('继续完成上面的任务，只处理尚未完成的步骤。',false,1,true):await turn('',true);
+   assert.equal(result.last.candidate?.command,'task.create');assert.equal(result.last.candidate.title,title);
+   assert.equal(result.last.candidate.source_record_id,(await world()).records[0].record_id);await confirm('task.create');
+  }
   for(const [message,command,status,evidence]of [
    [`${title}先等待，跟进记录原文为“班长正在收集”`,'task.update','waiting','班长正在收集'],
    [`结束${title}，实际结果原文为“班长交齐，我已核对”`,'task.complete','done','班长交齐，我已核对'],
@@ -250,7 +267,9 @@ async function confirm(command){
   const history=await read(`/workspace-chat/threads/${thread}`);assert.equal(history.turns.filter(t=>t.action_receipt).length,5);
   const failed=rows.filter(row=>row.request_id&&row.state==='failed');
   for(const row of failed){const stored=history.turns.find(turn=>turn.request_id===row.request_id);assert.equal(stored?.state,'failed','A successful retry/restart must retain the original failed turn');assert.equal(stored.candidate,null);assert.equal(stored.action_receipt,null);}
-  rows.push({case:'failed turns retained after restart',count:failed.length,passed:true});
+  for(const request of priorRecoveryFailures){const stored=history.turns.find(turn=>turn.request_id===request);assert.equal(stored?.state,'failed');assert.equal(stored.candidate,null);assert.equal(stored.action_receipt,null);}
+  if(waitingRecovery)rows.push({case:'all prior failed waiting attempts retained after complete restart',count:priorRecoveryFailures.length,passed:true});
+  rows.push({case:'failed turns retained after restart',count:new Set([...failed.map(row=>row.request_id),...priorRecoveryFailures]).size,passed:true});
   rows.push({case:'fact→linked followup→waiting→end→sourced summary and complete restart',passed:true});assert.deepEqual(errors,[]);save();return;
  }
  if(scenario==='full-workbench'){

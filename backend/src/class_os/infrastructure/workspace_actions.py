@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import anyio
-from pydantic_ai import CallDeferred
+from pydantic_ai import CallDeferred, ModelRetry
 
 from class_os.domain.roster import CreateClass, ChangeClass, ChangeTerm, CreateStudent, ChangeStudentName
 from class_os.domain.activity import CreateTask, ChangeTask
@@ -33,6 +33,7 @@ class WorkspaceActionCapture:
     pending_commands: set[str] = field(default_factory=set)
     recall_reader: Callable | None = None
     committed_record_ids: set[str] = field(default_factory=set)
+    repair_requires_progress: bool = False
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -59,13 +60,23 @@ class WorkspaceActionCapture:
     def tools(self, query, credentials, current_memory, emit):
         async def execute(tool, operation):
             current_memory(); emit("tool.started", tool=tool)
-            if (self.classroom_enabled and self.user_messages[-1:] == ('继续完成上面的任务，只处理尚未完成的步骤。',)
-                    and tool != 'read_task_progress' and 'read_task_progress' not in self.completed_tools):
+            if (self.classroom_enabled and tool != 'read_task_progress'
+                    and (self.repair_requires_progress or (self.user_messages[-1:] == ('继续完成上面的任务，只处理尚未完成的步骤。',)
+                    and 'read_task_progress' not in self.completed_tools))):
                 # A provider may ignore tool_choice. Keep the prerequisite in
                 # the actual tool boundary, not just in model settings/prose.
                 operation = lambda: {'status': 'read-progress-first',
                     'instruction': 'Call read_task_progress now, inspect actual saved receipts and pending actions, then select the next unfinished requested step. This attempted operation did not execute.'}
-            result = await anyio.to_thread.run_sync(operation)
+            try:
+                result = await anyio.to_thread.run_sync(operation)
+            except ModelRetry:
+                if self.classroom_enabled and self.progress_reader is not None and tool.startswith('prepare_'):
+                    # A rejected mutation is not evidence that anything happened.
+                    # Ground the SDK's existing repair attempt in actual receipts.
+                    self.repair_requires_progress = True
+                raise
+            if tool == 'read_task_progress' and self.progress_reader is not None:
+                self.repair_requires_progress = False
             self.completed_tools.append(tool)
             current_memory(); emit("tool.completed", tool=tool)
             if (self.classroom_enabled and tool.startswith('prepare_') and isinstance(result, dict)
