@@ -20,6 +20,42 @@ def test_workflow_claims_cannot_replace_actual_candidates(answer):
 
 
 @pytest.mark.db
+@pytest.mark.parametrize('action,label', [('complete', '实际结果'), ('cancel', '取消原因')])
+@pytest.mark.parametrize('keeps_failing', [False, True])
+async def test_ending_copies_the_whole_explicit_result_before_any_confirmation(classroom_work, action, label, keeps_failing):
+    from class_os.domain.activity import CreateTask
+    from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
+    from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
+    business, query, auth, _, clock, store, commit, c, t, _ = classroom_work
+    task = CreateTask('task.create', uuid4(), c, t, '合成结果核对', None, None, None)
+    commit(task)
+    note, calls = '班长交齐，我已核对' if action == 'complete' else '计划已取消，不再需要收集', []
+    def respond(messages, info):
+        calls.append(True)
+        if len(calls) > 1:
+            assert any(isinstance(part, RetryPromptPart) for part in messages[-1].parts)
+        evidence = '' if keeps_failing else note.split('，')[0] if len(calls) == 1 else note
+        return ModelResponse(parts=[ToolCallPart('prepare_task', {'action': action, 'title': task.title, 'evidence': evidence})])
+    sdk = PydanticAgentRuntime(query, timeout=45, model_factory=lambda _: FunctionModel(respond))
+    chats = WorkspaceChatBusinessGateway(business.identity, store, clock=lambda: clock[0])
+    history = WorkspaceChatQueryGateway(query.identity, store, clock=lambda: clock[0])
+    runtime = WorkspaceChatRuntime(chats, history, sdk)
+    thread, request = uuid4(), uuid4()
+    chats.send(auth, thread, request, f'{"结束" if action == "complete" else "取消"}{task.title}，{label}原文为“{note}”')
+    events = [event async for event in runtime.stream_queued(auth, thread, request)]
+    row = history.turn(auth, thread, request)[1]
+    assert len(calls) == 2 and row['action_receipt'] is None
+    if keeps_failing:
+        assert row['state'] == 'failed' and row['candidate'] is row['assistant_text'] is None
+        assert not any(event.type in ('message.delta', 'draft.available') for event in events)
+    else:
+        assert row['state'] == 'completed' and row['candidate']['command'] == 'task.' + action
+        assert row['candidate']['evidence'] == note and row['candidate']['expected_version'] == 1
+    saved = query.projection(*auth, c, t)['tasks'][0]
+    assert saved['task_id'] == task.task_id and saved['version'] == 1 and saved['status'] == 'not-started'
+
+
+@pytest.mark.db
 @pytest.mark.parametrize('mistake,keeps_failing', [('prose', False), ('create', False), ('create', True), ('missing-note', False), ('short-note', False), ('missing-note', True)])
 async def test_waiting_note_false_saved_reply_repairs_to_the_original_task_candidate(classroom_work, mistake, keeps_failing):
     from class_os.domain.activity import CreateTask
