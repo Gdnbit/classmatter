@@ -1149,7 +1149,8 @@ export default function R1App() {
                 <button onClick={() => setPage("students")}>查看学生</button>
               </div>
               </div></div>
-              {workspaceMode && (conversationStarted || workspaceConversation.status) && <WorkspaceChatHistory state={workspaceConversation} />}
+              {workspaceMode && (conversationStarted || workspaceConversation.status) && <WorkspaceChatHistory state={workspaceConversation}
+                documentExports={classroomProfile ? { session, onError: fail } : undefined} />}
               {!workspaceMode && durableProfile && <DurableHistory state={durable} canWrite={editable && !busy && !form && !pending}
                 onDraft={title => { setDraftTitle(title); setRecord(null); open("task") }} />}
               {!durableProfile && <div ref={conversationContent} className="r1-messages">

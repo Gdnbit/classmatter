@@ -10,6 +10,8 @@ import time
 
 import pytest
 import uvicorn
+from docx import Document
+from pptx import Presentation
 from pydantic_ai.exceptions import ModelHTTPError
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
 from pydantic_ai.models.function import FunctionModel
@@ -24,7 +26,7 @@ from test_classroom_work_storage import classroom_work, workspace_chat, roster, 
 
 @pytest.mark.db
 @pytest.mark.parametrize('voice', [False, True])
-def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work, voice):
+def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work, voice, tmp_path):
     business, query, auth, owner, clock, store, commit, c, t, students = classroom_work
     fact, title = '合成学生0交来展示作品', '合成作品核对'
     failed, observed = [], []
@@ -38,6 +40,9 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
                     raise ModelHTTPError(503, 'synthetic', body={'error': {'status': 'UNAVAILABLE'}})
                 return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
             last = returned[-1]
+            if '追加合成工作小结' in request.text:
+                return ModelResponse(parts=[ToolCallPart('prepare_document', {'action': 'edit', 'title': '合成工作小结',
+                    'body': '补充：明天继续展示。', 'edit_mode': 'append'})])
             if '生成合成工作小结' in request.text:
                 if last.tool_name == 'read_task_progress':
                     return ModelResponse(parts=[ToolCallPart('read_class_records', {'student_name': '合成学生0'})])
@@ -110,6 +115,8 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
             'version': value['tasks'][0]['version'] if value['tasks'] else None,
             'documents': len(query.documents(*auth, c, t))}
     root = Path(__file__).resolve().parents[2]
+    destination = tmp_path / 'chat-office'
+    destination.mkdir()
     mount_web(app, root / 'apps/web/dist')
     server = uvicorn.Server(uvicorn.Config(app, host='127.0.0.1', port=port, proxy_headers=False, access_log=False, log_level='error', timeout_graceful_shutdown=5))
     thread = threading.Thread(target=server.run, daemon=True); thread.start()
@@ -119,17 +126,27 @@ def test_original_chat_record_followup_wait_end_summary_and_retry(classroom_work
             assert thread.is_alive() and time.monotonic() < deadline
             time.sleep(.05)
         result = subprocess.run(['node', 'tests/activity-actions-browser.mjs'], cwd=root / 'apps/web',
-            env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}', CLASSMATTER_SYNTHETIC_VOICE='1' if voice else '0'), capture_output=True,
-            text=True, encoding='utf-8', timeout=150, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}', CLASSMATTER_SYNTHETIC_VOICE='1' if voice else '0',
+                CLASSMATTER_TEST_DOWNLOAD_ROOT=str(destination)), capture_output=True,
+            text=True, encoding='utf-8', timeout=210, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
         assert result.returncode == 0, result.stdout + result.stderr + str(sdk.last_failure_type)
         assert len(failed) == len(observed) == 1 and sdk.active == 0
         assert len(captures) == (1 if voice else 0)
         assert observed[0][1]['status'] == 'done' and observed[0][1]['evidence'] == '班长交齐，我已核对'
+        for version in (1, 2):
+            word = '\n'.join(p.text for p in Document(str(destination / f'summary-v{version}.docx')).paragraphs)
+            slides = Presentation(str(destination / f'summary-v{version}.pptx'))
+            ppt = '\n'.join(shape.text for slide in slides.slides for shape in slide.shapes if shape.has_text_frame)
+            for body in (word, ppt):
+                assert fact in body and '班长交齐，我已核对' in body and '任务v3' in body
+                assert ('补充：明天继续展示。' in body) == (version == 2)
         with owner.transaction(read_only=True) as connection:
             assert connection.execute(text('SELECT count(*) FROM class_os.record_revision')).scalar_one() == 1
             assert connection.execute(text('SELECT count(*) FROM class_os.manual_task')).scalar_one() == 1
             assert connection.execute(text('SELECT version FROM class_os.manual_task')).scalar_one() == 3
-            body = connection.execute(text('SELECT body FROM class_os.working_document_revision')).scalar_one()
+            assert connection.execute(text('SELECT count(*) FROM class_os.working_document_revision')).scalar_one() == 2
+            assert connection.execute(text('SELECT count(*) FROM class_os.export_job')).scalar_one() == 0
+            body = connection.execute(text('SELECT body FROM class_os.working_document_revision ORDER BY version DESC LIMIT 1')).scalar_one()
             assert fact in body and '班长交齐，我已核对' in body and '任务v3' in body
             assert '书架' not in body
             if voice:

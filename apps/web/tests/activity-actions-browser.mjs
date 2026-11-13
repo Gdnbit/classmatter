@@ -1,14 +1,18 @@
 import assert from 'node:assert/strict';
+import path from 'node:path';
 import { chromium, expect as defaultExpect } from '@playwright/test';
 import { comparisonContent } from './change-comparison-content.mjs';
 
 const base = process.env.CLASS_OS_TEST_URL;
 const expect = defaultExpect.configure({ timeout: 30000 });
 const voice = process.env.CLASSMATTER_SYNTHETIC_VOICE === '1';
+const destination = process.env.CLASSMATTER_TEST_DOWNLOAD_ROOT;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
+if (!path.isAbsolute(destination || '')) throw new Error('Owned download directory required');
 const browser = await chromium.launch({ headless: true, args: voice ? ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'] : [], ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, ...(voice ? { permissions: ['microphone'] } : {}) }), errors = [], external = [];
+  const page = await browser.newPage({ acceptDownloads: true, viewport: { width: 1440, height: 1000 }, ...(voice ? { permissions: ['microphone'] } : {}) }), errors = [], external = [], downloads = [];
+  page.on('download', value => downloads.push(value));
   if (voice) await page.addInitScript(() => {
     const start = MediaRecorder.prototype.start;
     MediaRecorder.prototype.start = function(...args) {
@@ -88,8 +92,66 @@ try {
   await send('根据已保存的事实和任务生成合成工作小结');
   await expect(cards).toHaveCount(5);
   await expect(cards.nth(4)).toContainText('班长交齐，我已核对');
+  await expect(cards.nth(4).getByRole('button', { name: '导出 Word', exact: true })).toHaveCount(0);
+  await expect(cards.nth(4).getByRole('button', { name: '导出 PPT', exact: true })).toHaveCount(0);
   await save(4, '创建工作文档');
+  await cards.nth(4).screenshot({ path: path.join(destination, 'saved-chat-card.png') });
   await state({ records: 1, tasks: 1, status: 'done', version: 3, documents: 1 });
+  let focusDuringExport = false;
+  async function exportSaved(index, version) {
+    for (const [label, extension] of [['导出 Word', 'docx'], ['导出 PPT', 'pptx']]) {
+      // Hold genuine QG bytes while the original focus handler revalidates
+      // history. Background reads must not silently cancel an Office export.
+      let release, reached;
+      const held = new Promise(resolve => release = resolve), started = new Promise(resolve => reached = resolve);
+      const controlled = !focusDuringExport && extension === 'docx';
+      if (controlled) await page.route('**/exports/1/docx', async route => {
+        const response = await route.fetch(); reached(); await held;
+        await route.fulfill({ response }).catch(() => {});
+      }, { times: 1 });
+      let file;
+      try {
+        [file] = await Promise.all([page.waitForEvent('download'), (async () => {
+          await cards.nth(index).getByRole('button', { name: label, exact: true }).click();
+          if (controlled) {
+            await started;
+            const read = page.waitForResponse(response => /\/workspace-chat\/threads\/[a-f0-9-]+$/.test(response.url()) && response.status() === 200);
+            await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+            await (await read).json(); focusDuringExport = true; release();
+          }
+        })()]);
+      } finally { release(); if (controlled) await page.unroute('**/exports/1/docx'); }
+      assert.equal(file.suggestedFilename(), '合成工作小结.' + extension);
+      await file.saveAs(path.join(destination, `summary-v${version}.${extension}`));
+      assert.equal(await file.failure(), null);
+    }
+  }
+  await exportSaved(4, 1);
+  await send('追加合成工作小结：补充：明天继续展示。');
+  await expect(cards).toHaveCount(6);
+  await expect(cards.nth(5).getByRole('button', { name: '导出 Word', exact: true })).toHaveCount(0);
+  await save(5, '修改工作文档');
+  await exportSaved(5, 2);
+  const stale = page.waitForResponse(response => /\/exports\/1\/docx$/.test(response.url()));
+  await cards.nth(4).getByRole('button', { name: '导出 Word', exact: true }).click();
+  assert.equal((await stale).status(), 409);
+  await expect(cards.nth(4).getByRole('alert')).toContainText('文档已更新');
+  assert.equal(downloads.length, 4);
+  // Read-only export must not lock chat switching, and late bytes cannot
+  // trigger a download in another thread or page.
+  let release, reached;
+  const held = new Promise(resolve => release = resolve), started = new Promise(resolve => reached = resolve);
+  await page.route('**/exports/2/docx', async route => { reached(); await held; await route.abort().catch(() => {}); }, { times: 1 });
+  try {
+    await cards.nth(5).getByRole('button', { name: '导出 Word', exact: true }).click();
+    await started;
+    await page.getByRole('button', { name: '新对话', exact: true }).click();
+    await expect(cards).toHaveCount(0);
+    await input.fill('尚未发送的小结补充');
+    release();
+    await expect(input).toHaveValue('尚未发送的小结补充');
+  } finally { release(); await page.unroute('**/exports/2/docx'); }
+  assert.equal(downloads.length, 4);
   await page.getByRole('button', { name: '工作', exact: true }).click();
   await page.getByLabel('按状态筛选任务').selectOption('closed');
   await expect(page.getByRole('main').getByRole('button', { name: /合成作品核对/ })).toBeVisible();
@@ -100,6 +162,7 @@ try {
   await page.getByRole('button', { name: '原文', exact: true }).click();
   await expect(page.locator('.document-text')).toContainText('合成学生0交来展示作品');
   await expect(page.locator('.document-text')).toContainText('班长交齐，我已核对');
+  await expect(page.locator('.document-text')).toContainText('补充：明天继续展示。');
   assert.deepEqual(errors, []);
   assert.deepEqual(external, []);
 } finally { await browser.close(); }
