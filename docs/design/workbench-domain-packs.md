@@ -132,6 +132,14 @@ DDL或验收失败在提交前回滚，原D1仍可用；已核验备份与失败
 
 ## 原文档页面闭环
 
+### 可替换Office导出的Markdown呈现
+
+原文档的版本化正文仍是事实源；DOCX/PPTX只是同版本派生文件，复用既有导出端口与QG范围/版本核验，不创建修订或业务写入口。CommonMark采用固定markdown-it-py4.2.0解析为有界文本块和富文本片段，再交给既有python-docx/python-pptx。展示标题、列表、粗体、斜体、引用和代码；同名首级标题不重复显示。列表使用可编辑的可见编号/符号，Word另保留缩进，不承诺Office自动重编号或PPT多级列表布局。纯文本不解释Markdown，代码内容不去除星号，中文字体引用Microsoft YaHei但不下载或打包字体。
+
+链接和图片只保留文字及来源地址，不读取资源、不生成外部关系、不执行HTML。正文上限100000字符，另限定30000个块级token/10000段/150页PPT/4MiB输出，超限明确失败，不截断成成功。复杂表格、公式、图形、模板、缺字体替代及在线逐元素编辑仍需独立验收；本单元不增加教师点击、模型请求、权限、Schema或冻结R1内容。回滚代码及锁依赖并重建，不更改已保存文档。
+
+依据：[官方稳定版本](https://github.com/executablebooks/markdown-it-py/releases/tag/v4.2.0)、[token API](https://markdown-it-py.readthedocs.io/en/latest/using.html)、[MIT原文](https://github.com/executablebooks/markdown-it-py/blob/v4.2.0/LICENSE)。依赖与原始通知按公开清单逐文件核验；不将解析器升级成新编辑器或万能Artifact模型。
+
 选择/正文/初始草稿必须在新route绘制前统一初始化。不能等passive effect清空旧正文：URL先切到new时，旧文档不得短暂变成可保存的新稿。对应实际浏览器空正文断言保持严格，见台账PR62跨平台时序修复。
 
 `runtime/DocumentsWorkspace.tsx`在原工作台中复用原文档三栏、原文/修改后/修订记录及保存草稿动线，使用已验收的固定documentClient；不读Demo store、不自动保存、不直接操作数据库。原`/data`和`/data/documents/{UUID}`恢复同一班级/学期内文档，`new`仅为未保存本地草稿；旧样例ID、原文/凭据/批准URL参数不采纳。正文纯文本展示，Markdown文本不执行HTML。文档结构从正文标题派生，点击定位编辑范围，无新维护字段；明确只展示前100个、80字以内标题。

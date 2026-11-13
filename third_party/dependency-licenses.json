@@ -631,7 +631,7 @@
       "status": "INSTALLED_WINDOWS_METADATA_INSPECTED"
     },
     "backend": {
-      "lock_sha256": "9f9cd691ada4f6f9facbf0e1bb0ff240d4969c7f9d7978f65dc8ed2d48bb8f04",
+      "lock_sha256": "eef362909d5495bc2203df1b257c7837b9d7f35eda8c5d3d242dcf2a40085e55",
       "packages": [
         {
           "license_expression": "MIT",
@@ -1545,6 +1545,35 @@
             }
           ],
           "version": "3.3.1"
+        },
+        {
+          "license_expression": "MIT",
+          "name": "markdown-it-py",
+          "notices": [
+            {
+              "path": "licenses/python/markdown-it-py-4.2.0/0.txt",
+              "sha256": "4a2260d6e2cd0f5a151a1e86dbfe7d3ed552b1e2beabf9941c1ba5c49cbce484",
+              "upstream_relative_path": "licenses/LICENSE"
+            },
+            {
+              "path": "licenses/python/markdown-it-py-4.2.0/1.txt",
+              "sha256": "792c48c5a849a15fdf9e37e8bcf9e6d1dd13b32b46c642a748a0a46a9919d473",
+              "upstream_relative_path": "licenses/LICENSE.markdown-it"
+            }
+          ],
+          "version": "4.2.0"
+        },
+        {
+          "license_expression": "MIT",
+          "name": "mdurl",
+          "notices": [
+            {
+              "path": "licenses/python/mdurl-0.1.2/0.txt",
+              "sha256": "7c605df6e28667a9603118e98274f64a49ce3eed0d26fccce9534a345e0ef955",
+              "upstream_relative_path": "LICENSE"
+            }
+          ],
+          "version": "0.1.2"
         }
       ],
       "status": "INSTALLED_WINDOWS_METADATA_INSPECTED"
