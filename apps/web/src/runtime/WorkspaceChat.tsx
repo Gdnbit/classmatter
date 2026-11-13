@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react"
 import { ArrowUp, Copy, Check, X, Plus, Image, FileText, Mic, Square, ShieldCheck, LoaderCircle } from "lucide-react"
-import type { ChatCandidate } from "./workspace-chat"
+import type { ChatCandidate, ChatTurn } from "./workspace-chat"
 import type { WorkspaceChatController } from "./useWorkspaceChat"
 import type { Command, Session } from "./api"
 import { ModelSwitcher } from "./ModelSwitcher"
@@ -8,6 +8,8 @@ import { useComposerInput } from './useComposerInput'
 import './composer.css'
 import { SeatLayoutPreview } from './SeatLayoutPreview'
 import { ChangeComparison } from './ChangeComparison'
+import { DocumentExportActions } from './DocumentExportActions'
+import { documentClient } from './documents'
 
 const labels: Record<string, string> = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "record.create": "记录事实", "task.create": "建立任务", "task.update": "修改任务", "task.complete": "结束任务", "task.cancel": "取消任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
@@ -47,7 +49,20 @@ function CandidateContent({ value }: { value: ChatCandidate }) {
     {"body" in value && <details open><summary>草稿正文</summary><p className="r1-document-draft">{value.body}</p></details>}
   </>
 }
-export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatController }) {
+type DocumentExports = { session: Session; onError: (error: unknown) => void }
+function SavedDocumentExports({ turn, context }: { turn: ChatTurn; context: DocumentExports }) {
+  const candidate = turn.candidate, receipt = turn.action_receipt
+  if (!candidate || (candidate.command !== 'document.create' && candidate.command !== 'document.revise')
+    || !receipt || receipt.resource_id !== candidate.document_id
+    || receipt.version !== (candidate.command === 'document.create' ? 1 : candidate.expected_version + 1)) return null
+  // Export the approved version in this turn's scope, never the active class
+  // or a newer document revision. QG rejects stale/archived versions on read.
+  // History revalidation is not a scope change: only identity/thread/turn
+  // unmount or version change cancels this independent read-only download.
+  return <DocumentExportActions value={{ document_id: candidate.document_id, title: candidate.title, version: receipt.version }}
+    api={documentClient(context.session, candidate)} enabled={true} unsaved={false} onError={context.onError} />
+}
+export function WorkspaceChatHistory({ state: s, documentExports }: { state: WorkspaceChatController; documentExports?: DocumentExports }) {
   return <section aria-label="已保存的对话">
     {s.history?.thread.status === "cleared" && <p>此对话已清空</p>}
     {s.history?.next_before && <button disabled={s.working} onClick={() => void s.moreHistory()}>加载更早消息</button>}
@@ -63,7 +78,11 @@ export function WorkspaceChatHistory({ state: s }: { state: WorkspaceChatControl
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{labels[turn.candidate.command]}</h2>
           {turn.change_preview ? <ChangeComparison preview={turn.change_preview} saved={!!turn.action_receipt} /> : <CandidateContent value={turn.candidate} />}
-          {turn.action_receipt ? <><p role="status" className={turn.change_preview ? 'sr-only' : undefined}>已保存</p>{turn.turn_id === s.history?.turns.at(-1)?.turn_id && <button disabled={!s.canSend} onClick={() => void s.continueTask(turn)}>继续任务</button>}</>
+          {turn.action_receipt ? <><p role="status" className={turn.change_preview ? 'sr-only' : undefined}>已保存</p>
+            {(turn.turn_id === s.history?.turns.at(-1)?.turn_id || documentExports && turn.candidate.command.startsWith('document.')) && <div className="r1-toolbar">
+              {turn.turn_id === s.history?.turns.at(-1)?.turn_id && <button disabled={!s.canSend} onClick={() => void s.continueTask(turn)}>继续任务</button>}
+              {documentExports && <SavedDocumentExports key={s.draftKey + '/' + turn.turn_id} turn={turn} context={documentExports} />}
+            </div>}</>
             : <button className="r1-primary" disabled={!s.canAct} onClick={() => void s.preview(turn)}>预览这项操作</button>}
         </section>}
       </div>)}

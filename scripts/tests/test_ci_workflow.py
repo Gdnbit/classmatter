@@ -44,6 +44,13 @@ def validate(document):
         raise ValueError("Baseline verification missing")
     if 'postgresql-client-18=18.6-1.pgdg24.04+2' not in runs:
         raise ValueError("PostgreSQL server/client exact versions must match")
+    if 'install -m 0644 infra/ci/ubuntu.mirrors /etc/apt/apt-mirrors.txt' not in runs:
+        raise ValueError('Reviewed archive failover list required')
+    if runs.count('Acquire::Retries=2') != 2 or runs.count('Acquire::https::Timeout=20') != 2 or 'APT::Update::Error-Mode=any update' not in runs:
+        raise ValueError('Bounded transport and failed-index refusal required')
+    if any(value in runs.lower() for value in ('allowunauthenticated', '--allow-unauthenticated', 'allowinsecurerepositories',
+            'trusted=yes', 'trusted: yes', 'verify-peer=false', 'curl --insecure', 'curl -k ')):
+        raise ValueError('Archive or TLS verification cannot be disabled')
 
 
 class CiWorkflowTests(unittest.TestCase):
@@ -60,6 +67,27 @@ class CiWorkflowTests(unittest.TestCase):
                 step['run'] = step['run'].replace(' postgresql-client-18=18.6-1.pgdg24.04+2', '')
         with self.assertRaises(ValueError):
             validate(document)
+
+    def test_reviewed_mirror_list_uses_distinct_https_hosts_and_real_priorities(self):
+        raw = (ROOT / 'infra/ci/ubuntu.mirrors').read_bytes()
+        self.assertNotIn(b'\r', raw)
+        self.assertEqual([
+            ['https://archive.ubuntu.com/ubuntu', 'priority:1'],
+            ['https://mirrors.edge.kernel.org/ubuntu', 'priority:2'],
+        ], [line.split('\t') for line in raw.decode('utf-8').splitlines()])
+
+    def test_failover_does_not_suppress_errors_or_relax_archive_verification(self):
+        for before, after in (
+                ('install -m 0644 infra/ci/ubuntu.mirrors', 'install -m 0644 /tmp/unknown-mirrors'),
+                ('Acquire::Retries=2', 'Acquire::Retries=999'),
+                ('APT::Update::Error-Mode=any update', 'update'),
+                ('apt-get -o Acquire::Retries=2', 'apt-get --allow-unauthenticated -o Acquire::Retries=2')):
+            document = copy.deepcopy(self.document)
+            for step in document['jobs']['baseline']['steps']:
+                if 'run' in step:
+                    step['run'] = step['run'].replace(before, after)
+            with self.subTest(after=after), self.assertRaises(ValueError):
+                validate(document)
 
     def test_full_regression_budget_is_explicit_and_bounded(self):
         self.assertEqual(45, self.document["jobs"]["baseline"]["timeout-minutes"])

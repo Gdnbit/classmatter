@@ -290,6 +290,8 @@ D4准备工具从QG读取、领域校验并得到有效候选后，用SDK原生`
 
 ## 已保存文档的可编辑Office导出
 
+聊天卡片复用同一DocumentExportActions与固定QG导出接口，仅D4启用：document.create/revise候选必须有同资源、正确结果版本的真实保存回执，才显示Word/PPT；未保存不显示。范围来自该候选，不取当前班级下拉框；标题来自当时已批准候选，版本绑定当时回执，不伪造DocumentView的作者或时间。旧版本已被修改/归档时仍由服务端拒绝，不偷偷导出当前新版本。按身份/会话/turn区分组件，切换聊天或离开页面取消读取，导出忙碌不锁导航或聊天草稿。没有新增Agent工具、API、依赖、表或写入口；原文档页与原生保存策略继续复用。
+
 原文档页增加Word/PPT操作，不增加工作台或替换编辑器。AI沿原prepare_document准备教案/小结/文字课件，显示正文预览，经原BCG确认保存；文件导出再经QG读取指定文档的当前版本。HTTP固定为`documents/{document_id}/exports/{version}/{docx|pptx}`，版本变化409、权限失效拒绝，不能把旧页面内容当最新正式来源。导出只产生已保存工作草稿的派生文件，不修改业务表、文档版本、记忆或正式Gate，也不是完整备份退出包。
 
 `application/document_artifacts.py`是小型可替换renderer端口；可信组合默认使用既有锁定python-docx1.2.0/python-pptx1.0.2，模型/请求不能注册renderer。支持中文、段落、Markdown标题及分页文字幻灯片；输出可继续编辑，限制4MiB/150张幻灯片，超限拒绝、不静默截断。图片、图表、复杂Markdown表格、模板主题、PPT在线逐元素编辑仍未实现，不能把文字导出称为完整课件设计器。不下载字体/图片，不执行正文中的URL、HTML或指令。

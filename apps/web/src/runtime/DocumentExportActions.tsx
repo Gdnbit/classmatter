@@ -3,7 +3,7 @@ import { ApiError } from './api'
 import { documentClient, type DocumentView, type OfficeFormat } from './documents'
 
 export function DocumentExportActions({ value, api, enabled, unsaved, onError }: {
-  value: DocumentView; api: ReturnType<typeof documentClient>; enabled: boolean; unsaved: boolean; onError: (error: unknown) => void
+  value: Pick<DocumentView, 'document_id' | 'version' | 'title'>; api: ReturnType<typeof documentClient>; enabled: boolean; unsaved: boolean; onError: (error: unknown) => void
 }) {
   const [active, setActive] = useState<OfficeFormat | null>(null), [error, setError] = useState('')
   const operation = useRef<AbortController | null>(null)

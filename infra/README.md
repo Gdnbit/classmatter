@@ -15,3 +15,5 @@
 放置本地开发与受支持部署的 compose、观测、备份恢复和部署资产。当前没有批准生产拓扑；不得提交真实 secret、真实学生数据或默认公网暴露配置。
 
 `ci/pgdg.sources` 只供 [.github/workflows/synthetic-ci.yml](../.github/workflows/synthetic-ci.yml) 的 Ubuntu 隔离测试安装固定 PostgreSQL 18.6；不是运行时数据库配置或正式部署。Windows 自有开发运行入口在 [backend/local.py](../backend/local.py)，操作说明见 [backend README](../backend/README.md)。不把合成 CI、spike Compose 或本机 DPAPI 凭据当成跨主机生产恢复方案。
+
+2026-11-13：[PR #92](https://github.com/Gdnbit/classmatter/pull/92)两次Ubuntu准备阶段均在mirrors.edge.kernel.org连接超时、apt退出100，尚未进入业务回归；原始失败保留。`ci/ubuntu.mirrors`改用Canonical主档案与Linux Kernel Archives两个HTTPS地址，优先级用真实制表符分隔，复用[APT原生故障切换](https://manpages.debian.org/unstable/apt/apt-transport-mirror.1.en.html)，不自行下载/安装deb或吞掉失败。原runner suites/keyring、[Ubuntu档案签名链](https://documentation.ubuntu.com/security/software-integrity/archive-verification/)和PGDG签名来源保持，server/client仍精确18.6-1.pgdg24.04+2；网络重试2次/HTTPS等待20秒，任何索引失败即拒绝。45分钟作业预算、业务测试/产品期限和公开审查不变。两个网络均不可达仍应失败，不能将此配置检查冒充真实Ubuntu安装/完整CI已通过；最终结果在PR按精确head留证。
