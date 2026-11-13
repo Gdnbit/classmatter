@@ -519,7 +519,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "fe1bb820ddcb6310e88137c80bd9c0a6f6c494815d0d3e0eb6e8d11a16a2f949"
+      "sha256": "180acf0788659ac88e5b42836072dabdfc241d9cbd813602a8f85a772fae89e1"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2930,7 +2930,7 @@
       "sha256": "9ec7d07f56d7afea92c7b5d24fd8aaed18cbb4bf2289cdd7e80834a13953c2a6"
     },
     "apps/web/tests/persistent-chat-browser.mjs": {
-      "sha256": "2f5a8645f00b84492923a60abbb6950d2b1d6f143a78af472886029318a1df7f"
+      "sha256": "30db9a0b8894040391391903e808047d102b963d7a1458928e01772b20ac0800"
     },
     "apps/web/tests/workspace-chat.mjs": {
       "sha256": "23b16d48d5a152ee2ac2b41db54e5be99d1bdc32d03486027f97e51b38c02072"
@@ -3068,7 +3068,7 @@
       "sha256": "85cca2acddaadd29aca547380b0bf0475fb16565b1c71029081e57affb8efbb2"
     },
     "apps/web/tests/classroom-work-browser.mjs": {
-      "sha256": "bd5369e9bf55a358894a64f26343707df7ae611d40c9c94b21f077fd7d9e2177"
+      "sha256": "a5476d4800abae2ca385824e80a40bdb8546dd7be43e370a00c55abd8172abeb"
     },
     "apps/web/tests/classroom-work.mjs": {
       "sha256": "48d744c93faa1feaaa804c598284769118bb46523e2f903125bcb795618549f3"
@@ -3289,7 +3289,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "d9705ae1f88bec8a674923cdf8e2903b844a8f0cd8c4578bd157c35ac14b62be"
+      "sha256": "13d1dc4cca403ad4c0a658f0d42e1fe6d77a715e681afa21f0b48719bfe11788"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "a7137afba069ad1dc863a7c13ad770977ded5c8898e75515453c69b8c4d953ab"

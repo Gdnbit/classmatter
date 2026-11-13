@@ -208,12 +208,14 @@ try {
     await dialog.waitFor({ state: 'hidden', timeout: 5000 }).catch(async error => { throw new Error(JSON.stringify({ message, dialog: await dialog.innerText(), errors }), { cause: error }); });
     await card.getByRole('status').filter({ hasText: '已保存' }).waitFor();
     await page.reload();
+    await comparison.waitFor();
     await expect.poll(() => comparisonContent(comparison.getByLabel('修改前', { exact: true }))).toEqual(oldContent);
     await expect.poll(() => comparisonContent(comparison.getByLabel('已保存的结果', { exact: true }))).toEqual(changes.at(-1).newContent);
     assert.equal(new URL(page.url()).pathname, path);
   }
   const cards = history.getByRole('region', { name: '变更前后对比', exact: true });
   for (let index = 0; index < changes.length; index++) {
+    await cards.nth(index).waitFor();
     await expect.poll(() => comparisonContent(cards.nth(index).getByLabel('修改前', { exact: true }))).toEqual(changes[index].oldContent);
     await expect.poll(() => comparisonContent(cards.nth(index).getByLabel('已保存的结果', { exact: true }))).toEqual(changes[index].newContent);
   }
