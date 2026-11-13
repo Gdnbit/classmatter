@@ -87,11 +87,16 @@ def blocks(body, format):
             elif token.type == 'heading_close':
                 heading = 0
             elif token.type in ('bullet_list_open', 'ordered_list_open'):
+                if lists and lists[-1]['pending']:
+                    emit(())
                 lists.append({'ordered': token.type == 'ordered_list_open', 'next': int(token.attrGet('start') or 1), 'pending': False})
             elif token.type in ('bullet_list_close', 'ordered_list_close'):
                 lists.pop()
             elif token.type == 'list_item_open':
                 lists[-1]['pending'] = True
+            elif token.type == 'list_item_close' and lists[-1]['pending']:
+                # A teacher's blank placeholder still consumes its list number.
+                emit(())
             elif token.type == 'blockquote_open':
                 quoted += 1
             elif token.type == 'blockquote_close':

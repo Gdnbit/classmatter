@@ -129,6 +129,13 @@ def test_excessive_paragraphs_reject_before_office_file_success():
         render_office('合成超多段落', '\n' * 10001, 'plain-text', 'docx')
 
 
+def test_blank_list_items_do_not_renumber_later_teacher_instructions():
+    from class_os.infrastructure.office_markdown import blocks
+    assert [block.text for block in blocks('1.\n2. 核对材料', 'markdown')] == ['1. ', '2. 核对材料']
+    assert [block.text for block in blocks('*\n* 核对材料', 'markdown')] == ['• ', '• 核对材料']
+    assert [(block.text, block.depth) for block in blocks('1.\n   * 子项\n2. 次项', 'markdown')] == [('1. ', 1), ('• 子项', 2), ('2. 次项', 1)]
+
+
 @pytest.mark.parametrize('output', ['docx', 'pptx'])
 def test_nested_numbering_quotes_and_rich_files_remain_editable(output):
     body = '7. 第一项\n   * 子项目\n8. 第二项\n\n> **保留原话**\n\n*\n  ```text\n  **代码原文**\n  ```\n\n\\*原样星号\\*'
