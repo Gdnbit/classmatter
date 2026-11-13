@@ -49,6 +49,36 @@ def daily_recovery_checkpoint(history, world, documents):
         and str(candidate['student_id']) == str(world['records'][0]['student_id']))
 
 
+def daily_waiting_recovery_checkpoint(history, world, documents):
+    """Only the original confirmed fact/task before a failed waiting change."""
+    if (history['thread']['status'] != 'active' or history['next_before'] is not None
+            or not history['turns'] or len(world['records']) != 1 or len(world['tasks']) != 1 or documents):
+        return False
+    fact, task = world['records'][0], world['tasks'][0]
+    saved = [turn for turn in history['turns'] if turn['action_receipt']]
+    if (len(saved) != 2 or [turn['candidate']['command'] for turn in saved] != ['record.create', 'task.create']
+            or any(turn['state'] in ('queued', 'running', 'unknown')
+                or turn['candidate'] and not turn['action_receipt'] for turn in history['turns'])):
+        return False
+    record_turn, task_turn = saved
+    if (fact['kind'] != 'ordinary_fact' or fact['student_id'] is None or task['title'] != '合成作品核对'
+            or task['status'] != 'not-started' or task['version'] != 1 or task['evidence']
+            or str(record_turn['action_receipt']['resource_id']) != str(fact['record_id'])
+            or record_turn['action_receipt']['version'] != 1
+            or record_turn['candidate']['fact_text'] != fact['fact_text']
+            or str(record_turn['candidate']['student_id']) != str(fact['student_id'])
+            or str(task_turn['action_receipt']['resource_id']) != str(task['task_id'])
+            or task_turn['action_receipt']['version'] != 1
+            or task_turn['candidate']['title'] != task['title']
+            or str(task_turn['candidate']['source_record_id']) != str(fact['record_id'])
+            or str(task_turn['candidate']['student_id']) != str(fact['student_id'])
+            or str(task['source_record_id']) != str(fact['record_id'])):
+        return False
+    last = history['turns'][-1]
+    return (last['state'] == 'failed' and last['candidate'] is last['action_receipt'] is None
+        and last['user_text'] == '合成作品核对先等待，跟进记录原文为“班长正在收集”')
+
+
 def main():
     parser = OperatorParser(description=__doc__)
     parser.add_argument('--live', action='store_true')
@@ -60,7 +90,7 @@ def main():
     parser.add_argument('--provider', choices=('google', 'zhipu', 'zhipu-flash47'), default='google', help='Explicit registered free model only; never an automatic fallback')
     parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed turns; all attempts remain in the report')
     parser.add_argument('--turn-interval-seconds', type=int, choices=(0, 15, 65), default=0, help='Explicit test-only pacing for free provider rate limits; not application latency or automatic retry')
-    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-recovery'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; explicit recovery verifies its original saved checkpoint')
+    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-recovery', 'daily-work-waiting-recovery'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; explicit recovery verifies its original saved checkpoint')
     args = parser.parse_args()
     if not args.live or not args.source_runtime_root or not args.pg_root:
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_live_source_and_pg_required', 'requests': 0}))
@@ -68,8 +98,8 @@ def main():
     if args.scenario in ('full-workbench', 'daily-work') and args.resume_runtime_root:
         print(json.dumps({'status': 'blocked', 'reason': 'daily_work_requires_fresh_fixture' if args.scenario == 'daily-work' else 'full_workbench_requires_fresh_fixture', 'requests': 0}))
         return 2
-    if (args.scenario in ('classroom-recovery', 'daily-work-recovery') and (not args.resume_runtime_root or not args.resume_thread_id)
-            or args.resume_thread_id and args.scenario not in ('classroom-recovery', 'daily-work-recovery')):
+    if (args.scenario in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery') and (not args.resume_runtime_root or not args.resume_thread_id)
+            or args.resume_thread_id and args.scenario not in ('classroom-recovery', 'daily-work-recovery', 'daily-work-waiting-recovery')):
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_recovery_fixture_and_thread_required', 'requests': 0}))
         return 2
     if args.artifacts_root is not None:
@@ -177,11 +207,12 @@ def main():
                 raise ValueError('Resume cannot reset or overwrite classroom work')
             if args.scenario == 'classroom-documents' and target_services.query.documents(*auth, c, t):
                 raise ValueError('Resume cannot reset or overwrite documents')
-            if args.scenario == 'daily-work-recovery':
+            if args.scenario in ('daily-work-recovery', 'daily-work-waiting-recovery'):
                 from class_os.application.workspace_chat import WorkspaceChatQueryGateway
                 history = WorkspaceChatQueryGateway(target_services.query.identity, target_services.query.store).history(auth, args.resume_thread_id)
                 world = target_services.query.projection(*auth, c, t)
-                if not daily_recovery_checkpoint(history, world, target_services.query.documents(*auth, c, t)):
+                checkpoint = daily_waiting_recovery_checkpoint if args.scenario == 'daily-work-waiting-recovery' else daily_recovery_checkpoint
+                if not checkpoint(history, world, target_services.query.documents(*auth, c, t)):
                     raise ValueError('Only the original failed-followup checkpoint may resume')
         elif args.scenario in ('classroom', 'classroom-documents', 'daily-work'):
             c, t = uuid4(), uuid4()
