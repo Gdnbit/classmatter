@@ -217,7 +217,7 @@ def test_original_composer_switches_model_without_losing_draft(workspace_chat):
             probe = any(tool['function']['name'] == 'class_os_probe' for tool in body.get('tools', []))
             packet = protocol_reply('chat-completions', body if probe else {**body, 'tools': []}, len(calls))
             packet['model'] = body['model']
-            if not probe: packet['choices'][0]['message']['content'] = '合成模型切换后回复'
+            if not probe: packet['choices'][0]['message']['content'] = '# 合成模型切换后回复\n\n## 目标\n认识分数。\n\n- 平均分\n- 说出一份\n\n<script>throw Error("must stay text")</script>'
             return httpx.Response(200, json=packet)
         async with httpx.AsyncClient(transport=httpx.MockTransport(reply), trust_env=False) as http:
             async with AsyncOpenAI(api_key=secret.get_secret_value(), base_url=profile.base_url, max_retries=0,
@@ -245,6 +245,7 @@ def test_original_composer_switches_model_without_losing_draft(workspace_chat):
         assert query.model_configuration(auth)['model'] == 'synthetic-switched'
         with owner.transaction(read_only=True) as connection:
             assert connection.execute(text('SELECT count(*) FROM class_os.workspace_chat_turn')).scalar_one() == 1
+            assert connection.execute(text('SELECT assistant_text FROM class_os.workspace_chat_turn')).scalar_one().startswith('# 合成模型切换后回复\n')
     finally:
         server.should_exit = True; thread.join(timeout=10)
         assert not thread.is_alive()

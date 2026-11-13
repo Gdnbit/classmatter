@@ -61,7 +61,7 @@ def test_live_operator_refuses_system_relative_or_remote_artifact_roots_before_i
     assert result.stderr == '' and list(tmp_path.iterdir()) == []
 
 
-@pytest.mark.parametrize('scenario,reason', [('full-workbench', 'full_workbench_requires_fresh_fixture'), ('daily-work', 'daily_work_requires_fresh_fixture'), ('daily-work-audio', 'daily_work_requires_fresh_fixture')])
+@pytest.mark.parametrize('scenario,reason', [('full-workbench', 'full_workbench_requires_fresh_fixture'), ('teacher-intro', 'teacher_intro_requires_fresh_fixture'), ('daily-work', 'daily_work_requires_fresh_fixture'), ('daily-work-audio', 'daily_work_requires_fresh_fixture')])
 def test_full_workbench_refuses_resume_before_reading_credentials_or_creating_files(tmp_path, scenario, reason):
     entry = Path(__file__).resolve().parents[1] / 'live_classroom_acceptance.py'
     result = subprocess.run([sys.executable, str(entry), '--live', '--scenario', scenario,

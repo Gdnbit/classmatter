@@ -32,6 +32,17 @@ try {
   await input.fill('合成新模型对话');
   await page.getByRole('button', { name: '发送消息', exact: true }).click();
   await page.getByRole('region', { name: '已保存的对话' }).getByText('合成模型切换后回复', { exact: true }).waitFor();
+  const answer = page.getByRole('article', { name: '助手回复' }).last();
+  await answer.getByRole('heading', { name: '合成模型切换后回复', exact: true }).waitFor();
+  assert.equal(await answer.getByRole('heading', { name: '目标', exact: true }).count(), 1);
+  assert.deepEqual(await answer.locator('li').allTextContents(), ['平均分', '说出一份']);
+  assert.equal(await answer.locator('script,img,iframe').count(), 0);
+  assert.equal(await answer.getByRole('button', { name: '复制回答', exact: true }).count(), 1);
+  const chat = page.url();await page.reload();
+  await page.getByRole('article', { name: '助手回复' }).getByRole('heading', { name: '目标', exact: true }).waitFor();
+  assert.equal(page.url(), chat);
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   assert.equal(starts.length, 1);
   assert.deepEqual(errors, []);
   console.log('PASS original composer: existing-key model switch via BCG, explicit probe+enable, draft preserved and subsequent SDK chat uses new model');

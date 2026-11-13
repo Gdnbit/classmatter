@@ -183,13 +183,13 @@ def main():
     parser.add_argument('--provider', choices=('google', 'zhipu', 'zhipu-flash47'), default='google', help='Explicit registered free model only; never an automatic fallback')
     parser.add_argument('--attempts-per-turn', type=int, choices=(1, 2, 3), default=1, help='Explicit test-only UI resends after failed chat turns or audio capture HTTP responses; unknown outcomes are not retried; all attempts remain in the report')
     parser.add_argument('--turn-interval-seconds', type=int, choices=(0, 15, 65), default=0, help='Explicit test-only pacing for free provider rate limits; not application latency or automatic retry')
-    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'daily-work', 'daily-work-audio', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery', 'daily-work-summary-review'), default='classroom', help='Daily work checks record/follow-up/wait/end/summary; audio uses fixed offline synthetic speech; explicit recovery/review verifies its original saved checkpoint')
+    parser.add_argument('--scenario', choices=('classroom', 'classroom-documents', 'classroom-recovery', 'full-workbench', 'teacher-intro', 'daily-work', 'daily-work-audio', 'daily-work-recovery', 'daily-work-waiting-recovery', 'daily-work-summary-recovery', 'daily-work-summary-review'), default='classroom', help='Teacher intro uses chat without a class; daily work checks record/follow-up/wait/end/summary; audio uses fixed offline synthetic speech; explicit recovery/review verifies its original saved checkpoint')
     args = parser.parse_args()
     if not args.live or not args.source_runtime_root or not args.pg_root:
         print(json.dumps({'status': 'blocked', 'reason': 'explicit_live_source_and_pg_required', 'requests': 0}))
         return 2
-    if args.scenario in ('full-workbench', 'daily-work', 'daily-work-audio') and args.resume_runtime_root:
-        print(json.dumps({'status': 'blocked', 'reason': 'full_workbench_requires_fresh_fixture' if args.scenario == 'full-workbench' else 'daily_work_requires_fresh_fixture', 'requests': 0}))
+    if args.scenario in ('full-workbench', 'teacher-intro', 'daily-work', 'daily-work-audio') and args.resume_runtime_root:
+        print(json.dumps({'status': 'blocked', 'reason': 'teacher_intro_requires_fresh_fixture' if args.scenario == 'teacher-intro' else 'full_workbench_requires_fresh_fixture' if args.scenario == 'full-workbench' else 'daily_work_requires_fresh_fixture', 'requests': 0}))
         return 2
     if args.scenario == 'daily-work-audio' and args.provider != 'google':
         print(json.dumps({'status': 'blocked', 'reason': 'approved_audio_provider_required', 'requests': 0}))
