@@ -2,23 +2,35 @@
   "schema_version": 1,
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
+    "third_party/licenses/upstream/rehype-katex-7.0.1/LICENSE.txt": {
+      "sha256": "cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9",
+      "reviewed_pattern_exceptions": [
+        { "rule": "email-shape", "line_sha256": "78370f9238252adddae9d7ad28dd1595f5463292716fcd13c82bf9b2f915c1d8" }
+      ]
+    },
+    "third_party/licenses/upstream/remark-math-6.0.0/LICENSE.txt": {
+      "sha256": "cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9",
+      "reviewed_pattern_exceptions": [
+        { "rule": "email-shape", "line_sha256": "78370f9238252adddae9d7ad28dd1595f5463292716fcd13c82bf9b2f915c1d8" }
+      ]
+    },
     "apps/desktop/tests/document-text.cjs": {
-      "sha256": "163972487e097886b0389640ff9616725dcf342aff2f981c0dee996fb9a4f59b"
+      "sha256": "f6c7c9492d263d1b7d258b2b9c0428559626b94bc952a345f15f3de7002cb5d5"
     },
     "apps/desktop/tests/document-text.test.cjs": {
-      "sha256": "ba6b7fb7bc4b6488f21302783aa5b04013864438fa084efb3e9404e0e11ecae2"
+      "sha256": "8d26b30457aa1df60dfdfdf93fd176b5979ba6f3b9b00ab599adf04675d35334"
     },
     "apps/desktop/tests/notices.test.cjs": {
-      "sha256": "40ea5b0b856956bec10011973a2066936cffbea6d144f7f033d69792fcc5d59a"
+      "sha256": "5a02904df0e62422924158bed748011d188b66ca36ff31d3ffcedd0f6affd325"
     },
     "apps/web/src/runtime/DocumentBody.tsx": {
-      "sha256": "212bbde4afa50492b8e023610a83081edc6f0ee5681c1f617b986656f297ae65"
+      "sha256": "a7d4b25fc33e5c62bbd96033b02c80f8b08eb769198c595e74230340e6126d38"
     },
     "apps/web/src/runtime/document-body.css": {
-      "sha256": "14da15252ebabb8c6b86f9cede474c2d54d7d779a27df881d46f3c3031a2ef0d"
+      "sha256": "53dfadef480a915685e6126a86fa8f06d872f345d95434e7b5df8523e007ff03"
     },
     "apps/web/tests/document-body.mjs": {
-      "sha256": "d2033c83ca439fd723b86a28a2d5246771a5f2848d62dcd054e08dc74dd0c70c"
+      "sha256": "9632cba3dabf21e0be9e392a9a981d6e365c803e7a2f778f9ea62baeae970a08"
     },
     "infra/ci/ubuntu.mirrors": {
       "sha256": "908eac5647cae6fc835ef4df2190aa6258dd95f507341ecd8cecd92660a18e04"
@@ -540,7 +552,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "d6fb2f91a082800969984bf4c91770873a2f3b406cb29f81cd2d7696483961df"
+      "sha256": "b0f2a7f3413ecc7ea485bbf8b8013c6a53dd28f8dfa07b888a510bc0f6f298ae"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -600,7 +612,7 @@
       "sha256": "b79b3e96203f7e65977e7636549a571cb30c4cf4a00d9b161efb35e474cccaf8"
     },
     "apps/desktop/scripts/notices.cjs": {
-      "sha256": "42ba5a35b511f27f2a6e048da7059cb14b1f14f7ab226524b61ae0ef6f41c073"
+      "sha256": "fc53008d95d9237dd6d75b4970de5cc21683b6ecb8cc0dd7f22d40f3e0b417d8"
     },
     "apps/desktop/scripts/package.cjs": {
       "sha256": "197ace83cbbd212f888702c25a825f2ece85d35bd777295a5e6ab0f6f99c3043"
@@ -702,7 +714,7 @@
       "sha256": "f14b6fab4f65f7fb21a5712a64a4978df6baf878806af524a017c2011a9691af"
     },
     "THIRD_PARTY_NOTICES.md": {
-      "sha256": "feb836e3a0768764ff4e0684f3211d18d24c16041bd8a6e587f0f3130648bf52"
+      "sha256": "3a877a346067ee3fb69697ef5f1889f3b7c275586e1c903c032b29540385fbf7"
     },
     "apps/web/.figma/make/site.json": {
       "sha256": "ec98b717eb772e31d8a21ba072d45aa47561e4bc1b13f87f9cc71a54ad2435f9"
@@ -717,13 +729,13 @@
       "sha256": "6857940a16627475250d8d98cf9711cf58e418459b8a7f97755f0c3180ed845f"
     },
     "apps/web/package.json": {
-      "sha256": "024975897672952466c4066c9881fb5fb4c614444ad981cdda7cd3c93ef360c6"
+      "sha256": "9310a6665439f51bb0a3bbb81055284dc27aabccbf4ae220708a68bbac83cfd8"
     },
     "apps/web/pnpm-lock.yaml": {
-      "sha256": "f48dfa39f5fe18e8569146637c7bf100d35ce3da9a36908829a5c32d9b066c57"
+      "sha256": "7dccf7c53b17963802df5854568d1eee6dcfaea4e165752c514d714594f1597c"
     },
     "apps/web/pnpm-workspace.yaml": {
-      "sha256": "47ec91afec7dcedc204eb448858f7470661bef8ce386f117c1a995092dc83393"
+      "sha256": "8364223745e6f5a291eba62b18863c7601d110cbcfd8e048f8b49d0e67b2ffb5"
     },
     "apps/web/scripts/generate-agent-conversation.mjs": {
       "sha256": "beba852f1d4635731ec599815c1ccc6f2e7c619cd2f1897cfd61b4b4b7c290b6"
@@ -2639,7 +2651,7 @@
       "sha256": "035507b8a1e787a16c7f138f092557a30a8ee9cc9cef6e84d11546ee3b9a45cd"
     },
     "third_party/supplemental-license-review.json": {
-      "sha256": "339532c31fda00b2a65a17c5b27001815344c6fdab953a3d543d80ac94497903"
+      "sha256": "4d62834644a8ce63ffea58152c08c8837f07351e279178e47ff77c352bd4f82a"
     },
     "docs/product/scenario-catalog.md": {
       "sha256": "286d975bdbe526bfe45d9906572b4aab6b43dcac20e3558c9a2908bc8085fd3d"
@@ -2909,7 +2921,7 @@
       "sha256": "bdb5222fd1b40e6a133583642727d9214a309e8316d92ac9e2c53f5319eeba88"
     },
     "apps/web/tests/documents-browser.mjs": {
-      "sha256": "db3b3b3ad86dfb3d743f4fc21f76466cd592b53c33a9bfe09aaaf0185e4fe464"
+      "sha256": "c8359bae3138c19c037d4f13c54c468d200b1704092903d9dcb14c5cfada54a9"
     },
     "backend/tests/test_documents_web.py": {
       "sha256": "77402bcebc27e393ce0fbe5998010a33950de9473b1414c25a74f716d430b7e1"
@@ -2951,7 +2963,7 @@
       "sha256": "9ec7d07f56d7afea92c7b5d24fd8aaed18cbb4bf2289cdd7e80834a13953c2a6"
     },
     "apps/web/tests/persistent-chat-browser.mjs": {
-      "sha256": "2703a2d5b440e1e9718a054ea47fd52c3d1efe115f4bab61db8009084ec6b4df"
+      "sha256": "56604ee11b5860afc60a8ee16378bd4b614d302018ccfbbe5427ebe92cd0b545"
     },
     "apps/web/tests/workspace-chat.mjs": {
       "sha256": "23b16d48d5a152ee2ac2b41db54e5be99d1bdc32d03486027f97e51b38c02072"
@@ -2990,7 +3002,7 @@
       "sha256": "8ab5a4d849ba3e29ebcdd3aae402921d4124ec9ceceef20a52ee63d1efc56ee7"
     },
     "backend/tests/test_persistent_chat_web.py": {
-      "sha256": "a7b9cc00603e8bc201dec282791ca7156e87f57d26d43078b3809d19221f4d57"
+      "sha256": "c27e7a1ea5786e8f58879dd933010a1cfe415887d4853bf13425cbf6d4a86fc2"
     },
     "backend/tests/test_workspace_chat_runtime.py": {
       "sha256": "797fca772a26e04550ecb9baba5cb78f536a0a3fb3ac4a0c9ea4326eb38b54c7"
@@ -3038,7 +3050,7 @@
       "sha256": "5440b56eb3b1314ac2d9dc75c38de860e35a695b3b52b2b02bf9d605098371c0"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "65364dad959f2f10f5c3ded70b3ae39f3679ef477f60905a6923359229494f15"
+      "sha256": "4012b421aed01f8cfe8328d2d4f337f55073521bb41433d47e8ddef80060287c"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3062,7 +3074,7 @@
       "sha256": "1d91bbf6b45770b8b6802ecee0f5fa2b8592ef34fbc94a979978c8183db59a83"
     },
     "apps/web/tests/model-switch-browser.mjs": {
-      "sha256": "9b1d558af0b86306808396aa2b43d70ff7f4a0dcce9cc60f186ea5191f75966b"
+      "sha256": "4dee1a5305b4e8c6b7d336106b490c30fc475ff0a762404cbc1975cc523e7f5a"
     },
     "apps/web/src/runtime/user-facing.ts": {
       "sha256": "95ef576de0cead717f64984cba6d8171ca18086f89ca674794fbda7396bc7899"
@@ -3149,7 +3161,7 @@
       "sha256": "afbd08f4d56791a074a11ffbf8ad2a407f1e4d4787153698576cdd0f75e60695"
     },
     "apps/desktop/tests/live-classroom-acceptance.cjs": {
-      "sha256": "0945b0a3610775cc69896466645dfd1fe04b04e1e16f7834e902d3dd670ef4b5"
+      "sha256": "5df5448ef8854ecca584d4a16daf554121c9a89ceee3a398ee23b4f8c31f4c1a"
     },
     "backend/live_classroom_acceptance.py": {
       "sha256": "f257c1a4de95a44efb98afa98b3a612a93011d08836eea7682ee0f1a94eed66a"
@@ -3310,7 +3322,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "945939cf9154d634e8d648321e4c94939322e0a3f430183ab719342b1ea30f47"
+      "sha256": "cc58ab2a515353b766a127d8cb4cb8495ad422fb9b23ae00c7a0fdf61fc457b1"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "bae496e88ba3625b1e243bec525fc856fd32523415d35041c969842e3ad88551"

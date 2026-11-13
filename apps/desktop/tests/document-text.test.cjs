@@ -8,4 +8,5 @@ test('native preview oracle retains Markdown business text without syntax and le
   assert.equal(await documentText(body, 'plain-text'), body);
   assert.equal(await documentText('事实：\\*原字样\\*，分数80→88.5。', 'markdown'), '事实：*原字样*，分数80→88.5。');
   assert.equal(await documentText('[来源][source]\n\n[source]: https://example.invalid/source\n\n[无效](javascript:alert(1))', 'markdown'), '来源（https://example.invalid/source）无效');
+  assert.equal(await documentText('每份 $\\frac{1}{2}$。\n\n$$\nx+1=2\n$$', 'markdown'), '每份\\frac{1}{2}。x+1=2');
 });

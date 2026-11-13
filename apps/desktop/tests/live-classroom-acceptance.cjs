@@ -1,6 +1,6 @@
 // Explicit real-model acceptance; same native UI and APIs, isolated synthetic DB.
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
-const {documentText}=require('./document-text.cjs');
+const {documentText,documentFields}=require('./document-text.cjs');
 if(process.env.CLASSMATTER_RUN_LIVE_CLASSROOM!=='1')throw Error('Explicit live synthetic opt-in required');
 const stage=process.env.CLASSMATTER_LIVE_STAGE,report=process.env.CLASSMATTER_LIVE_REPORT;
 const model=process.env.CLASSMATTER_LIVE_MODEL||'gemini-3.1-flash-lite';
@@ -111,9 +111,9 @@ async function assertDialog(candidate,before,dialog){
  const comparison=dialog.getByRole('region',{name:'变更前后对比',exact:true});
  const hasComparison=await comparison.count();
  const target=hasComparison?comparison.getByLabel(/^(待确认的结果|已保存的结果)$/):dialog;
- const fields=await target.locator('dl>div').evaluateAll(nodes=>Object.fromEntries(nodes.map(n=>[n.querySelector('dt').textContent,n.querySelector('dd').textContent])));
+ const fields=await documentFields(target.locator('dl>div'));
  if(hasComparison){
-  const old=await comparison.getByLabel('修改前',{exact:true}).locator('dl>div').evaluateAll(nodes=>Object.fromEntries(nodes.map(n=>[n.querySelector('dt').textContent,n.querySelector('dd').textContent])));
+  const old=await documentFields(comparison.getByLabel('修改前',{exact:true}).locator('dl>div'));
   if(candidate.command==='class.update')assert.equal(old['名称'],before.context.name);
   if(candidate.command==='term.update'){assert.equal(old['名称'],before.term.name);assert.equal(old['开始日期'],before.term.start_date);assert.equal(old['结束日期'],before.term.end_date);}
   if(candidate.command==='student.update_name')assert.equal(old['名称'],before.students.find(s=>s.student_id===candidate.student_id).name);

@@ -20,3 +20,5 @@
 .document-markdown th { background: #f3f6f4; font-weight: 600; }
 .document-markdown .task-list-item { list-style-type: none; }
 .document-markdown input[type='checkbox'] { width: auto; margin-right: .4em; }
+.document-markdown .katex-display { max-width: 100%; overflow-x: auto; overflow-y: hidden; padding: .35em 0; }
+.document-markdown :not(.katex-display) > .katex { display: inline-block; max-width: 100%; overflow-x: auto; overflow-y: hidden; vertical-align: middle; padding: .15em 0; }
