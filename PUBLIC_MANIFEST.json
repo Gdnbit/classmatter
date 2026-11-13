@@ -93,7 +93,7 @@
       "sha256": "4e0a62b9bcc598e482a1adca9eeeee342c1b8c2850c882d280cd5bd87abe9969"
     },
     "apps/web/tests/durable-fault-browser.mjs": {
-      "sha256": "d323f9e69a3fe1af411b533e505475e7b117ae885adafffd3e96aad74b38a04e"
+      "sha256": "d5f3d88bde907fa62546ac1de135963f72611fd3b1b43c7ae5df620ea00f2342"
     },
     "backend/src/class_os/infrastructure/durable_local_runtime.py": {
       "sha256": "d00883e52446a6ede5f6e4094a0e8e6ec5f392327a5e86b282bbd2c3efb7ea08"
@@ -519,7 +519,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "dc63efad00ce3f2c816d5ef5f03199a794180c28e06eb9d9a142806a3a8b35b7"
+      "sha256": "c4dca27ec8898a67d943c8b56f2042067769b68c4f0762656e56c4f3d9c1f258"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3289,7 +3289,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "b463a897f71e9e5943f482c0c84535c7f71438a14a5a64f15a31acc309e66149"
+      "sha256": "9b158a6d5df940bfca4d696468f78d27a8b9eec1df0f6f9f58571fa36b5a06f3"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "bc8293bdf3ded386485335642e0cc0259a890a56149a98662f469c0e0b8f69a5"
