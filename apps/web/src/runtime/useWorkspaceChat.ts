@@ -30,6 +30,7 @@ export function useWorkspaceChat(props: Props) {
   const identity = props.enabled && props.session ? `${props.session.subject.owner_id}/${props.session.subject.workspace_id}/${props.session.csrf_token}` : ""
   const scopeRef = useRef(identity); scopeRef.current = identity
   const [readyScope, setReadyScope] = useState("")
+  const refreshRevision = useRef(0)
   const client = () => { if (!latest.current.session || !latest.current.enabled) throw new Error("请先连接当前身份"); return workspaceChatClient(latest.current.session) }
   function report(error: unknown, thread = selected.current) {
     local(thread).status = error instanceof Error ? error.message : "操作未完成"; changed()
@@ -40,10 +41,14 @@ export function useWorkspaceChat(props: Props) {
     const list = await api.listing()
     if (generation === epoch.current && serial === listingRead.current) { setListing(list); return list }
   }
-  async function refresh(thread = selected.current) {
+  async function refresh(thread = selected.current, background = false) {
     if (!identity) return null
     const generation = epoch.current, currentView = ++view.current, serial = ++listingRead.current, key = scopeRef.current, controller = new AbortController()
-    reader.current?.abort(); reader.current = controller; setFresh(false)
+    reader.current?.abort(); reader.current = controller
+    // Revalidating an already checked snapshot must not disable a button
+    // between pointer down and up. Explicit recovery still starts unavailable;
+    // failures/offline invalidate it, and proposals retain their server checks.
+    if (!background) setFresh(false)
     try {
       const api = client()
       const session = latest.current.session
@@ -51,9 +56,10 @@ export function useWorkspaceChat(props: Props) {
       const [list, saved, modelStatus] = await Promise.all([api.listing(controller.signal), thread && !local(thread).saving ? api.history(thread, controller.signal) : Promise.resolve(null), getModelStatus(session, controller.signal)])
       if (controller.signal.aborted || generation !== epoch.current || currentView !== view.current || thread !== selected.current || !navigator.onLine) return null
       if (serial === listingRead.current) setListing(list)
+      refreshRevision.current++
       setHistory(saved); setModel(modelStatus); setFresh(!local(thread).saving); setReadyScope(key)
       return saved
-    } catch (error) { if (controller.signal.aborted || generation !== epoch.current) return null; throw error }
+    } catch (error) { if (controller.signal.aborted || generation !== epoch.current) return null; setFresh(false); throw error }
   }
   const refreshRef = useRef(refresh); refreshRef.current = refresh
   async function loadView(thread: string) {
@@ -101,7 +107,7 @@ export function useWorkspaceChat(props: Props) {
   const foreground = useRef<ReturnType<typeof createQueryRefresh> | null>(null)
   useEffect(() => {
     if (!identity) return
-    const controller = createQueryRefresh({ read: async () => { await refreshRef.current() },
+    const controller = createQueryRefresh({ read: async () => { await refreshRef.current(undefined, true) },
       invalidate: () => { view.current++; reader.current?.abort(); setFresh(false); local().status = "连接已断开，恢复后请刷新对话。"; changed() },
       fail: report, available: () => navigator.onLine && document.visibilityState === "visible", idle: () => idle.current,
       now: () => performance.now(), schedule: (callback, delay) => window.setTimeout(callback, delay), cancel: timer => window.clearTimeout(timer as number) })
@@ -212,7 +218,7 @@ export function useWorkspaceChat(props: Props) {
   }
   const pendingThreads = [...threads.current.entries()].flatMap(([id, item]) => id && item.pending && !listing?.data.some(row => row.thread_id === id)
     ? [{ thread_id: id, title: item.pending.text.slice(0, 40) }] : [])
-  return { history, listing, pendingThreads, model, text, setText, working, anyWorking, listingBusy: listingLoading.current, fresh: freshScope, status, pendingSend, send, lastActive: active(last),
+  return { history, listing, pendingThreads, model, text, setText, working, anyWorking, listingBusy: listingLoading.current, fresh: freshScope, refreshRevision: refreshRevision.current, status, pendingSend, send, lastActive: active(last),
     draftKey: identity + '/' + selected.current, reasoning: state.reasoning,
     recordingFile: state.recordingFile,
     markRecording: (key: string, value: boolean) => {

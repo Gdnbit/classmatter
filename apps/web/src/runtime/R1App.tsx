@@ -887,7 +887,7 @@ export default function R1App() {
     canInteract: !!session && !busy && !form && !pending && !modelUncertain, refreshSignal: activity,
     onSelect: id => navigation.setConversation("", "", id), onSaved: navigation.adoptWorkspaceConversation,
     onBusy: setWorkspaceBusy, onDraft: setWorkspaceDraft, onError: fail,
-    onPreview: proposal => setPending({ proposal, key: crypto.randomUUID(), displayNames: proposal.displayNames }) })
+    onPreview: proposal => { setError(""); setPending({ proposal, key: crypto.randomUUID(), displayNames: proposal.displayNames }) } })
 
   const workspaceLatest = workspaceConversation.history?.turns.at(-1)
   useLayoutEffect(() => {

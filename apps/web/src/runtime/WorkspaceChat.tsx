@@ -110,7 +110,7 @@ export function WorkspaceChatComposer({ state: s, session, modelRevision, onMana
     return () => { document.removeEventListener('pointerdown', outside); document.removeEventListener('keydown', escape) }
   }, [menu])
   const imports = (files: FileList | null) => { setMenu(null); if (files) void capture.files(Array.from(files)) }
-  return <form className={`r1-composer composer-reference${dragging ? ' composer-dropping' : ''}`} data-chat-fresh={s.fresh} data-chat-working={s.working} data-chat-pending={!!s.pendingSend}
+  return <form className={`r1-composer composer-reference${dragging ? ' composer-dropping' : ''}`} data-chat-fresh={s.fresh} data-chat-refresh-revision={s.refreshRevision} data-chat-working={s.working} data-chat-pending={!!s.pendingSend}
     onDragOver={event => { if (event.dataTransfer.types.includes('Files')) { event.preventDefault(); setDragging(true) } }}
     onDragLeave={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDragging(false) }}
     onDrop={event => { event.preventDefault(); setDragging(false); imports(event.dataTransfer.files) }}
