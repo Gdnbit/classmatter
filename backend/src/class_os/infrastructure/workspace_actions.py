@@ -34,6 +34,8 @@ class WorkspaceActionCapture:
     recall_reader: Callable | None = None
     committed_record_ids: set[str] = field(default_factory=set)
     repair_requires_progress: bool = False
+    record_read_requested: bool = False
+    source_identifiers: set[str] = field(default_factory=set)
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -162,6 +164,7 @@ class WorkspaceActionCapture:
                                "source_record_id": str(row["source_record_id"]) if row["source_record_id"] else None}
                               for row in rows if not search or search in row["title"]]
                     self.task_read_scopes.add((current.class_id, current.term_id))
+                    self.source_identifiers.update(value['task_id'] for value in values[:30])
                 else:
                     rows = query.documents(*credentials, current.class_id, current.term_id)
                     values = [{"title": row["title"], "status": row["status"], "version": row["version"]} for row in rows if not search or search in row["title"]]
@@ -258,12 +261,18 @@ class WorkspaceActionCapture:
                 if current is None:
                     return missing_class
                 scope = (current.class_id, current.term_id)
+                if self.classroom_enabled and self.record_read_requested and scope not in self.record_read_scopes:
+                    return {'status': 'read-record-source-first',
+                        'instruction': 'The selected ordinary-fact source has not been successfully read in this turn. Call read_class_records for the correct class/student and use its actual result before preparing this document. Nothing was prepared or saved.'}
                 if self.classroom_enabled and scope in self.record_read_scopes and scope not in self.task_read_scopes:
                     # Receipt progress proves saves, not the current task's
                     # actual result. Keep sourced document drafts in this turn
                     # behind the existing QG read, without asking for a form.
                     return {'status': 'read-task-source-first',
                         'instruction': 'Before preparing this fact-based document, call read_class_work(kind="tasks") in this turn. Copy actual task status and result from that source; read_task_progress receipts and assistant history are not a substitute. Then prepare the document. Nothing was prepared or saved by this attempt.'}
+                if any(identifier.lower().split('-')[0] in body.lower() for identifier in self.source_identifiers):
+                    return {'status': 'readable-citations-required',
+                        'instruction': 'Keep internal record/task identifiers, including shortened prefixes, out of the document. Cite the actual student, date, fact text, task title and result in readable language. Do not change the facts or add excluded notes. Nothing was prepared or saved.'}
                 if not self.mentioned(title) or new_title and not self.mentioned(new_title):
                     return {"status": "needs-information", "question": "文档的新标题是什么？" if self.mentioned(title) else "要处理哪份文档？", "instruction": "Ask for the document title. Explain that generated prose needs review."}
                 if action == "create":
