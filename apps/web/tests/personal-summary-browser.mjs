@@ -71,7 +71,13 @@ try {
   await expect(input).toHaveValue('另一段对话的备课草稿');
   await expect(page.locator('.r1-notice')).toHaveCount(0);
   await delegatedChat.click();
-  await page.reload(); await input.waitFor();
+  // The other chat still has unsent text. This reload explicitly discards it;
+  // cancellation and continued editing are covered by the native regression.
+  const leaving = page.waitForEvent('dialog');
+  const reload = page.reload();
+  const warning = await leaving;
+  assert.equal(warning.type(), 'beforeunload');
+  await warning.accept(); await reload; await input.waitFor();
   await expect(card('创建工作文档').getByRole('region', { name: '变更前后对比', exact: true })).toHaveText(summary);
   assert.equal(new URL(page.url()).pathname, path);
   await send('以后用三条要点整理小结。');
