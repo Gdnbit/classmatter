@@ -30,11 +30,12 @@ export function ModelSwitcher({ session, state, revision, disabled, onManage, on
     } catch { setRecent([]) }
   }, [session.subject.workspace_id, current?.configuration?.model, current?.configuration?.base_url, current?.configuration?.protocol, current?.mode])
   useEffect(() => {
-    const version = ++generation.current, controller = new AbortController()
-    void getModelStatus(session, controller.signal).then(value => {
-      if (version === generation.current) setCurrent(value)
-    }).catch(error => { if (!controller.signal.aborted) onError(error) })
-    return () => { generation.current++; controller.abort() }
+    // The chat controller owns the checked model snapshot. Remounting this
+    // presentation must not dispatch a second read or report an unrelated
+    // failure. Explicit model operations still read and validate current state.
+    generation.current++
+    setPending(false)
+    return () => { generation.current++ }
   }, [session.csrf_token, revision])
   useEffect(() => {
     if (!open && !effortOpen) return
@@ -69,7 +70,7 @@ export function ModelSwitcher({ session, state, revision, disabled, onManage, on
   const adjustable = !!onReasoning && supportsReasoning(current)
   return <div className={`r1-model-picker${adjustable ? ' has-reasoning' : ''}`} ref={root}>
     <button ref={trigger} type="button" className="r1-model-trigger" aria-label="切换模型" aria-expanded={open}
-      aria-controls={title} disabled={disabled || pending} onClick={() => { setEffortOpen(false); setOpen(value => !value) }}>
+      aria-controls={title} aria-busy={!current || pending} disabled={disabled || pending || !current} onClick={() => { setEffortOpen(false); setOpen(value => !value) }}>
       <span>{pending ? "正在核对模型…" : current?.mode === "configured-api" ? current.configuration?.model : "选择模型"}</span><ChevronDown size={15} />
     </button>
     {adjustable && <button type="button" className="composer-reasoning" aria-label="思考强度" aria-expanded={effortOpen}

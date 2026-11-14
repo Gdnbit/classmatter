@@ -597,7 +597,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "5d242fa1ee7cd862c1d28fc6ab1e37874be06bbe99cf72253e41cf7d4cf61252"
+      "sha256": "a1cf1c244913510a0d66e6288b5384ecaf5dd624ce8d36947262566c513dc5c6"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2987,7 +2987,7 @@
       "sha256": "441f74bd146cc0c1e92f127705120ac4b1f2ce47efa38e1871c765929e56a062"
     },
     "apps/desktop/tests/workspace-chat-integration.cjs": {
-      "sha256": "9b2864ebefc97ce88fc7ecaf870c066df002eeedf7c4b804f9db4fa82ea0d61d"
+      "sha256": "8a3953bb01b660ef1e6a6d00747d39e9ab0b9c43f6711c41fd07bce9e717455d"
     },
     "apps/web/scripts/generate-workspace-chat.mjs": {
       "sha256": "252318368a669a6479e74e67c47187b5b5be2dd499cd668f39dff7853f099624"
@@ -3095,7 +3095,7 @@
       "sha256": "5440b56eb3b1314ac2d9dc75c38de860e35a695b3b52b2b02bf9d605098371c0"
     },
     "docs/design/workspace-chat-and-actions.md": {
-      "sha256": "1768f3676d28271a0d496c91b8fbabad89f2256531be41a09250038f0272e0ae"
+      "sha256": "14da9249377cf8ed12c89d4107452241bb15248360c89a6a215d3479b08a9f74"
     },
     "backend/src/class_os/application/local_identity.py": {
       "sha256": "79ab279f8e95ef2af257100b03da927a2da918900e337738a24c7bdf03f9b7bf"
@@ -3116,10 +3116,10 @@
       "sha256": "555c1e50a1f93fafb575cdb17a06e927c90b56f6e4789cc242847e177edd8233"
     },
     "apps/web/src/runtime/ModelSwitcher.tsx": {
-      "sha256": "1d91bbf6b45770b8b6802ecee0f5fa2b8592ef34fbc94a979978c8183db59a83"
+      "sha256": "d5a7187e1e2922393be552892ef35c186995db2b5dd5e2a6d4054e3bd7132406"
     },
     "apps/web/tests/model-switch-browser.mjs": {
-      "sha256": "4dee1a5305b4e8c6b7d336106b490c30fc475ff0a762404cbc1975cc523e7f5a"
+      "sha256": "6001f38ad21824659d8033d5faf15408980fb2f451eca3d87c4a88b073c9be96"
     },
     "apps/web/src/runtime/user-facing.ts": {
       "sha256": "95ef576de0cead717f64984cba6d8171ca18086f89ca674794fbda7396bc7899"

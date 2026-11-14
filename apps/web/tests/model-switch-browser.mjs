@@ -8,15 +8,29 @@ const browser = await chromium.launch({ headless: true, ...(process.platform ===
 let page;
 try {
   page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-  const errors = [], starts = [];
+  const errors = [], starts = [], statusReads = [];
   const external = [];
   page.on('request', r => { if (!r.url().startsWith(`${base}/`) && !r.url().startsWith('data:')) external.push(r.url()) });
   page.on('pageerror', e => errors.push(e.message));
   page.on('request', r => { if (r.method() === 'POST' && r.url().endsWith('/events')) starts.push(r.url()) });
+  page.on('request', r => { if (r.method() === 'GET' && r.url().endsWith('/agent/configuration/status')) statusReads.push(r.url()) });
   await page.goto(base);
   await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
   const input = page.getByLabel('输入消息'); await input.fill('切换期间保留的未发送草稿');
+  await page.getByRole('button', { name: '切换模型', exact: true }).waitFor();
+  await page.locator('.r1-composer[data-chat-fresh="true"]').waitFor();
+  // Settle the existing 250ms foreground-read debounce, not all page traffic.
+  await page.waitForTimeout(600);
+  const beforeRemount = statusReads.length;
+  const navigation = page.getByRole('navigation', { name: '主要工作组件', exact: true });
+  await navigation.getByRole('button', { name: '学生', exact: true }).click();
+  await navigation.getByRole('button', { name: '对话', exact: true }).click();
+  await input.waitFor();
+  await page.locator('.r1-composer[data-chat-fresh="true"]').waitFor();
+  await page.waitForTimeout(300);
+  assert.equal(statusReads.length, beforeRemount, 'Returning to chat must reuse its verified model state');
+  assert.equal(await input.inputValue(), '切换期间保留的未发送草稿');
   await page.getByRole('button', { name: '切换模型', exact: true }).click();
   const menu = page.getByRole('region', { name: '选择模型', exact: true });
   await menu.getByLabel('切换后的模型名称').fill('synthetic-switched');

@@ -12,11 +12,18 @@ const file = path.join(stage, 'runtime-source.json'), original = fs.readFileSync
 const source = JSON.parse(original); source.runtimeRoot = root; source.servicePort = port;
 const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
 let app;
+const failures = [], errors = [];
 async function launch() {
   app = await electron.launch({ executablePath: require('electron'), args: [stage, '--classmatter-development-no-password'], env });
+  app.context().on('response', response => {
+    if (response.status() >= 500) failures.push({status: response.status(), path: new URL(response.url()).pathname});
+  });
+  app.on('window', page => page.on('pageerror', error => errors.push(error.name)));
   // Private workspace connection (15s) precedes the API's bounded startup (30s).
   const page = await app.firstWindow({ timeout: 60000 });
   await page.getByLabel('输入消息').waitFor();
+  await page.getByRole('button', { name: '新对话', exact: true }).waitFor();
+  assert.deepEqual(failures, [], 'Desktop startup requests must succeed');
   assert.equal(await page.getByLabel('密码', { exact: true }).count(), 0);
   assert.equal(await page.getByRole('button', { name: '退出登录', exact: true }).count(), 0);
   assert.equal(await page.getByRole('button', { name: '进入本机开发', exact: true }).count(), 0);
@@ -63,6 +70,8 @@ async function launch() {
     console.log('PASS owned D4 Electron: grades/seating share the preserved world after full native/API restart');
   }
   console.log('PASS owned D3 Electron: passwordless original shell; persisted ordinary chat survives full API/application restart');
+  assert.deepEqual(failures, [], 'Original desktop requests must not hide server failures');
+  assert.deepEqual(errors, []);
 } finally {
   if (app) await app.close();
   fs.writeFileSync(file, original);
