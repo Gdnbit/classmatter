@@ -368,6 +368,15 @@ class QueryGateway(GatewayBase):
         # fetching a class. Existing class.context metadata audit is retained.
         return self._run((token, client, csrf, workspace_id), "class.context", lambda tx, binding, now: None)
 
+    def policy_search(self, token, client, csrf, workspace_id, question):
+        from .policy_knowledge import search_policy
+        # Same identity, native-instance and audit fences; no class selection,
+        # student access, external fetch, or business-change capability.
+        # Reuse the existing workspace-context read audit. Source provenance is
+        # carried in the answer; adding an audit action would require a migration.
+        return self._run((token, client, csrf, workspace_id), "class.context",
+                         lambda tx, binding, now: search_policy(question))
+
     def roster(self, token, client, csrf, workspace_id, class_id, term_id):
         def query(tx, binding, now):
             if type(class_id) is not UUID or type(term_id) is not UUID:

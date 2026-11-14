@@ -36,6 +36,7 @@ class WorkspaceActionCapture:
     repair_requires_progress: bool = False
     record_read_requested: bool = False
     source_identifiers: set[str] = field(default_factory=set)
+    policy_result: dict | None = None
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -298,10 +299,18 @@ class WorkspaceActionCapture:
                 return self.recall_reader(keyword)
             return await execute('recall_this_chat', read)
 
+        async def search_policy_knowledge() -> dict:
+            """Search reviewed public policy excerpts for this user's current question, without a class. Returns exact passages, sources and coverage gaps. School internal rules, individual cases and current validity are not verified. Never writes, fetches websites or assigns responsibility."""
+            def read():
+                result = query.policy_search(*credentials, self.user_messages[-1])
+                self.policy_result = result
+                return result
+            return await execute('search_policy_knowledge', read)
+
         base = (read_class_work, prepare_class_create, prepare_class_edit, prepare_term_edit, prepare_student, prepare_task, prepare_document, read_task_progress)
         if self.classroom_enabled:
             from .classroom_actions import tools
             from .activity_actions import tools as activity_tools
             activity = activity_tools(self, query, credentials, context, execute, missing_class)
-            return tuple(activity[2] if tool is prepare_task else tool for tool in base) + activity[:2] + tools(self, query, credentials, context, execute, missing_class) + (recall_this_chat,)
+            return tuple(activity[2] if tool is prepare_task else tool for tool in base) + activity[:2] + tools(self, query, credentials, context, execute, missing_class) + (recall_this_chat, search_policy_knowledge)
         return base
