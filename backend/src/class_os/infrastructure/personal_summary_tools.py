@@ -42,7 +42,7 @@ def tools(capture, query, credentials, context, execute, missing_class):
             old = SummaryDelegation.parse(row['body']) if row else SummaryDelegation()
             if row is None and action != 'enable':
                 return {'status': 'needs-information', 'question': '要先开始持续整理班级小结吗？'}
-            if required_material and required_material not in quote:
+            if required_material and required_material not in quote and required_material != old.required_material:
                 return {'status': 'needs-information', 'question': '小结还需要核对什么材料？'}
             value = SummaryDelegation('paused' if action == 'pause' else 'enabled',
                 style or old.style, old.required_material if required_material is None else required_material)

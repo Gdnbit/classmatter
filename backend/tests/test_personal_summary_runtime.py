@@ -111,6 +111,36 @@ def materials(fixture):
 
 
 @pytest.mark.db
+async def test_format_feedback_can_repeat_verified_existing_material_without_reasking(classroom_work):
+    business, query, auth, _, _, _, _, c, t, _ = classroom_work
+    chats, history, sdk, runtime, _, _ = assembly(classroom_work)
+    thread = uuid4()
+    delegated = await send(runtime, chats, history, auth, thread, '以后持续整理班级小结，需要核对班会主题。')
+    save(business, auth, delegated)
+    def feedback(messages, info):
+        return ModelResponse(parts=[ToolCallPart('prepare_summary_delegation', {
+            'quote': '以后用三条要点整理小结。', 'action': 'update',
+            'style': 'three-points', 'required_material': '班会主题'})])
+    sdk.model_factory = lambda _: FunctionModel(feedback)
+    updated = await send(runtime, chats, history, auth, thread, '以后用三条要点整理小结。')
+    assert updated['candidate'] and updated['candidate']['command'] == 'document.revise'
+    assert updated['candidate']['document_id'] == delegated['candidate']['document_id']
+    assert SummaryDelegation.parse(updated['candidate']['body']) == SummaryDelegation(style='three-points', required_material='班会主题')
+    save(business, auth, updated)
+    documents = query.documents(*auth, c, t)
+    assert len(documents) == 1 and documents[0]['version'] == 2
+    from pydantic_ai import CallDeferred
+    from class_os.infrastructure.workspace_actions import WorkspaceActionCapture
+    capture = WorkspaceActionCapture(('以后用三条要点整理小结。',), classroom_enabled=True)
+    tools = {fn.__name__: fn for fn in capture.tools(query, auth, lambda: None, lambda *a, **k: None)}
+    with pytest.raises(CallDeferred):
+        await tools['prepare_summary_delegation'](quote='以后用三条要点整理小结。', action='update',
+            style='three-points', required_material='会议地点')
+    assert capture.proposed is None and capture.clarification == '小结还需要核对什么材料？'
+    assert query.documents(*auth, c, t)[0]['version'] == 2
+
+
+@pytest.mark.db
 async def test_confirmed_standing_order_discovers_material_without_new_user_request_and_deduplicates(classroom_work):
     business, query, auth, owner, clock, _, _, c, t, _ = classroom_work
     chats, history, sdk, runtime, service, calls = assembly(classroom_work)

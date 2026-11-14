@@ -3,11 +3,12 @@ from uuid import uuid4
 from threading import Event
 
 import pytest
-from pydantic_ai import CallDeferred
-from pydantic_ai.messages import ModelResponse, ToolCallPart, ToolReturnPart
+from pydantic_ai import CallDeferred, ModelRetry
+from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart, RetryPromptPart
 from pydantic_ai.models.function import FunctionModel
 
 from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
+from class_os.application.agent import AgentRequest, Mode
 from class_os.domain.activity import CreateRecord, CreateTask, ChangeTask
 from class_os.infrastructure.agent import PydanticAgentRuntime
 from class_os.infrastructure.workspace_actions import WorkspaceActionCapture
@@ -169,3 +170,59 @@ async def test_source_read_scope_is_per_turn_and_generic_document_remains_availa
     with pytest.raises(CallDeferred):
         await fresh['prepare_document'](action='create', title='合成教案', body='课堂讨论提纲')
     assert second.proposed['body'] == '课堂讨论提纲' and not query.documents(*auth, c, t)
+
+
+@pytest.mark.db
+@pytest.mark.parametrize('partial', ['record-search', 'record-student', 'task-search'])
+async def test_filtered_results_do_not_satisfy_standing_summary_sources(classroom_work, partial):
+    _, query, auth, _, clock, _, commit, c, t, students = classroom_work
+    record = CreateRecord('record.create', uuid4(), c, t, students[0], 'ordinary_fact', clock[0], '合成学生0交来作品', '')
+    commit(record)
+    commit(CreateTask('task.create', uuid4(), c, t, '合成作品核对', None, students[0], record.record_id))
+    capture = WorkspaceActionCapture(('班会主题是合作。',), classroom_enabled=True,
+        summary_context={'class_id': c, 'term_id': t, 'style': 'standard', 'required_material': '班会主题'})
+    tools = {fn.__name__: fn for fn in capture.tools(query, auth, lambda: None, lambda *a, **k: None)}
+    arguments = {'search': '班会主题'} if partial == 'record-search' else (
+        {'student_name': '合成学生0'} if partial == 'record-student' else {})
+    await tools['read_class_records'](**arguments)
+    await tools['read_class_work'](kind='tasks', search='合成作品' if partial == 'task-search' else '')
+    result = await tools['prepare_document'](action='create', title='班级工作小结', body='老师补充：班会主题是合作。')
+    assert result['status'] == 'read-summary-sources-first' and capture.proposed is None
+    with pytest.raises(ModelRetry):
+        await tools['ask_summary_question'](question='班会主题是什么？')
+    # The existing tool path can repair its source read, without another form.
+    await tools['read_class_records']()
+    await tools['read_class_work'](kind='tasks')
+    assert capture.task_status_sources[(c, t)] == (('合成作品核对', 'not-started'),)
+    with pytest.raises(CallDeferred):
+        await tools['prepare_document'](action='create', title='班级工作小结',
+            body='合成学生0交来作品。合成作品核对：待处理。老师补充：班会主题是合作。')
+    assert capture.proposed['command'] == 'document.create'
+    assert not query.documents(*auth, c, t)
+
+
+@pytest.mark.db
+async def test_summary_quiet_decision_repairs_filtered_empty_sources_in_real_sdk(classroom_work):
+    _, query, auth, _, clock, _, commit, c, t, students = classroom_work
+    commit(CreateRecord('record.create', uuid4(), c, t, students[0], 'ordinary_fact', clock[0], '合成学生0交来作品', ''))
+    replies = iter([
+        [ToolCallPart('read_class_records', {'search': '不存在的班级标题'})],
+        [ToolCallPart('read_class_work', {'kind': 'tasks', 'search': '不存在的任务'})],
+        [TextPart('NO_SUMMARY')],
+        [ToolCallPart('read_class_records', {}), ToolCallPart('read_class_work', {'kind': 'tasks'})],
+        [TextPart('NO_SUMMARY')],
+    ])
+    seen = []
+    def respond(messages, info):
+        seen.append(messages)
+        return ModelResponse(parts=next(replies))
+    sdk = PydanticAgentRuntime(query, model_factory=lambda _: FunctionModel(respond))
+    conversation = sdk.workspace_conversation(auth)
+    capture = WorkspaceActionCapture(('检查持续小结',), classroom_enabled=True, initiative=True,
+        summary_context={'class_id': c, 'term_id': t, 'style': 'standard', 'body': '持续整理', 'required_material': ''})
+    events = [event async for event in sdk.stream(auth,
+        AgentRequest(conversation.conversation_id, '检查持续小结', Mode.CHAT), _workspace_actions=capture)]
+    assert events[-1].type == 'run.completed' and len(seen) == 5, sdk.last_failure_type
+    assert any(isinstance(part, RetryPromptPart) for message in seen[-1] for part in message.parts)
+    assert capture.summary_sources_read((c, t)) and capture.proposed is None
+    assert not query.documents(*auth, c, t)

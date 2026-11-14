@@ -9,7 +9,7 @@
       "sha256": "64aa0d9cf0e28d43c7c6934b5350f6f2a69ec1414442d0cc59da6f90ce35efd2"
     },
     "backend/src/class_os/domain/personal_summary.py": {
-      "sha256": "7d2efc3c235341962b16fb3f8591b8421775c0af76a24d66fd55c3802314d365"
+      "sha256": "b8ce48feb357f12f4896cc0d23b53dab76e346da1364c43937dce56332855d70"
     },
     "backend/src/class_os/infrastructure/personal_summary_runtime.py": {
       "sha256": "8544a07dbfb08e83faf5f4b2a9708fa4e85c45140ba825d2ea824d5ff973d818"
@@ -18,16 +18,16 @@
       "sha256": "d9a0cbde2c4251bcb72df8ff27ae24fa8f9020c18152a89fced84b955fd7f87c"
     },
     "backend/src/class_os/infrastructure/personal_summary_tools.py": {
-      "sha256": "aedc9d60d6d5f00c098c7e410cb39940c161682d3152185059f6fe68dcedfdd1"
+      "sha256": "0debbfc37ee1361cca159c814c6dfe211a5b60f36f09adc246ea3c7abbbe7cd6"
     },
     "backend/tests/test_personal_summary_live.py": {
-      "sha256": "f8b7eef4e4db995371dcdb5576aac0553be7761cca604fb613d902bf88f2a47a"
+      "sha256": "621296d34bbfc725753051770c622aaacd5bb5d2a5f6bea531dfce3e181a1aae"
     },
     "backend/tests/test_personal_summary_runtime.py": {
-      "sha256": "e869d2fefb262e8222fb093a7ab1bc473834a94900de58e60e440a6cb3ecc686"
+      "sha256": "b7f53f4d6a323307fe7fbdeb51f99d9f05b1165b647fa2cd38477acf0be8058a"
     },
     "backend/tests/test_personal_summary_values.py": {
-      "sha256": "6131e6de3f184d0975b5f7f187f2d246e5b8d57a1a4afab8b806e43f148184a9"
+      "sha256": "41d88e48aa4ae87222aab3de59638795cd448ca89d00ad8035ce74b676140d65"
     },
     "backend/tests/test_personal_summary_web.py": {
       "sha256": "2b70fde52a52430a585b1150f4742c1205aa7dab16471a934c92d1d1a312de87"
@@ -36,7 +36,7 @@
       "sha256": "d627c8e8c67af7122bc8b44d7f1d1f72bf69aac3f887f85131072fa11fb71f88"
     },
     "docs/design/personal-summary-agent.md": {
-      "sha256": "8f83b6d6aaf49098f0e97e0c6dd03b66c42599c2aa60d9f9707ce343256a572f"
+      "sha256": "b9f4d3ab58568ed8d30d9587b1589c5c116a66a4d7cc9bb58a9f5be7fd00cd52"
     },
     "third_party/licenses/python/apscheduler-3.11.3/0.txt": {
       "sha256": "6163f7987dfb38d6bc320ce2b70b2f02b862bc41126516d552ef1cd43247e758"
@@ -597,7 +597,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "a1cf1c244913510a0d66e6288b5384ecaf5dd624ce8d36947262566c513dc5c6"
+      "sha256": "65727449120418377dd6f9a1d35b4929a3e4467bfb18c07576e23497cf12630e"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1131,7 +1131,7 @@
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
     },
     "backend/src/class_os/infrastructure/agent.py": {
-      "sha256": "ceaef3b2fc4eb05af857f2a989875423eab0b5afecfcb2acacac15c25717e179"
+      "sha256": "6764d8acaba139bc3f6fa4eb6b0df435e331c3fa59d05d67bee785ef69de75d2"
     },
     "backend/src/class_os/infrastructure/agent_memory.py": {
       "sha256": "2042927005c163c2179cbf81f85ac0b3c01d57ca2b22f4d9f39199fe69f2d101"
@@ -3026,7 +3026,7 @@
       "sha256": "48d161a4fc1760d284e70b2d6ba9aba36e92e610a3d3d8c001bf832c5c3ffe2f"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "3f73d9b57d13d316be32f03ee60773a9c6315a1a0fb53acecd9b9be1b1cfac89"
+      "sha256": "587433b687cf0559e704de477c0dcd15c98335d21a7e6df4b1afcd7bddeb9063"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "71704dddb58048169ac26d190fb90c3430c6a82dc16e0e14ac1361d1b8b81c5b"
@@ -3367,7 +3367,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "e8bc7880c13f694f423e30a1f86328f05768100b328e5253331fa6f29542b67a"
+      "sha256": "9df6ddf2800096e7bc4ef7931b4d7f2d167261b5c263cab4b98bb898aa51ff47"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "bae496e88ba3625b1e243bec525fc856fd32523415d35041c969842e3ad88551"
@@ -3379,7 +3379,7 @@
       "sha256": "c429b07321ae86b33c6a802a44ff4edf5fd7896a772721095b0ec3a44a6546ba"
     },
     "backend/src/class_os/infrastructure/activity_actions.py": {
-      "sha256": "0b2423d23cd897123eeecfa7f2abdb4fcc05ed46d708caf7f8145b71f35dbf95"
+      "sha256": "ae0f3117691c9b044faadbaa783189b65eeef21a2f2467084c2572b5137ab04d"
     },
     "backend/tests/test_activity_actions_web.py": {
       "sha256": "48c4f7495a630713b387ca2af68e18e4913a97289469b538f082b313c1b9d518"
@@ -3403,7 +3403,7 @@
       "sha256": "11898bad50e3b5f48850374c5332469b00a3d537f42a8688b4f00a2dbe9cfddd"
     },
     "backend/tests/test_summary_source_reads.py": {
-      "sha256": "8521f9aa9b6292016c01d0d09dab08ca3654d393a9b5d1f59b61c6096a61e116"
+      "sha256": "294ef06329b79fc812d501a66b430efc24102cbb4e18ebc013aa573ce9d07ade"
     },
     "apps/web/tests/recording-recovery-browser.mjs": {
       "sha256": "570a466e0f030c4e52b2249937c3854b530dcd9003d12ce4108e3764592cd75d"
