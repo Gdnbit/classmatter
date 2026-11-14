@@ -1,0 +1,236 @@
+# 主动提问、到期提醒与持续推进：Agent 实现调研及 ClassMatter 接入建议
+
+> 核验日期：2026-11-14。状态：Research / Discovery；包含用户已明确提出的能力需求、上游文档事实、本地只读核验与待实验建议，四者不能互相替代。未实施调度器、后台主动消息或新业务权限；未改变冻结 R1、正式 Eval / Gate。
+>
+> 产品承载：[持续工作与注意力](../product/agent-owned-work-and-attention.md)；实验承载：[Runtime 与持续工作验收计划](2026-10-22-agent-runtime-and-work-evaluation-plan.md)。本文是本次研究证据及增量建议，不是第二套 canonical SDD。
+
+## 1. 结论与需求范围
+
+老师需要的是：系统记住未结束的事情，能做的部分继续做；关键条件不明时主动询问；临近约定时间或等待超过约定范围时提醒；得到答复后接着办理，而非要求老师重新描述全部上下文。
+
+建议保留现有 Pydantic AI、PostgreSQL、原聊天和 Attention-first 页面，分两条低风险闭环验证：
+
+1. **必要澄清 → 持久等待 → 定向答复 → 重查事实 → 继续准备原有预览。**
+2. **确认提醒条件 → 到时重查事项 → 合并提醒 → 延期或结束后停止提醒。**
+
+首先验证 DBOS 与现有部署的兼容性，Temporal 作复杂部署备选。这里的选择是 **Spike 优先级**，并未批准安装依赖、迁移运行时或确认生产可靠性。只做简单定时提醒时可比较 APScheduler，但不应把它当成完整 Agent 恢复引擎。
+
+主动能力不要求 Multi-Agent。一个受约束的 Agent 加可靠调度与持久状态，已经可以验证上述价值。自动授权任意工具、任意写库或全天反复调用模型，不属于本提案。
+
+## 2. 先区分五类“主动”
+
+| 类型 | 何时发生 | 应有结果 | 不应混淆为 |
+|---|---|---|---|
+| 澄清 | 对象不唯一、缺关键条件、陈述与命令有歧义 | 一个必要问题，保留原任务 | 批准业务修改 |
+| 预览确认 | 已得到有效候选，准备改变业务数据 | 显示真实内容与前后对比，等待确认 | 泛化的“继续”授权 |
+| 到期提醒 | 已确认时间/条件临近，事项尚未结束 | 显示事项、时间和可执行下一步 | 模型自行创造的截止日期 |
+| 等待复查 | 等待某人/某资料，到达约定检查点 | 核对新证据，再继续或提醒 | 消息发出即有人接手 |
+| 进度/失败通知 | 后台完成、需介入或有限重试已耗尽 | 留下结果、阻塞原因和最小下一步 | 每一个工具步骤都弹消息 |
+
+背景任务不等于“永远运行的模型”。等待期间应释放执行资源；只有事件或时钟满足条件时才恢复。普通时间比较、事项是否关闭等规则不需要模型调用。
+
+## 3. 主流厂家与开源方案实际做了什么
+
+以下只采用官方文档、官方项目和本地代码；不把论坛使用感受作为保证。
+
+| 方案 | 本次核验的机制 | 对 ClassMatter 的启发与限制 |
+|---|---|---|
+| OpenAI ChatGPT / Codex scheduled tasks | 定时运行、在原聊天续办或独立运行、结果入口；依赖本地文件的任务需要电脑与应用运行 | 学习消息归属和结果呈现；产品功能不等于可直接嵌入的调度库。[官方文档](https://learn.chatgpt.com/docs/automations) |
+| OpenAI Agents API scheduled automations | API 可按 cron 与时区创建/延续 session，并记录 invocation；Agent 可配置 automations 工具 | 这是可调用的托管能力，与产品定时任务及开源 SDK 分开评估；尚未验证本账号资格、费用或现有免费兼容模型可用性，不直接接入。[官方文档](https://developers.openai.com/api/docs/guides/agents-api/sessions/automations) |
+| OpenAI Responses background mode | 异步模型响应可轮询、取消 | 解决单次响应的异步生命周期；不能据此认定已有跨天业务调度和老师答复恢复。[官方文档](https://developers.openai.com/api/docs/guides/background) |
+| Anthropic Claude Agent SDK | `AskUserQuestion` 与工具审批由应用分别呈现、回传；长等待可通过 defer 与持久会话继续 | 询问内容、界面和后续执行需要应用接好，不能只输出一句问话。[官方文档](https://code.claude.com/docs/en/agent-sdk/user-input) |
+| Claude Code scheduling | 区分会话内 `/loop`、本机 Desktop 与云端 scheduled task | 是否需要电脑开机/会话打开是部署性质，不能用“支持后台”一词笼统承诺。[官方文档](https://code.claude.com/docs/en/scheduled-tasks) |
+| Google ADK long-running agents | 官方教程组合外部时钟、Runner、可恢复工具、稳定 interrupt ID 与 `RequestInput` | 借鉴“答复原暂停点”；不要把答复当成新任务启动。教程购买预算的默认示例不是我们的业务授权规则。[官方教程](https://codelabs.developers.google.com/codelabs/long-running-agents/instructions) |
+| LangGraph | `interrupt()`、持久 checkpointer、同 thread 的 resume；恢复时节点可能重跑 | 幂等是必需条件；图状态也不能替代业务事实。[官方文档](https://docs.langchain.com/oss/python/langgraph/interrupts) |
+| LangSmith Agent Server | cron 可发起独立 thread 或在既有 thread 运行；文档要求按 UTC 配置 | 这是 Server 部署能力，不能算作仅安装 MIT LangGraph 库就附带完整调度服务。[官方文档](https://docs.langchain.com/langsmith/cron-jobs) |
+| Pydantic AI | Deferred tools 可让当前运行退出，保留请求及消息历史，后续提交工具结果 | 最贴近现有代码；澄清与确认仍要由 ClassMatter 分开建模。[官方文档](https://pydantic.dev/docs/ai/tools-toolsets/deferred-tools/) |
+| OpenClaw | 独立 automation 持有时间、上下文、投递策略与历史，支持活跃时间和静默结果 | 借鉴提醒节制；当前文档已将旧 heartbeat 监控迁移为 editable jobs，不能照搬旧教程。[机制](https://docs.openclaw.ai/automation) · [时间安排](https://docs.openclaw.ai/automation/cron-jobs/schedules) · [投递](https://docs.openclaw.ai/automation/cron-jobs/delivery) |
+
+**共同模式是“可靠唤醒 + 有界 Agent 执行 + 可持久暂停点 + 明确的输出归属”。** 厂商 SDK、托管 Agent 服务、终端应用的内置功能和业务工作流，是不同层次的能力；不能仅按框架名称互相替代。
+
+特别注意：OpenClaw 官方明确记录，自动从聊天抽取 inferred commitments 的实验已移除，改用显式 automations。这个事实不能证明我们的候选抽取不可行，但提示我们必须区分“讨论中的一句话”“候选事项”和“用户确认的执行承诺”。不能把旧功能介绍当作当前可直接复用的接口。
+
+## 4. 当前项目究竟具备哪些基础
+
+只读基线 `93079f1c32da558734100f8f65d6c4c6eaba28eb`；以下是代码/依赖检查，不是新增场景测试通过记录。
+
+| 基础 | 代码位置 | 核验结果 |
+|---|---|---|
+| 普通聊天、历史及受控操作 | [workspace chat](../../backend/src/class_os/application/workspace_chat.py) · [设计](../design/workspace-chat-and-actions.md) | 可复用原会话和业务预览路径；不另建工作台 |
+| 工具缺信息时停止并提问 | [workspace actions](../../backend/src/class_os/infrastructure/workspace_actions.py) | 已用 `CallDeferred()` 处理部分 prepare 工具的缺信息、歧义、班级上下文与更正原因；不是“完全不会提问” |
+| Deferred 输出处理 | [Agent adapter](../../backend/src/class_os/infrastructure/agent.py) | 当前将一次澄清或一个候选转换为本轮答案/草稿；不能据此宣称已有持久 question ID、跨重启答复路由和后台等待服务 |
+| 已保存任务与时间 | [deadline 测试](../../backend/tests/test_chat_task_deadlines.py) | 可查询任务期限；“可读 due_at”不同于按时唤醒和实际投递 |
+| 运行、取消、回收 | [run metadata](../../backend/src/class_os/domain/conversation_worker.py) · [worker](../../backend/src/class_os/application/conversation_worker.py) | 有既有租约/运行边界可复用；不是跨天事项调度器 |
+| 底层时间语义 | [temporal](../../backend/src/class_os/domain/temporal.py) | 有 UTC、明确时区和有效区间；模块自身明确不是工作流/日历引擎 |
+
+**仍待实施/验证**：持久化待答问题与答复关联；业务事项的触发条件与下次检查点；用户可见的主动消息投递、去重和延期；重启/休眠补偿；完成或事实变更后的通知失效；长期低打扰策略。未发现相应功能的证据，不等于证明仓库不存在任何相关辅助机制；后续实施前应再次核对最新代码。
+
+另外，上一轮暴露的“已发生 vs 请求操作”仍是独立前置缺口。例如“甲和乙已经换了座位”应先核对现状和实际目标，不能直接反向交换。主动提醒也不能从“也许周五整理一下”自动生成已承诺任务。
+
+## 5. Pydantic AI：最新文档与已安装版本必须分开
+
+本地 `backend/pyproject.toml` / `uv.lock` 与虚拟环境均锁定 **pydantic-ai-slim 2.53.0**：
+
+- 可导入 `DeferredToolRequests`、`DeferredToolResults`、`ApprovalRequired`、`CallDeferred`；项目已使用其中部分能力。
+- 本地 `CallDeferred` 构造参数是可选 metadata，**没有**最新文档示例的 `kind='question'` 参数。应在应用的窄类型合同中区别问题和审批，不能直接复制该新语法。
+- 本地有 `durable_exec.dbos.DBOSDurability` 的源码，要求 Agent 在 DBOS workflow 内执行；DBOS 和 Temporal 的实际依赖均未安装。这不是可用性验收。
+- 本地未发现 `pydantic_ai.external_events` 模块，也未发现最新能力中的 `RequestInput` 定义；不能把官网当前能力登记为项目已启用能力。
+
+最新 [durable backend 文档](https://pydantic.dev/docs/ai/capabilities/durable_execution/backends/) 提供外部事件等待抽象；最新 [DBOS 集成文档](https://pydantic.dev/docs/ai/capabilities/durable_execution/dbos/) 还提醒旧 wrapper 迁移与事件重放限制。**目前先用已锁版本的 deferred 输出与后续结果机制验证最小链路；是否升级，另做兼容与恢复实验。**
+
+不将 Python 协程一直挂起、Session JSON 保存、SDK 能序列化一次请求，等同于业务等待在进程退出后仍能可靠恢复。
+
+## 6. 执行与调度组件：建议比较什么
+
+| 候选 | 能直接复用的基础 | 额外代价/边界 | 本次判断 |
+|---|---|---|---|
+| DBOS Transact Python | 数据库支持的 workflow/checkpoint、消息等待、定时执行与补偿；Pydantic 有现成 adapter | 要验证 Windows/Python/PG 兼容、生命周期、工作流版本与数据库权限；恢复不是任意副作用 exactly-once | **第一个隔离 Spike**，不是正式定案 |
+| Temporal Python SDK + Service | 持久历史、timer、Signals/Updates、Schedules、重放 | 需要额外服务及运维/版本治理；仅 SDK 不是完整 Service | 可靠性对照与更复杂部署备选 |
+| APScheduler stable | 时间触发、持久 job store、misfire 与 coalescing | 不保存 Agent 的业务暂停点；stable 文档明确 job store 不在多个 scheduler 间共享 | 仅提醒场景备选；不再自行拼出一套通用 workflow |
+| LangGraph + Agent Server | 图中断、持久恢复、服务端 cron | 新运行时及部署体系；库许可证不代表 Server、云服务全部相同条件 | 学习机制，现阶段不迁移 |
+
+一手资料：[DBOS 工作流](https://docs.dbos.dev/python/tutorials/workflow-tutorial) · [消息等待](https://docs.dbos.dev/python/tutorials/workflow-communication) · [调度及补跑](https://docs.dbos.dev/python/tutorials/scheduled-workflows) · [代码升级](https://docs.dbos.dev/python/tutorials/upgrading-workflows)；[Temporal 消息](https://docs.temporal.io/encyclopedia/workflow-message-passing) · [Schedules](https://docs.temporal.io/develop/python/workflows/schedules)；[APScheduler stable](https://apscheduler.readthedocs.io/en/stable/userguide.html)。
+
+DBOS 的已记录步骤、调度幂等键，以及 Temporal 的重放，都不能替我们证明 BCG 之外的外部发送只发生一次。DBOS 的自动回填还可能按**当前** cron 重算历史；修改频率后不能不加区分地补发旧提醒。工作流升级要保持旧执行的可恢复性，不得直接替换步骤顺序后声称自动兼容。
+
+### 维护和许可证快照
+
+2026-11-14 通过 GitHub 官方仓库 API 核验；`pushed_at` 表示仓库更新，不保证 release 稳定、维护 SLA 或生产成熟度。以下版本不是本轮安装结果。
+
+| 官方项目 | 最新非预发布 release | 发布时间（UTC） | 最近仓库更新（UTC） | 仓库 SPDX |
+|---|---|---|---|---|
+| [Pydantic AI](https://github.com/pydantic/pydantic-ai) | [v2.68.0](https://github.com/pydantic/pydantic-ai/releases/tag/v2.68.0) | 2026-11-12 | 2026-11-14 | MIT |
+| [DBOS Python](https://github.com/dbos-inc/dbos-transact-py) | [3.5.0](https://github.com/dbos-inc/dbos-transact-py/releases/tag/3.5.0) | 2026-11-10 | 2026-11-14 | MIT |
+| [Temporal Python SDK](https://github.com/temporalio/sdk-python) | [1.36.1](https://github.com/temporalio/sdk-python/releases/tag/1.36.1) | 2026-11-14 | 2026-11-14 | MIT |
+| [APScheduler](https://github.com/agronholm/apscheduler) | [3.11.3](https://github.com/agronholm/apscheduler/releases/tag/3.11.3) | 2026-06-28 | 2026-10-26 | MIT |
+
+另核验 LangGraph、Google ADK Python、OpenClaw 均未归档且 2026-11-14 有仓库更新；仓库 SPDX 分别 MIT、Apache-2.0、MIT。商用范围以最终引入版本的许可证及所用服务条款为准；例如 DBOS 文档将自动升级明确列为 Enterprise 功能，不能把整个产品视为免费开源同一范围。本轮没有引入这些依赖。
+
+## 7. 建议接入架构：复用旧边界，不另建事实世界
+
+```text
+老师对话 / 已确认业务事件 / 已确认的时间条件
+                    ↓
+既有 Task/记录 + 版本化的等待条件与触发登记（应用控制）
+                    ↓
+成熟执行引擎：时钟 / 事件 / 持久暂停 / 有界重试
+                    ↓
+检查是否仍有效 → Query Gateway 读取最新事实
+                    ↓
+必要时调用现有 Pydantic AI + 指定工具
+                    ↓
+答案 / 待答问题 / 原有 typed 业务预览 / 结果证据
+                    ↓
+原聊天 + 原事项投影；需要提醒时进入持久投递链
+                    ↓
+老师答复或确认 → 校验归属和版本 → 恢复原事项
+```
+
+- 引擎 checkpoint、租约与队列属于执行元数据；ClassMatter 正式事实仍由领域模型和现有网关管理。执行元数据的专用数据库账户不得因此取得任意业务写入权限。
+- 新的触发登记、待答问题及投递记录如需持久化，应定义窄类型命令及授权路径；业务持久变更仍经 BCG，身份生命周期仍经 ISB。调度器不能成为另一条通用写入口。
+- AI 可形成候选、检索、准备可编辑成果；既有业务修改继续显示预览，按原有确认及 BCG 回执办理。提问、提醒、继续运行都不能授予新业务写权限。
+- 不从聊天全文或 Memory 反推任务是否完成；重查真实任务/回执。Knowledge 只提供依据，不能决定教师已承担/已移交什么责任。
+- 避免双调度：选定一个运行触发的所有者；不要同时让 Electron interval、API scheduler、DBOS 和模型自行安排相同任务。
+
+## 8. 何时主动找老师，何时保持安静
+
+这些是待验证的产品策略，不是已经验证的统一时间阈值。
+
+| 条件 | 建议行为 |
+|---|---|
+| 现有事实已足够且下一步可逆、已获相应权限 | 继续，不为显而易见的细节反复提问 |
+| 一个缺失条件会影响对象、业务目标、时间或后果 | 先查已授权上下文；仍不能唯一确定时问一个紧凑的问题 |
+| 非阻塞偏好缺失，如草稿排版样式 | 使用可撤销的默认草稿，必要时允许修改；不阻塞整个任务 |
+| 确认期限临近，仍有待办且处于可提醒时段 | 提醒一次并给出下一步；无需调用模型才能说清时直接用可信模板 |
+| 已延期、已结束、源事实撤回、问题被替代 | 旧提醒/旧答复入口失效，保留历史，不继续催 |
+| 无变化、后台正常进展或短暂可恢复故障 | 不主动发新消息；记录状态，必要时有限重试 |
+| 已达到有界重试/费用上限 | 明确保留进度及待办；仅提示实际需要老师处理的阻塞 |
+| 多项低优先级变化 | 合并成可处理的摘要；不逐条打断 |
+
+不使用模型口头“置信度低于某数字”作为唯一提问开关。先按唯一对象、必填条件、事实冲突、是否改变业务结果等可检查条件判断；模型负责将真正缺少的信息问清楚。
+
+提问要绑定事项、步骤、消息和来源版本，而不是仅保存一段问句。答复必须匹配有效的待答问题；用户在另一个聊天说“是”，不能批准或回答之前所有任务。问题过期后重查，不能拿旧答案执行新版本操作。
+
+提醒键应由事项、规则版本、目标用户、提醒窗口等稳定语义组成。`已排队 → 已投递 → 已读 → 已回答 → 业务已接受 → 已完成` 是不同状态；系统通知弹出不构成老师同意，也不构成任务完成。
+
+默认仅站内给用户本人提醒。微信、家长或同事消息外发需独立通道和当次任务授权，不因“主动推进”自动打开。静默时段、稍后提醒、停止跟进应能用对话表达，不要求老师维护新的一堆设置表单。
+
+## 9. 在原界面怎样呈现
+
+保留聊天为主、原侧栏事件和“需要我处理 / 可能遗漏 / 等待别人”结构。以下是原界面内的交互候选，不是要求重做页面：
+
+- 澄清出现在原事项对应聊天，可直接回答或点必要的少量选项；后台暂停不锁住输入框或其他对话。
+- 临期提醒复用原事项入口，短句说明事项与时间，提供继续、稍后提醒等直接操作。点击回到具体事项和原上下文。
+- 主动后台结果始终归属原事项/聊天；用户在其他页面时，不抢占当前输入焦点、不改变当前聊天、不把回复插到错误对话。
+- 已确认修改继续显示真实前后对比与保存回执；提醒本身不能产生假的“已保存”状态。
+- 不展示内部 scheduler、checkpoint、token、run ID 等技术说明；开发诊断留在日志。失败只展示保留了什么、下一步做什么。
+
+本机运行有明确能力边界：后台服务仍在时可以继续；电脑休眠/关机时本机代码不会执行。下次启动应按当前状态合并补偿，不能冒称准时提醒，也不能把休眠期间每次检查全部补发。跨设备、关机仍能处理需要另行部署常驻服务，本轮不引入云资源或费用。
+
+## 10. 第一条真实闭环的合成演练
+
+全部使用虚构数据，选择非学生健康/应急情境。
+
+1. 老师说：“周五下午四点前整理班级工作小结，缺材料就问我，提前半小时提醒。”
+2. 系统先区分这是请求；解析本次本地日期和时区；若具体周五存在歧义，只问影响安排的时间条件。展示原有任务候选及准确时间，沿原确认路径保存，不让老师另填表。
+3. 系统查询既有事实与任务准备小结草稿。确实缺少老师指定的材料时，形成关联问题并暂停该步骤；已有材料不重复问。草稿不伪装成已完成或已提交。
+4. 老师切换页面、退出后再打开，问题仍在。答复后重查材料与任务版本，继续该事项，不重复建任务、不重复成果。
+5. 约定提醒窗口到来时，重查事项。尚未结束且未延期才提醒；已完成则安静跳过。老师说“改到下周一”，走原修改预览与确认，再使旧触发失效。
+6. 完成后保存符合现有合同的成果/状态证据；刷新页面显示相同结果。系统不替老师推断已向学校提交或他人已确认接收。
+
+“老师报告已发生的换座位”作为独立意图反例加入：先核实并形成同步目标，不直接调用相对交换；没有确定目标时询问或展示当前座位。请求、报告、假设、否定和引用五类都要覆盖，不能只测命令式句子。
+
+## 11. 实施顺序、验收与退出
+
+### 单元 A：必要澄清与答复续办
+
+复用原聊天存储、现有 `CallDeferred` 和 typed candidates；补充窄类型待答问题及回复归属，后台执行机制暂不扩到全部模块。
+
+**最小验收候选**：
+
+| 编号 | 场景 | 必须证明的结果 |
+|---|---|---|
+| PA-01 | 对象不唯一 | 只问必要问题，未创建/修改业务对象 |
+| PA-02 | 已有资料足够 | 不重复询问，不索取无关表单 |
+| PA-03 | 答复后继续 | 使用原事项和最新事实，产出真实预览 |
+| PA-04 | 重复答复/并发点击 | 有效步骤仅推进一次，不重复候选或业务提交 |
+| PA-05 | 两个聊天各有待答问题 | 不串答、不将“是”作用于其他事项 |
+| PA-06 | 问题等待期间重启 | 待答信息与原草稿不丢失；恢复不是重新从头建事项 |
+| PA-07 | 老师撤回/改变目标/事实已变 | 旧问题失效或重新核对，旧批准不重放 |
+| PA-08 | 陈述已发生、否定、假设、引用 | 不把这些句子一律转成执行命令 |
+
+### 单元 B：DBOS 隔离兼容性与恢复实验
+
+在独立合成数据库中验证，不接真实外发与业务写权限；下载与实验数据使用项目批准的数据盘。核对锁定 SDK 的依赖范围、DBOS 实际版本、Windows + Ubuntu、PG、应用启动/退出、备份恢复及旧工作流升级。
+
+PA-09：暂停/进程崩溃/重启恢复；PA-10：两个 worker 同时领取；PA-11：步骤完成但回执或 UI 事件丢失；PA-12：升级/回滚后旧等待可继续或明确保持阻塞。记录是否重复模型请求、工具调用、消息及成本，不把一次顺利重启当成全部可靠性证明。
+
+若兼容性/维护成本不合适，停止这一实验，保持现有运行时；以同样场景比较 Temporal 或仅提醒所需的 stable scheduler，避免被新增框架绑架。
+
+### 单元 C：原事项的提前提醒
+
+PA-13：确认时间前不误发、窗口内按实际状态提醒；PA-14：完成/取消/延期后旧提醒停止；PA-15：休眠后只补当前仍有意义的提醒；PA-16：静默/合并/稍后提醒；PA-17：模型或网络不可用时确定性提醒仍可达；PA-18：通知不可用时站内保留，未读不等于同意。
+
+### 单元 D：后台准备工作小结草稿
+
+PA-19：已有事实 → 引用 → 可编辑草稿，缺资料走单元 A；PA-20：后台完成/有限失败回到原聊天，不锁其他页面、不覆盖输入；PA-21：来源更正后重新检查，历史成果不被静默篡改；PA-22：等待期间模型调用为零、无变化检查不做无界 LLM 轮询。
+
+所有编号是**研究验收候选，尚未执行**，不冒充现有正式 Eval ID。工程故障用合成数据和可控制时钟先验证，再用获准免费 Provider 验证真实工具选择；记录首次失败、显式重试和真实结果，不用重试成功掩盖原失败。
+
+业务正确性和重复有效副作用采用零容忍断言；提醒时延记录予定时间、实际领取/投递时间与 p95，具体 SLA 在实验前固定并按运行环境分别报告。净减负比较完整闭环中的录入、提问、确认、纠错与打断次数；不把 Agent 步数增加当作效果。产品阈值须经过真实老师试用校准。
+
+### 停用与回滚
+
+新能力默认可停：停止新触发和通知投递，不删除待答问题、既有任务、聊天和回执；保留已确认预览与原人工入口。重开前重查事项、问题和授权版本。工作流代码以已记录版本恢复或排空旧运行，数据库用显式迁移，不能降级程序后假装不存在新存储。具体迁移/恢复步骤在实施单元中验证，本研究不提供未经试验的恢复保证。
+
+## 12. 仍需验证，而非再造框架
+
+1. 哪些任务值得后台准备，哪些只需到时显示？第一批优先工作小结与明确期限的普通班务任务。
+2. 老师真正希望提前多久、何时不打扰？没有证据前不默认全天每隔几分钟催促。
+3. 用户多久未答应再次提醒？按期限和约定，不能把沉默解释为同意或更高紧急程度。
+4. 哪种消息位置能在不干扰聊天的前提下被发现？在原布局做可测微调，暂不新增中心式管理页。
+5. 本机运行可接受哪些离线限制？是否存在明确的常驻服务/跨机需求，再决定部署，不先开云资源。
+6. 自动抽取多少候选会造成额外审核负担？明确需求可准备候选；闲聊/犹豫表述不得直接变成已承诺事项。
+7. 执行引擎完整生命周期、许可证、旧运行迁移、事件回放能否与已锁 SDK 同时通过？维护活跃不等于答案已确定。
+
+本轮没有启动任何主动提醒、第三方消息或付费服务；仅形成研究证据与增量实施建议。下一步最小工程单元是 **PA-01～PA-08 的必要澄清与可靠续办**，同时隔离验证执行引擎，不先建立万能 Memory、Intent、Agent 或 Workflow 平台。
