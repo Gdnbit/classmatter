@@ -313,3 +313,42 @@ def test_revision31_summary_upgrade_preserves_chat_and_rolls_back_on_failure(own
             services.close()
     finally:
         owner.close()
+
+
+@pytest.mark.db
+@pytest.mark.skipif(os.name != 'nt', reason='Actual owned Windows workspace composition')
+async def test_native_workspace_stops_personal_agent_before_closing_database(owned_upgrade, monkeypatch):
+    from class_os.infrastructure.workspace_local_runtime import compose, OwnedWorkspaceServices
+    from class_os.infrastructure.personal_summary_runtime import PersonalSummaryService
+    from class_os.interfaces.http.settings import Settings
+    current = upgrade_classroom(upgrade_workspace_chat(owned_upgrade.runtime))
+    setup = NativeSetup(current, development=True)
+    try:
+        cookies = setup.handle({'operation': 'development_access'})['cookies']
+    finally:
+        setup.close()
+    auth = cookies['session'], cookies['client'], cookies['csrf'], owned_upgrade.workspace_id
+    events = []
+    close_summary = PersonalSummaryService.close
+    close_databases = OwnedWorkspaceServices.close
+    async def stop_summary(self):
+        events.append('personal-start')
+        await close_summary(self)
+        events.append('personal-stopped')
+    def stop_databases(self):
+        events.append('databases')
+        close_databases(self)
+    monkeypatch.setattr(PersonalSummaryService, 'close', stop_summary)
+    monkeypatch.setattr(OwnedWorkspaceServices, 'close', stop_databases)
+    app = compose(Settings(), current, local_development=True)
+    personal = app.state.personal_summary
+    try:
+        async with app.router.lifespan_context(app):
+            await personal.watch(auth)
+            assert personal.scheduler.running
+        assert events == ['personal-start', 'personal-stopped', 'databases']
+        assert personal.scheduler is None and not personal.sessions and not personal.tasks
+    finally:
+        # A failing old composition must not leak a scheduler from this fixture.
+        if personal.scheduler is not None:
+            await close_summary(personal)
