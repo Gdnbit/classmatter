@@ -1,7 +1,7 @@
 """Owned synthetic profile's read-only critical guards, not a full ACL matrix."""
 from sqlalchemy import text
 
-from .schema_inventory import REGISTERED_TABLES, D1_COLUMNS, D2_COLUMNS, D3_COLUMNS, D4_COLUMNS, schema_profile
+from .schema_inventory import REGISTERED_TABLES, D1_COLUMNS, D2_COLUMNS, D3_COLUMNS, D4_COLUMNS, PERSONAL_COLUMNS, schema_profile
 
 
 ROLE_NAMES = ("class_os_migrator", "class_os_identity", "class_os_runtime")
@@ -10,11 +10,17 @@ PRIVATE_IDENTITY_TABLES = frozenset(("owner_account", "bootstrap_capability", "a
 BUSINESS_TABLES = REGISTERED_TABLES - PRIVATE_IDENTITY_TABLES - {"workspace", "database_state", "alembic_version"}
 
 
-def validate_role_guards(connection, *, profile="r1", legacy_classroom=False):
+def validate_role_guards(connection, *, profile="r1", legacy_classroom=False, prior_summary=False):
     if legacy_classroom and (profile != 'classroom-work-d4' or connection.execute(text(
             'SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0029'):
         raise ValueError('Legacy checkpoint requires exact D4 revision 0029')
+    prior_summary = prior_summary or legacy_classroom
     _, registered = schema_profile(profile)
+    if prior_summary:
+        if profile != 'classroom-work-d4' or connection.execute(text(
+                'SELECT version_num FROM class_os.alembic_version')).scalar_one() not in ('0029', '0030', '0031'):
+            raise ValueError('Exact pre-summary D4 checkpoint required')
+        registered = registered - frozenset(PERSONAL_COLUMNS)
     business = registered - PRIVATE_IDENTITY_TABLES - {"workspace", "database_state", "alembic_version"}
     def reject():
         raise RuntimeError("Database role safety guards failed")
@@ -80,6 +86,9 @@ def validate_role_guards(connection, *, profile="r1", legacy_classroom=False):
                 "workspace_chat_audit": set()}
         if profile == "classroom-work-d4":
             inventory = {**inventory, **D4_COLUMNS}
+            if not prior_summary:
+                inventory = {**inventory, **PERSONAL_COLUMNS}
+                updates['personal_summary_attempt'] = {'answer_required', 'waiting_request_id'}
             if not legacy_classroom:
                 inventory['workspace_chat_turn'] = inventory['workspace_chat_turn'] | {'change_preview'}
                 updates['workspace_chat_turn'] = updates['workspace_chat_turn'] | {'change_preview'}

@@ -47,6 +47,7 @@ class ChatThread(WireModel):
     created_at: datetime
     updated_at: datetime
     cleared_at: datetime | None
+    summary_attention: bool = False
 
 
 class ChatActionReceipt(WireModel):
@@ -74,10 +75,15 @@ class ChatTurn(WireModel):
     duration_ms: int | None = Field(strict=True, ge=0)
     action_receipt: ChatActionReceipt | None
     change_preview: ChangePreview | None = None
+    origin: Literal['user', 'personal-agent'] = 'user'
+    answer_required: bool = False
 
 
 def visible_turn(row):
-    return ChatTurn(**{key: row.get(key) for key in ChatTurn.model_fields})
+    # A newly persisted input has no receipt projection yet. Required nullable
+    # fields retain None; optional source fields retain their explicit defaults.
+    return ChatTurn(**{key: row.get(key) for key, field in ChatTurn.model_fields.items()
+                       if field.is_required() or key in row})
 
 
 class ChatListing(WireModel):
@@ -107,6 +113,11 @@ class ChatEmpty(WireModel):
     pass
 
 
+class SummaryWake(WireModel):
+    schema_version: Literal['classmatter.personal-summary-check.v1'] = 'classmatter.personal-summary-check.v1'
+    accepted: Literal[True] = True
+
+
 class ChatVersion(WireModel):
     expected_version: int = Field(strict=True, ge=1, lt=2147483647)
 
@@ -134,8 +145,14 @@ class CandidatePreview(WireModel):
     change_preview: ChangePreview | None = None
 
 
-def router(runtime, commands):
+def router(runtime, commands, personal=None):
     routes = APIRouter(prefix="/api/workspaces/{workspace_id}/workspace-chat")
+
+    if personal is not None:
+        @routes.post('/personal-summary/check', response_model=SummaryWake)
+        async def summary_check(workspace_id: UUID, request: Request, body: ChatEmpty):
+            await personal.watch(credentials(request, workspace_id, write=True))
+            return SummaryWake()
 
     @routes.get("/capabilities", response_model=ChatCapabilities)
     def capabilities(workspace_id: UUID, request: Request):
@@ -228,7 +245,13 @@ def create_workspace_chat_app(settings, *, worker, query, sdk, readiness=None, m
     business = WorkspaceChatBusinessGateway(worker.identity, worker.store, clock=worker.clock)
     history = WorkspaceChatQueryGateway(query.identity, query.store, clock=query.clock)
     runtime = WorkspaceChatRuntime(business, history, sdk)
-    app.include_router(router(runtime, worker))
+    personal = None
+    if worker.store.database.profile == 'classroom-work-d4':
+        from class_os.infrastructure.personal_summary_runtime import PersonalSummaryService
+        personal = PersonalSummaryService(runtime)
+        app.state.personal_summary = personal
+        app.router.add_event_handler('shutdown', personal.close)
+    app.include_router(router(runtime, worker, personal))
     if worker.store.database.profile == 'classroom-work-d4':
         from .classroom_work import router as classroom_router
         app.include_router(classroom_router(worker, query))

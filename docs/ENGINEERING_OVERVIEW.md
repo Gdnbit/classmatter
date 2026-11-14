@@ -22,6 +22,8 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 ## 当前技术与限制
 
+2026-11-14 后续 D4 的 [Personal Agent 小结切片](design/personal-summary-agent.md)复用原聊天、普通事实/任务、Pydantic AI 和文档预览/确认，仅新增固定委托与主动执行关联；当前 D4 目标为0032，旧实例须先核验0031 checkpoint 后显式升级。`domain/personal_summary.py`封闭委托格式，`personal_summary_tools.py`准备委托/读取偏好，`personal_summary_store.py`通过原QG/BCG保存来源与问题关联，`personal_summary_runtime.py`用APScheduler唤醒原SDK。它不提供通用自动任务、Agent提交或Memory写入，R1/D1/D2/D3及正式Gate不变；实际验收见实施台账。
+
 `apps/desktop/` 是Electron独立Windows宿主。当前候选开发入口默认连接显式升级后的自有D3实例并托管已有API子进程，先验证进程proof/readiness，再开放该loopback同源；按用户要求免输密码，普通API仍经ISB/QG/BCG。不会在启动时初始化、迁移、清空或接管实例。原离线资源协议构建保留为显式fixture回归。运行入口及升级步骤以[桌面说明](../apps/desktop/README.md)为准；[早期桌面设计](desktop-demo.md)记录原离线宿主。候选分支不代表完整原型、正式R1或发行准入。
 
 2026-10-22 W2-01新增独立的源码开发runtime入口，复用已有R1页面和后端，托管固定自有API进程，先验证每次启动的进程proof与readiness，再开放该loopback同源。它不改变离线Demo、不初始化/迁移/启动用户数据库、不代设owner；不是全部冻结Demo页面绑定完成。临时SCRAM数据库+真实Electron已验证事实/任务经原BCG持久化及应用重启后复用，Agent fake只读/草稿不自动写入；正式发布、真实模型、完整退出仍未完成。代码与剩余项见[实现台账](implementation-ledger.md)。

@@ -138,6 +138,11 @@
             }
           ],
           "title": "Cleared At"
+        },
+        "summary_attention": {
+          "default": false,
+          "title": "Summary Attention",
+          "type": "boolean"
         }
       },
       "required": [
@@ -374,6 +379,20 @@
             }
           ],
           "default": null
+        },
+        "origin": {
+          "default": "user",
+          "enum": [
+            "user",
+            "personal-agent"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "answer_required": {
+          "default": false,
+          "title": "Answer Required",
+          "type": "boolean"
         }
       },
       "required": [

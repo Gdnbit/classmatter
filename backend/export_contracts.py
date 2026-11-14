@@ -26,7 +26,7 @@ from class_os.interfaces.http.documents import (DocumentCreate, DocumentRevise, 
 from class_os.interfaces.http.workbench import WorkbenchCapabilities, WorkbenchAuditResponse
 from class_os.interfaces.http.classroom_work import ClassroomCapabilities, ExamListing, ExamResults, SeatingResponse, ClassroomPreview
 from class_os.interfaces.http.workspace_chat import (ChatCapabilities, ChatListing, ChatHistory, ChatSend, ChatTurnResponse,
-    ChatVersion, ChatClear, ChatThreadResponse, CandidatePreviewBody, CandidatePreview)
+    ChatVersion, ChatClear, ChatThreadResponse, CandidatePreviewBody, CandidatePreview, SummaryWake)
 from class_os.interfaces.http.composer import CaptureInput, CaptureOutput
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
@@ -86,6 +86,7 @@ def main():
             root.mkdir(parents=True, exist_ok=True)
             target.write_text(content, encoding="utf-8", newline="\n")
     for name, model in [("workspace-chat-capabilities.v1", ChatCapabilities), ("workspace-chat-list.v1", ChatListing),
+                        ('personal-summary-check.v1', SummaryWake),
                         ("workspace-chat-history.v1", ChatHistory), ("workspace-chat-send.v1", ChatSend),
                         ("workspace-chat-turn.v1", ChatTurnResponse), ("workspace-chat-version.v1", ChatVersion),
                         ("workspace-chat-clear.v1", ChatClear), ("workspace-chat-thread.v1", ChatThreadResponse),

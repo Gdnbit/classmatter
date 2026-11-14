@@ -5,7 +5,7 @@ import { createQueryRefresh } from "./query-refresh"
 import { getModelStatus, type ModelStatus } from "./model-configuration"
 import { supportsReasoning, type Reasoning } from './composer-capture'
 
-type Props = { enabled: boolean; session: Session | null; threadId: string; canInteract: boolean; refreshSignal: unknown;
+type Props = { enabled: boolean; personalEnabled?: boolean; session: Session | null; threadId: string; canInteract: boolean; refreshSignal: unknown;
   onSelect: (id: string) => void; onSaved: (id: string) => void; onBusy: (busy: boolean) => void; onDraft: (dirty: boolean) => void; onError: (error: unknown) => void; onPreview: (preview: ChatPreview) => void }
 const active = (turn?: ChatTurn) => !!turn && (turn.state === "queued" || turn.state === "running")
 type LocalThread = { text: string; reasoning: Reasoning; editVersion: number; busy: boolean; saving: boolean; status: string; recordingFile: File | null; recordingActive: boolean; pending: {thread: string; request: string; text: string; editVersion: number} | null; stream: AbortController | null }
@@ -118,6 +118,23 @@ export function useWorkspaceChat(props: Props) {
     return () => { controller.dispose(); foreground.current = null; window.removeEventListener("offline", offline); window.removeEventListener("online", reload); window.removeEventListener("focus", reload); document.removeEventListener("visibilitychange", visibility) }
   }, [identity])
   useEffect(() => { foreground.current?.request() }, [props.refreshSignal])
+  useEffect(() => {
+    if (!identity || !props.personalEnabled) return
+    const controller = new AbortController()
+    // The POST only registers a live session/checks an already confirmed
+    // standing instruction. The server owns scheduling, dedup and SDK calls.
+    void client().checkSummaries(controller.signal).catch(error => {
+      if (!controller.signal.aborted && error instanceof ApiError && error.status === 401) report(error)
+    })
+    return () => controller.abort()
+  }, [identity, props.personalEnabled, props.refreshSignal])
+  useEffect(() => {
+    if (!identity || !props.personalEnabled) return
+    // Reading background results never dispatches a model, adopts a thread,
+    // clears local drafts, or changes the user's active page.
+    const timer = window.setInterval(() => foreground.current?.request(), 8000)
+    return () => window.clearInterval(timer)
+  }, [identity, props.personalEnabled])
   useEffect(() => { foreground.current?.resume() })
   async function operate(action: (generation: number, thread: string, api: ReturnType<typeof workspaceChatClient>, state: LocalThread) => Promise<void>, thread = selected.current) {
     const state = local(thread)
@@ -250,7 +267,8 @@ export function useWorkspaceChat(props: Props) {
     },
     retryFailed: (turn: ChatTurn) => {
       if (turn.request_id === history?.turns.at(-1)?.request_id && turn.state === 'failed'
-          && turn.user_text && !turn.candidate && !turn.action_receipt) return send(turn.user_text, turn)
+          && turn.user_text && !turn.candidate && !turn.action_receipt)
+        return turn.origin === 'personal-agent' ? send('继续整理班级工作小结。') : send(turn.user_text, turn)
     },
     select: (thread: string) => latest.current.onSelect(thread),
     newChat: () => latest.current.onSelect(""),

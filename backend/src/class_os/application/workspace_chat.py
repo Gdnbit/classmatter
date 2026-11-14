@@ -15,9 +15,18 @@ class WorkspaceChatBusinessGateway(BusinessGateway):
         return self._run(credentials, "workspace.chat.claim",
             lambda tx, binding, now: tx.chat_claim(binding, thread_id, request_id, now), resource_id=thread_id)
 
-    def finish(self, credentials, ticket, state, answer=None, candidate=None, *, duration_ms=None, input_tokens=None, output_tokens=None):
+    def finish(self, credentials, ticket, state, answer=None, candidate=None, *, duration_ms=None, input_tokens=None, output_tokens=None, answer_required=False, summary_document_id=None):
+        def finish(tx, binding, now):
+            extras = {'answer_required': answer_required, 'summary_document_id': summary_document_id} if self.store.database.profile == 'classroom-work-d4' else {}
+            return tx.chat_finish(binding, ticket, state, answer, candidate, now, duration_ms, input_tokens, output_tokens, **extras)
         return self._run(credentials, "workspace.chat.finish",
-            lambda tx, binding, now: tx.chat_finish(binding, ticket, state, answer, candidate, now, duration_ms, input_tokens, output_tokens), resource_id=ticket["thread_id"])
+            finish, resource_id=ticket["thread_id"])
+
+    def summary_claim(self, credentials, document_id):
+        if self.store.database.profile != 'classroom-work-d4':
+            raise CommandRejected()
+        return self._run(credentials, 'workspace.chat.send',
+            lambda tx, binding, now: tx.summary_claim(binding, document_id, now), resource_id=document_id)
 
     def cancel(self, credentials, thread_id, request_id, expected_version):
         return self._run(credentials, "workspace.chat.cancel",
@@ -31,6 +40,17 @@ class WorkspaceChatBusinessGateway(BusinessGateway):
 
 
 class WorkspaceChatQueryGateway(QueryGateway):
+    def summary_programs(self, credentials):
+        if self.store.database.profile != 'classroom-work-d4':
+            raise CommandRejected()
+        return self._run(credentials, 'workspace.chat.read', lambda tx, binding, now: tx.summary_programs(binding))
+
+    def summary_context(self, credentials, thread_id, request_id):
+        if self.store.database.profile != 'classroom-work-d4':
+            return None
+        return self._run(credentials, 'workspace.chat.read',
+            lambda tx, binding, now: tx.summary_context(binding, thread_id, request_id), resource_id=thread_id)
+
     def turn(self, credentials, thread_id, request_id):
         return self._run(credentials, "workspace.chat.read",
             lambda tx, binding, now: tx.chat_turn_view(binding, thread_id, request_id), resource_id=thread_id)

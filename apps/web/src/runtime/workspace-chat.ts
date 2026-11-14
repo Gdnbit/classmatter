@@ -19,11 +19,12 @@ export type ChatCandidate =
   | (Scope & { command: "task.update" | "task.complete" | "task.cancel"; task_id: string; expected_version: number; status: string; evidence: string; title?: string | null; due_at?: string | null; change_due_date?: boolean })
   | (Scope & { command: "document.create"; document_id: string; title: string; body: string; format: "plain-text" | "markdown" })
   | (Scope & { command: "document.revise"; document_id: string; expected_version: number; title: string; body: string; format: "plain-text" | "markdown" })
-export type ChatThread = { thread_id: string; title: string; status: "active" | "archived" | "cleared"; version: number; created_at: string; updated_at: string; cleared_at: string | null }
+export type ChatThread = { thread_id: string; title: string; status: "active" | "archived" | "cleared"; version: number; created_at: string; updated_at: string; cleared_at: string | null; summary_attention?: boolean }
 export type ChatTurn = { turn_id: string; request_id: string; ordinal: number; state: "queued" | "running" | "completed" | "failed" | "cancelled" | "unknown"; version: number;
   user_text: string | null; assistant_text: string | null; candidate: ChatCandidate | null; candidate_hash: string | null;
   created_at: string; started_at: string | null; lease_until: string | null; ended_at: string | null; input_tokens: number | null; output_tokens: number | null; duration_ms: number | null;
-  action_receipt: { receipt_id: string; resource_id: string; version: number } | null; change_preview: ChangePreview | null }
+  action_receipt: { receipt_id: string; resource_id: string; version: number } | null; change_preview: ChangePreview | null;
+  origin?: 'user' | 'personal-agent'; answer_required?: boolean }
 export type ChatListing = { schema_version: "classmatter.workspace-chat-list.v1"; data: ChatThread[]; next_offset: number | null }
 export type ChatHistory = { schema_version: "classmatter.workspace-chat-history.v1"; thread: ChatThread; turns: ChatTurn[]; next_before: number | null }
 export type ChatPreview = { schema_version: "classmatter.workspace-chat-preview.v1"; proposal_id: string; payload_hash: string; risk: "W1" | "W2"; expires_at: string; payload: ChatCandidate; change_preview: ChangePreview | null; displayNames?: Record<string, string> }
@@ -58,7 +59,7 @@ function checkComparison(preview: ChangePreview | null | undefined, candidate: C
     if (positions.size !== board.rows * board.columns) throw new Error('座位预览不完整')
   }
 }
-type Schema = "capabilities" | "listing" | "history" | "send" | "turn" | "version" | "clear" | "thread" | "previewBody" | "preview"
+type Schema = "capabilities" | "listing" | "history" | "send" | "turn" | "version" | "clear" | "thread" | "previewBody" | "preview" | 'summaryWake'
 function decode<T>(schema: Schema, data: unknown): T {
   const validate = validators[schema], valid = validate(data); validate.errors = null
   if (!valid) throw new Error("聊天响应契约不匹配；未回退到演示数据。")
@@ -88,6 +89,7 @@ export async function workspaceChatAvailable(session: Session, signal?: AbortSig
 export function workspaceChatClient(session: Session) {
   const root = `${workspace(session)}/workspace-chat`, thread = (value: string) => `${root}/threads/${id(value)}`
   return {
+    checkSummaries: (signal?: AbortSignal) => json<{ schema_version: 'classmatter.personal-summary-check.v1'; accepted: true }>('summaryWake', `${root}/personal-summary/check`, session, {}, signal),
     listing: (signal?: AbortSignal, offset = 0) => json<ChatListing>("listing", `${root}/threads${offset ? `/pages/${offset}` : ""}`, session, undefined, signal),
     history: async (threadId: string, signal?: AbortSignal, before?: number) => {
       const result = await json<ChatHistory>("history", thread(threadId) + (before ? `/before/${before}` : ""), session, undefined, signal)

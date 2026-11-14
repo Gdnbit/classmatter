@@ -37,6 +37,8 @@ class WorkspaceActionCapture:
     record_read_requested: bool = False
     source_identifiers: set[str] = field(default_factory=set)
     policy_result: dict | None = None
+    summary_context: dict | None = None
+    initiative: bool = False
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -54,6 +56,18 @@ class WorkspaceActionCapture:
     def propose(self, command):
         payload = command.canonical()
         candidate(payload)
+        if self.initiative:
+            from class_os.domain.personal_summary import SUMMARY_TITLE
+            scope = self.summary_context
+            if (scope is None or type(command) not in (CreateDocument, ReviseDocument)
+                    or command.title != SUMMARY_TITLE or command.class_id != scope['class_id']
+                    or command.term_id != scope['term_id']):
+                raise ModelRetry('The standing instruction only permits a work-summary draft in its own class. No other change was prepared.')
+            scope_key = (scope['class_id'], scope['term_id'])
+            if scope_key not in self.record_read_scopes or scope_key not in self.task_read_scopes:
+                raise ModelRetry('Read current ordinary facts and tasks in this run before preparing a proactive summary.')
+            if scope['style'] == 'three-points' and len(re.findall(r'^[-*+]\s+\S', command.body, re.MULTILINE)) != 3:
+                raise ModelRetry('The confirmed long-term format requires exactly three top-level bullets. Keep the same facts, without inventing filler.')
         if self.proposed is not None:
             raise ValueError("Only one business candidate per turn")
         self.proposed = payload
@@ -95,6 +109,9 @@ class WorkspaceActionCapture:
 
         def context():
             rows = [SimpleNamespace(**row) for row in query.history(*credentials) if row['status'] == 'active']
+            if self.initiative and self.summary_context is not None:
+                return next((row for row in rows if row.class_id == self.summary_context['class_id']
+                    and row.term_id == self.summary_context['term_id']), None)
             value = rows[0] if len(rows) == 1 else None
             if len(rows) > 1:
                 for message in reversed(self.user_messages):
@@ -104,6 +121,11 @@ class WorkspaceActionCapture:
                         selected = narrowed or matches
                         value = selected[0] if len(selected) == 1 else None
                         break
+            if value is None and self.summary_context is not None:
+                # A direct answer to this chat's pending question can retain
+                # its class without asking the teacher to select it again.
+                value = next((row for row in rows if row.class_id == self.summary_context['class_id']
+                    and row.term_id == self.summary_context['term_id']), None)
             if value is None:
                 return None
             self.reads.append("current-class")
@@ -158,6 +180,7 @@ class WorkspaceActionCapture:
                     rows = query.roster(*credentials, current.class_id, current.term_id)
                     values = [{"name": row.name, "version": row.version} for row in rows if not search or search in row.name]
                 elif kind == "tasks":
+                    limit = 100 if self.summary_context else 30
                     rows = query.projection(*credentials, current.class_id, current.term_id)["tasks"]
                     values = [{"title": row["title"], "status": row["status"], "version": row["version"],
                                "due_at": row["due_at"].isoformat() if row["due_at"] is not None else None,
@@ -165,7 +188,7 @@ class WorkspaceActionCapture:
                                "source_record_id": str(row["source_record_id"]) if row["source_record_id"] else None}
                               for row in rows if not search or search in row["title"]]
                     self.task_read_scopes.add((current.class_id, current.term_id))
-                    self.source_identifiers.update(value['task_id'] for value in values[:30])
+                    self.source_identifiers.update(value['task_id'] for value in values[:limit])
                 else:
                     rows = query.documents(*credentials, current.class_id, current.term_id)
                     values = [{"title": row["title"], "status": row["status"], "version": row["version"]} for row in rows if not search or search in row["title"]]
@@ -175,7 +198,8 @@ class WorkspaceActionCapture:
                         if len(document["body"]) <= 10000:
                             self.document_reads.add(document["document_id"])
                         return {"class_name": current.name, "items": values[:30], "current_body": document["body"][:10000], "body_truncated": len(document["body"]) > 10000}
-                return {"class_name": current.name, "items": values[:30], "truncated": len(values) > 30}
+                limit = 100 if self.summary_context and kind == 'tasks' else 30
+                return {"class_name": current.name, "items": values[:limit], "truncated": len(values) > limit}
             return await execute("read_class_work", read)
 
         async def prepare_class_create(name: str, term_name: str, start_date: str, end_date: str) -> dict:
@@ -274,7 +298,9 @@ class WorkspaceActionCapture:
                 if any(identifier.lower().split('-')[0] in body.lower() for identifier in self.source_identifiers):
                     return {'status': 'readable-citations-required',
                         'instruction': 'Keep internal record/task identifiers, including shortened prefixes, out of the document. Cite the actual student, date, fact text, task title and result in readable language. Do not change the facts or add excluded notes. Nothing was prepared or saved.'}
-                if not self.mentioned(title) or new_title and not self.mentioned(new_title):
+                from class_os.domain.personal_summary import SUMMARY_TITLE
+                summary_title = bool(self.summary_context and title == SUMMARY_TITLE and not new_title)
+                if not summary_title and (not self.mentioned(title) or new_title and not self.mentioned(new_title)):
                     return {"status": "needs-information", "question": "文档的新标题是什么？" if self.mentioned(title) else "要处理哪份文档？", "instruction": "Ask for the document title. Explain that generated prose needs review."}
                 if action == "create":
                     if any(row["title"] == title for row in query.documents(*credentials, current.class_id, current.term_id)):
@@ -312,5 +338,20 @@ class WorkspaceActionCapture:
             from .classroom_actions import tools
             from .activity_actions import tools as activity_tools
             activity = activity_tools(self, query, credentials, context, execute, missing_class)
-            return tuple(activity[2] if tool is prepare_task else tool for tool in base) + activity[:2] + tools(self, query, credentials, context, execute, missing_class) + (recall_this_chat, search_policy_knowledge)
+            from .personal_summary_tools import tools as summary_tools
+            async def ask_summary_question(question: str) -> dict:
+                """Only ask about the standing summary instruction's explicitly required material after reading current facts and tasks. Pause with one short question. Never invent a missing requirement or modify a task."""
+                def validate():
+                    scope = self.summary_context
+                    if not scope or not scope['required_material'] or scope['required_material'] not in question or len(question) > 240:
+                        raise ModelRetry('Ask only for the explicit required material; otherwise prepare the sourced draft or report that nothing useful changed.')
+                    if (scope['class_id'], scope['term_id']) not in self.record_read_scopes or (scope['class_id'], scope['term_id']) not in self.task_read_scopes:
+                        raise ModelRetry('Read current ordinary facts and tasks before asking for missing material.')
+                    return {'status': 'waiting-for-summary-material'}
+                await execute('ask_summary_question', validate)
+                self.clarification = question
+                raise CallDeferred()
+            return (tuple(activity[2] if tool is prepare_task else tool for tool in base) + activity[:2]
+                + tools(self, query, credentials, context, execute, missing_class) + (recall_this_chat, search_policy_knowledge)
+                + summary_tools(self, query, credentials, context, execute, missing_class) + (ask_summary_question,))
         return base

@@ -3,6 +3,8 @@
 > **状态：Discovery / Future · 开放讨论中 · 非 R1 需求或实施授权。**
 > 日期：2026-10-23。本文记录产品方向、可反证假设、候选机制和待决策问题；不代表已建立用户画像功能、持续记忆、自动学习、自动发消息或真实学生数据准入。
 > 原则：仅使用虚构场景，不引用私人聊天、真实教师/学生/家长信息及未授权企业材料。
+>
+> 2026-11-14 实施增量：[持续小结委托](../design/personal-summary-agent.md)仅承载老师明确确认的启停、格式和待核对材料；通过现有文档版本与原确认保存。它不是完整人物画像或通用 Memory，没有从一次修改暗中学习永久偏好，也没有自动生成/安装 Skill。
 
 关联：[Agent 持续工作研究](agent-owned-work-and-attention.md) · [长期需求](../specs/class-os-v1/long-term-requirements.md) · [ADR-009 Context/Memory/Fact](../specs/class-os-v1/architecture-decision.md) · [Runtime 与持续工作实验](../research/2026-10-22-agent-runtime-and-work-evaluation-plan.md)。
 

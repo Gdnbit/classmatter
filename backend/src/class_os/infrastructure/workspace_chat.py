@@ -115,11 +115,14 @@ class WorkspaceChatTransaction(WorkbenchTransaction):
         keyword = keyword.strip()
         # Search original user notes, not assistant claims or candidate JSON.
         # Failed replies do not invalidate the user's persisted input.
+        initiative_filter = (''' AND NOT EXISTS(SELECT 1 FROM class_os.personal_summary_attempt p
+            WHERE p.workspace_id=workspace_chat_turn.workspace_id AND p.thread_id=workspace_chat_turn.thread_id
+              AND p.request_id=workspace_chat_turn.request_id) ''' if self._store.database.profile == 'classroom-work-d4' else '')
         rows = self._connection.execute(text("""SELECT ordinal,created_at,user_text,input_hash
             FROM class_os.workspace_chat_turn
             WHERE workspace_id=:workspace_id AND thread_id=:thread AND ordinal<:before
               AND state IN ('completed','failed','cancelled','unknown')
-              AND strpos(user_text,:keyword)>0 ORDER BY ordinal DESC LIMIT 6"""),
+              AND strpos(user_text,:keyword)>0 """ + initiative_filter + " ORDER BY ordinal DESC LIMIT 6"),
             {**binding, 'thread': thread_id, 'before': before, 'keyword': keyword}).mappings().all()
         items = []
         for row in rows[:5]:

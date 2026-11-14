@@ -43,13 +43,14 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 return {'status': 'needs-disambiguation', 'question': '没有找到唯一的学生，请确认姓名。'}
             names = {row.student_id: row.name for row in query.roster(*credentials, current.class_id, current.term_id)}
             rows = [row for row in records(current, student.student_id if student else None) if not search or search in row['fact_text']]
+            limit = 100 if capture.summary_context else 30
             result = {'class_name': current.name, 'items': [
                 {'record_id': str(row['record_id']), 'version': row['version'], 'student': names.get(row['student_id'], '历史学生'),
-                 'fact_text': row['fact_text'], 'occurred_at': row['occurred_at'].isoformat()} for row in rows[:30]],
-                'truncated': len(rows) > 30, 'scope': 'ordinary-facts-only',
+                 'fact_text': row['fact_text'], 'occurred_at': row['occurred_at'].isoformat()} for row in rows[:limit]],
+                'truncated': len(rows) > limit, 'scope': 'ordinary-facts-only',
                 'instruction': 'Cite the returned student, fact and date in readable language. Retain source IDs/versions for verification; do not display internal IDs. Report scope and missing data honestly.'}
             capture.record_read_scopes.add((current.class_id, current.term_id))
-            capture.source_identifiers.update(str(row['record_id']) for row in rows[:30])
+            capture.source_identifiers.update(str(row['record_id']) for row in rows[:limit])
             return result
         return await execute('read_class_records', read)
 
