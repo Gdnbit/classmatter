@@ -498,7 +498,7 @@
       "sha256": "d91aef443a3865ba724990f2f9536fa1f76ec3e447703fb4e6819a49d4d63e01"
     },
     "docs/product/2026-10-23-personal-working-profile-and-adaptive-agent.md": {
-      "sha256": "3df8e2b910093672e8a994fd0d6f2da93971cf06f3b7040f1a5c7b1ce07c7e2a"
+      "sha256": "bf747ced4c68b3e5571b7754251b0e99eeb79c7f6d2da7cf70d83787714907d6"
     },
     "docs/research/2026-10-23-teacher-tools-and-policy-intelligence-agent.md": {
       "sha256": "a04672039103d12facaac8f4a880fc0724edf00e04b3085b380d0fe19eaaaada"
@@ -2666,7 +2666,7 @@
       "sha256": "f8a9cc9012ad8909a541d1c04f5fa008e148b7c4c4c92b5215e50b6ff38796bc"
     },
     "docs/product/agent-owned-work-and-attention.md": {
-      "sha256": "a0a03ad194f5307ac61a467ff856cb8a47fac3f3760caca6f026681cf9ef8479"
+      "sha256": "ebb2d7e8d943df7956e94fc432ae4e0246313fdddb8b1950761c8dda5e50cc55"
     },
     "docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md": {
       "sha256": "e047cf517a7b25f53c836b0472d03c5bb7d5444a41530f00f7bef2d0e9c0d2a4"
@@ -3400,7 +3400,7 @@
       "sha256": "3e8bbd56a73a7a1f9f98508012082831374468fb342dec55eed1756f3889b19a"
     },
     "docs/research/2026-11-14-proactive-agent-clarification-and-followup.md": {
-      "sha256": "e8df0e48dd5d699a0580015f3cab6668203166a2fb0296d170e3bc493d82e684"
+      "sha256": "6b2a10b546fcdd226bb0895380440e3c409eba2869afef0dac15c66b13ddf0e0"
     }
   }
 }
