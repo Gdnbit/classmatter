@@ -91,6 +91,14 @@ def search_policy(question):
         stages.add('幼儿园')
     if '初一' in value or '初二' in value or '初三' in value:
         stages.add('初中')
+    for stage, aliases in (
+        ('高中', ('高一', '高二', '高三', '普高')),
+        ('中职', ('职高', '中专')),
+        ('大学', ('高职', '高校', '大专', '本科')),
+        ('幼儿园', ('学前',)),
+    ):
+        if any(alias in value for alias in aliases):
+            stages.add(stage)
     ranked, excluded = [], []
     # Geography is an applicability condition, never a similarity score.
     other_region = any(place in value for place in ('广东', '广州', '深圳', '北京', '上海', '湖北', '武汉',

@@ -44,6 +44,10 @@ def test_search_locates_reviewed_passage_with_precise_source(question, expected)
     '湖南岳阳小学的课后服务要求是什么？',
     '宁乡公办小学办公室报销标准是多少？',
     '宁乡中职能按长沙义务教育课后服务办法安排晚自习吗？',
+    '宁乡高一晚自习能纳入课后服务吗？',
+    '宁乡职高课后服务规定是什么？',
+    '宁乡高职课后服务规定是什么？',
+    '宁乡学前课后服务规定是什么？',
 ])
 def test_missing_school_rules_and_out_of_scope_never_get_false_basis(question):
     result = search_policy(question)

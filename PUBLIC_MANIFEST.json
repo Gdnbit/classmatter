@@ -555,7 +555,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "ad4ba90c95788a42119b73eb78800332b87cca9e4a8fb2b362527b40afa4f9f4"
+      "sha256": "a5a51b41a083247ccae3282869b9d85a8b48a2d10ae2ba8b3190c76d09a736ed"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3388,10 +3388,10 @@
       "sha256": "333c48949fb1611964db9fd90a753c020aca7f6f2180b66f4f43d8c0d65afcb0"
     },
     "backend/src/class_os/application/policy_knowledge.py": {
-      "sha256": "24cb0d904e042968d0a2facb45811672d882d60225e9d9b6aebe7b2ef049d84f"
+      "sha256": "2afcda9240e8626df78fa13bdb453922336eee5a010a6bd6f2fc1ae3dfe47b31"
     },
     "backend/tests/test_policy_knowledge.py": {
-      "sha256": "47032e0755c4392c4ffc98524d4fae80cacf8868ef25b80a75838f82779df83d"
+      "sha256": "0129b96f5afb32859721d6e981f862b5c4e6e1436f87055bf7763dd32c001198"
     },
     "backend/tests/test_policy_knowledge_live.py": {
       "sha256": "ee751460eb7674154042493d071a44a3fb7f0f3d0acf7f18bb0b7683fd6e2dd6"
