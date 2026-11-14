@@ -144,7 +144,20 @@ try {
   assert.equal(cancels.length, 1); assert(cancels[0].includes(b.split('/').at(-1)));
   await select('会话甲'); await answer('等待甲').waitFor();
   await select('会话乙'); assert.equal(await answer('等待乙').count(), 0);
-  await page.reload(); await input.waitFor();
+  const cancelledLeave = page.waitForEvent('dialog');
+  // We expect no navigation after cancellation, so do not wait for a load.
+  const cancelledReload = page.evaluate(() => window.location.reload());
+  const cancelWarning = await cancelledLeave;
+  assert.equal(cancelWarning.type(), 'beforeunload');
+  await cancelWarning.dismiss(); await cancelledReload;
+  await select('会话甲');
+  assert.equal(await input.inputValue(), '甲等待期间的下一条草稿');
+  await select('会话乙');
+  const approvedLeave = page.waitForEvent('dialog');
+  const approvedReload = page.reload();
+  const discardWarning = await approvedLeave;
+  assert.equal(discardWarning.type(), 'beforeunload');
+  await discardWarning.accept(); await approvedReload; await input.waitFor();
   assert.equal(starts.length, 7);
   await select('会话甲'); await answer('等待甲').waitFor();
   assert.equal(starts.length, 7);

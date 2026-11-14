@@ -4,6 +4,8 @@ Windows x64，版本 0.1.0，Pre-alpha / synthetic only。不是浏览器快捷�
 
 ## 当前成绩与座位开发入口（D4）
 
+当前会话内的聊天草稿可跨原页面/对话保留。有未发送或未保存内容时，刷新和离开窗口需确认；默认继续编辑，取消应用退出后API仍可用。无草稿不增加常驻提示。未发送文字不是跨进程持久化承诺，强退或系统关机不保证恢复；已保存聊天继续从原数据库回读。实现与原生/浏览器验收见[聊天设计](../../docs/design/workspace-chat-and-actions.md)和[实现台账](../../docs/implementation-ledger.md)。
+
 首次普通聊天可用显式合成演练`--scenario teacher-intro`，其它来源/PG/非C产物参数与下述联测相同。只接受全新空班级实例、不接受恢复根目录；原输入框直接请求“认识分数”教学导入，要求目标/讲解/练习、零班级工具和业务候选/提交、回答可读且可复制。刷新与完整桌面/API重启后原始回答及失败记录仍在，班级列表仍空。使用现有已授权免费模型，不因此生成正式教案文档或通过教学质量审查；默认CI只运行离线准入/受控合成Provider测试。
 
 ### Windows 系统信息查询停顿排查
@@ -211,7 +213,7 @@ pnpm build:runtime
 pnpm start:runtime
 ```
 
-桌面以固定自有Python入口启动API，使用每次启动的新密钥和随机challenge验证服务进程，再检查数据库/身份/业务Gateway readiness；不连接占用8000端口的旧服务。不启动/初始化/迁移/停止PostgreSQL，不创建owner、不重放失败写入。关闭桌面会停止自有API；父进程强退时空stdin管道EOF触发API退出。服务崩溃关闭窗口，不自动重连或重启。
+桌面以固定自有Python入口启动API，使用每次启动的新密钥和随机challenge验证服务进程，再检查数据库/身份/业务Gateway readiness；不连接占用8000端口的旧服务。不启动/初始化/迁移/停止PostgreSQL，不创建owner、不重放失败写入。确认离开并关闭桌面后停止自有API；取消退出保持API，父进程强退时空stdin管道EOF触发API退出。服务崩溃请求关闭窗口，有未发送内容可取消关闭以保留/复制，但不会自动重连或重启服务。
 
 runtime构建在`.build/runtime/`，与`.build/app/`离线Demo及普通Web dist分开。生成的`runtime-source.json`只包含本机源码与合成runtime路径，不入Git，不能跨机复制。此入口依赖源码、Python虚拟环境、当前用户DPAPI和已启动的PG；不支持packaged分发，不是安装包/完整离线后端捆绑。
 
