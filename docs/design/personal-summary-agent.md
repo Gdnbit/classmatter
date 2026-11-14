@@ -2,6 +2,8 @@
 
 > 2026-11-14，实施设计与本地工程验收。基线 main 93079f1；独立[PR #105](https://github.com/Gdnbit/classmatter/pull/105)记录精确head CI、真实免费模型逐次结果和最终合并状态；研究补正见[Personal Agent 研究](../research/2026-11-14-proactive-agent-clarification-and-followup.md)。仅合成开发，不改变冻结 R1、正式 Requirement/Eval/Task/Gate、生产数据或 Agent 业务写权限。
 
+首个窄场景的实际SDK/PG/HTTP/原Web工程闭环及一次含重试的既有免费Gemini完整演练已通过；后者240.98秒、两份文档及摘要版本2回读一致。503/504、模型内容拒绝和初始化失败分别保留，不据此声称稳定性SLA或通用Personal Agent全部交付。最终head自动检查与合并状态以PR为准。
+
 ## 目标与范围
 
 老师在原聊天明确委托持续积累本班小结材料，沿现有预览确认一次；之后只记录事实和处理任务，系统根据真实新增材料自主判断是否值得准备小结，有关键缺项才提问，并从明确长期反馈调整后续格式。没有变化、没有委托或委托暂停时保持安静。用户不需要重新发起每一次小结，也不新增配置页面或表单。

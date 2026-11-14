@@ -29,19 +29,26 @@ from test_personal_summary_runtime import classroom_work, workspace_chat, roster
 
 SOURCE = r'''
 import base64, json, sys
+def phase(name):
+    sys.stderr.write(name+'\n'); sys.stderr.flush()
+phase('bootstrap')
 sys.path.insert(0, 'src')
 from class_os.infrastructure.local_runtime import LocalRuntime, protect
 from class_os.infrastructure.native_setup import NativeSetup
 from class_os.infrastructure.workspace_local_runtime import open_services
 from class_os.infrastructure.local_model_activation import LocalModelActivation
 from class_os.infrastructure.model_control import ModelController
+phase('imports-complete')
 runtime = LocalRuntime(sys.argv[1], profile='classroom-work-d4')
+phase('runtime-validated')
 native = NativeSetup(runtime, development=True)
 try:
     cookies = native.handle({'operation':'development_access'})['cookies']
+    phase('development-access')
 finally:
     native.close()
 services = open_services(runtime, local_development=True)
+phase('services-open')
 try:
     auth = cookies['session'], cookies['client'], cookies['csrf'], services.restrictions.workspace_id
     row = services.query.model_configuration(auth)
@@ -50,6 +57,7 @@ try:
     profile = ModelController.profile(row)
     assert profile.model == 'gemini-3.1-flash-lite'
     assert profile.base_url == 'https://generativelanguage.googleapis.com/v1beta/openai/'
+    phase('free-profile-validated')
     key = services.worker.store.model_secrets.open(auth[3],row['candidate_id'],row['version'],profile,bytes(row['sealed']))
     envelope = protect(json.dumps({'key':key.get_secret_value(),'model':profile.model,
         'base_url':profile.base_url,'protocol':profile.protocol.value,'proxy':active['proxy']}).encode())
@@ -70,8 +78,18 @@ async def test_existing_free_model_standing_summary_question_feedback_and_save(c
     assert not artifacts.is_relative_to(Path(__file__).resolve().parents[2])
     remote = subprocess.check_output(['git','remote','get-url','origin'],cwd=checkout,text=True).strip().removesuffix('.git')
     assert remote == 'https://github.com/Gdnbit/classmatter'
-    result = subprocess.run([str(checkout/'backend/.venv/Scripts/python.exe'),'-c',SOURCE,str(source)],
-        cwd=checkout/'backend',capture_output=True,timeout=35,creationflags=subprocess.CREATE_NO_WINDOW)
+    output = artifacts/uuid4().hex
+    output.mkdir(parents=True,exist_ok=False)
+    try:
+        result = subprocess.run([str(checkout/'backend/.venv/Scripts/python.exe'),'-c',SOURCE,str(source)],
+            cwd=checkout/'backend',capture_output=True,timeout=60,creationflags=subprocess.CREATE_NO_WINDOW)
+    except subprocess.TimeoutExpired as error:
+        known = {'bootstrap','imports-complete','runtime-validated','development-access','services-open','free-profile-validated'}
+        stages = [line for line in (error.stderr or b'').decode('utf-8',errors='replace').splitlines() if line in known]
+        (output/'report.json').write_text(json.dumps([{'stage':'configuration-source','state':'blocked',
+            'candidate':None,'answer':None,'tools':[],'diagnostics':[], 'category':'source-timeout',
+            'last_phase':stages[-1] if stages else 'process-start','timeout_seconds':60}]),encoding='utf-8')
+        pytest.fail('Existing configuration source timed out; bounded local phase evidence retained, no provider call made')
     assert result.returncode == 0, 'Existing approved free configuration unavailable; no credentials copied to logs'
     packet = json.loads(protect(base64.b64decode(result.stdout),decrypt=True))
     profile = ModelConfiguration(Protocol(packet['protocol']),packet['model'],packet['base_url'])
@@ -99,8 +117,6 @@ async def test_existing_free_model_standing_summary_question_feedback_and_save(c
     runtime = WorkspaceChatRuntime(chats,history,sdk)
     service = PersonalSummaryService(runtime)
     service.sessions[auth[3]] = auth
-    output = artifacts/uuid4().hex
-    output.mkdir(parents=True,exist_ok=False)
     thread = uuid4()
     def record(stage,row,events):
         reports.append({'stage':stage,'state':row['state'],'candidate':row['candidate'],

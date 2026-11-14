@@ -21,7 +21,7 @@
       "sha256": "aedc9d60d6d5f00c098c7e410cb39940c161682d3152185059f6fe68dcedfdd1"
     },
     "backend/tests/test_personal_summary_live.py": {
-      "sha256": "fc44316aab114695daa8130b5f4a8a5118e38d1151b99c164c6e9090bd53dea9"
+      "sha256": "f8b7eef4e4db995371dcdb5576aac0553be7761cca604fb613d902bf88f2a47a"
     },
     "backend/tests/test_personal_summary_runtime.py": {
       "sha256": "6198ba685b44d6b4d0a0c9a07dbab6bc92a2050b2ae92936d0a28cc4ad8ee485"
@@ -36,7 +36,7 @@
       "sha256": "d627c8e8c67af7122bc8b44d7f1d1f72bf69aac3f887f85131072fa11fb71f88"
     },
     "docs/design/personal-summary-agent.md": {
-      "sha256": "5c7d49cc384bc09e8403ed9341a46e08034fc000a9b91d2d2e3e7fdf09e23cb1"
+      "sha256": "8ce8fdfa03c0a64e42be4ff7117e3af61fb5aa4169e973cb900b4723cbfd4c77"
     },
     "third_party/licenses/python/apscheduler-3.11.3/0.txt": {
       "sha256": "6163f7987dfb38d6bc320ce2b70b2f02b862bc41126516d552ef1cd43247e758"
@@ -597,7 +597,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "319cfdc0edb280e66c1d6f63ef33e2c66efb1a2766751a8f035c714791de562a"
+      "sha256": "4aeee5dd950596c9dfe28a4dfe21e7ed7bc0d4f5ac60b67c450d45b45dba2310"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -2993,7 +2993,7 @@
       "sha256": "252318368a669a6479e74e67c47187b5b5be2dd499cd668f39dff7853f099624"
     },
     "apps/web/src/runtime/WorkspaceChat.tsx": {
-      "sha256": "e16cf09f65d577caddbd66914c3b131a833b26659dd0cc23f6ca0e583e878d28"
+      "sha256": "4af984ff3805179e3193df25406f8d78d4aa3a6cd525fb421615b5f5a41233fa"
     },
     "apps/web/src/runtime/useWorkspaceChat.ts": {
       "sha256": "0414d0322376bb60c3e8344138c8a854da5f316bbc330fe33b6bc7055c337e51"
