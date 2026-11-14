@@ -252,9 +252,12 @@ class PydanticAgentRuntime:
                     tools = list(_workspace_actions.tools(self.query, credentials, current_memory, emit))
                     expected = workspace_catalog(_workspace_actions.classroom_enabled)
                     summary_scope = _workspace_actions.summary_context
-                    focused_summary = bool(summary_scope and not re.search(r'以后|今后|持续|长期|暂停|停止|不再|不要|不用', request.text)
+                    from class_os.application.policy_knowledge import requires_policy_search
+                    focused_summary = bool(summary_scope and not requires_policy_search(request.text)
+                        and not re.search(r'以后|今后|持续|长期|暂停|停止|不再|不要|不用', request.text)
                         and (request.text == '继续整理班级工作小结。'
-                            or summary_scope['required_material'] and summary_scope['required_material'] in request.text))
+                            or summary_scope['required_material'] and re.search(
+                                re.escape(summary_scope['required_material']) + r'\s*(?:是|为|：|:)', request.text)))
                     if _workspace_actions.initiative or focused_summary:
                         allowed = frozenset({'read_class_work', 'read_class_records', 'prepare_document',
                                              'read_summary_delegation', 'ask_summary_question', 'read_task_progress'})
@@ -306,7 +309,7 @@ class PydanticAgentRuntime:
                                 agent.instructions(lambda: "A follow-up task's progress, waiting state, completion or cancellation belongs to prepare_task (action edit/complete/cancel), not prepare_record. Read current tasks to identify the existing title. Keep an explicitly quoted follow-up note in evidence; never turn task workflow notes into a new student fact. prepare_record is only for a new already-occurred ordinary student event. Neither tool saves anything: show the actual candidate for human review, never say that a state or note was already saved.")
                                 agent.instructions(lambda: "Keep notes the user explicitly excluded out of generated documents, including footnotes or explanations that repeat the excluded content. Read current fact and task sources before drafting a factual work summary.")
                                 agent.instructions(lambda: "When the user explicitly delegates ongoing class work summaries or gives lasting feedback, use prepare_summary_delegation with an exact quote of the current human message. It only prepares a readable instruction for confirmation; never say a preference is saved without a receipt. A one-off 'this time' request must not change standing instructions. Read confirmed summary instructions when preparing a work summary.")
-                                if _workspace_actions.summary_context is not None:
+                                if _workspace_actions.summary_context is not None and (_workspace_actions.initiative or focused_summary):
                                     scope = _workspace_actions.summary_context
                                     agent.instructions(lambda: 'This turn is grounded in a confirmed standing summary instruction: '
                                         + scope['body'] + '. Read ordinary records and tasks this turn. Decide whether the new material provides useful summary work. '
@@ -321,11 +324,15 @@ class PydanticAgentRuntime:
                                         + ('This is a system initiative under the standing instruction, not a new human request.'
                                            if _workspace_actions.initiative else
                                            'The current human message answers/retries this existing delegation. Do not ask to enable it again; incorporate the answer and prepare the actual draft.'))
+                                elif _workspace_actions.summary_context is not None:
+                                    agent.instructions(lambda: 'A summary question remains open in this chat. It is context, not authority to replace the current human request. '
+                                        'Answer other questions and use their appropriate existing tools normally. If the human is answering the summary question, '
+                                        'read current sources and continue its draft. Do not enable the already confirmed delegation again.')
                             @agent.output_validator
                             def confirmed_candidate_exists(ctx: RunContext[None], output):
                                 scope = _workspace_actions.summary_context
                                 if (isinstance(output, str) and scope and _workspace_actions.proposed is None
-                                        and (_workspace_actions.initiative or 'basis_hash' in scope or scope.get('resuming'))
+                                        and (_workspace_actions.initiative or focused_summary or scope.get('resuming'))
                                         and output.strip() != 'NO_SUMMARY'):
                                     raise ModelRetry('This is an already confirmed summary delegation. Read current records and tasks, '
                                         'then call ask_summary_question for missing required material, or prepare_document for the actual draft. '

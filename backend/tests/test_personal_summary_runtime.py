@@ -337,3 +337,34 @@ async def test_failed_initiative_manual_retry_question_survives_service_restart(
     assert answer['candidate'] and '老师补充' in answer['candidate']['body']
     save(business, auth, answer)
     assert not history.listing(auth)['data'][0]['summary_attention']
+
+
+@pytest.mark.db
+async def test_unanswered_summary_does_not_capture_an_unrelated_policy_question(classroom_work):
+    business, query, auth, _, _, _, _, _, _, _ = classroom_work
+    chats, history, sdk, runtime, service, _ = assembly(classroom_work)
+    thread = uuid4()
+    delegated = await send(runtime, chats, history, auth, thread, '以后持续整理班级小结，需要核对班会主题。')
+    save(business, auth, delegated); materials(classroom_work)
+    service.sessions[auth[3]] = auth
+    await service.check(auth[3])
+    assert history.history(auth, thread)['turns'][-1]['answer_required']
+    seen = []
+    def policy_factory(request):
+        def respond(messages, info):
+            names = {tool.name for tool in info.function_tools}
+            assert 'search_policy_knowledge' in names and 'prepare_student' in names
+            seen.append(names)
+            if not any(isinstance(part, ToolReturnPart) and part.tool_name == 'search_policy_knowledge'
+                       for message in messages for part in message.parts):
+                return ModelResponse(parts=[ToolCallPart('search_policy_knowledge', {})])
+            return ModelResponse(parts=[TextPart('请核对已收录资料的适用范围和当前效力。')])
+        return FunctionModel(respond)
+    sdk.model_factory = policy_factory
+    ordinary = await send(runtime, chats, history, auth, thread, '先问一下，宁乡班会主题安排有哪些学校减负规定依据？')
+    assert seen and ordinary['candidate'] is None and not ordinary['answer_required']
+    assert '适用范围' in ordinary['assistant_text']
+    assert history.listing(auth)['data'][0]['summary_attention'], 'Unrelated chat did not consume the unanswered question'
+    chats, history, _, runtime, _, _ = assembly(classroom_work)
+    resumed = await send(runtime, chats, history, auth, thread, '班会主题是合作。')
+    assert resumed['candidate'] and resumed['candidate']['title'] == SUMMARY_TITLE
