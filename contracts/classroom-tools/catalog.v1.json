@@ -535,6 +535,88 @@
       },
       "kind": "function",
       "strict": null
+    },
+    {
+      "name": "prepare_summary_delegation",
+      "description": "Only for explicit ongoing delegation or long-term feedback about class work summaries. Quote the exact current human request. 'This time' is not a permanent preference. Prepare a readable instruction document for the existing human confirmation; never saves or enables itself. Preserve omitted prior settings. Pause only on an explicit stop request.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "quote": {
+            "type": "string"
+          },
+          "action": {
+            "default": "enable",
+            "enum": [
+              "enable",
+              "update",
+              "pause"
+            ],
+            "type": "string"
+          },
+          "style": {
+            "anyOf": [
+              {
+                "enum": [
+                  "standard",
+                  "three-points"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "required_material": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "required": [
+          "quote"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "read_summary_delegation",
+      "description": "Read the current confirmed summary instructions and preferences; not conversation guesses. Does not enable a program or save anything.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
+    },
+    {
+      "name": "ask_summary_question",
+      "description": "Only ask about the standing summary instruction's explicitly required material after reading current facts and tasks. Pause with one short question. Never invent a missing requirement or modify a task.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "question": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
     }
   ]
 }

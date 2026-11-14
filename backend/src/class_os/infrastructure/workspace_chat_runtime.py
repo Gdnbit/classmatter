@@ -41,7 +41,9 @@ class WorkspaceChatRuntime:
         async def finish(state, answer=None, proposed=None):
             return await anyio.to_thread.run_sync(lambda: self.business.finish(credentials, ticket, state, answer, proposed,
                 duration_ms=min(2147483647, int((monotonic() - started) * 1000)),
-                input_tokens=capture.input_tokens if capture else None, output_tokens=capture.output_tokens if capture else None))
+                input_tokens=capture.input_tokens if capture else None, output_tokens=capture.output_tokens if capture else None,
+                answer_required=bool(capture and capture.clarification),
+                summary_document_id=capture.summary_context['document_id'] if capture and capture.summary_context else None))
 
         phase = "history_read"
         try:
@@ -56,15 +58,22 @@ class WorkspaceChatRuntime:
                 if len(previous) >= 6 or total + size > 8000:
                     break
                 previous.insert(0, row); total += size
-            conversation.history = [message for row in previous for message in (
-                ModelRequest(parts=[UserPromptPart(row["user_text"])]), ModelResponse(parts=[TextPart(row["assistant_text"])]))]
+            conversation.history = []
+            for row in previous:
+                if row.get('origin', 'user') == 'user':
+                    conversation.history.append(ModelRequest(parts=[UserPromptPart(row['user_text'])]))
+                conversation.history.append(ModelResponse(parts=[TextPart(row['assistant_text'])]))
             # Keep explicit user intent available to candidate validation even
             # when many short continuations pushed it outside the SDK window.
-            intent = [row['user_text'] for row in history['turns'] if row['ordinal'] < ticket['ordinal'] and row['state'] == 'completed']
-            capture = WorkspaceActionCapture(tuple(intent + [ticket["user_text"]]),
+            intent = [row['user_text'] for row in history['turns'] if row['ordinal'] < ticket['ordinal']
+                      and row['state'] == 'completed' and row.get('origin', 'user') == 'user']
+            summary_context = await anyio.to_thread.run_sync(lambda: self.query.summary_context(credentials, thread_id, request_id))
+            initiative = ticket.get('origin') == 'personal-agent'
+            capture = WorkspaceActionCapture(tuple(intent + ([] if initiative else [ticket['user_text']])),
                 progress_reader=lambda: self.query.history(credentials, thread_id),
                 recall_reader=lambda keyword: self.query.recall(credentials, thread_id, keyword, before=ticket['ordinal']),
-                classroom_enabled=self.business.store.database.profile == 'classroom-work-d4')
+                classroom_enabled=self.business.store.database.profile == 'classroom-work-d4',
+                summary_context=summary_context, initiative=initiative)
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket["user_text"], Mode.CHAT)
             phase = "sdk_dispatch"

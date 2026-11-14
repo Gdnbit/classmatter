@@ -20,8 +20,8 @@ class WorkbenchStore(DocumentStore):
         if self.database.profile == 'classroom-work-d4':
             if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != schema_profile('classroom-work-d4')[0]:
                 raise RuntimeError('Explicit classroom work schema required')
-            from .classroom_work import ClassroomTransaction
-            return ClassroomTransaction(connection, self)
+            from .personal_summary_store import PersonalSummaryTransaction
+            return PersonalSummaryTransaction(connection, self)
         if self.database.profile == 'workspace-chat-d3':
             if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() != '0028':
                 raise RuntimeError('Explicit workspace chat schema required')

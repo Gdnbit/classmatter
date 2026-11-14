@@ -1,5 +1,6 @@
 import type { ValidateFunction } from "ajv"
 export const capabilities: ValidateFunction
+export const summaryWake: ValidateFunction
 export const listing: ValidateFunction
 export const history: ValidateFunction
 export const send: ValidateFunction

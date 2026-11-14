@@ -61,10 +61,12 @@ class SyntheticBackup:
         if legacy_classroom:
             self.head = '0029'
         if checkpoint_revision is not None:
-            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision != '0030':
+            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision not in ('0030', '0031'):
                 raise ValueError('Explicit prior D4 checkpoint revision required')
             self.head = checkpoint_revision
         self.checkpoint_revision = checkpoint_revision
+        if legacy_classroom or checkpoint_revision in ('0030', '0031'):
+            self.tables = self.tables - {'personal_summary_attempt'}
         self.profile = profile
         self.kind = {"r1": "class-os.owned-synthetic-backup.v1",
                      "conversation-d1": "classmatter.owned-conversation-backup.v1",
@@ -150,14 +152,15 @@ class SyntheticBackup:
                 raise BackupRejected()
             head = '0029'
         if checkpoint_revision is not None:
-            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision != '0030':
+            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision not in ('0030', '0031'):
                 raise BackupRejected()
             head = checkpoint_revision
-        validate_surface(connection, complete=True, profile=profile)
+        prior_summary = profile == 'classroom-work-d4' and head in ('0029', '0030', '0031')
+        validate_surface(connection, complete=True, profile=profile, prior_summary=prior_summary)
         if (connection.execute(text("SELECT version_num FROM class_os.alembic_version")).scalar_one() != head
                 or connection.execute(text("SELECT data_mode FROM class_os.database_state WHERE singleton=true")).scalar_one() != "synthetic-only"):
             raise BackupRejected()
-        validate_role_guards(connection, profile=profile, legacy_classroom=legacy_classroom)
+        validate_role_guards(connection, profile=profile, legacy_classroom=legacy_classroom, prior_summary=prior_summary)
         if profile != "r1":
             from .conversation_integrity import validate_conversation_integrity
             validate_conversation_integrity(connection)
@@ -172,11 +175,17 @@ class SyntheticBackup:
         if profile == "classroom-work-d4":
             from .classroom_work import validate_classroom_integrity
             validate_classroom_integrity(connection)
+            if not prior_summary:
+                from .personal_summary_store import validate_summary_integrity
+                validate_summary_integrity(connection)
 
     @staticmethod
     def _inventory(connection, *, profile="r1"):
         result, total = {}, 0
         _, tables = schema_profile(profile)
+        if profile == 'classroom-work-d4' and connection.execute(text(
+                'SELECT version_num FROM class_os.alembic_version')).scalar_one() in ('0029', '0030', '0031'):
+            tables = tables - {'personal_summary_attempt'}
         for table in sorted(tables):
             # Closed source registry, never a caller/model-selected identifier.
             rows, size = connection.execute(text(f"SELECT count(*),coalesce(sum(octet_length(to_jsonb(t)::text)),0) FROM class_os.{table} t")).one()

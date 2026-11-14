@@ -311,6 +311,20 @@
             }
           ],
           "default": null
+        },
+        "origin": {
+          "default": "user",
+          "enum": [
+            "user",
+            "personal-agent"
+          ],
+          "title": "Origin",
+          "type": "string"
+        },
+        "answer_required": {
+          "default": false,
+          "title": "Answer Required",
+          "type": "boolean"
         }
       },
       "required": [

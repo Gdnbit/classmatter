@@ -69,15 +69,17 @@ export function WorkspaceChatHistory({ state: s, documentExports }: { state: Wor
     {s.history?.next_before && <button disabled={s.working} onClick={() => void s.moreHistory()}>加载更早消息</button>}
     <div className="r1-messages">
       {s.pendingSend && !s.history?.turns.some(turn => turn.request_id === s.pendingSend?.request) && <article className="user" aria-label="你的消息"><p>{s.pendingSend.text}</p></article>}
-      {s.history?.turns.map(turn => <div key={turn.turn_id}>
-        {turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
+      {s.history?.turns.filter(turn => !(turn.origin === 'personal-agent' && turn.state === 'completed' && !turn.candidate && !turn.answer_required)).map(turn => <div key={turn.turn_id}>
+        {turn.origin !== 'personal-agent' && turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
         {turn.assistant_text && <article className="assistant" aria-label="助手回复"><DocumentBody body={turn.assistant_text} format="markdown" /><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
         {turn.state !== "completed" && <p className="r1-muted" role={turn.state === 'queued' || turn.state === 'running' ? 'status' : undefined}>{turn.state === 'queued' && s.working ? states.running : states[turn.state]}</p>}
         {turn.state === "queued" && !s.working && <button disabled={!s.canAct} onClick={() => void s.startQueued(turn)}>继续回复</button>}
         {turn.state === 'failed' && turn.request_id === s.history?.turns.at(-1)?.request_id && turn.user_text && !turn.candidate && !turn.action_receipt
           && <button aria-label="重试回复" disabled={!s.canSend} onClick={() => void s.retryFailed(turn)}>重试</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
-          <h2>{labels[turn.candidate.command]}</h2>
+          <h2>{turn.candidate.command.startsWith('document.') && 'title' in turn.candidate && turn.candidate.title === '班级小结委托'
+            ? turn.candidate.command === 'document.create' ? '持续整理班级小结' : '调整小结委托'
+            : labels[turn.candidate.command]}</h2>
           {turn.change_preview ? <ChangeComparison preview={turn.change_preview} saved={!!turn.action_receipt} /> : <CandidateContent value={turn.candidate} />}
           {turn.action_receipt ? <><p role="status" className={turn.change_preview ? 'sr-only' : undefined}>已保存</p>
             {(turn.turn_id === s.history?.turns.at(-1)?.turn_id || documentExports && turn.candidate.command.startsWith('document.')) && <div className="r1-toolbar">

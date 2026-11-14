@@ -109,6 +109,7 @@ def test_revision29_comparison_upgrade_checkpoints_preserves_chat_and_rolls_back
     owner = current.database('migrator')
     try:
         with owner.transaction() as connection:
+            connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
             connection.execute(text('ALTER TABLE class_os.workspace_chat_turn DROP COLUMN change_preview'))
             connection.execute(text("UPDATE class_os.alembic_version SET version_num='0029'"))
         old_backup = SyntheticBackup(current, profile='classroom-work-d4', legacy_classroom=True)
@@ -211,6 +212,7 @@ def test_revision30_activity_upgrade_is_checkpointed_atomic_and_retryable(owned_
     try:
         # Reconstruct the exact old candidate guard in this disposable fixture.
         with owner.transaction() as connection:
+            connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
             connection.execute(text('ALTER TABLE class_os.workspace_chat_turn DROP CONSTRAINT workspace_chat_candidate_command_check'))
             connection.execute(text("""ALTER TABLE class_os.workspace_chat_turn ADD CONSTRAINT workspace_chat_candidate_command_check
                 CHECK(candidate IS NULL OR (jsonb_typeof(candidate)='object' AND octet_length(candidate::text)<=440000
@@ -238,6 +240,75 @@ def test_revision30_activity_upgrade_is_checkpointed_atomic_and_retryable(owned_
             assert row['assistant_text'] == '合成原回答' and row['change_preview'] is None
             backup = SyntheticBackup(current, profile='classroom-work-d4')
             assert backup.check_current_restrictions(backup.create(), services.restrictions)['snapshot_integrity_verified']
+        finally:
+            services.close()
+    finally:
+        owner.close()
+
+
+@pytest.mark.db
+@pytest.mark.skipif(os.name != 'nt', reason='Owned Windows DPAPI checkpoint')
+def test_revision31_summary_upgrade_preserves_chat_and_rolls_back_on_failure(owned_upgrade, monkeypatch):
+    from sqlalchemy import text
+    from class_os.infrastructure import classroom_upgrade as upgrade
+    from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
+    current = upgrade_classroom(upgrade_workspace_chat(owned_upgrade.runtime))
+    native = NativeSetup(current, development=True)
+    try:
+        cookies = native.handle({'operation': 'development_access'})['cookies']
+    finally:
+        native.close()
+    auth = cookies['session'], cookies['client'], cookies['csrf'], owned_upgrade.workspace_id
+    services = open_services(current, local_development=True)
+    thread, request = uuid4(), uuid4()
+    try:
+        chats = WorkspaceChatBusinessGateway(services.worker.identity, services.worker.store)
+        chats.send(auth, thread, request, '合成0031历史')
+        chats.finish(auth, chats.claim(auth, thread, request), 'completed', '合成原回答')
+    finally:
+        services.close()
+    owner = current.database('migrator')
+    try:
+        # Reconstruct only this disposable fixture's exact pre-feature schema.
+        with owner.transaction() as connection:
+            connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
+            connection.execute(text("UPDATE class_os.alembic_version SET version_num='0031'"))
+        prior = SyntheticBackup(current, profile='classroom-work-d4', checkpoint_revision='0031')
+        assert prior.check(prior.create())['snapshot_integrity_verified']
+        migrate = upgrade.migrate
+        def interrupted(*args, **kwargs):
+            migrate(*args, **kwargs)
+            raise RuntimeError('Synthetic interrupted summary migration')
+        monkeypatch.setattr(upgrade, 'migrate', interrupted)
+        with pytest.raises(UpgradeRejected):
+            upgrade_classroom(current)
+        with owner.transaction(read_only=True) as connection:
+            assert connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() == '0031'
+        monkeypatch.setattr(upgrade, 'migrate', migrate)
+        upgrade_classroom(current)
+        assert upgrade_classroom(current).root == current.root
+        services = open_services(current, local_development=True)
+        try:
+            row = WorkspaceChatQueryGateway(services.query.identity, services.query.store).turn(auth, thread, request)[1]
+            assert row['assistant_text'] == '合成原回答' and row['origin'] == 'user'
+            from class_os.domain.documents import CreateDocument
+            from class_os.domain.activity import CreateTask
+            from class_os.domain.personal_summary import SummaryDelegation, TITLE
+            chats = WorkspaceChatBusinessGateway(services.worker.identity, services.worker.store)
+            document, delegated_request = uuid4(), uuid4()
+            chats.send(auth, thread, delegated_request, '以后持续整理班级工作小结。')
+            c, t = owned_upgrade.classroom.class_id, owned_upgrade.classroom.term_id
+            command = CreateDocument(document, c, t, TITLE, SummaryDelegation().body(), 'markdown')
+            chats.finish(auth, chats.claim(auth, thread, delegated_request), 'completed', '请核对。', command.canonical())
+            for command in (command, CreateTask('task.create', uuid4(), c, t, '合成小结核对', None)):
+                proposal = services.worker.preview(*auth, command)
+                approval = services.worker.approve(*auth, proposal.proposal_id, proposal.payload_hash) if proposal.risk == 'W2' else None
+                services.worker.commit(*auth, proposal.proposal_id, uuid4(), approval)
+            assert chats.summary_claim(auth, document)['state'] == 'queued'
+            backup = SyntheticBackup(current, profile='classroom-work-d4')
+            artifact = backup.create()
+            assert backup._open(artifact)[0]['inventory']['personal_summary_attempt']['rows'] == 1
+            assert backup.check_current_restrictions(artifact, services.restrictions)['snapshot_integrity_verified']
         finally:
             services.close()
     finally:

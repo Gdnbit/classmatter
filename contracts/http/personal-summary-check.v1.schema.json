@@ -1,0 +1,19 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.personal-summary-check.v1",
+      "default": "classmatter.personal-summary-check.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "accepted": {
+      "const": true,
+      "default": true,
+      "title": "Accepted",
+      "type": "boolean"
+    }
+  },
+  "title": "SummaryWake",
+  "type": "object"
+}

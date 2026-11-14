@@ -631,7 +631,7 @@
       "status": "INSTALLED_WINDOWS_METADATA_INSPECTED"
     },
     "backend": {
-      "lock_sha256": "eef362909d5495bc2203df1b257c7837b9d7f35eda8c5d3d242dcf2a40085e55",
+      "lock_sha256": "7d27f46bab87d6fb90f0c7b03c4e220c9df6ba60e90ebc1be572866dd37decb4",
       "packages": [
         {
           "license_expression": "MIT",
@@ -1574,6 +1574,30 @@
             }
           ],
           "version": "0.1.2"
+        },
+        {
+          "license_expression": "MIT",
+          "name": "apscheduler",
+          "notices": [
+            {
+              "path": "licenses/python/apscheduler-3.11.3/0.txt",
+              "sha256": "6163f7987dfb38d6bc320ce2b70b2f02b862bc41126516d552ef1cd43247e758",
+              "upstream_relative_path": "licenses/LICENSE.txt"
+            }
+          ],
+          "version": "3.11.3"
+        },
+        {
+          "license_expression": "MIT",
+          "name": "tzlocal",
+          "notices": [
+            {
+              "path": "licenses/python/tzlocal-5.4.5/0.txt",
+              "sha256": "d99ab209aeb16aad2c25c90ffd83c1a981e290ffff76a420a2ab03e03f041b8c",
+              "upstream_relative_path": "licenses/LICENSE.txt"
+            }
+          ],
+          "version": "5.4.5"
         }
       ],
       "status": "INSTALLED_WINDOWS_METADATA_INSPECTED"

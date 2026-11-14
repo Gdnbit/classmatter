@@ -47,11 +47,15 @@ D4_COLUMNS = MappingProxyType({
     "class_seating": frozenset({"workspace_id", "layout_id", "owner_id", "class_id", "term_id", "rows", "columns", "version", "created_at", "updated_at"}),
     "seat_revision": frozenset({"workspace_id", "layout_id", "class_id", "term_id", "version", "row_index", "column_index", "student_id", "enrollment_id", "created_by", "created_at"}),
 })
+PERSONAL_COLUMNS = MappingProxyType({
+    'personal_summary_attempt': frozenset({'workspace_id', 'owner_id', 'document_id', 'document_version',
+        'thread_id', 'request_id', 'waiting_request_id', 'basis_hash', 'answer_required', 'created_at'}),
+})
 SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
                                    "conversation-d1": ("0026", REGISTERED_TABLES | D1_TABLES),
                                    "workbench-d2": ("0027", REGISTERED_TABLES | D1_TABLES | D2_TABLES),
                                    "workspace-chat-d3": ("0028", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS)),
-                                   "classroom-work-d4": ("0031", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS))})
+                                   "classroom-work-d4": ("0032", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS) | frozenset(PERSONAL_COLUMNS))})
 
 
 def schema_profile(value="r1"):
@@ -70,8 +74,13 @@ def relation_surface(connection):
         AND c.relkind IN ('r','p','v','m','f','S') ORDER BY n.nspname,c.relname""")).mappings())
 
 
-def validate_surface(connection, *, complete=False, profile="r1"):
+def validate_surface(connection, *, complete=False, profile="r1", prior_summary=False):
     _, registered = schema_profile(profile)
+    if prior_summary:
+        if profile != 'classroom-work-d4' or connection.execute(text(
+                'SELECT version_num FROM class_os.alembic_version')).scalar_one() not in ('0029', '0030', '0031'):
+            raise ValueError('Exact pre-summary D4 checkpoint required')
+        registered = registered - frozenset(PERSONAL_COLUMNS)
     relations = relation_surface(connection)
     if any(row["namespace"] != "class_os" or row["name"] not in registered or row["kind"] != "table"
            or row["persistence"] != "p" or row["owner"] != "class_os_migrator" for row in relations):

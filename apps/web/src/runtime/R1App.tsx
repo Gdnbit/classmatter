@@ -883,7 +883,7 @@ export default function R1App() {
     onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
     onBusyChange: value => { if (!workspaceMode) setDurableBusy(value) }, onDraftChange: value => { if (!workspaceMode) setDurableDraft(value) }, onError: fail,
   })
-  const workspaceConversation = useWorkspaceChat({ enabled: workspaceProfile, session, threadId: workspaceMode ? navigation.route.conversationId : "",
+  const workspaceConversation = useWorkspaceChat({ enabled: workspaceProfile, personalEnabled: classroomProfile, session, threadId: workspaceMode ? navigation.route.conversationId : "",
     canInteract: !!session && !busy && !form && !pending && !modelUncertain, refreshSignal: activity,
     onSelect: id => navigation.setConversation("", "", id), onSaved: navigation.adoptWorkspaceConversation,
     onBusy: setWorkspaceBusy, onDraft: setWorkspaceDraft, onError: fail,
@@ -1032,7 +1032,8 @@ export default function R1App() {
             onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.title} · 待确认</button>)}
           {workspaceMode && workspaceConversation.listing?.data.map(item => <button className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`} key={item.thread_id}
             disabled={navigationBlocked}
-            onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
+            onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.summary_attention && <span role="img" aria-label="有待处理的小结">● </span>}
+              {item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
           {!workspaceMode && durableProfile && durable.listing?.data.map(item => <button
             className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`}
             key={item.thread_id} disabled={durable.blocked || !!durable.text.trim()}

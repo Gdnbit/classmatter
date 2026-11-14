@@ -29,6 +29,9 @@ def surface(connection, *, profile='workspace-chat-d3'):
         raise RuntimeError("Explicit current synthetic D3 schema required")
     validate_document_integrity(connection); validate_workspace_chat_integrity(connection)
     if profile == 'classroom-work-d4':
+        from .personal_summary_store import validate_summary_integrity
+        validate_summary_integrity(connection)
+    if profile == 'classroom-work-d4':
         from .classroom_work import validate_classroom_integrity
         validate_classroom_integrity(connection)
 

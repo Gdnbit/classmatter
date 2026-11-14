@@ -49,6 +49,11 @@
             }
           ],
           "title": "Cleared At"
+        },
+        "summary_attention": {
+          "default": false,
+          "title": "Summary Attention",
+          "type": "boolean"
         }
       },
       "required": [

@@ -3,6 +3,8 @@
 > **状态**：Discovery / Future，2026-10-22 研究草案；**尚未执行**，所有阈值与实验步骤均属拟议，不能当作现有 R1 Eval、Gate 或已通过的证据。
 >
 > 关联：[产品研究](../product/agent-owned-work-and-attention.md) · [Pydantic AI / Pi 调研](2026-10-22-pydantic-ai-pi-runtime-assessment.md) · [R1 manifest](../specs/class-os-v1/release-1-manifest.md)。
+>
+> 2026-11-14 增量：[主动提问、到期提醒与持续推进调研](2026-11-14-proactive-agent-clarification-and-followup.md)。当前优先保留 Pydantic AI 2.53.0，先验证 PA-01～PA-08 的必要澄清与定向续办，再隔离比较 DBOS/Temporal 的恢复与调度。本文原有 Pi 对照仍为历史未执行候选，不是该闭环的前置条件，不要求为新需求先替换运行时。全部 PA 编号也是未执行候选，不修改 RT/WK 历史含义或正式 Gate。
 
 ## 1. 目的和待证伪的问题
 
