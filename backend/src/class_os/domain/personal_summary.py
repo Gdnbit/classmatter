@@ -28,7 +28,9 @@ def _section_texts(body):
             headings.append((level, heading))
         elif token.type == 'inline':
             section = next((label for _, label in reversed(headings) if label in ('已完成', '进行中')), None)
-            yield section, token.content
+            plain = ''.join(child.content for child in token.children or ()
+                            if child.type in ('text', 'code_inline'))
+            yield section, plain
 
 
 def supplement_under_completed(body, requirement):
@@ -46,9 +48,16 @@ def task_section_conflicts(body, task_statuses):
     if not states:
         return False
     # A shorter task title must not steal a longer task's occurrence.
-    names = re.compile('|'.join(re.escape(title) for title in sorted(states, key=len, reverse=True)))
-    return any(section in allowed and states[match.group()] != {allowed[section]}
-               for section, text in _section_texts(body) for match in names.finditer(text))
+    names = re.compile('(?:' + '|'.join(re.escape(title) for title in sorted(states, key=len, reverse=True)) + r')(?=$|\W)')
+    for section, text in _section_texts(body):
+        if section not in allowed:
+            continue
+        # Inspect an explicit leading task label, not a word inside a fact.
+        label = re.sub(r'^\s*(?:任务|事项)\s*[：:]\s*', '', text).lstrip().lstrip('“「"\'')
+        match = names.match(label)
+        if match is not None and states[match.group()] != {allowed[section]}:
+            return True
+    return False
 
 
 @dataclass(frozen=True)

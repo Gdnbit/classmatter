@@ -63,8 +63,16 @@ def test_longer_task_title_is_not_confused_with_a_shorter_title_or_regex():
     from class_os.domain.personal_summary import task_section_conflicts
     tasks = (('合成作品', 'done'), ('合成作品核对', 'in-progress'), ('合成作品(二)', 'done'))
     assert not task_section_conflicts('## 进行中\n- 合成作品核对', tasks)
-    assert task_section_conflicts('## 进行中\n- 合成作品核对、合成作品', tasks)
+    assert task_section_conflicts('## 进行中\n- 合成作品核对\n- 合成作品', tasks)
     assert not task_section_conflicts('## 已完成\n- 合成作品(二)', tasks)
+
+
+def test_task_word_inside_an_ordinary_fact_is_not_a_task_status_claim():
+    from class_os.domain.personal_summary import task_section_conflicts
+    tasks = (('作品', 'not-started'), ('作品核对', 'not-started'))
+    assert not task_section_conflicts('## 已完成\n- 合成学生0交来作品。', tasks)
+    assert task_section_conflicts('## 进行中\n- 任务：**作品核对**（待处理）', tasks)
+    assert task_section_conflicts('## 已完成\n- “作品核对”任务已结束', tasks)
 
 
 @pytest.mark.parametrize('state', ['enabled', 'paused'])
