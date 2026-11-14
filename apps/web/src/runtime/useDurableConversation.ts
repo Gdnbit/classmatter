@@ -34,6 +34,7 @@ export function useDurableConversation(props: Props) {
   const [readyKey, setReadyKey] = useState("")
   const [pending, setPending] = useState<{ preview: Preview; key: string; approval: string | null; attempted: boolean } | null>(null)
   const [title, setTitle] = useState("")
+  const [listingRetry, setListingRetry] = useState(0)
   const identity = props.enabled && props.session
     ? `${props.session.subject.owner_id}/${props.session.subject.workspace_id}/${props.session.csrf_token}` : ""
   const workspaceChat = !props.threadId && mode === "chat" && !classChat
@@ -79,8 +80,8 @@ export function useDurableConversation(props: Props) {
     return dispose
   }, [key])
 
-  // History discovery is a UI read, not the scope of an ordinary model chat.
-  // Keep old class conversations reachable without forcing chat into a class.
+  // Optional legacy discovery must not be a prerequisite of workspace chat.
+  // R1App enables it only while the existing legacy section is expanded.
   useLayoutEffect(() => {
     if (!identity || !workspaceChat) return
     setListing(null)
@@ -88,12 +89,13 @@ export function useDurableConversation(props: Props) {
   useEffect(() => {
     if (!identity || !workspaceChat) return
     if (!props.classroom) return
+    setStatus(""); setListing(null)
     const generation = epoch.current, controller = new AbortController()
     void api().list(controller.signal).then(list => {
       if (!controller.signal.aborted && generation === epoch.current) setListing(list)
     }).catch(error => { if (!controller.signal.aborted && generation === epoch.current) report(error) })
     return () => controller.abort()
-  }, [identity, workspaceChat, props.classroom?.class_id, props.classroom?.term_id])
+  }, [identity, workspaceChat, props.classroom?.class_id, props.classroom?.term_id, listingRetry])
 
   async function refresh(threadId = latest.current.threadId) {
     if (workspaceChat) return null
@@ -285,6 +287,7 @@ export function useDurableConversation(props: Props) {
     blocked: working || !!pending, active: active(history?.turns.at(-1)), isStreaming: !!stream.current,
     send: () => send(), startSaved: (turn: Turn) => send(turn), stop,
     refresh: () => operate(async () => { await refresh() }),
+    retryListing: () => setListingRetry(value => value + 1),
     select: (id: string) => { if (!working && !pending && !text.trim()) latest.current.onSelect(id) },
     moreThreads: () => operate(async current => {
       if (!listing?.next_offset) return

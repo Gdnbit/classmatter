@@ -7,13 +7,37 @@ const browser = await chromium.launch({ headless: true, ...(process.platform ===
 try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [], external = [], failures = [];
+  let legacyReads = 0, refuseLegacy = true;
+  await page.route('**/conversation-d1/classes/**/conversations', async route => {
+    legacyReads++;
+    if (refuseLegacy) return route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ detail: 'Conflict' }) });
+    return route.continue();
+  });
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => { if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url()); });
   page.on('response', response => { if (response.status() >= 400) failures.push([response.status(), new URL(response.url()).pathname]); });
   await page.goto(base);
+  const studentsLoaded = page.waitForResponse(response => response.url().endsWith('/students') && response.status() === 200);
   await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
+  assert.deepEqual(failures, [[401, '/api/identity/session']], 'One expected session probe before fixture login');
+  failures.splice(0, 1);
   await page.getByRole('button', { name: '登录', exact: true }).click();
   const input = page.getByLabel('输入消息');
+  await studentsLoaded;
+  await expect(input).toBeEnabled();
+  assert.equal(legacyReads, 0, 'Workspace startup must not depend on a complete legacy archive proof');
+  const legacy = page.locator('details').filter({ has: page.locator('summary', { hasText: '班级旧对话' }) });
+  await legacy.locator('summary').click();
+  await expect(legacy.getByRole('status')).toContainText('暂时无法读取旧对话');
+  await expect(page.locator('.r1-error')).toHaveCount(0);
+  assert.equal(legacyReads, 1, 'No automatic retry of refused legacy reads');
+  refuseLegacy = false;
+  await legacy.getByRole('button', { name: '重试', exact: true }).click();
+  await expect(legacy.getByRole('status')).toContainText('暂无旧对话');
+  assert.equal(legacyReads, 2);
+  await legacy.locator('summary').click();
+  assert.equal(failures.filter(([status, path]) => status === 409 && path.endsWith('/conversations')).length, 1);
+  failures.splice(failures.findIndex(([status, path]) => status === 409 && path.endsWith('/conversations')), 1);
   const send = async text => {
     await input.fill(text);
     await expect(page.getByRole('button', { name: '发送消息', exact: true })).toBeEnabled();
@@ -110,6 +134,6 @@ try {
   await page.setViewportSize({ width: 390, height: 844 });
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await page.screenshot({ path: '../../test-results/personal-summary-narrow.png', fullPage: true });
-  assert.deepEqual(errors, []); assert.deepEqual(external, []);
+  assert.deepEqual(errors, []); assert.deepEqual(external, []); assert.deepEqual(failures, []);
   console.log('PASS standing delegation -> attention in original chat without stealing another draft -> answer -> real preview/save -> refresh -> lasting feedback -> proactive revision -> pause -> ordinary record remains usable without another initiative');
 } finally { await browser.close(); }

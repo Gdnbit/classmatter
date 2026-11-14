@@ -153,6 +153,7 @@ export default function R1App() {
   const [profileRetry, setProfileRetry] = useState(0)
   const [durableBusy, setDurableBusy] = useState(false)
   const [durableDraft, setDurableDraft] = useState(false)
+  const [legacyConversationsOpen, setLegacyConversationsOpen] = useState(false)
   const [workspaceBusy, setWorkspaceBusy] = useState(false)
   const [workspaceDraft, setWorkspaceDraft] = useState(false)
   const [exitBusy, setExitBusy] = useState(false)
@@ -880,13 +881,14 @@ export default function R1App() {
     (navigation.route.conversationClassId === classroom?.class_id && navigation.route.conversationTermId === classroom?.term_id)
   const workspaceMode = workspaceProfile && !navigation.route.conversationClassId
   const durable = useDurableConversation({
-    enabled: durableProfile && (workspaceMode ? !!classroom : durableScopeMatches),
+    enabled: durableProfile && (workspaceMode ? !!classroom && legacyConversationsOpen : durableScopeMatches),
     session, classroom, threadId: workspaceMode ? "" : navigation.route.conversationId,
     readable: queryFresh && !refreshing,
     canWrite: !workspaceMode && editable && !busy && !form && !pending && !modelUncertain,
     canChat: !workspaceMode && !!session && !busy && !form && !pending && !modelUncertain,
     onSelect: id => navigation.setConversation(id ? classroom?.class_id || "" : "", id ? classroom?.term_id || "" : "", id),
-    onBusyChange: value => { if (!workspaceMode) setDurableBusy(value) }, onDraftChange: value => { if (!workspaceMode) setDurableDraft(value) }, onError: fail,
+    onBusyChange: value => { if (!workspaceMode) setDurableBusy(value) }, onDraftChange: value => { if (!workspaceMode) setDurableDraft(value) },
+    onError: reason => { if (!workspaceMode) fail(reason) },
   })
   const workspaceConversation = useWorkspaceChat({ enabled: workspaceProfile, personalEnabled: classroomProfile, session, threadId: workspaceMode ? navigation.route.conversationId : "",
     canInteract: !!session && !busy && !form && !pending && !modelUncertain, refreshSignal: activity,
@@ -1045,10 +1047,18 @@ export default function R1App() {
             onClick={() => { durable.select(item.thread_id); setPage("conversation") }}>
             {item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}
           </button>)}
-          {workspaceMode && !!durable.listing?.data.length && <><p className="side-kicker">当前班级的旧对话</p>{durable.listing.data.map(item => <button
+          {workspaceMode && classroom && <details open={legacyConversationsOpen}
+            onToggle={event => setLegacyConversationsOpen(event.currentTarget.open)}>
+            <summary className="side-kicker">班级旧对话</summary>
+            {legacyConversationsOpen && <>
+            {durable.status ? <div role="status">暂时无法读取旧对话 <button onClick={durable.retryListing}>重试</button></div>
+              : !durable.listing ? <p role="status" className="sidebar-empty">正在读取…</p>
+              : !durable.listing.data.length ? <p role="status" className="sidebar-empty">暂无旧对话</p> : null}
+            {durable.listing?.data.map(item => <button
             className="conversation-item" key={`class-${item.thread_id}`} disabled={navigationBlocked || durable.blocked}
             onClick={() => durable.select(item.thread_id)}>{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
-            {durable.listing.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多班级旧对话</button>}</>}
+            {durable.listing?.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多班级旧对话</button>}</>}
+          </details>}
           {!(workspaceMode ? workspaceConversation.listing?.data.length || workspaceConversation.pendingThreads.length || durable.listing?.data.length : durable.listing?.data.length) && <p className="sidebar-empty">尚无已保存对话</p>}
           {workspaceMode ? workspaceConversation.listing?.next_offset && <button disabled={workspaceConversation.listingBusy} onClick={() => void workspaceConversation.moreThreads()}>更多会话</button>
             : durable.listing?.next_offset && <button disabled={durable.blocked} onClick={() => void durable.moreThreads()}>更多会话</button>}
