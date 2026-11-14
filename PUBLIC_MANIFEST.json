@@ -501,7 +501,7 @@
       "sha256": "3df8e2b910093672e8a994fd0d6f2da93971cf06f3b7040f1a5c7b1ce07c7e2a"
     },
     "docs/research/2026-10-23-teacher-tools-and-policy-intelligence-agent.md": {
-      "sha256": "6f05c8e34dd3ad5e8407dc211292065ae91d1f63b4b29177c53491604f0eca63"
+      "sha256": "a04672039103d12facaac8f4a880fc0724edf00e04b3085b380d0fe19eaaaada"
     },
     "apps/web/src/runtime/work-projection.ts": {
       "sha256": "bf9ab4d1b0d941077675c78f7a44ed16d44661bf264a72ac0d851264795be5e6"
@@ -555,7 +555,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "eab7e769f3524cd8a1b0c53d143a83c3ace3857a1b40c2fced2a8d5ec56ddfb3"
+      "sha256": "ad4ba90c95788a42119b73eb78800332b87cca9e4a8fb2b362527b40afa4f9f4"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1047,7 +1047,7 @@
       "sha256": "fe7d5c934e2a9ed7e98a1780281d124b37f39f9335281bc3b60452c44ad51f85"
     },
     "backend/src/class_os/application/roster.py": {
-      "sha256": "130c3d74b2eb853af424ac51ca3e73fc4fe35424625f3d7c31cfaee233140be7"
+      "sha256": "cd144862a2a59e2fe32354e5f621adb4309ef36d60beb322c03a2a0027a899c4"
     },
     "backend/src/class_os/domain/__init__.py": {
       "sha256": "54388f3dd125b33067a8f81c5f2062c3dd59d66476f30bd5b63d2458891efe2f"
@@ -1089,7 +1089,7 @@
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
     },
     "backend/src/class_os/infrastructure/agent.py": {
-      "sha256": "ac9d1f17bc0ed15ebf73ff26c2aade09e735e09d1880dc363a4d38fb56fc0dfb"
+      "sha256": "1e0b40d009973985c3664851557c5d65322c14c4b472ddc3445bb5abdbd2f2e5"
     },
     "backend/src/class_os/infrastructure/agent_memory.py": {
       "sha256": "2042927005c163c2179cbf81f85ac0b3c01d57ca2b22f4d9f39199fe69f2d101"
@@ -2663,7 +2663,7 @@
       "sha256": "5575daa767000efa787bbd93893ecb727bfa90df6cf4e81cfacdfa38fe245514"
     },
     "docs/product/legal-evidence-and-rule-hierarchy.md": {
-      "sha256": "af3b3d7ea70428af7a675e45f8b79853d8eeafe4438c898202ecae327f4d3542"
+      "sha256": "f8a9cc9012ad8909a541d1c04f5fa008e148b7c4c4c92b5215e50b6ff38796bc"
     },
     "docs/product/agent-owned-work-and-attention.md": {
       "sha256": "8ed5a5f2fbaf951d71e6a531aafa1d30f85572ee56741423fcbe2be9a8fe4aa6"
@@ -2984,7 +2984,7 @@
       "sha256": "48d161a4fc1760d284e70b2d6ba9aba36e92e610a3d3d8c001bf832c5c3ffe2f"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "43e50277715d23d19015c92a2f5cf28071f685fcf8fd1ff30c56b38ff76ea4a5"
+      "sha256": "67a49e25a0b9ceee57b12f9f3347963452337da4761bd5b4c0fad7f5cb01838f"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "1b647d7d9762a54e8f9a16c1e39f5e183bd62a6599735850d72ed336caf20a41"
@@ -2996,7 +2996,7 @@
       "sha256": "ee3bac4240ecb25bedd5c856e7e9ad627c8d48deb3456ef00740731ce95cdff8"
     },
     "backend/src/class_os/infrastructure/workspace_tool_contracts.py": {
-      "sha256": "4f5f7e84d80412cda48edf085b4622202a8eb52283a0e07e6fd45d36d8a77654"
+      "sha256": "a15e9468ee34497a1c2cee3ce47ed31a726362e427a3ef2d0b67e770c13a79d5"
     },
     "backend/src/class_os/infrastructure/workspace_upgrade.py": {
       "sha256": "f2b0298dc8f54d1af85dda866d0d7982ac47e42145dc2682e9b8bfbd12c16bf7"
@@ -3146,7 +3146,7 @@
       "sha256": "4b8dff4f9281cde6093298607c8c8d43f6f5863210a205b07dcee03724aef638"
     },
     "contracts/classroom-tools/catalog.v1.json": {
-      "sha256": "793045f48ca0ba36923b38639943b29624c0b3f0726de64957ec1f7ecf23f09f"
+      "sha256": "eef3528d6b6b59518dd2e424e8a176ef06ad090c89c2f664c1919a7f8335d386"
     },
     "contracts/http/classroom-capabilities.v1.schema.json": {
       "sha256": "4b7e7693752741345cdd5911f15db52ede04fdc86558616b59965c11ed33df2f"
@@ -3383,6 +3383,21 @@
     },
     "backend/tests/test_windows_platform.py": {
       "sha256": "d162f47e8522e1c2184c3c1a19a40a029d0c145e6df937562a7c797039c4d980"
+    },
+    "apps/web/tests/policy-knowledge-browser.mjs": {
+      "sha256": "333c48949fb1611964db9fd90a753c020aca7f6f2180b66f4f43d8c0d65afcb0"
+    },
+    "backend/src/class_os/application/policy_knowledge.py": {
+      "sha256": "24cb0d904e042968d0a2facb45811672d882d60225e9d9b6aebe7b2ef049d84f"
+    },
+    "backend/tests/test_policy_knowledge.py": {
+      "sha256": "47032e0755c4392c4ffc98524d4fae80cacf8868ef25b80a75838f82779df83d"
+    },
+    "backend/tests/test_policy_knowledge_live.py": {
+      "sha256": "ee751460eb7674154042493d071a44a3fb7f0f3d0acf7f18bb0b7683fd6e2dd6"
+    },
+    "backend/tests/test_policy_knowledge_web.py": {
+      "sha256": "3e8bbd56a73a7a1f9f98508012082831374468fb342dec55eed1756f3889b19a"
     }
   }
 }

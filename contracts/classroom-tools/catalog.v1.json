@@ -524,6 +524,17 @@
       },
       "kind": "function",
       "strict": null
+    },
+    {
+      "name": "search_policy_knowledge",
+      "description": "Search reviewed public policy excerpts for this user's current question, without a class. Returns exact passages, sources and coverage gaps. School internal rules, individual cases and current validity are not verified. Never writes, fetches websites or assigns responsibility.",
+      "parameters_json_schema": {
+        "additionalProperties": false,
+        "properties": {},
+        "type": "object"
+      },
+      "kind": "function",
+      "strict": null
     }
   ]
 }
