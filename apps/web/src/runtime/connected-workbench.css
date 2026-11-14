@@ -41,6 +41,8 @@
 .connected-runtime .chat-history .new-chat{flex:none;border:0;background:transparent;justify-content:flex-start;padding:9px 10px;gap:12px;min-height:40px}
 .connected-runtime .chat-history .conversation-item{flex:none;border:0;background:transparent;padding:9px 12px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:38px;border-radius:9px}
 .connected-runtime .chat-history .conversation-item.active{background:var(--sidebar-active,#dfe7e2)}
+.connected-runtime .chat-history .r1-chat-attention{flex:none;min-width:8px;font-size:10px;color:var(--ink,#1f2923)}
+.connected-runtime .chat-history .r1-chat-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .connected-runtime .r1-workspace-footer{display:flex;align-items:center;justify-content:space-between;flex:none;min-width:0;width:100%;border-top:1px solid #dce3de;padding:10px 12px;gap:8px}
 .connected-runtime .r1-workspace-footer .user-area{border:0;padding:4px;background:transparent;flex:1;min-width:0;width:auto;font-size:13px}
 .connected-runtime .r1-workspace-footer .r1-settings-trigger{border:0;background:transparent;padding:8px;display:flex}
