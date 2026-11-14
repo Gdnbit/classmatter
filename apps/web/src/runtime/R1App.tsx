@@ -207,7 +207,12 @@ export default function R1App() {
   const navigation = useRuntimeNavigation(navigationBlocked)
   const { page, studentId: selectedStudent, workFilter, studentView, studentTab } = navigation.route
   const { setPage, setSelectedStudent, setWorkFilter, setStudentView, setStudentTab } = navigation
-  useLayoutEffect(() => { setError("") }, [navigation.route.conversationId, navigation.route.conversationClassId, navigation.route.conversationTermId])
+  useLayoutEffect(() => {
+    setError("")
+    // A previous chat's transient save notice is not a receipt for this one.
+    // Keep one-time identity/model notices and the original durable receipts.
+    setNotice(current => current === "已保存" ? "" : current)
+  }, [navigation.route.conversationId, navigation.route.conversationClassId, navigation.route.conversationTermId])
   useLayoutEffect(() => {
     if (page === "settings") { setSettingsOpen(true); navigation.setPage("conversation") }
   }, [page])
@@ -1032,8 +1037,8 @@ export default function R1App() {
             onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.title} · 待确认</button>)}
           {workspaceMode && workspaceConversation.listing?.data.map(item => <button className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`} key={item.thread_id}
             disabled={navigationBlocked}
-            onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.summary_attention && <span role="img" aria-label="有待处理的小结">● </span>}
-              {item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</button>)}
+            onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.summary_attention && <span className="r1-chat-attention" role="img" aria-label="有待处理的小结">●</span>}
+              <span className="r1-chat-title">{item.title}{item.status === "archived" ? " · 已归档" : item.status === "cleared" ? " · 已清除" : ""}</span></button>)}
           {!workspaceMode && durableProfile && durable.listing?.data.map(item => <button
             className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`}
             key={item.thread_id} disabled={durable.blocked || !!durable.text.trim()}
