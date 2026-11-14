@@ -13,6 +13,15 @@ const source = JSON.parse(original); source.runtimeRoot = root; source.servicePo
 const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
 let app;
 const failures = [], errors = [];
+async function expectLeavePrompt(count) {
+  const observed = await app.evaluate(async ({ app }, expected) => {
+    const until = Date.now() + 5000;
+    while (app.__classmatterDraftCheck.prompts.length < expected && Date.now() < until)
+      await new Promise(resolve => setTimeout(resolve, 25));
+    return app.__classmatterDraftCheck.prompts.length;
+  }, count);
+  assert.equal(observed, count, 'Exactly one native confirmation per attempted leave');
+}
 async function launch() {
   app = await electron.launch({ executablePath: require('electron'), args: [stage, '--classmatter-development-no-password'], env });
   app.context().on('response', response => {
@@ -51,6 +60,43 @@ async function launch() {
   assert.equal(await app.evaluate(async ({ clipboard }, expected) => (await clipboard.readText()).replace(/\r\n/g,'\n') === expected.replace(/\r\n/g,'\n'), answerText), true);
   const chatPath = new URL(page.url()).pathname;
   assert.match(chatPath, /^\/chats\/[a-f0-9-]{36}$/);
+  // Stub only the owned fixture's native dialog response. The real window,
+  // renderer unload event, service and database stay on the original path.
+  await app.evaluate(({ app, dialog }) => {
+    app.__classmatterDraftCheck = { leave: false, prompts: [] };
+    dialog.showMessageBoxSync = (_window, options) => {
+      app.__classmatterDraftCheck.prompts.push(options);
+      return app.__classmatterDraftCheck.leave ? 1 : 0;
+    };
+  });
+  const draft = '合成未发送草稿';
+  await page.getByLabel('输入消息').fill(draft);
+  await page.getByRole('button', { name: '新对话', exact: true }).click();
+  await page.waitForURL(url => url.pathname === '/');
+  assert.equal(await page.getByLabel('输入消息').inputValue(), '');
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.reload());
+  await expectLeavePrompt(1);
+  await page.getByRole('button', { name: '合成桌面重启持久聊天', exact: true }).click();
+  assert.equal(await page.getByLabel('输入消息').inputValue(), draft, 'Hidden conversation draft survives cancelled reload');
+  await app.evaluate(({ app }) => app.quit());
+  await expectLeavePrompt(2);
+  assert.equal((await page.request.get(new URL('/health/ready', page.url()).href)).status(), 200,
+    'Cancelling application quit must keep its service alive');
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].close());
+  await expectLeavePrompt(3);
+  assert.equal(await page.getByLabel('输入消息').inputValue(), draft);
+  await app.evaluate(({ app }) => { app.__classmatterDraftCheck.leave = true; });
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].webContents.reload());
+  await expectLeavePrompt(4);
+  await page.getByLabel('输入消息').waitFor();
+  assert.equal(await page.getByLabel('输入消息').inputValue(), '');
+  await history.getByText('合成桌面重启持久聊天', { exact: true }).waitFor();
+  const prompts = await app.evaluate(({ app }) => app.__classmatterDraftCheck.prompts);
+  assert.ok(prompts.every(item => item.defaultId === 0 && item.cancelId === 0
+    && item.buttons[0] === '继续编辑' && item.buttons[1] === '放弃并离开'));
+  // Reloading/closing without a local draft must not add a routine prompt.
+  await page.reload(); await page.getByLabel('输入消息').waitFor();
+  assert.equal(await app.evaluate(({ app }) => app.__classmatterDraftCheck.prompts.length), 4);
   await app.close(); app = null;
   page = await launch();
   await page.getByRole('button', { name: '合成桌面重启持久聊天', exact: true }).click();

@@ -9,6 +9,7 @@ type Props = { enabled: boolean; personalEnabled?: boolean; session: Session | n
   onSelect: (id: string) => void; onSaved: (id: string) => void; onBusy: (busy: boolean) => void; onDraft: (dirty: boolean) => void; onError: (error: unknown) => void; onPreview: (preview: ChatPreview) => void }
 const active = (turn?: ChatTurn) => !!turn && (turn.state === "queued" || turn.state === "running")
 type LocalThread = { text: string; reasoning: Reasoning; editVersion: number; busy: boolean; saving: boolean; status: string; recordingFile: File | null; recordingActive: boolean; pending: {thread: string; request: string; text: string; editVersion: number} | null; stream: AbortController | null }
+const hasUnsentContent = (state: LocalThread) => !!state.text.trim() || !!state.pending || !!state.recordingFile || state.recordingActive
 function clearSentDraft(state: LocalThread, sent: { text: string; editVersion: number }) {
   if (state.text === sent.text && state.editVersion === sent.editVersion) { state.text = ""; state.editVersion++ }
 }
@@ -84,9 +85,19 @@ export function useWorkspaceChat(props: Props) {
   }
   const state = local(), { text, busy: working, status, pending: pendingSend } = state
   const anyWorking = [...threads.current.values()].some(item => item.busy)
-  const anyDraft = [...threads.current.values()].some(item => !!item.text.trim() || !!item.pending || !!item.recordingFile || item.recordingActive)
+  const anyDraft = [...threads.current.values()].some(hasUnsentContent)
   useEffect(() => { latest.current.onBusy(anyWorking) }, [anyWorking, identity])
   useEffect(() => { latest.current.onDraft(anyDraft) }, [anyDraft, identity])
+  useEffect(() => {
+    if (!identity) return
+    // Read the current map, including other chats, instead of a stale render.
+    const warn = (event: BeforeUnloadEvent) => {
+      if (![...threads.current.values()].some(hasUnsentContent)) return
+      event.preventDefault(); event.returnValue = ""
+    }
+    window.addEventListener("beforeunload", warn)
+    return () => window.removeEventListener("beforeunload", warn)
+  }, [identity])
   useLayoutEffect(() => {
     epoch.current++; view.current++; reader.current?.abort()
     for (const item of threads.current.values()) item.stream?.abort()

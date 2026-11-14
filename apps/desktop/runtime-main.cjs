@@ -29,7 +29,7 @@ app.setAppUserModelId(d1?'org.classmatter.synthetic-d1':'org.classmatter.synthet
 app.enableSandbox();
 const development=app.commandLine.hasSwitch('classmatter-development-no-password');
 if(development&&!d1)sourceInvalid=true;
-let window,service,quitting=false,origin,setupWindow;
+let window,service,quitting=false,stopping=false,origin,setupWindow;
 if(sourceInvalid) app.whenReady().then(()=>{
   dialog.showErrorBox('暂时无法打开工作区','应用文件不完整，请重新安装。已有内容未更改。');
   app.exit(1);
@@ -39,8 +39,12 @@ else {
   app.on('second-instance',()=>{if(window){if(window.isMinimized())window.restore();window.show();window.focus();}});
   app.on('before-quit',event=>{
     if(quitting || !service) return;
-    event.preventDefault();quitting=true;
-    service.stop().then(()=>app.quit()).catch(()=>app.exit(1));
+    event.preventDefault();
+    if(stopping)return;
+    // A cancelled renderer unload must leave its API running too.
+    if(window&&!window.isDestroyed()){window.close();return;}
+    stopping=true;
+    service.stop().then(()=>{quitting=true;app.quit();}).catch(()=>app.exit(1));
   });
   app.on('window-all-closed',()=>app.quit());
   app.whenReady().then(async()=>{
@@ -58,9 +62,9 @@ else {
       }finally{pipe.stop();}
     }else if(d1)setupWindow=await require('./setup-window.cjs').prepareWorkspace({BrowserWindow,ipcMain,session},source);
     service=desktopService(source.repositoryRoot,path.join(__dirname,'ui'),()=>{
-      if(window) window.close();
       // No automatic replay or reattachment after a service crash.
-      app.quit();
+      if(window&&!window.isDestroyed())window.close();
+      else app.quit();
     },source.runtimeRoot,d1?source.profile:'r1',d1?source.servicePort:8000,modelNetwork,development&&['workspace-chat-d3','classroom-work-d4'].includes(source.profile));
     origin=await service.start();
     const isolated=session.fromPartition(d1?'classmatter-synthetic-d1':'classmatter-synthetic-runtime');
@@ -139,6 +143,12 @@ else {
     ipcMain.on('desktop:menu',(event,name)=>{
       if(!window || event.sender!==window.webContents || event.senderFrame!==window.webContents.mainFrame || !allowed(origin,event.senderFrame.url) || typeof name!=='string' || !Object.hasOwn(indices,name))return;
       menu.items[indices[name]].submenu.popup({window,x:120+48*indices[name],y:44});
+    });
+    window.webContents.on('will-prevent-unload',event=>{
+      const choice=dialog.showMessageBoxSync(window,{type:'question',title:'离开当前页面？',
+        message:'离开将丢失未发送或未保存的内容。',buttons:['继续编辑','放弃并离开'],defaultId:0,cancelId:0});
+      // Electron preventDefault here allows the requested unload.
+      if(choice===1)event.preventDefault();
     });
     window.once('ready-to-show',()=>window.show());
     window.on('closed',()=>{window=null;});
