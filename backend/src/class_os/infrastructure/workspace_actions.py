@@ -28,6 +28,11 @@ class WorkspaceActionCapture:
     document_reads: set = field(default_factory=set)
     record_read_scopes: set = field(default_factory=set)
     task_read_scopes: set = field(default_factory=set)
+    # A successful filtered query is useful evidence, but cannot prove what
+    # the standing class-wide summary is missing. These are per-run only.
+    complete_record_read_scopes: set = field(default_factory=set)
+    complete_task_read_scopes: set = field(default_factory=set)
+    task_status_sources: dict = field(default_factory=dict)
     completed_tools: list[str] = field(default_factory=list)
     clarification: str | None = None
     pending_commands: set[str] = field(default_factory=set)
@@ -53,6 +58,9 @@ class WorkspaceActionCapture:
                     pass
         return value in dates
 
+    def summary_sources_read(self, scope):
+        return scope in self.complete_record_read_scopes and scope in self.complete_task_read_scopes
+
     def propose(self, command):
         payload = command.canonical()
         candidate(payload)
@@ -66,16 +74,26 @@ class WorkspaceActionCapture:
         if (scope and type(command) in (CreateDocument, ReviseDocument) and command.title == SUMMARY_TITLE
                 and command.class_id == scope['class_id'] and command.term_id == scope['term_id']):
             scope_key = (scope['class_id'], scope['term_id'])
-            if scope_key not in self.record_read_scopes or scope_key not in self.task_read_scopes:
-                raise ModelRetry('Read current ordinary facts and tasks in this run before preparing the summary, including replies and retries. '
+            if not self.summary_sources_read(scope_key):
+                raise ModelRetry('Read all current ordinary facts and tasks without student/search filters or truncation in this run before preparing the summary, including replies and retries. '
                     'Use actual task statuses; attribute human supplemental material with 老师补充. Follow the confirmed format.')
             if scope['style'] == 'three-points' and len(re.findall(r'^[-*+]\s+\S', command.body, re.MULTILINE)) != 3:
                 raise ModelRetry('The confirmed long-term format requires exactly three top-level bullets. Keep the same facts, without inventing filler.')
+            from class_os.domain.personal_summary import task_section_conflicts
+            if task_section_conflicts(command.body, self.task_status_sources.get(scope_key, ())):
+                raise ModelRetry('A task was placed under a section that conflicts with its current stored status. '
+                    'Only done tasks belong under 已完成; only in-progress tasks belong under 进行中. '
+                    'Keep not-started/waiting tasks outside these sections and preserve their actual status. No task was changed.')
             requirement = scope['required_material']
             supplied = requirement and any(re.search(re.escape(requirement) + r'\s*(?:是|为|：|:)', message)
                 for message in self.user_messages)
             if supplied and (requirement not in command.body or '老师补充' not in command.body):
                 raise ModelRetry('Retain the supplied '+requirement+' as 老师补充, not a registered student fact or a completed activity. Do not infer its purpose or time.')
+            if supplied:
+                from class_os.domain.personal_summary import supplement_under_completed
+                if supplement_under_completed(command.body, requirement):
+                    raise ModelRetry('The teacher-supplied '+requirement+' does not prove an activity happened. '
+                        'Move this attributed supplement outside the 已完成 section. Keep actual records and task statuses unchanged.')
         if self.proposed is not None:
             raise ValueError("Only one business candidate per turn")
         self.proposed = payload
@@ -196,6 +214,10 @@ class WorkspaceActionCapture:
                                "source_record_id": str(row["source_record_id"]) if row["source_record_id"] else None}
                               for row in rows if not search or search in row["title"]]
                     self.task_read_scopes.add((current.class_id, current.term_id))
+                    if not search and len(values) <= limit:
+                        self.complete_task_read_scopes.add((current.class_id, current.term_id))
+                        self.task_status_sources[(current.class_id, current.term_id)] = tuple(
+                            (value['title'], value['status']) for value in values)
                     self.source_identifiers.update(value['task_id'] for value in values[:limit])
                 else:
                     rows = query.documents(*credentials, current.class_id, current.term_id)
@@ -299,7 +321,7 @@ class WorkspaceActionCapture:
                 from class_os.domain.personal_summary import SUMMARY_TITLE
                 if (self.summary_context and title == SUMMARY_TITLE
                         and scope == (self.summary_context['class_id'], self.summary_context['term_id'])
-                        and (scope not in self.record_read_scopes or scope not in self.task_read_scopes)):
+                        and not self.summary_sources_read(scope)):
                     return {'status': 'read-summary-sources-first',
                         'instruction': 'Nothing was prepared. Call read_class_records() without search/student filters AND '
                             'read_class_work(kind="tasks") now, then prepare_document again with their actual facts/statuses. '
@@ -363,8 +385,8 @@ class WorkspaceActionCapture:
                     scope = self.summary_context
                     if not scope or not scope['required_material'] or scope['required_material'] not in question or len(question) > 240:
                         raise ModelRetry('Ask only for the explicit required material; otherwise prepare the sourced draft or report that nothing useful changed.')
-                    if (scope['class_id'], scope['term_id']) not in self.record_read_scopes or (scope['class_id'], scope['term_id']) not in self.task_read_scopes:
-                        raise ModelRetry('Read current ordinary facts and tasks before asking for missing material.')
+                    if not self.summary_sources_read((scope['class_id'], scope['term_id'])):
+                        raise ModelRetry('Read all current ordinary facts and tasks without student/search filters or truncation before asking for missing material.')
                     return {'status': 'waiting-for-summary-material'}
                 await execute('ask_summary_question', validate)
                 self.clarification = question

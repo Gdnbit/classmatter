@@ -4,6 +4,7 @@ from hashlib import sha256
 import re
 
 import rfc8785
+from markdown_it import MarkdownIt
 
 
 TITLE = '班级小结委托'
@@ -11,6 +12,52 @@ SUMMARY_TITLE = '班级工作小结'
 INITIATIVE_REQUEST = '依据已确认的班级小结委托，检查最新材料；有值得整理的新内容才准备“班级工作小结”，没有新价值保持安静。'
 STYLES = {'standard': '按已完成、进行中、待核对整理', 'three-points': '三条要点'}
 STATES = {'enabled': '持续整理', 'paused': '暂停整理'}
+
+
+def _section_texts(body):
+    """Read Markdown hierarchy, not regex-shaped headings in code examples."""
+    tokens = MarkdownIt('commonmark').parse(body)
+    headings = []
+    for index, token in enumerate(tokens):
+        if token.type == 'heading_open':
+            level = int(token.tag[1:])
+            while headings and headings[-1][0] >= level:
+                headings.pop()
+            heading = ''.join(child.content for child in tokens[index + 1].children or ()
+                              if child.type in ('text', 'code_inline')).strip().rstrip('：:').strip()
+            headings.append((level, heading))
+        elif token.type == 'inline':
+            section = next((label for _, label in reversed(headings) if label in ('已完成', '进行中')), None)
+            plain = ''.join(child.content for child in token.children or ()
+                            if child.type in ('text', 'code_inline'))
+            yield section, plain
+
+
+def supplement_under_completed(body, requirement):
+    """A supplied topic is not proof that an activity happened."""
+    return bool(requirement) and any(section == '已完成' and requirement in text
+                                    for section, text in _section_texts(body))
+
+
+def task_section_conflicts(body, task_statuses):
+    """Only flag exact known titles under a conflicting explicit state section."""
+    allowed = {'已完成': 'done', '进行中': 'in-progress'}
+    states = {}
+    for title, status in task_statuses:
+        states.setdefault(title, set()).add(status)
+    if not states:
+        return False
+    # A shorter task title must not steal a longer task's occurrence.
+    names = re.compile('(?:' + '|'.join(re.escape(title) for title in sorted(states, key=len, reverse=True)) + r')(?=$|\W)')
+    for section, text in _section_texts(body):
+        if section not in allowed:
+            continue
+        # Inspect an explicit leading task label, not a word inside a fact.
+        label = re.sub(r'^\s*(?:任务|事项)\s*[：:]\s*', '', text).lstrip().lstrip('“「"\'')
+        match = names.match(label)
+        if match is not None and states[match.group()] != {allowed[section]}:
+            return True
+    return False
 
 
 @dataclass(frozen=True)

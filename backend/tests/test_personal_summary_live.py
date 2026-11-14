@@ -23,6 +23,7 @@ from class_os.infrastructure.local_runtime import protect
 from class_os.infrastructure.model_provider import configured_client, model_for_configuration
 from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
 from class_os.infrastructure.personal_summary_runtime import PersonalSummaryService
+from class_os.domain.personal_summary import supplement_under_completed
 from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
 from test_personal_summary_runtime import classroom_work, workspace_chat, roster, identity, materials, save
 
@@ -142,6 +143,7 @@ async def test_existing_free_model_standing_summary_question_feedback_and_save(c
     draft = await turn('answer','班会主题是合作。')
     assert draft['candidate'] and draft['candidate']['title']=='班级工作小结'
     assert all(value in draft['candidate']['body'] for value in ('合成学生0','合成作品核对','老师补充','合作'))
+    assert not supplement_under_completed(draft['candidate']['body'], '班会主题')
     save(business,auth,draft)
     feedback = await turn('feedback','以后用三条要点整理小结。')
     assert feedback['candidate'] and feedback['candidate']['title']=='班级小结委托'
@@ -151,6 +153,7 @@ async def test_existing_free_model_standing_summary_question_feedback_and_save(c
     if revised['state']!='completed':
         revised = await turn('explicit-feedback-retry','继续整理班级工作小结。')
     assert revised['candidate'] and revised['candidate']['command']=='document.revise'
+    assert not supplement_under_completed(revised['candidate']['body'], '班会主题')
     save(business,auth,revised)
     saved = query.document(*auth,c,t,UUID(revised['candidate']['document_id']))
     assert saved['version']==2 and saved['body']==revised['candidate']['body']

@@ -50,6 +50,8 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 'truncated': len(rows) > limit, 'scope': 'ordinary-facts-only',
                 'instruction': 'Cite the returned student, fact and date in readable language. Retain source IDs/versions for verification; do not display internal IDs. Report scope and missing data honestly.'}
             capture.record_read_scopes.add((current.class_id, current.term_id))
+            if not student_name and not search and len(rows) <= limit:
+                capture.complete_record_read_scopes.add((current.class_id, current.term_id))
             capture.source_identifiers.update(str(row['record_id']) for row in rows[:limit])
             return result
         return await execute('read_class_records', read)

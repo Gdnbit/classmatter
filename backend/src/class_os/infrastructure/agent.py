@@ -312,15 +312,19 @@ class PydanticAgentRuntime:
                                 if _workspace_actions.summary_context is not None and (_workspace_actions.initiative or focused_summary):
                                     scope = _workspace_actions.summary_context
                                     agent.instructions(lambda: 'This turn is grounded in a confirmed standing summary instruction: '
-                                        + scope['body'] + '. Read ordinary records and tasks this turn. Decide whether the new material provides useful summary work. '
+                                        + scope['body'] + '. Read all ordinary records with read_class_records() and all tasks with read_class_work(kind="tasks") this turn, without student/search filters. A class name is not a fact-text search. Filtered or truncated results cannot establish what is missing. Decide whether the new material provides useful summary work. '
                                         'Prepare only a truthful editable document titled 班级工作小结, reusing the current document if present. '
                                         'If a required material is genuinely missing, call ask_summary_question with a short question naming that requirement. '
-                                        'Copy facts accurately. Never put internal IDs in the document, infer an activity happened from a topic, or invent its purpose/time. '
-                                        'Label the teacher-provided required material explicitly as 老师补充：, not a registered fact or completed activity. '
+                                        'Copy facts accurately and retain the source students and meaningful registered facts. The supplied topic complements those facts; it must not replace all of them. '
+                                        'Never put internal IDs in the document, infer an activity happened from a topic, or invent its purpose/time. '
+                                        'Label the teacher-provided required material explicitly as 老师补充： in its own section outside 已完成, not a registered fact or completed activity. '
                                         + ('Write exactly three top-level bullets, preserving those facts and teacher supplements. '
                                            if scope['style'] == 'three-points' else
                                            'Use 已完成、进行中、待核对 sections based on actual task status; omit empty sections. Do not add a 三条要点 section. ')
-                                        + 'Never mark a planned/waiting task completed. If there is no useful work, reply NO_SUMMARY without a candidate. '
+                                        + 'Only done tasks belong under 已完成; only in-progress tasks belong under 进行中. '
+                                        'Put not-started/waiting tasks under 待核对 with their actual status; never turn them into active or completed work. '
+                                        'Render task states in teacher-readable Chinese (未开始、进行中、等待别人、已完成、已取消), never internal enum values. '
+                                        'If there is no useful work, reply NO_SUMMARY without a candidate. '
                                         + ('This is a system initiative under the standing instruction, not a new human request.'
                                            if _workspace_actions.initiative else
                                            'The current human message answers/retries this existing delegation. Do not ask to enable it again; incorporate the answer and prepare the actual draft.'))
@@ -341,8 +345,8 @@ class PydanticAgentRuntime:
                                 if isinstance(output, str) and _workspace_actions.initiative:
                                     scope = _workspace_actions.summary_context
                                     key = (scope['class_id'], scope['term_id'])
-                                    if key not in _workspace_actions.record_read_scopes or key not in _workspace_actions.task_read_scopes:
-                                        raise ModelRetry('Inspect actual ordinary records and tasks before deciding whether to remain quiet. Do not guess from chat history.')
+                                    if not _workspace_actions.summary_sources_read(key):
+                                        raise ModelRetry('Inspect all actual ordinary records and tasks without student/search filters or truncation before deciding whether to remain quiet. Do not guess from a search miss or chat history.')
                                 if isinstance(output, str) and _workspace_actions.classroom_enabled:
                                     from class_os.application.policy_knowledge import requires_policy_search
                                     if _workspace_actions.policy_result is None and (requires_policy_search(request.text)
