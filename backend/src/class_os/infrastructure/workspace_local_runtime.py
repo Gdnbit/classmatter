@@ -99,10 +99,13 @@ def compose(settings, runtime, *, local_development=False):
             readiness=services.readiness, model_controller=controller)
     except Exception:
         services.close(); raise
+    application_lifespan = app.router.lifespan_context
     @asynccontextmanager
     async def lifespan(app):
         try:
-            yield
+            # Preserve application shutdown hooks before closing their database pools.
+            async with application_lifespan(app) as state:
+                yield state
         finally:
             services.close()
     app.router.lifespan_context = lifespan

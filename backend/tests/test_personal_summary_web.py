@@ -9,6 +9,9 @@ import time
 
 import pytest
 import uvicorn
+from pydantic_ai.messages import ModelResponse, ToolCallPart
+from pydantic_ai.models.function import FunctionModel
+from class_os.domain.personal_summary import SummaryDelegation
 
 from class_os.interfaces.http.workspace_chat import create_workspace_chat_app
 from class_os.interfaces.http.settings import Settings
@@ -22,7 +25,17 @@ def test_original_ui_proactive_summary_feedback_and_refresh(classroom_work):
     materials(classroom_work)
     _, _, sdk, _, _, _ = assembly(classroom_work)
     original_factory = sdk.model_factory
+    initiatives = []
     def factory(request):
+        if request.text.startswith('依据已确认'):
+            initiatives.append(request.text)
+        if request.text == '刚刚合成学生0交来第二份作品，记下来。':
+            def record(messages, info):
+                if len(info.function_tools) == 1 and info.function_tools[0].name == 'read_task_progress':
+                    return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
+                return ModelResponse(parts=[ToolCallPart('prepare_record', {'student_name':'合成学生0',
+                    'fact_text':'合成学生0交来第二份作品','occurred_now':True})])
+            return FunctionModel(record)
         if request.text.startswith('以后用三条'):
             clock[0] += timedelta(minutes=2)  # Controlled fixture clock, not a production timer shortcut.
         return original_factory(request)
@@ -59,6 +72,10 @@ def test_original_ui_proactive_summary_feedback_and_refresh(classroom_work):
         summary = next(row for row in documents if row['title'] == '班级工作小结')
         assert summary['version'] == 2
         assert query.document(*auth, c, t, summary['document_id'])['body'].count('\n- ') == 2
+        delegation = next(row for row in documents if row['title'] == '班级小结委托')
+        assert SummaryDelegation.parse(query.document(*auth, c, t, delegation['document_id'])['body']).state == 'paused'
+        assert sum(row['fact_text'] == '合成学生0交来第二份作品' for row in query.projection(*auth, c, t)['records']) == 1
+        assert len(initiatives) == 2, 'Initial question and format revision only; no initiative after pause'
     finally:
         server.should_exit = True; thread.join(timeout=12)
         assert not thread.is_alive()
