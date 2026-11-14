@@ -251,7 +251,11 @@ class PydanticAgentRuntime:
                     from .workspace_tool_contracts import catalog as workspace_catalog
                     tools = list(_workspace_actions.tools(self.query, credentials, current_memory, emit))
                     expected = workspace_catalog(_workspace_actions.classroom_enabled)
-                    if _workspace_actions.initiative:
+                    summary_scope = _workspace_actions.summary_context
+                    focused_summary = bool(summary_scope and not re.search(r'以后|今后|持续|长期|暂停|停止|不再|不要|不用', request.text)
+                        and (request.text == '继续整理班级工作小结。'
+                            or summary_scope['required_material'] and summary_scope['required_material'] in request.text))
+                    if _workspace_actions.initiative or focused_summary:
                         allowed = frozenset({'read_class_work', 'read_class_records', 'prepare_document',
                                              'read_summary_delegation', 'ask_summary_question', 'read_task_progress'})
                         tools = [tool for tool in tools if tool.__name__ in allowed]
@@ -308,9 +312,15 @@ class PydanticAgentRuntime:
                                         + scope['body'] + '. Read ordinary records and tasks this turn. Decide whether the new material provides useful summary work. '
                                         'Prepare only a truthful editable document titled 班级工作小结, reusing the current document if present. '
                                         'If a required material is genuinely missing, call ask_summary_question with a short question naming that requirement. '
-                                        'Use direct human answers as attributed supplemental context, not as new registered facts. '
-                                        'For 三条要点 write exactly three top-level bullets. Never mark a planned/waiting task completed. '
-                                        'If there is no useful work, reply NO_SUMMARY without a candidate. This is a system initiative under the standing instruction, not a new human request.')
+                                        'Copy facts accurately. Never put internal IDs in the document, infer an activity happened from a topic, or invent its purpose/time. '
+                                        'Label the teacher-provided required material explicitly as 老师补充：, not a registered fact or completed activity. '
+                                        + ('Write exactly three top-level bullets, preserving those facts and teacher supplements. '
+                                           if scope['style'] == 'three-points' else
+                                           'Use 已完成、进行中、待核对 sections based on actual task status; omit empty sections. Do not add a 三条要点 section. ')
+                                        + 'Never mark a planned/waiting task completed. If there is no useful work, reply NO_SUMMARY without a candidate. '
+                                        + ('This is a system initiative under the standing instruction, not a new human request.'
+                                           if _workspace_actions.initiative else
+                                           'The current human message answers/retries this existing delegation. Do not ask to enable it again; incorporate the answer and prepare the actual draft.'))
                             @agent.output_validator
                             def confirmed_candidate_exists(ctx: RunContext[None], output):
                                 scope = _workspace_actions.summary_context

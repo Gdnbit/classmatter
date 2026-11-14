@@ -56,18 +56,26 @@ class WorkspaceActionCapture:
     def propose(self, command):
         payload = command.canonical()
         candidate(payload)
+        from class_os.domain.personal_summary import SUMMARY_TITLE
+        scope = self.summary_context
         if self.initiative:
-            from class_os.domain.personal_summary import SUMMARY_TITLE
-            scope = self.summary_context
             if (scope is None or type(command) not in (CreateDocument, ReviseDocument)
                     or command.title != SUMMARY_TITLE or command.class_id != scope['class_id']
                     or command.term_id != scope['term_id']):
                 raise ModelRetry('The standing instruction only permits a work-summary draft in its own class. No other change was prepared.')
+        if (scope and type(command) in (CreateDocument, ReviseDocument) and command.title == SUMMARY_TITLE
+                and command.class_id == scope['class_id'] and command.term_id == scope['term_id']):
             scope_key = (scope['class_id'], scope['term_id'])
             if scope_key not in self.record_read_scopes or scope_key not in self.task_read_scopes:
-                raise ModelRetry('Read current ordinary facts and tasks in this run before preparing a proactive summary.')
+                raise ModelRetry('Read current ordinary facts and tasks in this run before preparing the summary, including replies and retries. '
+                    'Use actual task statuses; attribute human supplemental material with 老师补充. Follow the confirmed format.')
             if scope['style'] == 'three-points' and len(re.findall(r'^[-*+]\s+\S', command.body, re.MULTILINE)) != 3:
                 raise ModelRetry('The confirmed long-term format requires exactly three top-level bullets. Keep the same facts, without inventing filler.')
+            requirement = scope['required_material']
+            supplied = requirement and any(re.search(re.escape(requirement) + r'\s*(?:是|为|：|:)', message)
+                for message in self.user_messages)
+            if supplied and (requirement not in command.body or '老师补充' not in command.body):
+                raise ModelRetry('Retain the supplied '+requirement+' as 老师补充, not a registered student fact or a completed activity. Do not infer its purpose or time.')
         if self.proposed is not None:
             raise ValueError("Only one business candidate per turn")
         self.proposed = payload
@@ -281,11 +289,21 @@ class WorkspaceActionCapture:
 
         async def prepare_document(action: Literal["create", "edit"], title: str, body: str, new_title: str = "", format: Literal["plain-text", "markdown"] = "markdown", edit_mode: Literal["replace", "append"] = "replace") -> dict:
             """Prepare a working document or revise one unique title. Saved documents can be exported as editable Word or text-only PPT; use Markdown headings for slide sections. A file is not created until the user saves and exports. Read the current body before replacement or append without losing text. Generated prose is unverified. Never saves."""
+            if new_title == title:
+                new_title = ''  # Repeating the current title is not a rename.
             def prepare():
                 current = context()
                 if current is None:
                     return missing_class
                 scope = (current.class_id, current.term_id)
+                from class_os.domain.personal_summary import SUMMARY_TITLE
+                if (self.summary_context and title == SUMMARY_TITLE
+                        and scope == (self.summary_context['class_id'], self.summary_context['term_id'])
+                        and (scope not in self.record_read_scopes or scope not in self.task_read_scopes)):
+                    return {'status': 'read-summary-sources-first',
+                        'instruction': 'Nothing was prepared. Call read_class_records() without search/student filters AND '
+                            'read_class_work(kind="tasks") now, then prepare_document again with their actual facts/statuses. '
+                            'read_task_progress and earlier chat are not these sources. Label teacher answers as 老师补充.'}
                 if self.classroom_enabled and self.record_read_requested and scope not in self.record_read_scopes:
                     return {'status': 'read-record-source-first',
                         'instruction': 'The selected ordinary-fact source has not been successfully read in this turn. Call read_class_records for the correct class/student and use its actual result before preparing this document. Nothing was prepared or saved.'}

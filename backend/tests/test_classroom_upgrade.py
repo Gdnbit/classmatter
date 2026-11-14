@@ -291,8 +291,24 @@ def test_revision31_summary_upgrade_preserves_chat_and_rolls_back_on_failure(own
         try:
             row = WorkspaceChatQueryGateway(services.query.identity, services.query.store).turn(auth, thread, request)[1]
             assert row['assistant_text'] == '合成原回答' and row['origin'] == 'user'
+            from class_os.domain.documents import CreateDocument
+            from class_os.domain.activity import CreateTask
+            from class_os.domain.personal_summary import SummaryDelegation, TITLE
+            chats = WorkspaceChatBusinessGateway(services.worker.identity, services.worker.store)
+            document, delegated_request = uuid4(), uuid4()
+            chats.send(auth, thread, delegated_request, '以后持续整理班级工作小结。')
+            c, t = owned_upgrade.classroom.class_id, owned_upgrade.classroom.term_id
+            command = CreateDocument(document, c, t, TITLE, SummaryDelegation().body(), 'markdown')
+            chats.finish(auth, chats.claim(auth, thread, delegated_request), 'completed', '请核对。', command.canonical())
+            for command in (command, CreateTask('task.create', uuid4(), c, t, '合成小结核对', None)):
+                proposal = services.worker.preview(*auth, command)
+                approval = services.worker.approve(*auth, proposal.proposal_id, proposal.payload_hash) if proposal.risk == 'W2' else None
+                services.worker.commit(*auth, proposal.proposal_id, uuid4(), approval)
+            assert chats.summary_claim(auth, document)['state'] == 'queued'
             backup = SyntheticBackup(current, profile='classroom-work-d4')
-            assert backup.check_current_restrictions(backup.create(), services.restrictions)['snapshot_integrity_verified']
+            artifact = backup.create()
+            assert backup._open(artifact)[0]['inventory']['personal_summary_attempt']['rows'] == 1
+            assert backup.check_current_restrictions(artifact, services.restrictions)['snapshot_integrity_verified']
         finally:
             services.close()
     finally:

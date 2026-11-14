@@ -10,7 +10,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from pydantic import SecretStr
@@ -125,6 +125,7 @@ async def test_existing_free_model_standing_summary_question_feedback_and_save(c
     assert question['candidate'] is None and '班会主题' in question['assistant_text']
     draft = await turn('answer','班会主题是合作。')
     assert draft['candidate'] and draft['candidate']['title']=='班级工作小结'
+    assert all(value in draft['candidate']['body'] for value in ('合成学生0','合成作品核对','老师补充','合作'))
     save(business,auth,draft)
     feedback = await turn('feedback','以后用三条要点整理小结。')
     assert feedback['candidate'] and feedback['candidate']['title']=='班级小结委托'
@@ -135,7 +136,7 @@ async def test_existing_free_model_standing_summary_question_feedback_and_save(c
         revised = await turn('explicit-feedback-retry','继续整理班级工作小结。')
     assert revised['candidate'] and revised['candidate']['command']=='document.revise'
     save(business,auth,revised)
-    saved = query.document(*auth,c,t,revised['candidate']['document_id'])
+    saved = query.document(*auth,c,t,UUID(revised['candidate']['document_id']))
     assert saved['version']==2 and saved['body']==revised['candidate']['body']
     assert len(query.documents(*auth,c,t))==2
     assert sdk.active==0

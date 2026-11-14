@@ -1,6 +1,6 @@
 # Personal Agent：持续委托的小结闭环
 
-> 2026-11-14，实施计划。基线 main 93079f1；研究补正见[Personal Agent 研究](../research/2026-11-14-proactive-agent-clarification-and-followup.md)。仅合成开发，不改变冻结 R1、正式 Requirement/Eval/Task/Gate、生产数据或 Agent 业务写权限。
+> 2026-11-14，实施设计与本地工程验收。基线 main 93079f1；独立[PR #105](https://github.com/Gdnbit/classmatter/pull/105)记录精确head CI、真实免费模型逐次结果和最终合并状态；研究补正见[Personal Agent 研究](../research/2026-11-14-proactive-agent-clarification-and-followup.md)。仅合成开发，不改变冻结 R1、正式 Requirement/Eval/Task/Gate、生产数据或 Agent 业务写权限。
 
 ## 目标与范围
 

@@ -17,7 +17,7 @@ from class_os.infrastructure.personal_summary_runtime import PersonalSummaryServ
 from test_classroom_work_storage import classroom_work, workspace_chat, roster, identity
 
 
-def assembly(fixture, *, before_prepare=None, fail=False, quiet=False, plain_question=False):
+def assembly(fixture, *, before_prepare=None, fail=False, quiet=False, plain_question=False, premature_answer=False):
     business, query, auth, owner, clock, store, commit, c, t, students = fixture
     calls = []
     def factory(request):
@@ -38,8 +38,14 @@ def assembly(fixture, *, before_prepare=None, fail=False, quiet=False, plain_que
             # Read only this run's tool returns; prior chat prose is not evidence.
             last_user = max(index for index, message in enumerate(messages)
                             if any(isinstance(part, UserPromptPart) for part in message.parts))
+            if len(info.function_tools) == 1 and info.function_tools[0].name == 'read_task_progress':
+                return ModelResponse(parts=[ToolCallPart('read_task_progress', {})])
+            if premature_answer and request.text.startswith('班会主题是') and not any(isinstance(part, ToolReturnPart)
+                    and part.tool_name == 'prepare_document' for message in messages[last_user:] for part in message.parts):
+                return ModelResponse(parts=[ToolCallPart('prepare_document', {'action':'create','title':SUMMARY_TITLE,
+                    'body':'已完成班会。暂无记录。'})])
             returns = [part for message in messages[last_user:] for part in message.parts if isinstance(part, ToolReturnPart)]
-            if not returns:
+            if not any(part.tool_name == 'read_class_records' for part in returns):
                 return ModelResponse(parts=[ToolCallPart('read_class_records', {})])
             if not any(part.tool_name == 'read_class_work' for part in returns):
                 return ModelResponse(parts=[ToolCallPart('read_class_work', {'kind': 'tasks'})])
@@ -62,9 +68,13 @@ def assembly(fixture, *, before_prepare=None, fail=False, quiet=False, plain_que
                 before_prepare()
             supplemented = any('班会主题是合作' in str(part.content)
                 for message in messages for part in message.parts if isinstance(part, (UserPromptPart, ToolReturnPart)))
-            body = ('- 合成学生0交来作品。\n- 合成作品核对：等待确认。\n- '
+            task_items = next(part.content['items'] for part in returns if part.tool_name == 'read_class_work'
+                and part.content.get('items') and 'task_id' in part.content['items'][0])
+            status = {'not-started':'待处理','in-progress':'进行中','waiting':'等待别人','done':'已完成','cancelled':'已取消'}[task_items[0]['status']]
+            task_text = task_items[0]['title'] + '：' + status + '。'
+            body = ('- 合成学生0交来作品。\n- '+task_text+'\n- '
                     + ('老师补充：班会主题是合作。' if supplemented else '后续继续核对。')
-                    if instruction.get('style') == 'three-points' else '## 班级工作小结\n\n合成学生0交来作品。\n\n合成作品核对：等待确认。')
+                    if instruction.get('style') == 'three-points' else '## 班级工作小结\n\n合成学生0交来作品。\n\n'+task_text)
             if '班会主题是' in request.text:
                 body += '\n\n老师补充：班会主题是合作。'
             return ModelResponse(parts=[ToolCallPart('prepare_document', {'action': 'edit' if has_document else 'create', 'title': SUMMARY_TITLE, 'body': body})])
@@ -120,7 +130,7 @@ async def test_confirmed_standing_order_discovers_material_without_new_user_requ
     prepared = rows[-1]
     assert prepared['origin'] == 'personal-agent' and prepared['candidate']['title'] == SUMMARY_TITLE
     assert prepared['change_preview']['kind'] == 'create' and prepared['action_receipt'] is None
-    assert '等待确认' in prepared['candidate']['body']
+    assert '合成作品核对：待处理' in prepared['candidate']['body']
     assert len(query.documents(*auth, c, t)) == 1, 'Agent did not save the generated summary'
     saved_calls = len(calls)
     rebuilt = PersonalSummaryService(WorkspaceChatRuntime(chats, history, sdk))
@@ -318,7 +328,7 @@ async def test_failed_initiative_manual_retry_question_survives_service_restart(
         from class_os.infrastructure.personal_summary_store import validate_summary_integrity
         validate_summary_integrity(connection)
     # Fresh runtime has no in-memory pending question; linkage is in PostgreSQL.
-    chats, history, _, runtime, _, _ = assembly(classroom_work)
+    chats, history, _, runtime, _, _ = assembly(classroom_work, premature_answer=True)
     failed_request = uuid4()
     chats.send(auth, thread, failed_request, '班会主题是合作。')
     chats.finish(auth, chats.claim(auth, thread, failed_request), 'failed')
