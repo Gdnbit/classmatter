@@ -204,6 +204,20 @@ async def test_resume_does_not_require_a_new_activation_phrase_or_duplicate_pref
     assert already['candidate'] is None and not query.documents(*auth, c, t)
     paused = await send(runtime, chats, history, auth, thread, '暂停整理班级小结。')
     save(business, auth, paused)
+    from class_os.infrastructure.workspace_actions import WorkspaceActionCapture
+    for quote, action in [('不要恢复整理班级小结。', 'enable'), ('这次恢复整理班级小结。', 'enable'),
+                          ('假设恢复整理班级小结。', 'enable'), ('不要暂停整理班级小结。', 'pause'),
+                          ('不想恢复整理班级小结。', 'enable'), ('不再恢复整理班级小结。', 'enable'),
+                          ('这次暂停整理班级小结。', 'pause')]:
+        capture = WorkspaceActionCapture((quote,), classroom_enabled=True)
+        tools = {fn.__name__: fn for fn in capture.tools(query, auth, lambda: None, lambda *a, **k: None)}
+        outcome = await tools['prepare_summary_delegation'](quote=quote, action=action)
+        assert outcome['status'] == 'not-long-term-delegation' and capture.proposed is None
+        shortened = quote.removeprefix('不要')
+        if shortened != quote:
+            outcome = await tools['prepare_summary_delegation'](quote=shortened, action=action)
+            assert outcome['status'] == 'not-long-term-delegation' and capture.proposed is None
+        assert history.summary_programs(auth) == [] and query.documents(*auth, c, t)[0]['version'] == 1
     restored = await send(runtime, chats, history, auth, thread, '恢复整理班级小结。')
     assert restored['candidate']['command'] == 'document.revise'
     assert restored['candidate']['document_id'] == paused['candidate']['document_id']

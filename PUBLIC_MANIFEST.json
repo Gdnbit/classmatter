@@ -12,7 +12,7 @@
       "sha256": "f5151d8095f1151438a73b5f4015c8fa71a5b7cd10c97903a501a2428f2550e1"
     },
     "backend/tests/test_builtin_summary_runtime.py": {
-      "sha256": "9360be198e12ddbebf3439eedc9188204dcec472faeb98c90d5d2782fd9e1f37"
+      "sha256": "1ad562a3625782811970ee5118ddd25df7d038d145b596c6ba5dec2d31a3e7e3"
     },
     "backend/tests/test_legacy_archive_capacity.py": {
       "sha256": "a63cea186e41753c345252b14537e0761432cf4608379ea3aa64ef28d2d9ea43"
@@ -33,7 +33,7 @@
       "sha256": "5d4730906bd01bd164ba1dccaacf6293ad0362bd948e5e80d71039699f62c37b"
     },
     "backend/src/class_os/infrastructure/personal_summary_tools.py": {
-      "sha256": "aab51e8824c6294d63db9fd130f5a03c51682f4c7f1b7948fbc7f4a9df359658"
+      "sha256": "5d1a945f7b7693ab2642f04fd90433c178a4c2bf516d2be95eb2457a9ffe659e"
     },
     "backend/tests/test_personal_summary_live.py": {
       "sha256": "a53ea5281bd684f9f730f6943235f35bf5aeb21cee8f5f87fcea939450dea842"
@@ -51,7 +51,7 @@
       "sha256": "d627c8e8c67af7122bc8b44d7f1d1f72bf69aac3f887f85131072fa11fb71f88"
     },
     "docs/design/personal-summary-agent.md": {
-      "sha256": "9e4acc2f3b5017b96a3db778028e8571525094e4992ca8d1b26699078e03e6bd"
+      "sha256": "696891cc7276950e60237a877b28d11cb440e51075d08727ea04104460ebeab1"
     },
     "third_party/licenses/python/apscheduler-3.11.3/0.txt": {
       "sha256": "6163f7987dfb38d6bc320ce2b70b2f02b862bc41126516d552ef1cd43247e758"
@@ -612,7 +612,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "3f05d610adf7f65fcd8d4f1bdad30ce2a6052b04e24e56d6ec56c6939d36ad57"
+      "sha256": "1463b4c13e10267a833c52eb06e81fb5557ac3685f281732f2d4e07e99d58881"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"

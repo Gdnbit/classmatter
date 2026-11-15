@@ -28,11 +28,13 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 raise ModelRetry('Quote only the exact current human message, never prior delegation messages or concatenated history. '
                     'If this is a reply/retry, read the confirmed instructions and continue the existing summary instead of asking to enable it again.')
             if action == 'pause':
-                valid = bool(re.search(r'暂停|停止|不再|不要|不用|别再', quote))
+                valid = bool(re.search(r'暂停|停止|不再|不要|不用|别再', quote)) and not re.search(
+                    r'(?:不要|不用|别|不必|无需|不想|不需要)\s*(?:再)?(?:暂停|停止)|这次|仅本次|假设|举例|引用', request)
             else:
                 valid = bool(re.search(r'以后|今后|持续|平时|长期|每次|一直', quote)) and not re.search(
                     r'这次|仅本次|不要|不需要|不用|别|假设|举例|引用', quote)
-            resume = action == 'enable' and '小结' in quote and bool(re.search(r'恢复|重新开始', quote))
+            resume = (action == 'enable' and '小结' in quote and bool(re.search(r'恢复|重新开始', quote))
+                and not re.search(r'这次|仅本次|不要|不需要|不用|不想|不必|无需|不再|不恢复|别|假设|举例|引用', request))
             if not valid and not resume:
                 return {'status': 'not-long-term-delegation',
                         'instruction': 'Do not change the standing instruction. Handle a one-off request in this turn, or ask whether a lasting change is intended.'}
