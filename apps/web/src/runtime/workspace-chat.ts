@@ -8,6 +8,9 @@ type SeatBoard = { rows: number; columns: number; cells: { row: number; column: 
 export type ChangePreview = { schema_version: 'classmatter.change-preview.v1'; candidate_hash: string; kind: 'create' | 'edit' | 'seating';
   fields: { field: string; before: string | null; after: string | null }[]; before_seats: SeatBoard | null; after_seats: SeatBoard | null }
 export type ChatCandidate =
+  | (Scope & { command: 'collaboration.request'; request_id: string; peer_id: string; thread_id: string; title: string; body: string })
+  | (Scope & { command: 'collaboration.material.share'; message_id: string; request_id: string; peer_id: string; thread_id: string; document_id: string; expected_version: number; title: string; body: string })
+  | (Scope & { command: 'collaboration.summary.save'; request_id: string; source_message_id: string; document_id: string; expected_version: number; title: '班级工作小结'; body: string; format: 'markdown' })
   | ClassroomCommand
   | (Scope & { command: "class.create"; name: string; term_name: string; start_date: string; end_date: string })
   | (Scope & { command: "class.update"; name: string; expected_version: number })
@@ -24,7 +27,7 @@ export type ChatTurn = { turn_id: string; request_id: string; ordinal: number; s
   user_text: string | null; assistant_text: string | null; candidate: ChatCandidate | null; candidate_hash: string | null;
   created_at: string; started_at: string | null; lease_until: string | null; ended_at: string | null; input_tokens: number | null; output_tokens: number | null; duration_ms: number | null;
   action_receipt: { receipt_id: string; resource_id: string; version: number } | null; change_preview: ChangePreview | null;
-  origin?: 'user' | 'personal-agent'; answer_required?: boolean }
+  origin?: 'user' | 'personal-agent' | 'collaboration'; answer_required?: boolean }
 export type ChatListing = { schema_version: "classmatter.workspace-chat-list.v1"; data: ChatThread[]; next_offset: number | null }
 export type ChatHistory = { schema_version: "classmatter.workspace-chat-history.v1"; thread: ChatThread; turns: ChatTurn[]; next_before: number | null }
 export type ChatPreview = { schema_version: "classmatter.workspace-chat-preview.v1"; proposal_id: string; payload_hash: string; risk: "W1" | "W2"; expires_at: string; payload: ChatCandidate; change_preview: ChangePreview | null; displayNames?: Record<string, string> }
@@ -42,7 +45,9 @@ function dates(value: unknown): void {
 function checkComparison(preview: ChangePreview | null | undefined, candidate: ChatCandidate | null, hash: string | null) {
   if (!preview) return
   if (!candidate || preview.candidate_hash !== hash || new Set(preview.fields.map(field => field.field)).size !== preview.fields.length) throw new Error('预览与对话不匹配')
-  const expectedKind = candidate.command.startsWith('seat.') ? 'seating' : candidate.command.endsWith('.create') ? 'create' : 'edit'
+  const expectedKind = candidate.command.startsWith('seat.') ? 'seating'
+    : candidate.command === 'collaboration.summary.save' ? candidate.expected_version === 0 ? 'create' : 'edit'
+      : candidate.command === 'collaboration.request' || candidate.command === 'collaboration.material.share' || candidate.command.endsWith('.create') ? 'create' : 'edit'
   if (preview.kind !== expectedKind) throw new Error('预览类型不匹配')
   if (preview.kind === 'seating' ? !candidate.command.startsWith('seat.') || !preview.after_seats || preview.fields.length > 0
     : preview.before_seats || preview.after_seats || !preview.fields.length) throw new Error('预览内容不完整')

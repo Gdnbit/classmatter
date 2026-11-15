@@ -44,6 +44,7 @@ import { ModelConfigurationForm } from "./ModelConfiguration"
 import { createScopedConversation, createWorkspaceConversation, parseRecordNoteCandidate, type RecordNoteCandidate } from "./agent-conversation"
 import { useWorkspaceChat } from "./useWorkspaceChat"
 import { WorkspaceChatHistory, WorkspaceChatComposer } from "./WorkspaceChat"
+import { CollaborationSettings, CollaborationWaiting } from './MaterialCollaboration'
 import { decodeApproval, decodeCommandReceipt, decodeCommandState } from "./command-receipts"
 import { decodeTermMetadata } from "./term-metadata"
 import { searchStudents, studentFollowUps, isOpenTask } from "./student-directory"
@@ -1147,7 +1148,8 @@ export default function R1App() {
                     </button>
                   )}
                 </>,
-                taskCards(attention.waiting),
+                <>{taskCards(attention.waiting)}{classroomProfile && <CollaborationWaiting session={session}
+                  onSelect={thread => { setError(''); workspaceConversation.select(thread) }} />}</>,
               ]}</AttentionColumns>
               <div className="r1-quick">
                 <button
@@ -1602,6 +1604,7 @@ export default function R1App() {
       {settingsOpen && <R1Dialog titleId="r1-settings-title" busy={busy || exitBusy} onDismiss={() => setSettingsOpen(false)}>
         <div className="r1-settings-heading"><h2 id="r1-settings-title">设置</h2><button aria-label="关闭设置" disabled={busy || exitBusy} onClick={() => setSettingsOpen(false)}><X size={18} /></button></div>
         <div className="r1-settings-content">
+              {classroomProfile && <CollaborationSettings key={`${session.csrf_token}:${classroom?.class_id}:${classroom?.term_id}`} session={session} classroom={classroom} disabled={busy || workspaceBusy} onError={fail} />}
               <section className="r1-card">
                 <h2>当前班级与学期</h2>
                 <button disabled={!classroom || busy || refreshing} onClick={event => { auditOpener.current = event.currentTarget; setSettingsOpen(false); void action(async () => {

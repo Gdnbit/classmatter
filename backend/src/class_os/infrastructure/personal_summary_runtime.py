@@ -12,12 +12,15 @@ class PersonalSummaryService:
         self.runtime, self.interval = runtime, interval
         self.scheduler = None
         self.sessions, self.checking, self.tasks = {}, set(), set()
+        self.collaboration = None
 
     async def watch(self, credentials):
         # Only a CSRF-protected explicit POST registers a live identity. No
         # credential is persisted and GET/reconnect never redispatches a turn.
         await anyio.to_thread.run_sync(lambda: self.runtime.query.listing(credentials))
         self.sessions[credentials[3]] = credentials
+        if self.collaboration is not None:
+            await self.collaboration.watch(credentials)
         if self.scheduler is None:
             self.scheduler = AsyncIOScheduler(timezone='UTC')
             self.scheduler.start()
@@ -37,6 +40,13 @@ class PersonalSummaryService:
         self.tasks.add(task)
         credentials = self.sessions[workspace_id]
         try:
+            if self.collaboration is not None:
+                try:
+                    await self.collaboration.check(workspace_id)
+                except asyncio.CancelledError:
+                    raise
+                except Exception as error:
+                    logging.getLogger(__name__).warning('Material collaboration check stopped: %s',type(error).__name__)
             programs = await anyio.to_thread.run_sync(lambda: self.runtime.query.summary_programs(credentials))
             for program in programs:
                 if program.get('kind') == 'builtin' and not self._builtin_model_ready(credentials):
@@ -73,6 +83,8 @@ class PersonalSummaryService:
             self.scheduler.shutdown(wait=False)
             self.scheduler = None
         self.sessions.clear()
+        if self.collaboration is not None:
+            self.collaboration.sessions.clear()
         for task in tuple(self.tasks):
             task.cancel()
         if self.tasks:

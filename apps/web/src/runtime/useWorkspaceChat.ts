@@ -279,7 +279,8 @@ export function useWorkspaceChat(props: Props) {
     retryFailed: (turn: ChatTurn) => {
       if (turn.request_id === history?.turns.at(-1)?.request_id && turn.state === 'failed'
           && turn.user_text && !turn.candidate && !turn.action_receipt)
-        return turn.origin === 'personal-agent' ? send('继续整理班级工作小结。') : send(turn.user_text, turn)
+        return turn.origin === 'personal-agent' ? send('继续整理班级工作小结。')
+          : turn.origin === 'collaboration' ? send('重新整理收到的材料。') : send(turn.user_text, turn)
     },
     select: (thread: string) => latest.current.onSelect(thread),
     newChat: () => latest.current.onSelect(""),

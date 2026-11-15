@@ -69,11 +69,12 @@ class WorkspaceChatRuntime:
                       and row['state'] == 'completed' and row.get('origin', 'user') == 'user']
             summary_context = await anyio.to_thread.run_sync(lambda: self.query.summary_context(credentials, thread_id, request_id))
             initiative = ticket.get('origin') == 'personal-agent'
-            capture = WorkspaceActionCapture(tuple(intent + ([] if initiative else [ticket['user_text']])),
+            collaboration = ticket.get('origin') == 'collaboration'
+            capture = WorkspaceActionCapture(tuple(intent + ([] if initiative or collaboration else [ticket['user_text']])),
                 progress_reader=lambda: self.query.history(credentials, thread_id),
                 recall_reader=lambda keyword: self.query.recall(credentials, thread_id, keyword, before=ticket['ordinal']),
                 classroom_enabled=self.business.store.database.profile == 'classroom-work-d4',
-                summary_context=summary_context, initiative=initiative)
+                summary_context=summary_context, initiative=initiative,thread_id=thread_id,collaboration_initiative=collaboration)
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket["user_text"], Mode.CHAT)
             phase = "sdk_dispatch"

@@ -1,0 +1,276 @@
+{
+  "$defs": {
+    "MaterialItem": {
+      "additionalProperties": false,
+      "properties": {
+        "message_id": {
+          "format": "uuid",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "peer_id": {
+          "format": "uuid",
+          "title": "Peer Id",
+          "type": "string"
+        },
+        "direction": {
+          "enum": [
+            "incoming",
+            "outgoing"
+          ],
+          "title": "Direction",
+          "type": "string"
+        },
+        "operation": {
+          "enum": [
+            "request",
+            "material"
+          ],
+          "title": "Operation",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        },
+        "source_document_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Document Id"
+        },
+        "source_version": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Version"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "delivered_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Delivered At"
+        },
+        "peer_name": {
+          "maxLength": 80,
+          "title": "Peer Name",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "queued",
+            "retry-needed",
+            "delivered",
+            "received",
+            "material-received",
+            "material-sent",
+            "saved"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "saved": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Saved"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "message_id",
+        "request_id",
+        "peer_id",
+        "direction",
+        "operation",
+        "title",
+        "body",
+        "source_document_id",
+        "source_version",
+        "class_id",
+        "term_id",
+        "thread_id",
+        "created_at",
+        "delivered_at",
+        "peer_name",
+        "status",
+        "saved"
+      ],
+      "title": "MaterialItem",
+      "type": "object"
+    },
+    "Peer": {
+      "additionalProperties": false,
+      "properties": {
+        "peer_id": {
+          "format": "uuid",
+          "title": "Peer Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "endpoint": {
+          "maxLength": 128,
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "public_key": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Public Key",
+          "type": "string"
+        },
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "active",
+            "revoked"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "peer_id",
+        "name",
+        "endpoint",
+        "public_key",
+        "class_id",
+        "term_id",
+        "status",
+        "version"
+      ],
+      "title": "Peer",
+      "type": "object"
+    },
+    "Saved": {
+      "additionalProperties": false,
+      "properties": {
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "document_version": {
+          "minimum": 1,
+          "title": "Document Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "request_id",
+        "document_id",
+        "document_version"
+      ],
+      "title": "Saved",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.collaboration-state.v1",
+      "default": "classmatter.collaboration-state.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "peers": {
+      "items": {
+        "$ref": "#/$defs/Peer"
+      },
+      "maxItems": 20,
+      "title": "Peers",
+      "type": "array"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/MaterialItem"
+      },
+      "maxItems": 100,
+      "title": "Items",
+      "type": "array"
+    }
+  },
+  "required": [
+    "peers",
+    "items"
+  ],
+  "title": "CollaborationState",
+  "type": "object"
+}

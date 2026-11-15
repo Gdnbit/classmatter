@@ -120,7 +120,10 @@ class WorkspaceChatTransaction(WorkbenchTransaction):
               AND p.request_id=workspace_chat_turn.request_id)
             AND NOT EXISTS(SELECT 1 FROM class_os.builtin_summary_attempt p
               WHERE p.workspace_id=workspace_chat_turn.workspace_id AND p.thread_id=workspace_chat_turn.thread_id
-                AND p.request_id=workspace_chat_turn.request_id) ''' if self._store.database.profile == 'classroom-work-d4' else '')
+                AND p.request_id=workspace_chat_turn.request_id)
+            AND NOT EXISTS(SELECT 1 FROM class_os.collaboration_message p
+              WHERE p.workspace_id=workspace_chat_turn.workspace_id AND p.thread_id=workspace_chat_turn.thread_id
+                AND p.message_id=workspace_chat_turn.request_id AND p.direction='incoming') ''' if self._store.database.profile == 'classroom-work-d4' else '')
         rows = self._connection.execute(text("""SELECT ordinal,created_at,user_text,input_hash
             FROM class_os.workspace_chat_turn
             WHERE workspace_id=:workspace_id AND thread_id=:thread AND ordinal<:before

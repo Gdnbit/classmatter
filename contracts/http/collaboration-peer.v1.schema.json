@@ -1,0 +1,61 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "peer_id": {
+      "format": "uuid",
+      "title": "Peer Id",
+      "type": "string"
+    },
+    "name": {
+      "maxLength": 80,
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "endpoint": {
+      "maxLength": 128,
+      "title": "Endpoint",
+      "type": "string"
+    },
+    "public_key": {
+      "pattern": "^[a-f0-9]{64}$",
+      "title": "Public Key",
+      "type": "string"
+    },
+    "class_id": {
+      "format": "uuid",
+      "title": "Class Id",
+      "type": "string"
+    },
+    "term_id": {
+      "format": "uuid",
+      "title": "Term Id",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "revoked"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "version": {
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "peer_id",
+    "name",
+    "endpoint",
+    "public_key",
+    "class_id",
+    "term_id",
+    "status",
+    "version"
+  ],
+  "title": "Peer",
+  "type": "object"
+}

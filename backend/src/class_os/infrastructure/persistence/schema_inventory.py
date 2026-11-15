@@ -55,11 +55,22 @@ BUILTIN_COLUMNS = MappingProxyType({
     'builtin_summary_attempt': frozenset({'workspace_id', 'owner_id', 'class_id', 'term_id', 'program_id',
         'program_version', 'thread_id', 'request_id', 'basis_hash', 'created_at'}),
 })
+COLLABORATION_COLUMNS = MappingProxyType({
+    'collaboration_identity': frozenset({'workspace_id', 'owner_id', 'public_key', 'sealed_key', 'created_at'}),
+    'collaboration_peer': frozenset({'workspace_id', 'owner_id', 'peer_id', 'name', 'endpoint', 'public_key',
+        'class_id', 'term_id', 'status', 'version', 'created_at'}),
+    'collaboration_message': frozenset({'workspace_id', 'owner_id', 'message_id', 'request_id', 'peer_id',
+        'direction', 'operation', 'title', 'body', 'source_document_id', 'source_version', 'class_id', 'term_id',
+        'thread_id', 'payload_hash', 'attempts', 'next_attempt_at', 'delivered_at', 'last_error', 'created_at'}),
+    'collaboration_summary': frozenset({'workspace_id', 'owner_id', 'request_id', 'source_message_id',
+        'document_id', 'document_version', 'body_hash', 'created_at'}),
+    'collaboration_audit': frozenset({'workspace_id', 'event_id', 'owner_id', 'action', 'outcome', 'resource_id', 'occurred_at'}),
+})
 SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
                                    "conversation-d1": ("0026", REGISTERED_TABLES | D1_TABLES),
                                    "workbench-d2": ("0027", REGISTERED_TABLES | D1_TABLES | D2_TABLES),
                                    "workspace-chat-d3": ("0028", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS)),
-                                   "classroom-work-d4": ("0033", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS) | frozenset(PERSONAL_COLUMNS) | frozenset(BUILTIN_COLUMNS))})
+                                   "classroom-work-d4": ("0034", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS) | frozenset(PERSONAL_COLUMNS) | frozenset(BUILTIN_COLUMNS) | frozenset(COLLABORATION_COLUMNS))})
 
 
 def schema_profile(value="r1"):
@@ -80,6 +91,9 @@ def relation_surface(connection):
 
 def validate_surface(connection, *, complete=False, profile="r1", prior_summary=False, prior_builtin=False):
     _, registered = schema_profile(profile)
+    if profile == 'classroom-work-d4' and connection.execute(text('SELECT to_regclass(\'class_os.alembic_version\')')).scalar_one() and connection.execute(text(
+            'SELECT version_num FROM class_os.alembic_version')).scalar_one_or_none() in ('0029','0030','0031','0032','0033'):
+        registered = registered - frozenset(COLLABORATION_COLUMNS)
     prior_builtin = prior_builtin or prior_summary
     if prior_builtin:
         if profile != 'classroom-work-d4' or connection.execute(text(

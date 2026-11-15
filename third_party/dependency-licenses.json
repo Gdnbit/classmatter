@@ -631,7 +631,7 @@
       "status": "INSTALLED_WINDOWS_METADATA_INSPECTED"
     },
     "backend": {
-      "lock_sha256": "7d27f46bab87d6fb90f0c7b03c4e220c9df6ba60e90ebc1be572866dd37decb4",
+      "lock_sha256": "fbfef2cef2cf7e845278f9b239de06f0e87a9f7faf5ae72f9d11f2c35d30166f",
       "packages": [
         {
           "license_expression": "MIT",
@@ -1598,6 +1598,90 @@
             }
           ],
           "version": "5.4.5"
+        },
+        {
+          "license_expression": "Apache-2.0",
+          "name": "a2a-sdk",
+          "notices": [
+            {
+              "path": "licenses/python/a2a-sdk-1.3.0/0.txt",
+              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "1.3.0"
+        },
+        {
+          "license_expression": "Apache-2.0",
+          "name": "google-api-core",
+          "notices": [
+            {
+              "path": "licenses/python/google-api-core-2.34.0/0.txt",
+              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "2.34.0"
+        },
+        {
+          "license_expression": "Apache-2.0",
+          "name": "googleapis-common-protos",
+          "notices": [
+            {
+              "path": "licenses/python/googleapis-common-protos-1.76.0/0.txt",
+              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "1.76.0"
+        },
+        {
+          "license_expression": "MIT",
+          "name": "json-rpc",
+          "notices": [
+            {
+              "path": "licenses/python/json-rpc-1.15.0/0.txt",
+              "sha256": "65d2a4421f8d862eae81a9ce8ceaf16a264412e849ed654f75606fe5de6e8e4a",
+              "upstream_relative_path": "LICENSE.txt"
+            }
+          ],
+          "version": "1.15.0"
+        },
+        {
+          "license_expression": "Apache-2.0",
+          "name": "proto-plus",
+          "notices": [
+            {
+              "path": "licenses/python/proto-plus-1.29.0/0.txt",
+              "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "1.29.0"
+        },
+        {
+          "license_expression": "BSD-3-Clause",
+          "name": "protobuf",
+          "notices": [
+            {
+              "path": "licenses/python/protobuf-7.36.2/0.txt",
+              "sha256": "6e5e117324afd944dcf67f36cf329843bc1a92229a8cd9bb573d7a83130fea7d",
+              "upstream_relative_path": "LICENSE"
+            }
+          ],
+          "version": "7.36.2"
+        },
+        {
+          "license_expression": "MIT",
+          "name": "PyJWT",
+          "notices": [
+            {
+              "path": "licenses/python/pyjwt-2.15.1/0.txt",
+              "sha256": "797a7a20231d4c433e9f1911db1731d06b5828b98f499819a034f7c0f56f5ce5",
+              "upstream_relative_path": "licenses/LICENSE"
+            }
+          ],
+          "version": "2.15.1"
         }
       ],
       "status": "INSTALLED_WINDOWS_METADATA_INSPECTED"

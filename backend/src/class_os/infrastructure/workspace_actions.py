@@ -44,6 +44,9 @@ class WorkspaceActionCapture:
     policy_result: dict | None = None
     summary_context: dict | None = None
     initiative: bool = False
+    thread_id: object = None
+    collaboration_state: dict | None = None
+    collaboration_initiative: bool = False
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -62,6 +65,10 @@ class WorkspaceActionCapture:
         return scope in self.complete_record_read_scopes and scope in self.complete_task_read_scopes
 
     def propose(self, command):
+        if self.collaboration_initiative:
+            from class_os.domain.collaboration import SaveCollectedSummary
+            if type(command) is not SaveCollectedSummary:
+                raise ModelRetry('A received-material run can only prepare its source-bound summary for human confirmation.')
         payload = command.canonical()
         candidate(payload)
         from class_os.domain.personal_summary import SUMMARY_TITLE
@@ -379,6 +386,7 @@ class WorkspaceActionCapture:
             from .activity_actions import tools as activity_tools
             activity = activity_tools(self, query, credentials, context, execute, missing_class)
             from .personal_summary_tools import tools as summary_tools
+            from .collaboration_tools import tools as collaboration_tools
             async def ask_summary_question(question: str) -> dict:
                 """Only ask about the standing summary instruction's explicitly required material after reading current facts and tasks. Pause with one short question. Never invent a missing requirement or modify a task."""
                 def validate():
@@ -393,5 +401,6 @@ class WorkspaceActionCapture:
                 raise CallDeferred()
             return (tuple(activity[2] if tool is prepare_task else tool for tool in base) + activity[:2]
                 + tools(self, query, credentials, context, execute, missing_class) + (recall_this_chat, search_policy_knowledge)
-                + summary_tools(self, query, credentials, context, execute, missing_class) + (ask_summary_question,))
+                + summary_tools(self, query, credentials, context, execute, missing_class) + (ask_summary_question,)
+                + collaboration_tools(self, query, credentials, context, execute, missing_class))
         return base

@@ -427,6 +427,13 @@
       "rule": "email-shape",
       "line_sha256": "b567882c16d0727a9ab06c911ecac8f769da430eb32a04ca63846df740dc69d5",
       "reason": "Public upstream copyright/license text retained verbatim; not a private project identity."
+    },
+    {
+      "path": "third_party/licenses/python/json-rpc-1.15.0/0.txt",
+      "line": 3,
+      "rule": "email-shape",
+      "line_sha256": "e636adf0610d7c43caa9e963b6abeb29c05a2558e227b89d7a9a7951b3a3f7b8",
+      "reason": "Unmodified upstream json-rpc1.15.0 MIT copyright/author address from installed distribution metadata; required third-party attribution, not a ClassMatter account or private contact."
     }
   ]
 }
