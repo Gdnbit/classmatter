@@ -25,7 +25,7 @@ try {
   await page.getByRole('heading', { name: '学生', exact: true }).waitFor();
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByRole('button', { name: '查看操作记录', exact: true }).click();
-  await page.getByRole('dialog').getByText('查看文档 · 已通过', { exact: true }).waitFor();
+  await page.getByRole('dialog').getByText('查看文档 · 已通过', { exact: true }).first().waitFor();
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByText('完整导出暂不可用。', { exact: false }).waitFor();

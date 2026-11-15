@@ -16,6 +16,7 @@ from class_os.interfaces.http.web import mount_web
 from class_os.interfaces.http.workbench import create_workbench_app
 from test_workbench_composition import workbench
 from test_documents_gateway import documents, control, storage, roster, identity, create, saved
+from test_legacy_archive_capacity import grow_audit
 
 
 @pytest.mark.db
@@ -23,6 +24,7 @@ def test_original_workbench_discovers_d2_and_reads_documents_audit_without_parti
     command = create(workbench)
     saved(workbench, command)
     workbench[1].document(*workbench[5][6], command.class_id, command.term_id, command.document_id)
+    assert grow_audit(workbench[1], workbench[3], workbench[5][6], action='document.read') > 10000
     with socket.socket() as probe:
         probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
     app = create_workbench_app(Settings(port=port), worker=workbench[0], query=workbench[1],
