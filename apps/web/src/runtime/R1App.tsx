@@ -1130,7 +1130,13 @@ export default function R1App() {
                 <h1>今天想处理什么？</h1>
               </div>
               <AttentionColumns className="r1-attention">{[
-                taskCards(attention.needsAction),
+                <>
+                  {workspaceConversation.listing?.data.filter(item => item.summary_attention).map(item =>
+                    <button className="r1-attention-item" key={item.thread_id} onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>
+                      <span>{item.title}</span><span aria-hidden="true">›</span>
+                    </button>)}
+                  {taskCards(attention.needsAction)}
+                </>,
                 <>
                   <p className="r1-muted">
                     暂无待提醒事项

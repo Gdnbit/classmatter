@@ -22,7 +22,7 @@ Web 的 typed client → HTTP/identity guard → QG 只读业务查询；业务�
 
 ## 当前技术与限制
 
-2026-11-14 后续 D4 的 [Personal Agent 小结切片](design/personal-summary-agent.md)复用原聊天、普通事实/任务、Pydantic AI 和文档预览/确认，仅新增固定委托与主动执行关联；当前 D4 目标为0032，旧实例须先核验0031 checkpoint 后显式升级。`domain/personal_summary.py`封闭委托格式，`personal_summary_tools.py`准备委托/读取偏好，`personal_summary_store.py`通过原QG/BCG保存来源与问题关联，`personal_summary_runtime.py`用APScheduler唤醒原SDK。它不提供通用自动任务、Agent提交或Memory写入，R1/D1/D2/D3及正式Gate不变；实际验收见实施台账。
+2026-11-15后续D4的[Personal Agent小结切片](design/personal-summary-agent.md)复用原聊天、普通事实/任务、Pydantic AI和文档预览/确认。小结准备是内置任务，可选长期偏好不再是启动前置条件；默认无额外班会主题。当前D4目标0033，旧0032等受支持实例须先实际恢复校验checkpoint再显式增量升级。`domain/builtin_class_work.py`固定任务身份，`builtin_summary_store.py`记录来源绑定的不可变执行；原`personal_summary.py/tools/store`保留可选偏好与问题关联，`personal_summary_runtime.py`用原APScheduler唤醒SDK。它不提供通用自动任务、Agent提交或Memory写入，R1/D1/D2/D3及正式Gate不变；实际验收见实施台账。
 
 `apps/desktop/` 是Electron独立Windows宿主。当前候选开发入口默认连接显式升级后的自有D3实例并托管已有API子进程，先验证进程proof/readiness，再开放该loopback同源；按用户要求免输密码，普通API仍经ISB/QG/BCG。不会在启动时初始化、迁移、清空或接管实例。原离线资源协议构建保留为显式fixture回归。运行入口及升级步骤以[桌面说明](../apps/desktop/README.md)为准；[早期桌面设计](desktop-demo.md)记录原离线宿主。候选分支不代表完整原型、正式R1或发行准入。
 

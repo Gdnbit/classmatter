@@ -78,6 +78,8 @@ def upgrade_classroom(runtime):
                     if after.get('personal_summary_attempt', {}).get('rows') != 0:
                         raise UpgradeRejected()
                     after.pop('personal_summary_attempt', None)
+                    if after.pop('builtin_summary_attempt')['rows'] != 0:
+                        raise UpgradeRejected()
                     turns = connection.execute(text("SELECT coalesce(jsonb_agg(to_jsonb(t)-'change_preview' ORDER BY (to_jsonb(t)-'change_preview')::text),'[]'::jsonb) FROM class_os.workspace_chat_turn t")).scalar_one()
                     after['workspace_chat_turn']['sha256'] = digest(encoded(turns))
                     after['alembic_version'] = packet['inventory']['alembic_version']
@@ -112,6 +114,8 @@ def upgrade_classroom(runtime):
                     if after.get('personal_summary_attempt', {}).get('rows') != 0:
                         raise UpgradeRejected()
                     after.pop('personal_summary_attempt', None)
+                    if after.pop('builtin_summary_attempt')['rows'] != 0:
+                        raise UpgradeRejected()
                     after['alembic_version'] = packet['inventory']['alembic_version']
                     if after != packet['inventory']:
                         raise UpgradeRejected()
@@ -138,6 +142,35 @@ def upgrade_classroom(runtime):
                     surface(connection, profile='classroom-work-d4')
                     after = SyntheticBackup._inventory(connection, profile='classroom-work-d4')
                     if after.pop('personal_summary_attempt')['rows'] != 0:
+                        raise UpgradeRejected()
+                    if after.pop('builtin_summary_attempt')['rows'] != 0:
+                        raise UpgradeRejected()
+                    after['alembic_version'] = packet['inventory']['alembic_version']
+                    if after != packet['inventory']:
+                        raise UpgradeRejected()
+                head = schema_profile('classroom-work-d4')[0]
+            if head == '0032':
+                if plan is None or plan['owner_id'] != str(row['owner_id']) or plan['workspace_id'] != str(row['workspace_id']):
+                    raise UpgradeRejected()
+                backup = SyntheticBackup(current, profile='classroom-work-d4', checkpoint_revision='0032')
+                artifact = backup.create()
+                backup.check_current_restrictions(artifact, restrictions)
+                packet, _ = backup._open(artifact)
+                builtin_journal = 'builtin-summary-upgrade.dpapi'
+                prior = load_plan(current, source, target, journal=builtin_journal, kind='classmatter.builtin-summary-upgrade.v1')
+                save_plan(current, {'kind': 'classmatter.builtin-summary-upgrade.v1', 'root': digest(str(current.root).encode('utf-8')),
+                    'source': digest(source), 'target': digest(target), 'attempt_id': str(uuid4()), 'backup_id': str(artifact),
+                    'business': business_digest(packet['inventory']), 'owner_id': str(row['owner_id']), 'workspace_id': str(row['workspace_id'])},
+                    prior, journal=builtin_journal)
+                with connection.begin():
+                    no_clients(connection); native_anchor(connection, current)
+                    if SyntheticBackup._inventory(connection, profile='classroom-work-d4') != packet['inventory']:
+                        raise UpgradeRejected()
+                    target_database = Database(database.engine.url, migration=True, profile='classroom-work-d4')
+                    migrate(target_database, connection=connection)
+                    surface(connection, profile='classroom-work-d4')
+                    after = SyntheticBackup._inventory(connection, profile='classroom-work-d4')
+                    if after.pop('builtin_summary_attempt')['rows'] != 0:
                         raise UpgradeRejected()
                     after['alembic_version'] = packet['inventory']['alembic_version']
                     if after != packet['inventory']:

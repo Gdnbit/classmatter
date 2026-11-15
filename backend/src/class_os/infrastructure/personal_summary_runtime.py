@@ -39,7 +39,10 @@ class PersonalSummaryService:
         try:
             programs = await anyio.to_thread.run_sync(lambda: self.runtime.query.summary_programs(credentials))
             for program in programs:
-                turn = await anyio.to_thread.run_sync(lambda: self.runtime.business.summary_claim(credentials, program['document_id']))
+                if program.get('kind') == 'builtin' and not self._builtin_model_ready(credentials):
+                    continue
+                turn = await anyio.to_thread.run_sync(lambda: self.runtime.business.summary_claim(credentials,
+                    program['program_id'] if program.get('kind') == 'builtin' else program['document_id']))
                 if turn is not None:
                     async for _ in self.runtime.stream_queued(credentials, program['thread_id'], turn['request_id']):
                         pass  # Only committed QG history is rendered by the UI.
@@ -57,6 +60,13 @@ class PersonalSummaryService:
         finally:
             self.checking.discard(workspace_id)
             self.tasks.discard(task)
+
+    def _builtin_model_ready(self, credentials):
+        state = self.runtime.sdk.provider_state
+        # A custom factory is not proof of an activated provider. Dedicated
+        # owned fixtures inject this state explicitly; unrelated browser tests
+        # and the unconfigured application's placeholder stay quiet.
+        return state is not None and state(credentials) == 'configured-api'
 
     async def close(self):
         if self.scheduler is not None:

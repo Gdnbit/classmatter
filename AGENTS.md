@@ -32,6 +32,8 @@ Every supported AI-created business change must show a factual, typed preview in
 
 ## Work and verification
 
+Basic teacher/class-teacher preparation should be built in and driven by verified records, tasks and events, without requiring an activation phrase or a separate setup form. Start from concrete work atoms and their completion evidence; use the existing attention views for the human judgment, missing information or confirmation actually needed. Do not presume a class-meeting topic or invent mandatory inputs. Explicit lasting preferences may customize or pause supported preparation. Keep the implemented task catalog distinct from future capabilities; built-in preparation does not grant Agent business-write authority or assign organizational responsibility.
+
 Plan before multi-file work. Map changes to requirements/evals/tasks, preserve task scopes and dependencies, reuse existing contracts, and keep diffs reviewable. Run the relevant `scripts/verify.ps1` suites and update documentation when status changes. Keep legacy protocol/import/environment/migration names stable; see the naming matrix. Do not rewrite migration history or Gate hashes.
 
 `apps/web/` owns presentation and typed API clients; `backend/` owns domain/application/adapters; `contracts/` owns wire schemas; `scripts/` owns verification; `evals/` and `.ai/gates/` own executable intent and formal admission. No production database or uploads belong in Git.

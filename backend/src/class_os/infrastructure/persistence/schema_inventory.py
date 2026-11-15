@@ -51,11 +51,15 @@ PERSONAL_COLUMNS = MappingProxyType({
     'personal_summary_attempt': frozenset({'workspace_id', 'owner_id', 'document_id', 'document_version',
         'thread_id', 'request_id', 'waiting_request_id', 'basis_hash', 'answer_required', 'created_at'}),
 })
+BUILTIN_COLUMNS = MappingProxyType({
+    'builtin_summary_attempt': frozenset({'workspace_id', 'owner_id', 'class_id', 'term_id', 'program_id',
+        'program_version', 'thread_id', 'request_id', 'basis_hash', 'created_at'}),
+})
 SCHEMA_PROFILES = MappingProxyType({"r1": ("0016", REGISTERED_TABLES),
                                    "conversation-d1": ("0026", REGISTERED_TABLES | D1_TABLES),
                                    "workbench-d2": ("0027", REGISTERED_TABLES | D1_TABLES | D2_TABLES),
                                    "workspace-chat-d3": ("0028", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS)),
-                                   "classroom-work-d4": ("0032", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS) | frozenset(PERSONAL_COLUMNS))})
+                                   "classroom-work-d4": ("0033", REGISTERED_TABLES | D1_TABLES | D2_TABLES | frozenset(D3_COLUMNS) | frozenset(D4_COLUMNS) | frozenset(PERSONAL_COLUMNS) | frozenset(BUILTIN_COLUMNS))})
 
 
 def schema_profile(value="r1"):
@@ -74,8 +78,14 @@ def relation_surface(connection):
         AND c.relkind IN ('r','p','v','m','f','S') ORDER BY n.nspname,c.relname""")).mappings())
 
 
-def validate_surface(connection, *, complete=False, profile="r1", prior_summary=False):
+def validate_surface(connection, *, complete=False, profile="r1", prior_summary=False, prior_builtin=False):
     _, registered = schema_profile(profile)
+    prior_builtin = prior_builtin or prior_summary
+    if prior_builtin:
+        if profile != 'classroom-work-d4' or connection.execute(text(
+                'SELECT version_num FROM class_os.alembic_version')).scalar_one() not in ('0029', '0030', '0031', '0032'):
+            raise ValueError('Exact pre-builtin D4 checkpoint required')
+        registered = registered - frozenset(BUILTIN_COLUMNS)
     if prior_summary:
         if profile != 'classroom-work-d4' or connection.execute(text(
                 'SELECT version_num FROM class_os.alembic_version')).scalar_one() not in ('0029', '0030', '0031'):

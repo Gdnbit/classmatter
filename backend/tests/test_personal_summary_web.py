@@ -27,7 +27,7 @@ def test_original_ui_proactive_summary_feedback_and_refresh(classroom_work):
     original_factory = sdk.model_factory
     initiatives = []
     def factory(request):
-        if request.text.startswith('依据已确认'):
+        if request.text.startswith(('依据已确认', '根据系统内置')):
             initiatives.append(request.text)
         if request.text == '刚刚合成学生0交来第二份作品，记下来。':
             def record(messages, info):
@@ -75,7 +75,7 @@ def test_original_ui_proactive_summary_feedback_and_refresh(classroom_work):
         delegation = next(row for row in documents if row['title'] == '班级小结委托')
         assert SummaryDelegation.parse(query.document(*auth, c, t, delegation['document_id'])['body']).state == 'paused'
         assert sum(row['fact_text'] == '合成学生0交来第二份作品' for row in query.projection(*auth, c, t)['records']) == 1
-        assert len(initiatives) == 2, 'Initial question and format revision only; no initiative after pause'
+        assert len(initiatives) == 2, 'Built-in summary and explicit format revision only; no initiative after pause'
     finally:
         server.should_exit = True; thread.join(timeout=12)
         assert not thread.is_alive()

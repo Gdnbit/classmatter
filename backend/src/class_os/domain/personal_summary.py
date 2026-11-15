@@ -111,7 +111,7 @@ def source_basis(document, activity):
              for row in sorted(activity['tasks'], key=lambda value: str(value['task_id']))]
     if len(records) + len(tasks) > 100:
         raise ValueError('Summary source limit exceeded')
-    payload = {'mandate': str(document['document_id']), 'version': document['version'],
+    payload = {'mandate': str(document.get('program_id') or document['document_id']), 'version': document['version'],
                'context': document.get('context_basis', ''),
                'body': document['body'], 'records': records, 'tasks': tasks}
     return sha256(rfc8785.dumps(payload)).hexdigest(), bool(records or tasks)
