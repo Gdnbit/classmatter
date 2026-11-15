@@ -4,6 +4,12 @@ Layered modular monolith, synthetic-only. Python 3.13, uv 0.11.7, PostgreSQL 18.
 
 ## Local entry point
 
+### Legacy conversation reads and export capacity
+
+Native D2/D3/D4 history reconstruction streams the entire authorized audit projection in128-row chunks and validates every row using the existing fixed audit partitions. Only the original query-source and completed-run audit references needed by the bounded conversation snapshot are carried into its private verification packet; original result classification, payload hashes, receipts and protected-root checks still apply. No history or audit is truncated, deleted or rewritten. The existing serialized business transaction and audit primary key preserve snapshot consistency and identity uniqueness. This is an online read proof, not a complete archive or import/admission authority.
+
+Complete export collection remains separate and retains every audit row and the original row/byte limits. Existing conversation/core snapshot bounds are also unchanged. Runtime and scan cost still grows with audit size; no unlimited-history or constant-latency claim is made. The implementation reuses locked SQLAlchemy [server-side streaming and explicit partitions](https://docs.sqlalchemy.org/en/20/core/connections.html#using-server-side-cursors-a-k-a-stream-results), not a new database driver or framework. Revert the read-path change to roll back; no Schema migration or data restore is needed.
+
 ### Read-only doctor and support
 
 `uv run --frozen python local.py doctor` returns closed health metadata; `support` adds only allowlisted numeric versions from the operator process. They probe only `/health/live` and `/health/ready` at127.0.0.1 on the explicitly configured `CLASS_OS_PORT` (default8000). They do not discover or authenticate an instance, select a database via `--profile`, initialize an Owner, or repair anything. For a D1 service, the operator must deliberately configure its API port; a green R1 endpoint is not evidence of D1 readiness. `complete_operator_check`/`complete_support_bundle` remain false.

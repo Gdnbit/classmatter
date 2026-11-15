@@ -1,4 +1,8 @@
 """Native D2 store composition. Imported/retired instances remain unavailable."""
+from datetime import date, datetime
+from uuid import UUID
+
+import rfc8785
 from sqlalchemy import text
 
 from class_os.application.documents import DOCUMENT_TYPES
@@ -65,7 +69,50 @@ class WorkbenchTransaction(DocumentTransaction, AdmissionTransaction):
         return AdmissionTransaction.apply(self, binding, command, now)
 
     def verified_result_bundle(self, binding, now, snapshot=None):
-        return self._verified_workbench_components(binding, now, snapshot)[0]
+        # Online reconstruction is not a complete export. Audit traffic must
+        # not consume an export-file budget before a small history can open.
+        from class_os.domain.conversation_exit_v6 import build_package
+        from .conversation_worker import verify_native_result_commits
+        core, conversations, proof, recovery, budget = snapshot if snapshot is not None else self._snapshot(binding, now)
+        if recovery['conversation_import'] or recovery['conversation_admission']:
+            raise CommandRejected()
+        audit = self._read_result_audit(binding, now, conversations, budget)
+        bundle = build_package(binding['workspace_id'], binding['actor_id'], now, core, conversations, proof, audit, recovery)
+        verify_native_result_commits(self._connection, binding, conversations)
+        return bundle
+
+    def _read_result_audit(self, binding, now, conversations, budget):
+        from class_os.domain.exit_package import AUDIT_COLUMNS
+        from class_os.domain.conversation_exit import MAX_BYTES, MAX_ROWS
+        from class_os.domain.workbench_audit import partition_audit
+        sources = {row['receipt_id'] for row in conversations['conversation_query_source']}
+        runs = {row['run_id'] for row in conversations['conversation_run'] if row['state'] == 'completed'}
+        selected = []
+        # Fixed public columns only. Server-side chunks bound memory; the
+        # existing serialized business transaction holds the snapshot stable.
+        # The schema's audit PK prevents duplicate identities across chunks.
+        result = self._connection.execute(text(
+            'SELECT ' + ','.join(AUDIT_COLUMNS) + ' FROM class_os.business_audit '
+            'WHERE workspace_id=:workspace ORDER BY occurred_at,event_id').execution_options(stream_results=True),
+            {'workspace': binding['workspace_id']})
+        try:
+            for chunk in result.mappings().partitions(128):
+                rows = [{key: str(value) if isinstance(value, UUID) else value.isoformat()
+                         if isinstance(value, (date, datetime)) else value for key, value in row.items()} for row in chunk]
+                legacy, _ = partition_audit(rows, str(binding['workspace_id']), str(binding['actor_id']), now,
+                    classroom=self._store.database.profile == 'classroom-work-d4')
+                # Validate ALL rows above, including unrelated rows in the last
+                # chunk. Carry every matching source/completion row so duplicate
+                # or corrupted evidence cannot disappear through filtering.
+                for row in legacy:
+                    if row['event_id'] in sources or row['action'] == 'command.commit' and row['resource_id'] in runs:
+                        selected.append(row)
+                        budget[0] += len(rfc8785.dumps(row)) + 1
+                        if len(selected) > MAX_ROWS or budget[0] > MAX_BYTES:
+                            raise CommandRejected()
+        finally:
+            result.close()
+        return selected
 
     def _verified_workbench_components(self, binding, now, snapshot=None):
         # Private D1 conversation component proof only. Public legacy exit and
