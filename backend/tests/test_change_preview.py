@@ -46,7 +46,7 @@ def test_all_registered_comparisons_are_factual_frozen_cleared_and_receipt_bound
         after = history.turn(auth, thread, request)[1]
         assert after['action_receipt']['receipt_id'] == receipt.receipt_id
         assert after['change_preview'] == row['change_preview']
-        saved.append((request, copy.deepcopy(after['change_preview'])))
+        saved.append((thread, request, copy.deepcopy(after['change_preview'])))
         return after['change_preview']
 
     try:
@@ -90,17 +90,56 @@ def test_all_registered_comparisons_are_factual_frozen_cleared_and_receipt_bound
         edit = stage('seat.swap', layout_id=str(layout), expected_version=3, first_row=1, first_column=1, second_row=1, second_column=2)
         assert [cell['student'] for cell in edit['before_seats']['cells'][:2]] == ['合成学生一', '合成学生乙']
         assert [cell['student'] for cell in edit['after_seats']['cells'][:2]] == ['合成学生乙', '合成学生一']
+        # The original exact inventory now also exercises every bilateral
+        # candidate, not just an exclusion for the newly registered commands.
+        from class_os.application.collaboration import CollaborationBusinessGateway
+        from class_os.domain.collaboration import Invitation, MaterialMessage, source_citation
+        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+        collaboration = CollaborationBusinessGateway(boundary, store, clock=lambda: clock[0])
+        peer = Invitation(workspace_id=uuid4(), name='合成任课同事', endpoint='http://127.0.0.1:18442',
+            public_key=Ed25519PrivateKey.generate().public_key().public_bytes_raw().hex())
+        collaboration.add_peer(auth, peer, c, t)
+        root, material_id, summary_id = uuid4(), uuid4(), uuid4()
+        created = stage('collaboration.request', request_id=str(root), peer_id=str(peer.workspace_id),
+            thread_id=str(thread), title='合成收集教学进度', body='请提供合成教学进度。')
+        assert created['kind'] == 'create'
+        assert next(field for field in created['fields'] if field['field'] == 'recipient')['after'] == peer.name
+        material = MaterialMessage(message_id=material_id, request_id=root, sender=peer.workspace_id,
+            receiver=auth[3], operation='material', title='合成同事文档', body='合成已核对的教学材料。',
+            source_document_id=uuid4(), source_version=1)
+        collaboration.receive(auth, material)
+        notice = business.finish(auth, business.claim(auth, thread, material_id), 'completed', '合成材料已收到。')
+        assert notice['candidate'] is None and notice['origin'] == 'collaboration'
+        created = stage('collaboration.summary.save', request_id=str(root), source_message_id=str(material_id),
+            document_id=str(summary_id), expected_version=0, title='班级工作小结',
+            body='合成班级小结。\n\n'+source_citation(peer.name, material), format='markdown')
+        assert next(field for field in created['fields'] if field['field'] == 'body')['after'].endswith(material.body)
+        incoming = uuid4()
+        collaboration.receive(auth, MaterialMessage(message_id=incoming, request_id=incoming,
+            sender=peer.workspace_id, receiver=auth[3], operation='request', title='合成核对小结', body='请提供合成修订小结。'))
+        request_row = next(row for row in query.collaboration(auth)['items'] if row['message_id'] == incoming)
+        thread = request_row['thread_id']
+        created = stage('collaboration.material.share', message_id=str(uuid4()), request_id=str(incoming),
+            peer_id=str(peer.workspace_id), thread_id=str(thread), document_id=str(doc), expected_version=2,
+            title='合成修订小结', body='新第一段\n保留段\n新段落')
+        assert next(field for field in created['fields'] if field['field'] == 'body')['after'] == query.document(*auth, c, t, doc)['body']
+        assert next(field for field in created['fields'] if field['field'] == 'format')['after'] == 'plain-text'
+        stage('document.revise', document_id=str(doc), expected_version=2, title='合成修订小结',
+            body='合成发送后的独立修订，不得重写已分享的历史。', format='plain-text')
         # A new store and later edits must not rewrite a past card.
         rebuilt = WorkspaceChatQueryGateway(boundary, WorkbenchStore(database, old_store.restrictions), clock=lambda: clock[0])
-        for request, frozen in saved:
-            assert rebuilt.turn(auth, thread, request)[1]['change_preview'] == frozen
+        for saved_thread, request, frozen in saved:
+            assert rebuilt.turn(auth, saved_thread, request)[1]['change_preview'] == frozen
         with owner.transaction(read_only=True) as connection:
             validate_workspace_chat_integrity(connection)
-            kinds = set(connection.execute(text("SELECT candidate->>'command' FROM class_os.workspace_chat_turn")).scalars())
+            from class_os.infrastructure.collaboration_store import validate_collaboration_integrity
+            validate_collaboration_integrity(connection)
+            kinds = set(connection.execute(text("SELECT candidate->>'command' FROM class_os.workspace_chat_turn WHERE candidate IS NOT NULL")).scalars())
             assert kinds == CANDIDATES
-        header = history.history(auth, thread)['thread']
-        business.control(auth, thread, header['version'], 'clear')
-        assert all(row['change_preview'] is None for row in history.history(auth, thread)['turns'])
+        for saved_thread in {item[0] for item in saved}:
+            header = history.history(auth, saved_thread)['thread']
+            business.control(auth, saved_thread, header['version'], 'clear')
+            assert all(row['change_preview'] is None for row in history.history(auth, saved_thread)['turns'])
         with owner.transaction(read_only=True) as connection:
             validate_workspace_chat_integrity(connection)
     finally:
