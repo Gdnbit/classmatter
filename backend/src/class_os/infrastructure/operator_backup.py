@@ -30,6 +30,10 @@ ARCHIVE_LIMIT = 16 * MIB
 PACKET_LIMIT = 32 * MIB
 CATALOG_LIMIT = 128
 CATALOG_BYTES = 64 * MIB
+D4_KIND_V1 = 'classmatter.owned-classroom-work-backup.v1'
+D4_KIND_V2 = 'classmatter.owned-classroom-work-backup.v2'
+# Version the D4 row budget; v1 and every byte/physical/archive bound stay fixed.
+D4_MAX_ROWS = 50000
 
 
 class BackupRejected(Exception):
@@ -74,7 +78,7 @@ class SyntheticBackup:
                      "conversation-d1": "classmatter.owned-conversation-backup.v1",
                      "workbench-d2": "classmatter.owned-workbench-backup.v1",
                      "workspace-chat-d3": "classmatter.owned-workspace-chat-backup.v1",
-                     "classroom-work-d4": "classmatter.owned-classroom-work-backup.v1"}[profile]
+                     "classroom-work-d4": D4_KIND_V2}[profile]
         self.runtime, self.codec = runtime, codec
 
     def _binding(self):
@@ -196,7 +200,7 @@ class SyntheticBackup:
             # Closed source registry, never a caller/model-selected identifier.
             rows, size = connection.execute(text(f"SELECT count(*),coalesce(sum(octet_length(to_jsonb(t)::text)),0) FROM class_os.{table} t")).one()
             total += size
-            if rows > 10000 or total > 12 * MIB:
+            if rows > (D4_MAX_ROWS if profile == 'classroom-work-d4' else 10000) or total > 12 * MIB:
                 raise BackupRejected()
             # A D3 component check during D4 upgrade must retain its exact
             # historical projection, excluding the D4-only presentation column.
@@ -287,7 +291,8 @@ class SyntheticBackup:
             if self.profile != "r1":
                 fields |= {"schema_profile", "activation_allowed"}
             if (type(packet) is not dict or set(packet) != fields
-                    or packet["kind"] != self.kind or packet["id"] != str(artifact)
+                    or packet["kind"] not in ((self.kind, D4_KIND_V1) if self.profile == 'classroom-work-d4' else (self.kind,))
+                    or packet["id"] != str(artifact)
                     or packet["head"] != self.head or packet["binding"] != self._binding()
                     or (self.profile != "r1" and (packet["schema_profile"] != self.profile or packet["activation_allowed"] is not False))
                     or type(packet["created_at"]) is not str or len(packet["created_at"]) > 50
@@ -297,7 +302,8 @@ class SyntheticBackup:
                 raise BackupRejected()
             for value in packet["inventory"].values():
                 if (type(value) is not dict or set(value) != {"rows", "sha256"} or type(value["rows"]) is not int
-                        or not 0 <= value["rows"] <= 10000 or type(value["sha256"]) is not str or not re.fullmatch(r"[0-9a-f]{64}", value["sha256"])):
+                        or not 0 <= value["rows"] <= (D4_MAX_ROWS if packet['kind'] == D4_KIND_V2 else 10000)
+                        or type(value["sha256"]) is not str or not re.fullmatch(r"[0-9a-f]{64}", value["sha256"])):
                     raise BackupRejected()
             archive = base64.b64decode(packet["archive"], validate=True)
             if not archive.startswith(b"PGDMP") or len(archive) > ARCHIVE_LIMIT or hashlib.sha256(archive).hexdigest() != packet["archive_sha256"]:
