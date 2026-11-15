@@ -34,7 +34,7 @@ def test_d4_upgrade_keeps_world_and_checkpoint_restores_pack(owned_upgrade):
         assert services.query.roster(*credentials, original.classroom.class_id, original.classroom.term_id)[0].student_id == original.student_id
         def commit(command):
             proposal = services.worker.preview(*credentials, command)
-            approval = services.worker.approve(*credentials, proposal.proposal_id, proposal.payload_hash)
+            approval = services.worker.approve(*credentials, proposal.proposal_id, proposal.payload_hash) if proposal.risk == 'W2' else None
             services.worker.commit(*credentials, proposal.proposal_id, uuid4(), approval)
         c, t = original.classroom.class_id, original.classroom.term_id
         exam, layout = uuid4(), uuid4()
@@ -42,12 +42,20 @@ def test_d4_upgrade_keeps_world_and_checkpoint_restores_pack(owned_upgrade):
         commit(RecordScore(exam, c, t, original.student_id, 0, 'scored', '88.50'))
         commit(CreateSeatLayout(layout, c, t, 2, 3))
         commit(AssignSeat(layout, c, t, 1, original.student_id, 1, 2))
+        from class_os.domain.activity import CreateTask
+        from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
+        commit(CreateTask('task.create', uuid4(), c, t, '合成内置小结材料', None))
+        chats = WorkspaceChatBusinessGateway(services.worker.identity, services.worker.store)
+        history = WorkspaceChatQueryGateway(services.query.identity, services.query.store)
+        builtin = history.summary_programs(credentials)[0]
+        assert chats.summary_claim(credentials, builtin['program_id'])['origin'] == 'personal-agent'
         backup = SyntheticBackup(current, profile='classroom-work-d4')
         artifact = backup.create()
         packet, _ = backup._open(artifact)
         assert packet['inventory']['class_exam']['rows'] == 1
         assert packet['inventory']['exam_result_revision']['rows'] == 1
         assert packet['inventory']['seat_revision']['rows'] == 12
+        assert packet['inventory']['builtin_summary_attempt']['rows'] == 1
         checked = backup.check_current_restrictions(artifact, services.restrictions)
         assert checked['snapshot_integrity_verified'] and not checked['activation_allowed']
         assert checked['schema_version'] == 'classmatter.classroom-work-backup-check.v1'
@@ -109,6 +117,7 @@ def test_revision29_comparison_upgrade_checkpoints_preserves_chat_and_rolls_back
     owner = current.database('migrator')
     try:
         with owner.transaction() as connection:
+            connection.execute(text('DROP TABLE class_os.builtin_summary_attempt'))
             connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
             connection.execute(text('ALTER TABLE class_os.workspace_chat_turn DROP COLUMN change_preview'))
             connection.execute(text("UPDATE class_os.alembic_version SET version_num='0029'"))
@@ -212,6 +221,7 @@ def test_revision30_activity_upgrade_is_checkpointed_atomic_and_retryable(owned_
     try:
         # Reconstruct the exact old candidate guard in this disposable fixture.
         with owner.transaction() as connection:
+            connection.execute(text('DROP TABLE class_os.builtin_summary_attempt'))
             connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
             connection.execute(text('ALTER TABLE class_os.workspace_chat_turn DROP CONSTRAINT workspace_chat_candidate_command_check'))
             connection.execute(text("""ALTER TABLE class_os.workspace_chat_turn ADD CONSTRAINT workspace_chat_candidate_command_check
@@ -248,7 +258,8 @@ def test_revision30_activity_upgrade_is_checkpointed_atomic_and_retryable(owned_
 
 @pytest.mark.db
 @pytest.mark.skipif(os.name != 'nt', reason='Owned Windows DPAPI checkpoint')
-def test_revision31_summary_upgrade_preserves_chat_and_rolls_back_on_failure(owned_upgrade, monkeypatch):
+@pytest.mark.parametrize('prior_revision', ('0031', '0032'))
+def test_prior_summary_upgrade_preserves_chat_and_rolls_back_on_failure(owned_upgrade, monkeypatch, prior_revision):
     from sqlalchemy import text
     from class_os.infrastructure import classroom_upgrade as upgrade
     from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
@@ -271,9 +282,11 @@ def test_revision31_summary_upgrade_preserves_chat_and_rolls_back_on_failure(own
     try:
         # Reconstruct only this disposable fixture's exact pre-feature schema.
         with owner.transaction() as connection:
-            connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
-            connection.execute(text("UPDATE class_os.alembic_version SET version_num='0031'"))
-        prior = SyntheticBackup(current, profile='classroom-work-d4', checkpoint_revision='0031')
+            connection.execute(text('DROP TABLE class_os.builtin_summary_attempt'))
+            if prior_revision == '0031':
+                connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
+            connection.execute(text('UPDATE class_os.alembic_version SET version_num=:revision'), {'revision': prior_revision})
+        prior = SyntheticBackup(current, profile='classroom-work-d4', checkpoint_revision=prior_revision)
         assert prior.check(prior.create())['snapshot_integrity_verified']
         migrate = upgrade.migrate
         def interrupted(*args, **kwargs):
@@ -283,7 +296,7 @@ def test_revision31_summary_upgrade_preserves_chat_and_rolls_back_on_failure(own
         with pytest.raises(UpgradeRejected):
             upgrade_classroom(current)
         with owner.transaction(read_only=True) as connection:
-            assert connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() == '0031'
+            assert connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() == prior_revision
         monkeypatch.setattr(upgrade, 'migrate', migrate)
         upgrade_classroom(current)
         assert upgrade_classroom(current).root == current.root

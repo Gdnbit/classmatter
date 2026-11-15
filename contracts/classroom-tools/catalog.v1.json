@@ -591,7 +591,7 @@
     },
     {
       "name": "read_summary_delegation",
-      "description": "Read the current confirmed summary instructions and preferences; not conversation guesses. Does not enable a program or save anything.",
+      "description": "Read applicable summary rules: built-in defaults or explicit teacher preferences, never conversation guesses. Base preparation needs no delegation. Does not save anything.",
       "parameters_json_schema": {
         "additionalProperties": false,
         "properties": {},

@@ -21,7 +21,7 @@ def tools(capture, query, credentials, context, execute, missing_class):
         """Only for explicit ongoing delegation or long-term feedback about class work summaries. Quote the exact current human request. 'This time' is not a permanent preference. Prepare a readable instruction document for the existing human confirmation; never saves or enables itself. Preserve omitted prior settings. Pause only on an explicit stop request."""
         def prepare():
             request = capture.user_messages[-1] if capture.user_messages else ''
-            if capture.summary_context and not re.search(r'以后|今后|持续|长期|暂停|停止|不再', request):
+            if capture.summary_context and not re.search(r'以后|今后|持续|长期|暂停|停止|不再|恢复|重新开始', request):
                 raise ModelRetry('A confirmed summary delegation already applies. This human answer or retry is not a new delegation. '
                     'Read current facts/tasks and prepare the summary, or use ask_summary_question for its missing required material.')
             if not quote or quote not in request or len(quote) > 1000:
@@ -32,7 +32,8 @@ def tools(capture, query, credentials, context, execute, missing_class):
             else:
                 valid = bool(re.search(r'以后|今后|持续|平时|长期|每次|一直', quote)) and not re.search(
                     r'这次|仅本次|不要|不需要|不用|别|假设|举例|引用', quote)
-            if not valid:
+            resume = action == 'enable' and '小结' in quote and bool(re.search(r'恢复|重新开始', quote))
+            if not valid and not resume:
                 return {'status': 'not-long-term-delegation',
                         'instruction': 'Do not change the standing instruction. Handle a one-off request in this turn, or ask whether a lasting change is intended.'}
             current = context()
@@ -40,8 +41,8 @@ def tools(capture, query, credentials, context, execute, missing_class):
                 return missing_class
             row = existing(current)
             old = SummaryDelegation.parse(row['body']) if row else SummaryDelegation()
-            if row is None and action != 'enable':
-                return {'status': 'needs-information', 'question': '要先开始持续整理班级小结吗？'}
+            if not valid and old.state != 'paused':
+                return {'status': 'unchanged', 'instruction': 'No paused preference exists. Base preparation is already built in; do not create an enabling instruction.'}
             if required_material and required_material not in quote and required_material != old.required_material:
                 return {'status': 'needs-information', 'question': '小结还需要核对什么材料？'}
             value = SummaryDelegation('paused' if action == 'pause' else 'enabled',
@@ -55,14 +56,21 @@ def tools(capture, query, credentials, context, execute, missing_class):
         return await execute('prepare_summary_delegation', prepare)
 
     async def read_summary_delegation() -> dict:
-        """Read the current confirmed summary instructions and preferences; not conversation guesses. Does not enable a program or save anything."""
+        """Read applicable summary rules: built-in defaults or explicit teacher preferences, never conversation guesses. Base preparation needs no delegation. Does not save anything."""
         def read():
             current = context()
             if current is None:
                 return missing_class
             row = existing(current)
             if row is None:
-                return {'status': 'not-delegated'}
+                from class_os.domain.builtin_class_work import identifiers, INSTRUCTION, VERSION
+                program_id, _ = identifiers(credentials[3], current.class_id, current.term_id)
+                if capture.summary_context is None:
+                    capture.summary_context = {'kind': 'builtin', 'program_id': program_id, 'document_id': None,
+                        'version': VERSION, 'class_id': current.class_id, 'term_id': current.term_id,
+                        'body': INSTRUCTION, 'style': 'standard', 'required_material': '', 'initiative': False, 'resuming': False}
+                return {'status': 'builtin', 'style': 'standard', 'required_material': '',
+                        'instruction': INSTRUCTION, 'version': VERSION}
             value = SummaryDelegation.parse(row['body'])
             if value.state == 'enabled' and capture.summary_context is None:
                 capture.summary_context = {**row, 'class_id': current.class_id, 'term_id': current.term_id,

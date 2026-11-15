@@ -85,7 +85,7 @@ class PersonalSummaryTransaction(ClassroomTransaction):
             row['summary_attention'] = row['thread_id'] in attention
         return result
 
-    def summary_programs(self, binding):
+    def summary_programs(self, binding, *, include_paused=False):
         rows = self._connection.execute(text('''SELECT d.document_id,d.class_id,d.term_id,d.version,r.body
             FROM class_os.working_document d JOIN class_os.working_document_revision r
             USING(workspace_id,document_id,version,status)
@@ -101,7 +101,7 @@ class PersonalSummaryTransaction(ClassroomTransaction):
             except ValueError:
                 continue  # A similarly named ordinary document is not executable.
             context = self.class_context(binding['workspace_id'], row['class_id'], row['term_id'])
-            if parsed.state != 'enabled' or not context or context['status'] != 'active' or context['term_status'] != 'active':
+            if (parsed.state != 'enabled' and not include_paused) or not context or context['status'] != 'active' or context['term_status'] != 'active':
                 continue
             import rfc8785
             from hashlib import sha256
@@ -111,17 +111,18 @@ class PersonalSummaryTransaction(ClassroomTransaction):
                 'students': [{'id': str(student.student_id), 'name': student.name, 'version': student.version, 'status': student.status}
                              for student in sorted(students, key=lambda student: str(student.student_id))]})).hexdigest()
             # The original human-confirmed candidate identifies the conversation.
-            turns = self._connection.execute(text('''SELECT t.* FROM class_os.workspace_chat_turn t
+            turns = self._connection.execute(text('''SELECT t.*,h.status AS chat_status FROM class_os.workspace_chat_turn t
                 JOIN class_os.workspace_chat_thread h USING(workspace_id,thread_id)
-                WHERE t.workspace_id=:workspace_id AND h.owner_id=:actor_id AND h.status='active'
+                WHERE t.workspace_id=:workspace_id AND h.owner_id=:actor_id AND h.status IN ('active','archived')
+                AND (:include_inactive OR h.status='active')
                 AND t.state='completed' AND t.candidate->>'document_id'=:document
                 AND t.candidate->>'command' IN ('document.create','document.revise')
                 ORDER BY t.created_at DESC,t.ordinal DESC LIMIT 20'''),
-                {**binding, 'document': str(row['document_id'])}).mappings().all()
+                {**binding, 'document': str(row['document_id']), 'include_inactive': include_paused}).mappings().all()
             for turn in turns:
                 receipt = self.chat_action_receipt(binding, turn)
                 if receipt and receipt['resource_id'] == row['document_id']:
-                    row.update(thread_id=turn['thread_id'], style=parsed.style,
+                    row.update(thread_id=turn['thread_id'], chat_status=turn['chat_status'], style=parsed.style, state=parsed.state,
                                required_material=parsed.required_material)
                     result.append(row)
                     break
@@ -190,9 +191,7 @@ class PersonalSummaryTransaction(ClassroomTransaction):
             OR EXISTS(SELECT 1 FROM class_os.workspace_chat_turn WHERE workspace_id=:workspace_id
                 AND thread_id=:thread AND state IN ('queued','running'))'''), values).scalar_one():
             return None
-        recent = self._connection.execute(text('''SELECT created_at FROM class_os.personal_summary_attempt
-            WHERE workspace_id=:workspace_id AND owner_id=:actor_id AND created_at>:since
-            ORDER BY created_at DESC LIMIT 7'''), {**values, 'since': now - timedelta(days=1)}).scalars().all()
+        recent = self._summary_recent(binding, now)
         if len(recent) >= 6 or recent and now - recent[0] < timedelta(minutes=1):
             return None
         request_id = uuid5(document_id, basis)
@@ -202,6 +201,11 @@ class PersonalSummaryTransaction(ClassroomTransaction):
             VALUES(:workspace_id,:actor_id,:document,:version,:thread,:request,:basis,:now)'''),
             {**values, 'version': program['version'], 'request': request_id})
         return self._chat_turn(binding, program['thread_id'], turn['request_id'])
+
+    def _summary_recent(self, binding, now):
+        return self._connection.execute(text('''SELECT created_at FROM class_os.personal_summary_attempt
+            WHERE workspace_id=:workspace_id AND owner_id=:actor_id AND created_at>:since
+            ORDER BY created_at DESC LIMIT 7'''), {**binding, 'since': now - timedelta(days=1)}).scalars().all()
 
     def chat_finish(self, binding, ticket, state, answer, proposed, now, duration_ms=None,
                     input_tokens=None, output_tokens=None, *, answer_required=False, summary_document_id=None):
@@ -256,3 +260,6 @@ def validate_summary_integrity(connection):
         if row['answer_required'] and row['status'] != 'cleared' and (
                 row['question_state'] != 'completed' or row['question_candidate'] is not None or not row['question_text']):
             raise ValueError('Invalid waiting question')
+    if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() == '0033':
+        from .builtin_summary_store import validate_builtin_summary_integrity
+        validate_builtin_summary_integrity(connection)

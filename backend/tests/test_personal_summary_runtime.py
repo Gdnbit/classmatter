@@ -82,6 +82,7 @@ def assembly(fixture, *, before_prepare=None, fail=False, quiet=False, plain_que
     chats = WorkspaceChatBusinessGateway(business.identity, store, clock=lambda: clock[0])
     history = WorkspaceChatQueryGateway(query.identity, store, clock=lambda: clock[0])
     sdk = PydanticAgentRuntime(query, model_factory=factory, timeout=30)
+    sdk.provider_state = lambda _: 'configured-api'  # Explicit owned FunctionModel readiness, not a live Provider score.
     runtime = WorkspaceChatRuntime(chats, history, sdk)
     return chats, history, sdk, runtime, PersonalSummaryService(runtime), calls
 
@@ -147,7 +148,7 @@ async def test_confirmed_standing_order_discovers_material_without_new_user_requ
     thread = uuid4()
     delegated = await send(runtime, chats, history, auth, thread, '以后持续整理本班的班级工作小结。')
     assert delegated['candidate']['title'] == TITLE
-    assert history.summary_programs(auth) == []  # A preview is not a standing order.
+    assert [p.get('kind') for p in history.summary_programs(auth)] == ['builtin']  # A preview cannot replace the default.
     save(business, auth, delegated)
     service.sessions[auth[3]] = auth
     await service.check(auth[3])

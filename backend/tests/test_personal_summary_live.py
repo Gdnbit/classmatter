@@ -70,7 +70,8 @@ finally:
 
 @pytest.mark.db
 @pytest.mark.skipif(os.environ.get('CLASSMATTER_PERSONAL_LIVE') != 'approved-free-only', reason='Explicit approved free-model test only')
-async def test_existing_free_model_standing_summary_question_feedback_and_save(classroom_work):
+@pytest.mark.parametrize('mode', ('explicit', 'builtin'))
+async def test_existing_free_model_standing_summary_question_feedback_and_save(classroom_work, mode):
     import base64
     checkout = Path(os.environ['CLASSMATTER_PERSONAL_SOURCE_CHECKOUT']).resolve()
     source = Path(os.environ['CLASSMATTER_PERSONAL_SOURCE_ROOT']).resolve()
@@ -115,6 +116,7 @@ async def test_existing_free_model_standing_summary_question_feedback_and_save(c
     history = WorkspaceChatQueryGateway(query.identity,store,clock=lambda:clock[0])
     diagnostics, reports = [], []
     sdk = PydanticAgentRuntime(query,model_context=context,provider_label='managed-model',timeout=100,diagnostics=diagnostics.append)
+    sdk.provider_state = lambda _: 'configured-api'  # Verified, already activated free configuration above.
     runtime = WorkspaceChatRuntime(chats,history,sdk)
     service = PersonalSummaryService(runtime)
     service.sessions[auth[3]] = auth
@@ -132,6 +134,30 @@ async def test_existing_free_model_standing_summary_question_feedback_and_save(c
             if row['state']=='completed':
                 return row
         pytest.fail('Free provider attempts retained in local report; no success claimed')
+    if mode == 'builtin':
+        materials(classroom_work)
+        program = history.summary_programs(auth)[0]
+        assert program['kind'] == 'builtin' and not query.documents(*auth,c,t)
+        thread = program['thread_id']
+        await service.check(auth[3])
+        draft = history.history(auth,thread)['turns'][-1]
+        record('builtin-proactive',draft,[])
+        if draft['state'] != 'completed':
+            draft = await turn('builtin-explicit-retry','继续整理班级工作小结。')
+        assert draft['candidate'] and draft['candidate']['title']=='班级工作小结'
+        assert all(value in draft['candidate']['body'] for value in ('合成学生0','合成作品核对'))
+        assert '班会主题' not in draft['candidate']['body'] and not draft['answer_required']
+        assert not query.documents(*auth,c,t)
+        save(business,auth,draft)
+        saved = query.document(*auth,c,t,UUID(draft['candidate']['document_id']))
+        assert saved['version']==1 and saved['body']==draft['candidate']['body']
+        assert len(query.documents(*auth,c,t))==1
+        called = len(reports)
+        await service.check(auth[3])
+        assert len(history.history(auth,thread)['turns'])==called
+        assert sdk.active==0
+        await service.close()
+        return
     delegation = await turn('delegate','以后持续整理合成成绩班的班级工作小结，需要核对班会主题。')
     assert delegation['candidate'] and delegation['candidate']['title']=='班级小结委托'
     save(business,auth,delegation); materials(classroom_work)

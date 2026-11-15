@@ -132,8 +132,8 @@ export function useWorkspaceChat(props: Props) {
   useEffect(() => {
     if (!identity || !props.personalEnabled) return
     const controller = new AbortController()
-    // The POST only registers a live session/checks an already confirmed
-    // standing instruction. The server owns scheduling, dedup and SDK calls.
+    // Register a live session for built-in preparation and confirmed preferences.
+    // The server owns scheduling, dedup and SDK calls.
     void client().checkSummaries(controller.signal).catch(error => {
       if (!controller.signal.aborted && error instanceof ApiError && error.status === 401) report(error)
     })

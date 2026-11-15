@@ -78,7 +78,7 @@ export function WorkspaceChatHistory({ state: s, documentExports }: { state: Wor
           && <button aria-label="重试回复" disabled={!s.canSend} onClick={() => void s.retryFailed(turn)}>重试</button>}
         {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{turn.candidate.command.startsWith('document.') && 'title' in turn.candidate && turn.candidate.title === '班级小结委托'
-            ? turn.candidate.command === 'document.create' ? '持续整理班级小结' : '调整小结委托'
+            ? 'body' in turn.candidate && turn.candidate.body.includes('\n- 状态：暂停整理\n') ? '暂停整理小结' : '调整小结安排'
             : labels[turn.candidate.command]}</h2>
           {turn.change_preview ? <ChangeComparison preview={turn.change_preview} saved={!!turn.action_receipt} /> : <CandidateContent value={turn.candidate} />}
           {turn.action_receipt ? <><p role="status" className={turn.change_preview ? 'sr-only' : undefined}>已保存</p>
