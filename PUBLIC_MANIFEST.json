@@ -3,7 +3,7 @@
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
     "apps/web/tests/personal-summary-browser.mjs": {
-      "sha256": "9bc02a31a29eaf4ceed56b5cc641180b21e4064ac5e4d4c26185fe1b10f35f06"
+      "sha256": "6f25e3243374645872db7631158f7fdd5145ccbb677d34c93e0e1c31387c41e5"
     },
     "backend/db/migrations/versions/0032_personal_summary_attempt.py": {
       "sha256": "64aa0d9cf0e28d43c7c6934b5350f6f2a69ec1414442d0cc59da6f90ce35efd2"
@@ -36,7 +36,7 @@
       "sha256": "d627c8e8c67af7122bc8b44d7f1d1f72bf69aac3f887f85131072fa11fb71f88"
     },
     "docs/design/personal-summary-agent.md": {
-      "sha256": "a7150ec3531eb135f59681eb0a8b18cf7dce2867367f26c6544b63e66eb302d7"
+      "sha256": "54df1babeb7fbd9de892c87ccf97523537a374edb0304e0a8a53f54b9f1c8fa3"
     },
     "third_party/licenses/python/apscheduler-3.11.3/0.txt": {
       "sha256": "6163f7987dfb38d6bc320ce2b70b2f02b862bc41126516d552ef1cd43247e758"
@@ -162,7 +162,7 @@
       "sha256": "e6e232422338832713d447d9a5d767515c1b8f48f82c16aa172618e9a2eb7969"
     },
     "apps/web/src/runtime/useDurableConversation.ts": {
-      "sha256": "5c6605e43ca8448f8e5205d9b714dbea01717f98220ef6c358a003d6d18ccf30"
+      "sha256": "21526194e8299a6dd8b20e7a361e4d5cb7787c2fb724960bd41749f746732815"
     },
     "apps/web/tests/durable-browser.mjs": {
       "sha256": "6b7bced626563f7fc764a00c5e05a0c5c9ca5514e69d87b33ac53eac1abef9e2"
@@ -597,7 +597,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "14178623e5648bc47f915d615a8102aa5c2e6a17cbf5f12f69ed226afb5c103d"
+      "sha256": "8f7d96ce4a962665bb075135d1335fe4d0a206c47d1e7b192d0a26013e0e611e"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -831,7 +831,7 @@
       "sha256": "a1eefaa3a1085e59a7857ab3d485491c465f9db63de095c9b7ac0f8408001b5c"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "a4a504c1f37480d7626536558dff4587cb6e1dba2409cc279010533431ad5663"
+      "sha256": "03c5b9b8e24312f380772078689e583c10542d4ff615d70a20f95bb43d8e4dd0"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "2bccc19ae001e98e669f3bbb7b6f3cd2b968893b2d85e27544e0ef6caca80fbe"
@@ -2987,7 +2987,7 @@
       "sha256": "441f74bd146cc0c1e92f127705120ac4b1f2ce47efa38e1871c765929e56a062"
     },
     "apps/desktop/tests/workspace-chat-integration.cjs": {
-      "sha256": "b725e3522f2e7420bc32fae3c07036d646e5d84dadda74f13032da94ac252408"
+      "sha256": "a9f7586e3b67b514c47c2c24557567053a44a9036c5bf47162f813c271cff226"
     },
     "apps/web/scripts/generate-workspace-chat.mjs": {
       "sha256": "252318368a669a6479e74e67c47187b5b5be2dd499cd668f39dff7853f099624"

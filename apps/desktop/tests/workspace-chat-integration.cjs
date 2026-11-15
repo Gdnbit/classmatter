@@ -12,7 +12,7 @@ const file = path.join(stage, 'runtime-source.json'), original = fs.readFileSync
 const source = JSON.parse(original); source.runtimeRoot = root; source.servicePort = port;
 const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
 let app;
-const failures = [], errors = [];
+const failures = [], errors = [], legacyReads = [];
 async function expectLeavePrompt(count) {
   const observed = await app.evaluate(async ({ app }, expected) => {
     const until = Date.now() + 5000;
@@ -23,9 +23,13 @@ async function expectLeavePrompt(count) {
   assert.equal(observed, count, 'Exactly one native confirmation per attempted leave');
 }
 async function launch() {
+  const previousLegacyReads = legacyReads.length;
   app = await electron.launch({ executablePath: require('electron'), args: [stage, '--classmatter-development-no-password'], env });
   app.context().on('response', response => {
     if (response.status() >= 500) failures.push({status: response.status(), path: new URL(response.url()).pathname});
+  });
+  app.context().on('request', request => {
+    if (/\/conversation-d1\/classes\/[^/]+\/terms\/[^/]+\/conversations$/.test(new URL(request.url()).pathname)) legacyReads.push(request.url());
   });
   app.on('window', page => page.on('pageerror', error => errors.push(error.name)));
   // Private workspace connection (15s) precedes the API's bounded startup (30s).
@@ -33,6 +37,7 @@ async function launch() {
   await page.getByLabel('输入消息').waitFor();
   await page.getByRole('button', { name: '新对话', exact: true }).waitFor();
   assert.deepEqual(failures, [], 'Desktop startup requests must succeed');
+  assert.equal(legacyReads.length, previousLegacyReads, 'Workspace startup does not read the optional legacy archive');
   assert.equal(await page.getByLabel('密码', { exact: true }).count(), 0);
   assert.equal(await page.getByRole('button', { name: '退出登录', exact: true }).count(), 0);
   assert.equal(await page.getByRole('button', { name: '进入本机开发', exact: true }).count(), 0);
@@ -42,6 +47,7 @@ async function launch() {
 (async () => { try {
   fs.writeFileSync(file, JSON.stringify(source));
   let page = await launch();
+  await page.locator('summary', { hasText: '班级旧对话' }).click();
   await page.getByRole('button', { name: '合成原对话', exact: true }).click();
   await page.getByRole('region', { name: '已保存的对话' }).getByText('合成升级前消息', { exact: true }).waitFor();
   await page.getByRole('button', { name: '新对话', exact: true }).click();
