@@ -115,7 +115,8 @@
             "received",
             "material-received",
             "material-sent",
-            "saved"
+            "saved",
+            "stopped"
           ],
           "title": "Status",
           "type": "string"

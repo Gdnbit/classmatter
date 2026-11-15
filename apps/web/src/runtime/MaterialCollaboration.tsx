@@ -86,7 +86,7 @@ export function CollaborationThread({ session, thread }: { session: Session; thr
     const timer = setInterval(() => void update(), 8000)
     return () => { abort.abort(); clearInterval(timer) }
   }, [session.csrf_token, thread, retry])
-  const labels = { queued: '等待发送', 'retry-needed': '发送未完成', delivered: '等待补充', received: '待提供材料', 'material-received': '材料已收到', 'material-sent': '材料已发送', saved: '小结已保存' }
+  const labels = { queued: '等待发送', 'retry-needed': '发送未完成', delivered: '等待补充', received: '待提供材料', 'material-received': '材料已收到', 'material-sent': '材料已发送', saved: '小结已保存', stopped: '已停止协作' }
   if (!items.length && !failed) return null
   return <section aria-label="材料协作">
     {items.map(item => <div className="r1-toolbar" key={item.request_id}><strong>{item.title}</strong><span>{item.peer_name}</span><span role="status">{labels[item.status]}</span>

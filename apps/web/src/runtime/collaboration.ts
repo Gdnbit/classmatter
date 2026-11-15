@@ -6,7 +6,7 @@ export type Invitation = { kind: 'classmatter.collaboration-invite.v1'; workspac
 export type MaterialItem = { message_id: string; request_id: string; peer_id: string; direction: 'incoming' | 'outgoing'; operation: 'request' | 'material';
   title: string; body: string; source_document_id: string | null; source_version: number | null; class_id: string; term_id: string; thread_id: string;
   created_at: string; delivered_at: string | null; peer_name: string;
-  status: 'queued' | 'retry-needed' | 'delivered' | 'received' | 'material-received' | 'material-sent' | 'saved';
+  status: 'queued' | 'retry-needed' | 'delivered' | 'received' | 'material-received' | 'material-sent' | 'saved' | 'stopped';
   saved: { request_id: string; document_id: string; document_version: number } | null }
 export type CollaborationState = { schema_version: 'classmatter.collaboration-state.v1'; peers: Peer[]; items: MaterialItem[] }
 

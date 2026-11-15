@@ -52,7 +52,7 @@ class CollaborationService:
         try:
             state = await anyio.to_thread.run_sync(lambda:self.query.read(credentials))
             for row in state['items']:
-                if row['direction']!='outgoing' or row['delivered_at']:
+                if row['direction']!='outgoing' or row['delivered_at'] or row['status']=='stopped':
                     continue
                 try:
                     ticket = await anyio.to_thread.run_sync(lambda:self.business.attempt(credentials,row['message_id']))
@@ -73,7 +73,7 @@ class CollaborationService:
             if self.runtime.sdk.provider_state and self.runtime.sdk.provider_state(credentials)=='configured-api':
                 state = await anyio.to_thread.run_sync(lambda:self.query.read(credentials))
                 for row in state['items']:
-                    if row['direction']=='incoming' and row['operation']=='material' and not row['saved']:
+                    if row['direction']=='incoming' and row['operation']=='material' and not row['saved'] and row['status']!='stopped':
                         turn = await anyio.to_thread.run_sync(lambda:self.runtime.query.turn(credentials,row['thread_id'],row['message_id']))
                         if turn[0]['status']=='active' and turn[1]['state']=='queued':
                             async for _ in self.runtime.stream_queued(credentials,row['thread_id'],row['message_id']):

@@ -264,6 +264,10 @@ async def test_peer_proof_binding_revocation_and_receive_audit_rollback(two_clas
         await sb.receive(wrong,changed_proof)
     peer=sa.query.read(a[2])['peers'][0]
     sa.business.revoke_peer(a[2],peer['peer_id'],peer['version'])
+    assert sa.query.read(a[2])['items'][0]['status']=='stopped'
+    peer_b=sb.query.read(b[2])['peers'][0]
+    sb.business.revoke_peer(b[2],peer_b['peer_id'],peer_b['version'])
+    assert not parts[1][1].listing(b[2])['data'][0]['summary_attention']
     from dataclasses import replace
     with pytest.raises(CommandRejected):
         a[0].preview(*a[2],replace(candidate(row['candidate']),request_id=uuid4()))
@@ -340,4 +344,8 @@ async def test_revoked_queue_does_not_starve_active_peer_and_concurrent_receive_
     receipts=await asyncio.gather(*(sb.receive(value,proof) for _ in range(3)))
     assert all(receipts) and len(sb.query.read(b[2])['items'])==1
     assert len(parts[1][1].history(b[2],incoming[0]['thread_id'])['turns'])==1
-    assert next(r for r in sa.query.read(a[2])['items'] if r['peer_id']==old.workspace_id)['delivered_at'] is None
+    stopped=next(r for r in sa.query.read(a[2])['items'] if r['peer_id']==old.workspace_id)
+    assert stopped['delivered_at'] is None and stopped['status']=='stopped'
+    current=parts[0][1].history(a[2],thread)['thread']
+    parts[0][0].control(a[2],thread,current['version'],'archive')
+    assert all(r['status']=='stopped' for r in sa.query.read(a[2])['items'])

@@ -107,6 +107,13 @@ try {
   await a.setViewportSize({ width: 390, height: 844 });
   assert(await a.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await a.screenshot({ path: '../../test-results/collaboration-summary-narrow.png', fullPage: true });
+  await b.getByRole('button', { name: '设置', exact: true }).click();
+  const settingsB = b.getByRole('dialog', { name: '设置', exact: true });
+  await settingsB.getByRole('button', { name: '停止协作', exact: true }).click();
+  await settingsB.getByRole('button', { name: '确认停止', exact: true }).click();
+  await expect(settingsB).toContainText('已停止协作');
+  await settingsB.getByRole('button', { name: '关闭设置', exact: true }).click();
+  await expect(b.getByRole('region', { name: '材料协作', exact: true })).toContainText('已停止协作', { timeout: 15000 });
   assert.deepEqual(errors, []); assert.deepEqual(external, []);
   console.log('PASS two original workspaces: human pairing -> request preview -> colleague material preview -> received source-bound summary -> refresh -> lost save response -> receipt recovery -> identical saved result; background attention preserves another draft');
 } catch (error) {

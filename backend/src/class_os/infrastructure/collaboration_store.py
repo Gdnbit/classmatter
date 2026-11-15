@@ -88,10 +88,13 @@ class CollaborationTransaction(BuiltinSummaryTransaction):
         return {k:row[k] for k in ('peer_id','name','endpoint','public_key','class_id','term_id','status','version')}
 
     def _collaboration_rows(self, binding, *, thread_id=None):
-        rows = self._connection.execute(text('''SELECT * FROM class_os.collaboration_message
-            WHERE workspace_id=:workspace_id AND owner_id=:actor_id
-              AND (CAST(:thread AS uuid) IS NULL OR thread_id=:thread)
-            ORDER BY created_at,message_id LIMIT 101'''), {**binding,'thread':thread_id}).mappings().all()
+        rows = self._connection.execute(text('''SELECT m.*,t.status AS thread_status,p.status AS peer_status
+            FROM class_os.collaboration_message m
+            JOIN class_os.workspace_chat_thread t ON t.workspace_id=m.workspace_id AND t.thread_id=m.thread_id
+            JOIN class_os.collaboration_peer p ON p.workspace_id=m.workspace_id AND p.peer_id=m.peer_id
+            WHERE m.workspace_id=:workspace_id AND m.owner_id=:actor_id
+              AND (CAST(:thread AS uuid) IS NULL OR m.thread_id=:thread)
+            ORDER BY m.created_at,m.message_id LIMIT 101'''), {**binding,'thread':thread_id}).mappings().all()
         if len(rows) > 100:
             raise CommandRejected()
         for row in rows:
@@ -120,6 +123,7 @@ class CollaborationTransaction(BuiltinSummaryTransaction):
         for row in rows:
             peer = next((p for p in peers if p['peer_id'] == row['peer_id']), None)
             status = ('saved' if row['request_id'] in summaries else
+                'stopped' if row['peer_status']!='active' or row['thread_status']!='active' else
                 'material-received' if any(r['request_id']==row['request_id'] and r['operation']=='material' and r['direction']=='incoming' for r in rows) else
                 'material-sent' if any(r['request_id']==row['request_id'] and r['operation']=='material' and r['delivered_at'] for r in rows) else
                 'received' if row['direction']=='incoming' else 'delivered' if row['delivered_at'] else
@@ -298,8 +302,9 @@ class CollaborationTransaction(BuiltinSummaryTransaction):
         rows = self._collaboration_rows(binding)
         for row in result['data']:
             requests = [r for r in rows if r['thread_id']==row['thread_id'] and r['direction']=='incoming' and r['operation']=='request']
-            pending = any(not any(m['request_id']==r['request_id'] and m['operation']=='material' for m in rows) for r in requests)
+            pending = any(r['peer_status']=='active' and not any(m['request_id']==r['request_id'] and m['operation']=='material' for m in rows) for r in requests)
             material = any(r['thread_id']==row['thread_id'] and r['direction']=='incoming' and r['operation']=='material'
+                and r['peer_status']=='active'
                 and not self._connection.execute(text('''SELECT EXISTS(SELECT 1 FROM class_os.collaboration_summary
                     WHERE workspace_id=:workspace_id AND request_id=:root)'''),{**binding,'root':r['request_id']}).scalar_one() for r in rows)
             row['summary_attention'] = row.get('summary_attention',False) or pending or material

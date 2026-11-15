@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "d46a9b12abf21c052a7ec536655966332e75c2a3faeec4c231d87183b275f116"
+      "sha256": "e6cb79318217c0a44c02a1ae631b792f710b31b2d426a39afef8169f69422950"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3023,7 +3023,7 @@
       "sha256": "ebdbbb647aa19554209678366bce38626b57cd4f4e8de01c386b57515b2667f1"
     },
     "apps/web/src/runtime/workspace-chat-validators.cjs": {
-      "sha256": "fdf05edec55cb2b6450306d5129a1af64b8769ab593fcd671014bdea48090160"
+      "sha256": "9845a0cb6c4073bff07409274bf5f65a75f90dd675882acda58fefdf84fbfa5a"
     },
     "apps/web/src/runtime/workspace-chat-validators.d.cts": {
       "sha256": "c3f576f69608c8f602575e656d3c05ba8b2325c412ce3d47e7a688fdbf032247"
@@ -3469,13 +3469,13 @@
       "sha256": "ccd9f7fdb4fbf00551a3f1e7eb22428e5e2d0caaeb47df1ea46c266bb667be3a"
     },
     "apps/web/src/runtime/MaterialCollaboration.tsx": {
-      "sha256": "7c3b0b2acb72937cddd58c1f3a303e7ac5b78c2296f1fe080228e7780dec3a8b"
+      "sha256": "df8159def28aed0c16532c47bf2ad65c8cd71c0f7dab8b21f46c777c42e735d1"
     },
     "apps/web/src/runtime/collaboration.ts": {
-      "sha256": "0fb2dd681619841a73651876f83f6686977b9718ce74d16a8b207602e3b9b8ee"
+      "sha256": "19a8f36fbaf05ea1d85b47b7161d00d7d02d47c8648d1b177f7e69e1d792da75"
     },
     "apps/web/tests/collaboration-browser.mjs": {
-      "sha256": "92db1a03dd4783d3dd04a58787a0b08b320e9e6c3396a5b9d7e7af9a33f2d991"
+      "sha256": "ceb2e6d9793179a943269b07b2f61997061f65970ddb3ab75e1346143081bb7c"
     },
     "backend/db/migrations/versions/0034_collaboration.py": {
       "sha256": "3b92dc2228cbb05817e81d52306607c6ba70bff5e60c68cbeda381a3baa2ca5e"
@@ -3487,10 +3487,10 @@
       "sha256": "250cf5b0d010abc1a0789d334984d80bf95efdf4cbbca35dcc04a25332e655a6"
     },
     "backend/src/class_os/infrastructure/collaboration_runtime.py": {
-      "sha256": "be1a297d6ad9244efd5dd7f890dbe4d88fa80fe0c4abdbbce4976122a751c33e"
+      "sha256": "e4e947ec04ffb9bd9fa03ac378c03882f3b697453b6b4ac49d1055901dfd5634"
     },
     "backend/src/class_os/infrastructure/collaboration_store.py": {
-      "sha256": "fab052112f52eca26677054767b4a6405125c042f75c9ef72a1aeba3805078e5"
+      "sha256": "168aabbb0a34fd95228f93251a025e1c00803198b3a63fc0bf14fee31494ad9c"
     },
     "backend/src/class_os/infrastructure/collaboration_tools.py": {
       "sha256": "0db462fd6bbe2357146d620b499e9c62344096e6a6c25ab161cf0fbfb6245572"
@@ -3499,13 +3499,13 @@
       "sha256": "d92b4a336f0e59865f3ee966e75d9eaaae05fb93addb7fc84af99dfd2238b378"
     },
     "backend/src/class_os/interfaces/http/collaboration.py": {
-      "sha256": "13592bdaa6fe2e99871aa2da23e1e44bf6fa4110c10fb41391204382412433be"
+      "sha256": "4ba0accd962cd5d5780349bbd2334ca2bc19da972031ae5adfa2062740b62e6c"
     },
     "backend/tests/test_collaboration_backup.py": {
       "sha256": "4aa67271ab808bd1c09ff058d8edbb5934f8c73ad7bc55210bdf9ff9440ba0b5"
     },
     "backend/tests/test_collaboration_runtime.py": {
-      "sha256": "1a25141b682959b19bf4470342dbdab0d2832164a95b03e592abbde85c4148ea"
+      "sha256": "5ee2bfc04592536252577194b93b51e7c72e2c7abff1dcd0676038b75bcce579"
     },
     "backend/tests/test_collaboration_values.py": {
       "sha256": "a2bfd5c46f2242425de845d26e18357b6182e2e45dc9f611bef08cfd5e7f272b"
@@ -3529,10 +3529,10 @@
       "sha256": "ec8c9c376f1fe803e5b18ee968e3c241203498d1e4ba78ab23b34eeb58b7e358"
     },
     "contracts/http/collaboration-state.v1.schema.json": {
-      "sha256": "9425eb9a8ef8f752272eddf24366145bca46cf4081ad54f93537220247d467f6"
+      "sha256": "71a00cd463b6dea70f38004384e8aae50198d69a77754bf42a494dc397712660"
     },
     "docs/design/two-teacher-material-summary.md": {
-      "sha256": "9b7b6b634cb6d059b65c35140ff7150c08f086194c817229de4f51a368e2cfa2"
+      "sha256": "17007b8bfb25cca5988ff739225d1c17bd7591990c696dc240384307a4d093f4"
     },
     "third_party/licenses/python/a2a-sdk-1.3.0/0.txt": {
       "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"

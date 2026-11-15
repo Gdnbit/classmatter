@@ -97,7 +97,7 @@ class MaterialItem(WireModel):
     created_at: datetime
     delivered_at: datetime | None
     peer_name: str = Field(max_length=80)
-    status: Literal['queued','retry-needed','delivered','received','material-received','material-sent','saved']
+    status: Literal['queued','retry-needed','delivered','received','material-received','material-sent','saved','stopped']
     saved: Saved | None
 
 
