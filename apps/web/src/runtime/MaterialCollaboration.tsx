@@ -34,7 +34,7 @@ export function CollaborationSettings({ session, classroom, disabled, onError }:
       <button disabled={blocked || !classroom || classroom.status === 'archived'} onClick={() => setAdding(value => !value)}>添加同事</button>
     </div>
     {invitation && <div>
-      <label>协作邀请<textarea aria-label="协作邀请" readOnly value={JSON.stringify(invitation)} /></label>
+      <strong>{invitation.name}</strong>
       <button disabled={blocked} onClick={() => void act(async () => { await navigator.clipboard.writeText(JSON.stringify(invitation)); if (active.current) setStatus('已复制邀请') })}>复制邀请</button>
     </div>}
     {adding && <div>

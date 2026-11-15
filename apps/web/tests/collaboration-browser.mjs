@@ -7,6 +7,7 @@ const browser = await chromium.launch({ headless: true, ...(process.platform ===
 const errors = [], external = [];
 try {
   const contexts = await Promise.all(bases.map(() => browser.newContext({ viewport: { width: 1440, height: 900 } })));
+  for (const [i, context] of contexts.entries()) await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: bases[i] });
   const pages = await Promise.all(contexts.map(context => context.newPage()));
   for (const [i, page] of pages.entries()) {
     page.on('pageerror', error => errors.push(error.message));
@@ -22,8 +23,11 @@ try {
     const settings = page.getByRole('dialog', { name: '设置', exact: true });
     await settings.getByLabel('我的称呼', { exact: true }).fill(i ? '合成王老师' : '合成李老师');
     await settings.getByRole('button', { name: '生成协作邀请', exact: true }).click();
-    await expect(settings.getByLabel('协作邀请', { exact: true })).not.toHaveValue('');
-    invitations.push(await settings.getByLabel('协作邀请', { exact: true }).inputValue());
+    await settings.getByRole('button', { name: '复制邀请', exact: true }).click();
+    await expect(settings.getByRole('status').filter({ hasText: '已复制邀请' })).toBeVisible();
+    invitations.push(await page.evaluate(() => navigator.clipboard.readText()));
+    assert.equal(JSON.parse(invitations.at(-1)).name, i ? '合成王老师' : '合成李老师');
+    await expect(settings.getByLabel('协作邀请', { exact: true })).toHaveCount(0);
     assert(!invitations.at(-1).includes('private_key'));
     await settings.getByRole('button', { name: '关闭设置', exact: true }).click();
   }

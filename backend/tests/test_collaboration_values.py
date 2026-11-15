@@ -61,3 +61,22 @@ async def test_receipt_stream_has_a_hard_byte_bound():
         async for chunk in LimitedStream(Chunks()):
             received+=len(chunk)
     assert received==65000
+
+
+@pytest.mark.parametrize('changes',[{'exp':1000},{'iat':1001},{'exp':1061},
+    {'aud':str(uuid4())},{'jti':str(uuid4())},{'digest':'b'*64},{'remote_tool':'not executable'}])
+def test_even_a_valid_peer_signature_does_not_override_receipt_scope_or_expiry(changes):
+    from datetime import datetime,timezone
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from class_os.infrastructure.collaboration_transport import PeerProofs
+    import jwt
+    sender,receiver,message_id=uuid4(),uuid4(),uuid4()
+    key=Ed25519PrivateKey.generate()
+    peer={'peer_id':sender,'public_key':key.public_key().public_bytes_raw().hex()}
+    proofs=PeerProofs(None,None,None,clock=lambda:datetime.fromtimestamp(1000,timezone.utc))
+    claims={'iss':str(sender),'aud':str(receiver),'jti':str(message_id),'iat':1000,'exp':1060,'digest':'a'*64}
+    valid=jwt.encode(claims,key,algorithm='EdDSA')
+    proofs.verify(valid,peer,receiver,message_id,'a'*64)
+    altered=jwt.encode(claims|changes,key,algorithm='EdDSA')
+    with pytest.raises((ValueError,jwt.PyJWTError)):
+        proofs.verify(altered,peer,receiver,message_id,'a'*64)
