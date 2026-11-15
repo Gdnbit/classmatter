@@ -11,11 +11,13 @@ import { ChangeComparison } from './ChangeComparison'
 import { DocumentExportActions } from './DocumentExportActions'
 import { documentClient } from './documents'
 import { DocumentBody } from './DocumentBody'
+import { CollaborationThread } from './MaterialCollaboration'
 
 const labels: Record<string, string> = { "class.create": "建立班级与学期", "class.update": "修改班级名称", "term.update": "更正学期信息", "student.create": "添加学生", "student.update_name": "更正学生姓名",
   "record.create": "记录事实", "task.create": "建立任务", "task.update": "修改任务", "task.complete": "结束任务", "task.cancel": "取消任务", "document.create": "创建工作文档", "document.revise": "修改工作文档" }
 const states = { queued: "等待回复", running: "正在回复…", completed: "回复完成", failed: "回复失败，请稍后再试", cancelled: "已停止回复", unknown: "暂时无法确认回复结果" }
 Object.assign(labels, { 'exam.create': '建立考试', 'score.record': '记录成绩', 'seat.layout.create': '建立座位表', 'seat.assign': '安排座位', 'seat.swap': '交换座位' })
+Object.assign(labels, { 'collaboration.request': '收集同事材料', 'collaboration.material.share': '提供材料', 'collaboration.summary.save': '保存班级工作小结' })
 function AnswerActions({ text, duration }: { text: string; duration: number | null }) {
   const [copied, setCopied] = useState(false), [failed, setFailed] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -66,17 +68,18 @@ function SavedDocumentExports({ turn, context }: { turn: ChatTurn; context: Docu
 export function WorkspaceChatHistory({ state: s, documentExports }: { state: WorkspaceChatController; documentExports?: DocumentExports }) {
   return <section aria-label="已保存的对话">
     {s.history?.thread.status === "cleared" && <p>此对话已清空</p>}
+    {documentExports && s.history?.thread.status === 'active' && <CollaborationThread key={`${documentExports.session.csrf_token}:${s.history.thread.thread_id}`} session={documentExports.session} thread={s.history.thread.thread_id} />}
     {s.history?.next_before && <button disabled={s.working} onClick={() => void s.moreHistory()}>加载更早消息</button>}
     <div className="r1-messages">
       {s.pendingSend && !s.history?.turns.some(turn => turn.request_id === s.pendingSend?.request) && <article className="user" aria-label="你的消息"><p>{s.pendingSend.text}</p></article>}
       {s.history?.turns.filter(turn => !(turn.origin === 'personal-agent' && turn.state === 'completed' && !turn.candidate && !turn.answer_required)).map(turn => <div key={turn.turn_id}>
-        {turn.origin !== 'personal-agent' && turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
+        {(turn.origin ?? 'user') === 'user' && turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
         {turn.assistant_text && <article className="assistant" aria-label="助手回复"><DocumentBody body={turn.assistant_text} format="markdown" /><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
         {turn.state !== "completed" && <p className="r1-muted" role={turn.state === 'queued' || turn.state === 'running' ? 'status' : undefined}>{turn.state === 'queued' && s.working ? states.running : states[turn.state]}</p>}
         {turn.state === "queued" && !s.working && <button disabled={!s.canAct} onClick={() => void s.startQueued(turn)}>继续回复</button>}
         {turn.state === 'failed' && turn.request_id === s.history?.turns.at(-1)?.request_id && turn.user_text && !turn.candidate && !turn.action_receipt
           && <button aria-label="重试回复" disabled={!s.canSend} onClick={() => void s.retryFailed(turn)}>重试</button>}
-        {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
+    {turn.candidate && <section className="r1-card" aria-label="对话中的操作候选">
           <h2>{turn.candidate.command.startsWith('document.') && 'title' in turn.candidate && turn.candidate.title === '班级小结委托'
             ? 'body' in turn.candidate && turn.candidate.body.includes('\n- 状态：暂停整理\n') ? '暂停整理小结' : '调整小结安排'
             : labels[turn.candidate.command]}</h2>

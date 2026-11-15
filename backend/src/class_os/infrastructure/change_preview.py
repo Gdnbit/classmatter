@@ -12,8 +12,11 @@ def build_change_preview(tx, binding, payload, now):
     from class_os.domain.workspace_chat import candidate, candidate_hash
     from class_os.application.roster import BusinessGateway
     from class_os.domain.classroom_work import COMMANDS
+    from class_os.domain.collaboration import COMMANDS as COLLABORATION_COMMANDS
     command = candidate(payload)
-    if payload['command'] in COMMANDS:
+    if payload['command'] in COLLABORATION_COMMANDS:
+        tx.validate_collaboration(binding, command, now)
+    elif payload['command'] in COMMANDS:
         tx.validate_classroom(binding, command, now)
     elif payload['command'].startswith('document.'):
         tx.validate_document(binding, command, now)
@@ -38,7 +41,23 @@ def build_change_preview(tx, binding, payload, now):
         return row
 
     operation = payload['command']
-    if operation in ('seat.layout.create', 'seat.assign', 'seat.swap'):
+    if operation in COLLABORATION_COMMANDS:
+        from class_os.domain.collaboration import SaveCollectedSummary
+        kind = 'create'
+        previous = None
+        if type(command) is SaveCollectedSummary and command.expected_version:
+            previous = tx.read_documents(binding,command.class_id,command.term_id,command.document_id,False)
+            kind = 'edit'
+        for key in ('title','body'):
+            field(key,previous[key] if previous else None,payload[key])
+        if type(command) is not SaveCollectedSummary:
+            field('recipient',None,tx._peer(binding,command.peer_id)['name'])
+            if operation=='collaboration.material.share':
+                source=tx.read_documents(binding,command.class_id,command.term_id,command.document_id,False)
+                field('format',None,source['format'])
+        else:
+            field('format',previous['format'] if previous else None,command.format)
+    elif operation in ('seat.layout.create', 'seat.assign', 'seat.swap'):
         kind = 'seating'
         previous = tx.read_seating(binding, command.class_id, command.term_id)
         def board(rows, columns, seats):

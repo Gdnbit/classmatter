@@ -18,11 +18,13 @@ const state = (p, nested = receipt(), status = 'committed') => {
     payload_hash: p.payload_hash, status, receipt: nested ? value : null };
 };
 
-test('all18 registered commands bind exact receipt target and result version, not name or workspace guesses', () => {
+test('registered commands bind exact receipt target and result version, not name or workspace guesses', () => {
   const cases = [
     ['class.create', 'class_id', 1], ['student.create', 'student_id', 1], ['record.create', 'record_id', 1],
     ['task.create', 'task_id', 1], ['exit_export.create', 'export_id', 1],
     ['document.create', 'document_id', 1], ['document.revise', 'document_id', 3],
+    ['collaboration.request', 'request_id', 1], ['collaboration.material.share', 'message_id', 1],
+    ['collaboration.summary.save', 'document_id', 3],
     ...['class.update', 'class.archive'].map(name => [name, 'class_id', 3]),
     ['term.update', 'term_id', 3],
     ...['student.update_name', 'student.update_identifier', 'student.deactivate'].map(name => [name, 'student_id', 3]),
@@ -40,6 +42,7 @@ test('all18 registered commands bind exact receipt target and result version, no
     assert.throws(() => api.decodeCommandReceipt(receipt(id, resultVersion + 1), payload));
   }
   assert.equal(api.decodeCommandReceipt(receipt(), { command: 'model_configuration.clear', candidate_id: id, expected_version: 0 }).version, 1);
+  assert.equal(api.decodeCommandReceipt(receipt(), { command: 'collaboration.summary.save', document_id: id, expected_version: 0 }).version, 1);
 });
 
 test('malformed200 receipt cannot become saved, aliases stay isolated and no request/retry occurs', () => {

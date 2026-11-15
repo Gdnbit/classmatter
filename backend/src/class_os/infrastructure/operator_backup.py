@@ -65,7 +65,7 @@ class SyntheticBackup:
         if legacy_classroom:
             self.head = '0029'
         if checkpoint_revision is not None:
-            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision not in ('0030', '0031', '0032'):
+            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision not in ('0030', '0031', '0032', '0033'):
                 raise ValueError('Explicit prior D4 checkpoint revision required')
             self.head = checkpoint_revision
         self.checkpoint_revision = checkpoint_revision
@@ -73,6 +73,9 @@ class SyntheticBackup:
             self.tables = self.tables - {'personal_summary_attempt'}
         if legacy_classroom or checkpoint_revision in ('0030', '0031', '0032'):
             self.tables = self.tables - {'builtin_summary_attempt'}
+        if legacy_classroom or checkpoint_revision is not None:
+            from .persistence.schema_inventory import COLLABORATION_COLUMNS
+            self.tables = self.tables - frozenset(COLLABORATION_COLUMNS)
         self.profile = profile
         self.kind = {"r1": "class-os.owned-synthetic-backup.v1",
                      "conversation-d1": "classmatter.owned-conversation-backup.v1",
@@ -158,7 +161,7 @@ class SyntheticBackup:
                 raise BackupRejected()
             head = '0029'
         if checkpoint_revision is not None:
-            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision not in ('0030', '0031', '0032'):
+            if legacy_classroom or profile != 'classroom-work-d4' or checkpoint_revision not in ('0030', '0031', '0032', '0033'):
                 raise BackupRejected()
             head = checkpoint_revision
         prior_summary = profile == 'classroom-work-d4' and head in ('0029', '0030', '0031')
@@ -185,11 +188,18 @@ class SyntheticBackup:
             if not prior_summary:
                 from .personal_summary_store import validate_summary_integrity
                 validate_summary_integrity(connection)
+            if head == '0034':
+                from .collaboration_store import validate_collaboration_integrity
+                validate_collaboration_integrity(connection)
 
     @staticmethod
     def _inventory(connection, *, profile="r1"):
         result, total = {}, 0
         _, tables = schema_profile(profile)
+        if profile == 'classroom-work-d4' and connection.execute(text(
+                'SELECT version_num FROM class_os.alembic_version')).scalar_one() in ('0029','0030','0031','0032','0033'):
+            from .persistence.schema_inventory import COLLABORATION_COLUMNS
+            tables = tables - frozenset(COLLABORATION_COLUMNS)
         if profile == 'classroom-work-d4' and connection.execute(text(
                 'SELECT version_num FROM class_os.alembic_version')).scalar_one() in ('0029', '0030', '0031'):
             tables = tables - {'personal_summary_attempt'}

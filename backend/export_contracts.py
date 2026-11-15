@@ -28,6 +28,7 @@ from class_os.interfaces.http.classroom_work import ClassroomCapabilities, ExamL
 from class_os.interfaces.http.workspace_chat import (ChatCapabilities, ChatListing, ChatHistory, ChatSend, ChatTurnResponse,
     ChatVersion, ChatClear, ChatThreadResponse, CandidatePreviewBody, CandidatePreview, SummaryWake)
 from class_os.interfaces.http.composer import CaptureInput, CaptureOutput
+from class_os.interfaces.http.collaboration import CollaborationState,InviteResult,InviteBody,AddPeer,Peer,RevokePeer
 from class_os.interfaces.http.model_configuration import ModelConfigurationBody, ModelConfigurationResponse, ModelStaged, ModelStageBody, ModelStatus, ModelTestBody, ModelEnableBody
 from class_os.interfaces.http.exit_package import ExitPackageResponse
 from class_os.interfaces.http.roster import (ApprovalBody, ClassBody, CommitBody, ContextResponse,
@@ -93,7 +94,10 @@ def main():
                         ("workspace-chat-preview-body.v1", CandidatePreviewBody), ("workspace-chat-preview.v1", CandidatePreview),
                         ("classroom-capabilities.v1", ClassroomCapabilities), ("exams.v1", ExamListing),
                         ("exam-results.v1", ExamResults), ("seating.v1", SeatingResponse), ("classroom-preview.v1", ClassroomPreview),
-                        ("composer-input.v1", CaptureInput), ("composer-output.v1", CaptureOutput)]:
+                        ("composer-input.v1", CaptureInput), ("composer-output.v1", CaptureOutput),
+                        ('collaboration-state.v1',CollaborationState),('collaboration-invitation.v1',InviteResult),
+                        ('collaboration-invite-body.v1',InviteBody),('collaboration-add-peer.v1',AddPeer),
+                        ('collaboration-peer.v1',Peer),('collaboration-revoke-peer.v1',RevokePeer)]:
         target = root / f"{name}.schema.json"
         content = json.dumps(model.model_json_schema(), indent=2, ensure_ascii=False) + "\n"
         if args.check:

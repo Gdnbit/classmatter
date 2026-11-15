@@ -17,6 +17,7 @@ from .contracts import WireModel
 from .roster import credentials, ClassBody, ClassChangeBody, TermBody, StudentBody, StudentNameBody, RecordBody, TaskBody, ChangeTaskBody
 from .documents import DocumentCreate, DocumentRevise
 from .classroom_work import ExamCreate, ScoreRecord, SeatLayoutCreate, SeatAssign, SeatSwap
+from .collaboration import MaterialRequest,MaterialShare,CollectedSummary
 
 
 class ClassEditCandidate(ClassChangeBody):
@@ -27,7 +28,7 @@ class TaskEditCandidate(ChangeTaskBody):
     command: Literal["task.update", "task.complete", "task.cancel"]
 
 
-Candidate = ClassBody | ClassEditCandidate | TermBody | StudentBody | StudentNameBody | RecordBody | TaskBody | TaskEditCandidate | DocumentCreate | DocumentRevise | ExamCreate | ScoreRecord | SeatLayoutCreate | SeatAssign | SeatSwap
+Candidate = ClassBody | ClassEditCandidate | TermBody | StudentBody | StudentNameBody | RecordBody | TaskBody | TaskEditCandidate | DocumentCreate | DocumentRevise | ExamCreate | ScoreRecord | SeatLayoutCreate | SeatAssign | SeatSwap | MaterialRequest | MaterialShare | CollectedSummary
 
 
 class ChatCapabilities(WireModel):
@@ -75,7 +76,7 @@ class ChatTurn(WireModel):
     duration_ms: int | None = Field(strict=True, ge=0)
     action_receipt: ChatActionReceipt | None
     change_preview: ChangePreview | None = None
-    origin: Literal['user', 'personal-agent'] = 'user'
+    origin: Literal['user', 'personal-agent','collaboration'] = 'user'
     answer_required: bool = False
 
 
@@ -250,6 +251,11 @@ def create_workspace_chat_app(settings, *, worker, query, sdk, readiness=None, m
         from class_os.infrastructure.personal_summary_runtime import PersonalSummaryService
         personal = PersonalSummaryService(runtime)
         app.state.personal_summary = personal
+        from class_os.infrastructure.collaboration_runtime import CollaborationService
+        from .collaboration import router as collaboration_router
+        personal.collaboration = CollaborationService(runtime)
+        app.state.collaboration = personal.collaboration
+        app.include_router(collaboration_router(personal.collaboration,personal))
         app.router.add_event_handler('shutdown', personal.close)
     app.include_router(router(runtime, worker, personal))
     if worker.store.database.profile == 'classroom-work-d4':

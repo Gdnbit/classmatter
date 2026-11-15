@@ -26,6 +26,27 @@ function history() {
       candidate: null, candidate_hash: null, action_receipt: null, created_at: instant, started_at: instant, lease_until: '2026-11-08T00:05:00Z', ended_at: instant,
       input_tokens: 10, output_tokens: 8, duration_ms: 100 }], next_before: null };
 }
+test('collaboration previews preserve closed create/edit shapes and reject mismatched kinds', async () => {
+  const original = globalThis.fetch;
+  try {
+    const scope = { class_id: randomUUID(), term_id: randomUUID() }, request = randomUUID(), peer = randomUUID();
+    const candidates = [
+      { command: 'collaboration.request', request_id: request, peer_id: peer, thread_id: threadId, ...scope, title: '教学进度', body: '请提供本周进度' },
+      { command: 'collaboration.material.share', message_id: randomUUID(), request_id: request, peer_id: peer, thread_id: threadId, ...scope, document_id: randomUUID(), expected_version: 1, title: '教学进度', body: '完成第三单元' },
+      ...[0, 1].map(version => ({ command: 'collaboration.summary.save', request_id: request, source_message_id: randomUUID(), ...scope, document_id: randomUUID(), expected_version: version, title: '班级工作小结', body: '合成小结', format: 'markdown' })),
+    ];
+    for (const candidate of candidates) {
+      const value = history(), hash = 'a'.repeat(64), kind = candidate.command === 'collaboration.summary.save' && candidate.expected_version ? 'edit' : 'create';
+      value.turns[0] = { ...value.turns[0], origin: 'collaboration', candidate, candidate_hash: hash,
+        change_preview: { schema_version: 'classmatter.change-preview.v1', candidate_hash: hash, kind,
+          fields: [{ field: 'body', before: kind === 'edit' ? '原有小结' : null, after: candidate.body }], before_seats: null, after_seats: null } };
+      globalThis.fetch = async () => reply(value);
+      assert.deepEqual(await client.history(threadId), value);
+      value.turns[0].change_preview.kind = kind === 'edit' ? 'create' : 'edit';
+      await assert.rejects(client.history(threadId), /预览类型不匹配/);
+    }
+  } finally { globalThis.fetch = original; }
+});
 test('workspace history is a private GET, requires no class, and never dispatches a model', async () => {
   const original = globalThis.fetch, calls = [], value = history();
   try {

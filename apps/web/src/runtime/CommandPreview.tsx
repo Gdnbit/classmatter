@@ -27,6 +27,8 @@ export function CommandPreview({ proposal, error, busy, names, onReject, onCheck
     {(proposal.payload.command === 'task.complete' || proposal.payload.command === 'task.cancel') && <p>
       {proposal.payload.command === 'task.cancel' ? '取消' : '结束'}后将移出待办，不能继续修改；记录会保留。
     </p>}
+    {(proposal.payload.command === 'collaboration.request' || proposal.payload.command === 'collaboration.material.share')
+      && <p>确认后将发送给预览中的同事；对方收到后，内容无法从对方工作区自动撤回。</p>}
     {proposal.change_preview ? <ChangeComparison preview={proposal.change_preview} /> : <dl>{previewFields(proposal.payload, names).map(([label, value], index) => <div key={index}>
       <dt>{label}</dt><dd>{value}</dd>
     </div>)}</dl>}

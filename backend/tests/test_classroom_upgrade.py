@@ -117,6 +117,8 @@ def test_revision29_comparison_upgrade_checkpoints_preserves_chat_and_rolls_back
     owner = current.database('migrator')
     try:
         with owner.transaction() as connection:
+            connection.execute(text('DROP TABLE class_os.collaboration_summary,class_os.collaboration_message,class_os.collaboration_audit,class_os.collaboration_peer,class_os.collaboration_identity'))
+            connection.execute(text('ALTER TABLE class_os.command_proposal DROP CONSTRAINT command_proposal_collaboration_risk_check'))
             connection.execute(text('DROP TABLE class_os.builtin_summary_attempt'))
             connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
             connection.execute(text('ALTER TABLE class_os.workspace_chat_turn DROP COLUMN change_preview'))
@@ -221,6 +223,8 @@ def test_revision30_activity_upgrade_is_checkpointed_atomic_and_retryable(owned_
     try:
         # Reconstruct the exact old candidate guard in this disposable fixture.
         with owner.transaction() as connection:
+            connection.execute(text('DROP TABLE class_os.collaboration_summary,class_os.collaboration_message,class_os.collaboration_audit,class_os.collaboration_peer,class_os.collaboration_identity'))
+            connection.execute(text('ALTER TABLE class_os.command_proposal DROP CONSTRAINT command_proposal_collaboration_risk_check'))
             connection.execute(text('DROP TABLE class_os.builtin_summary_attempt'))
             connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
             connection.execute(text('ALTER TABLE class_os.workspace_chat_turn DROP CONSTRAINT workspace_chat_candidate_command_check'))
@@ -258,7 +262,7 @@ def test_revision30_activity_upgrade_is_checkpointed_atomic_and_retryable(owned_
 
 @pytest.mark.db
 @pytest.mark.skipif(os.name != 'nt', reason='Owned Windows DPAPI checkpoint')
-@pytest.mark.parametrize('prior_revision', ('0031', '0032'))
+@pytest.mark.parametrize('prior_revision', ('0031', '0032', '0033'))
 def test_prior_summary_upgrade_preserves_chat_and_rolls_back_on_failure(owned_upgrade, monkeypatch, prior_revision):
     from sqlalchemy import text
     from class_os.infrastructure import classroom_upgrade as upgrade
@@ -282,7 +286,10 @@ def test_prior_summary_upgrade_preserves_chat_and_rolls_back_on_failure(owned_up
     try:
         # Reconstruct only this disposable fixture's exact pre-feature schema.
         with owner.transaction() as connection:
-            connection.execute(text('DROP TABLE class_os.builtin_summary_attempt'))
+            connection.execute(text('DROP TABLE class_os.collaboration_summary,class_os.collaboration_message,class_os.collaboration_audit,class_os.collaboration_peer,class_os.collaboration_identity'))
+            connection.execute(text('ALTER TABLE class_os.command_proposal DROP CONSTRAINT command_proposal_collaboration_risk_check'))
+            if prior_revision != '0033':
+                connection.execute(text('DROP TABLE class_os.builtin_summary_attempt'))
             if prior_revision == '0031':
                 connection.execute(text('DROP TABLE class_os.personal_summary_attempt'))
             connection.execute(text('UPDATE class_os.alembic_version SET version_num=:revision'), {'revision': prior_revision})

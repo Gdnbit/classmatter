@@ -1,0 +1,61 @@
+{
+  "$defs": {
+    "Invitation": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "classmatter.collaboration-invite.v1",
+          "default": "classmatter.collaboration-invite.v1",
+          "title": "Kind",
+          "type": "string"
+        },
+        "workspace_id": {
+          "format": "uuid",
+          "title": "Workspace Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "endpoint": {
+          "maxLength": 128,
+          "title": "Endpoint",
+          "type": "string"
+        },
+        "public_key": {
+          "pattern": "^[a-f0-9]{64}$",
+          "title": "Public Key",
+          "type": "string"
+        }
+      },
+      "required": [
+        "workspace_id",
+        "name",
+        "endpoint",
+        "public_key"
+      ],
+      "title": "Invitation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "classmatter.collaboration-invitation.v1",
+      "default": "classmatter.collaboration-invitation.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "invitation": {
+      "$ref": "#/$defs/Invitation"
+    }
+  },
+  "required": [
+    "invitation"
+  ],
+  "title": "InviteResult",
+  "type": "object"
+}

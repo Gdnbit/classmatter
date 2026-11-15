@@ -260,6 +260,6 @@ def validate_summary_integrity(connection):
         if row['answer_required'] and row['status'] != 'cleared' and (
                 row['question_state'] != 'completed' or row['question_candidate'] is not None or not row['question_text']):
             raise ValueError('Invalid waiting question')
-    if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() == '0033':
+    if connection.execute(text('SELECT version_num FROM class_os.alembic_version')).scalar_one() in ('0033','0034'):
         from .builtin_summary_store import validate_builtin_summary_integrity
         validate_builtin_summary_integrity(connection)

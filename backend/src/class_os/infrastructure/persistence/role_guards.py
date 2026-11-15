@@ -1,7 +1,7 @@
 """Owned synthetic profile's read-only critical guards, not a full ACL matrix."""
 from sqlalchemy import text
 
-from .schema_inventory import REGISTERED_TABLES, D1_COLUMNS, D2_COLUMNS, D3_COLUMNS, D4_COLUMNS, PERSONAL_COLUMNS, BUILTIN_COLUMNS, schema_profile
+from .schema_inventory import REGISTERED_TABLES, D1_COLUMNS, D2_COLUMNS, D3_COLUMNS, D4_COLUMNS, PERSONAL_COLUMNS, BUILTIN_COLUMNS, COLLABORATION_COLUMNS, schema_profile
 
 
 ROLE_NAMES = ("class_os_migrator", "class_os_identity", "class_os_runtime")
@@ -17,6 +17,10 @@ def validate_role_guards(connection, *, profile="r1", legacy_classroom=False, pr
     prior_summary = prior_summary or legacy_classroom
     prior_builtin = prior_builtin or prior_summary
     _, registered = schema_profile(profile)
+    collaboration = profile == 'classroom-work-d4' and connection.execute(text(
+        'SELECT version_num FROM class_os.alembic_version')).scalar_one() == '0034'
+    if profile == 'classroom-work-d4' and not collaboration:
+        registered = registered - frozenset(COLLABORATION_COLUMNS)
     if prior_builtin:
         if profile != 'classroom-work-d4' or connection.execute(text(
                 'SELECT version_num FROM class_os.alembic_version')).scalar_one() not in ('0029', '0030', '0031', '0032'):
@@ -98,6 +102,11 @@ def validate_role_guards(connection, *, profile="r1", legacy_classroom=False, pr
             if not prior_builtin:
                 inventory = {**inventory, **BUILTIN_COLUMNS}
                 updates['builtin_summary_attempt'] = set()
+            if collaboration:
+                inventory = {**inventory, **COLLABORATION_COLUMNS}
+                updates.update(collaboration_identity=set(), collaboration_peer={'status', 'version'},
+                    collaboration_message={'attempts','next_attempt_at','delivered_at','last_error'},
+                    collaboration_summary=set(), collaboration_audit=set())
             if not legacy_classroom:
                 inventory['workspace_chat_turn'] = inventory['workspace_chat_turn'] | {'change_preview'}
                 updates['workspace_chat_turn'] = updates['workspace_chat_turn'] | {'change_preview'}

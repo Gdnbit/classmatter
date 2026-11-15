@@ -197,6 +197,15 @@
               "$ref": "#/$defs/SeatSwap"
             },
             {
+              "$ref": "#/$defs/MaterialRequest"
+            },
+            {
+              "$ref": "#/$defs/MaterialShare"
+            },
+            {
+              "$ref": "#/$defs/CollectedSummary"
+            },
+            {
               "type": "null"
             }
           ],
@@ -316,7 +325,8 @@
           "default": "user",
           "enum": [
             "user",
-            "personal-agent"
+            "personal-agent",
+            "collaboration"
           ],
           "title": "Origin",
           "type": "string"
@@ -440,6 +450,75 @@
         "name"
       ],
       "title": "ClassEditCandidate",
+      "type": "object"
+    },
+    "CollectedSummary": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "command": {
+          "const": "collaboration.summary.save",
+          "title": "Command",
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "source_message_id": {
+          "format": "uuid",
+          "title": "Source Message Id",
+          "type": "string"
+        },
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 0,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "title": {
+          "const": "班级工作小结",
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 100000,
+          "title": "Body",
+          "type": "string"
+        },
+        "format": {
+          "const": "markdown",
+          "default": "markdown",
+          "title": "Format",
+          "type": "string"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "command",
+        "request_id",
+        "source_message_id",
+        "document_id",
+        "expected_version",
+        "title",
+        "body"
+      ],
+      "title": "CollectedSummary",
       "type": "object"
     },
     "DocumentCreate": {
@@ -625,6 +704,7 @@
             "status",
             "student",
             "source",
+            "recipient",
             "body",
             "format",
             "subject",
@@ -669,6 +749,142 @@
         "after"
       ],
       "title": "FieldChange",
+      "type": "object"
+    },
+    "MaterialRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "command": {
+          "const": "collaboration.request",
+          "title": "Command",
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "peer_id": {
+          "format": "uuid",
+          "title": "Peer Id",
+          "type": "string"
+        },
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "command",
+        "request_id",
+        "peer_id",
+        "thread_id",
+        "title",
+        "body"
+      ],
+      "title": "MaterialRequest",
+      "type": "object"
+    },
+    "MaterialShare": {
+      "additionalProperties": false,
+      "properties": {
+        "class_id": {
+          "format": "uuid",
+          "title": "Class Id",
+          "type": "string"
+        },
+        "term_id": {
+          "format": "uuid",
+          "title": "Term Id",
+          "type": "string"
+        },
+        "command": {
+          "const": "collaboration.material.share",
+          "title": "Command",
+          "type": "string"
+        },
+        "message_id": {
+          "format": "uuid",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "request_id": {
+          "format": "uuid",
+          "title": "Request Id",
+          "type": "string"
+        },
+        "peer_id": {
+          "format": "uuid",
+          "title": "Peer Id",
+          "type": "string"
+        },
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "document_id": {
+          "format": "uuid",
+          "title": "Document Id",
+          "type": "string"
+        },
+        "expected_version": {
+          "minimum": 1,
+          "title": "Expected Version",
+          "type": "integer"
+        },
+        "title": {
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "body": {
+          "maxLength": 12000,
+          "minLength": 1,
+          "title": "Body",
+          "type": "string"
+        }
+      },
+      "required": [
+        "class_id",
+        "term_id",
+        "command",
+        "message_id",
+        "request_id",
+        "peer_id",
+        "thread_id",
+        "document_id",
+        "expected_version",
+        "title",
+        "body"
+      ],
+      "title": "MaterialShare",
       "type": "object"
     },
     "RecordBody": {

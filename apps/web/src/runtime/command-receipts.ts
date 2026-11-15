@@ -9,6 +9,9 @@ function target(command: Command): { id: string; version: number } {
   let changed = false
   let zeroBased = false
   switch (command.command) {
+    case 'collaboration.request': field = 'request_id'; break
+    case 'collaboration.material.share': field = 'message_id'; break
+    case 'collaboration.summary.save': field = 'document_id'; changed = true; zeroBased = true; break
     case 'exam.create': field = 'exam_id'; break
     case 'score.record': field = 'student_id'; changed = true; zeroBased = true; break
     case 'seat.layout.create': field = 'layout_id'; break
