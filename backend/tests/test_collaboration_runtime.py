@@ -102,6 +102,33 @@ async def start_request(fixture,parts):
 
 
 @pytest.mark.db
+async def test_literal_share_does_not_offer_document_mutation_or_invent_material(two_classrooms):
+    a,b=two_classrooms
+    parts,_,services,_=await pair(two_classrooms)
+    await start_request(a,parts[0]);await services[0].check(a[2][3])
+    incoming=services[1].query.read(b[2])['items'][0]
+    document=CreateDocument(uuid4(),b[7],b[8],'本周教学进度','只记录已核对的第三单元进度。','markdown')
+    b[6](document)
+    observed=[]
+    def provider(request):
+        respond=model(request)
+        def check(messages,info):
+            names={tool.name for tool in info.function_tools}
+            observed.append(names)
+            assert names=={'read_material_collaboration','prepare_material_reply','read_task_progress'}
+            return respond.function(messages,info)
+        return FunctionModel(check)
+    parts[1][2].model_factory=provider
+    row=await send(parts[1][3],parts[1][0],parts[1][1],b[2],incoming['thread_id'],
+        '请提供本周教学进度给合成李老师。')
+    assert observed and row['candidate']['command']=='collaboration.material.share',row
+    assert row['candidate']['body']==document.body
+    assert row['candidate']['expected_version']==1
+    assert b[1].document(*b[2],b[7],b[8],document.document_id)['body']==document.body
+    assert len(services[1].query.read(b[2])['items'])==1,'A candidate does not send material'
+
+
+@pytest.mark.db
 async def test_two_workspaces_material_to_summary_save_and_refresh(two_classrooms):
     a,b=two_classrooms
     parts,_,services,_=await pair(two_classrooms)

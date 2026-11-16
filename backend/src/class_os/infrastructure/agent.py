@@ -262,6 +262,10 @@ class PydanticAgentRuntime:
                         allowed = frozenset({'read_material_collaboration','prepare_collected_summary','read_task_progress'})
                         tools = [tool for tool in tools if tool.__name__ in allowed]
                         expected = tuple(item for item in expected if item['name'] in allowed)
+                    elif _workspace_actions.collaboration_reply_only:
+                        allowed = frozenset({'read_material_collaboration','prepare_material_reply','read_task_progress'})
+                        tools = [tool for tool in tools if tool.__name__ in allowed]
+                        expected = tuple(item for item in expected if item['name'] in allowed)
                     elif _workspace_actions.initiative or focused_summary:
                         allowed = frozenset({'read_class_work', 'read_class_records', 'prepare_document',
                                              'read_summary_delegation', 'ask_summary_question', 'read_task_progress'})
@@ -323,6 +327,11 @@ class PydanticAgentRuntime:
                                     agent.instructions(lambda: 'This is a system-initiated received-material turn, not a human message. '
                                         'Read read_material_collaboration and call prepare_collected_summary for the actual incoming material. '
                                         'Do not send requests or replies, modify facts, or use prepare_document to omit its source binding.')
+                                if _workspace_actions.collaboration_reply_only:
+                                    agent.instructions(lambda: 'The current human request shares an existing local document for this incoming request. '
+                                        'Read read_material_collaboration, then prepare_material_reply with its request ID and the title the human named. '
+                                        'The tool loads the exact current document body/version. Do not add teaching progress, rewrite it, or prepare a document edit. '
+                                        'If the document is missing or ambiguous, ask which existing document to share. Nothing is sent until human confirmation.')
                                 if _workspace_actions.summary_context is not None and (_workspace_actions.initiative or focused_summary):
                                     scope = _workspace_actions.summary_context
                                     agent.instructions(lambda: ('This turn follows a built-in preparation task, not a claimed human mandate: '

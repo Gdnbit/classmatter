@@ -63,7 +63,7 @@
       "sha256": "d99ab209aeb16aad2c25c90ffd83c1a981e290ffff76a420a2ab03e03f041b8c"
     },
     "apps/web/tests/student-seating-entry.mjs": {
-      "sha256": "fb3968aee1db4b19181cc3be6dd2fd562bf3eb5e4d3e51f64cd8053cde7efccf"
+      "sha256": "4884a6e779770cf6ab0aca74597e471f670613e8a2c46d1b62056ab2270a27ac"
     },
     "third_party/licenses/upstream/rehype-katex-7.0.1/LICENSE.txt": {
       "sha256": "cb992262f361a5359e6771c28740d33c7041e15332ae8537fae40538992591a9",
@@ -99,7 +99,7 @@
       "sha256": "53dfadef480a915685e6126a86fa8f06d872f345d95434e7b5df8523e007ff03"
     },
     "apps/web/tests/document-body.mjs": {
-      "sha256": "9632cba3dabf21e0be9e392a9a981d6e365c803e7a2f778f9ea62baeae970a08"
+      "sha256": "f49d96878955ca6d8628edfa30a8a1aa6b59f9e48991501d31f21daeb629267b"
     },
     "infra/ci/ubuntu.mirrors": {
       "sha256": "908eac5647cae6fc835ef4df2190aa6258dd95f507341ecd8cecd92660a18e04"
@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "156ca54ace1404d7264617652c31fc7205991a60b9c87c71952f9bfb67523c43"
+      "sha256": "ce336647ea9e442f21454d7f93159365960dd99c3106b61b71513197b3129e09"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -855,7 +855,7 @@
       "sha256": "a1eefaa3a1085e59a7857ab3d485491c465f9db63de095c9b7ac0f8408001b5c"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "1e8ecf88445787ae72079a3267253d58d5d3933358aba54aaa2e347b5ec862fb"
+      "sha256": "87be3482e53c8adac7be14fda1bb26a9ca27503d7761b04d383aabce600d3825"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "2bccc19ae001e98e669f3bbb7b6f3cd2b968893b2d85e27544e0ef6caca80fbe"
@@ -1155,7 +1155,7 @@
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
     },
     "backend/src/class_os/infrastructure/agent.py": {
-      "sha256": "ad64cfe23e3934036968ca1a28f25358c349c61f7f24d208ad21af241e7441ee"
+      "sha256": "4fc03e9154815207c6b74c37f08b913113974c08e62a201ea276e2cffbd86a1a"
     },
     "backend/src/class_os/infrastructure/agent_memory.py": {
       "sha256": "2042927005c163c2179cbf81f85ac0b3c01d57ca2b22f4d9f39199fe69f2d101"
@@ -3050,13 +3050,13 @@
       "sha256": "48919c1a7d5d36d0149774b86f36d5ce3cf1e9c4fc4ba668ed0ddcd52495f671"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "9a3959ac10cd055cb1dd7a268fa853ecd9daad01680f1acfae53ff8c4d8560c2"
+      "sha256": "87a7ce55d0f822541c33a837e75eef24f648eea48f994c16b7c5a9d2e916bb55"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "c4ca14bee94279b47eb1c57af119724eefcc2d06bfc83712eb2757dfcc03d22c"
     },
     "backend/src/class_os/infrastructure/workspace_chat_runtime.py": {
-      "sha256": "2624956783a4c383c4fb8b33a4a7e255542dcf7198cc49fe1a923d32b904513d"
+      "sha256": "2d53214d6a35c788c5a46e89cccd2dffbf13730cb41e491a383bec71a574a6b0"
     },
     "backend/src/class_os/infrastructure/workspace_local_runtime.py": {
       "sha256": "d7eaf8889eac4f290ce2acd28756459de204517e36ed1a8accb2b614a327f05b"
@@ -3391,7 +3391,7 @@
       "sha256": "bfc795797dad74a80f2c2f8b0d8f5962db776ebf4d335d9ebadcd4460d77fd48"
     },
     "docs/product/scenario-run-results.md": {
-      "sha256": "0ad6213afcf04e584d09584db460d8ea14ddb0d3ef852534b28fd1ef991c76f0"
+      "sha256": "499d963bd585709932f1f6716270c89e6a34c2a6c65e8b29de9b76b9ac2efdbd"
     },
     "docs/research/2026-11-13-teacher-artifacts-voice-plotter.md": {
       "sha256": "bae496e88ba3625b1e243bec525fc856fd32523415d35041c969842e3ad88551"
@@ -3469,13 +3469,13 @@
       "sha256": "ccd9f7fdb4fbf00551a3f1e7eb22428e5e2d0caaeb47df1ea46c266bb667be3a"
     },
     "apps/web/src/runtime/MaterialCollaboration.tsx": {
-      "sha256": "df8159def28aed0c16532c47bf2ad65c8cd71c0f7dab8b21f46c777c42e735d1"
+      "sha256": "7d3b6ec93407b2748d3d8ec09acd7bda80353a9b08791a92b5e8ee19b7ad2d36"
     },
     "apps/web/src/runtime/collaboration.ts": {
       "sha256": "19a8f36fbaf05ea1d85b47b7161d00d7d02d47c8648d1b177f7e69e1d792da75"
     },
     "apps/web/tests/collaboration-browser.mjs": {
-      "sha256": "ceb2e6d9793179a943269b07b2f61997061f65970ddb3ab75e1346143081bb7c"
+      "sha256": "857c78440c11ec430e620738fe7dcde7c847879c15b7946507d4cfff6345cc1b"
     },
     "backend/db/migrations/versions/0034_collaboration.py": {
       "sha256": "3b92dc2228cbb05817e81d52306607c6ba70bff5e60c68cbeda381a3baa2ca5e"
@@ -3493,7 +3493,7 @@
       "sha256": "168aabbb0a34fd95228f93251a025e1c00803198b3a63fc0bf14fee31494ad9c"
     },
     "backend/src/class_os/infrastructure/collaboration_tools.py": {
-      "sha256": "0db462fd6bbe2357146d620b499e9c62344096e6a6c25ab161cf0fbfb6245572"
+      "sha256": "80a5f1a275b3ce6ef0044abd74048b091fb8f5b73cc926152c24a59aeb7e6b92"
     },
     "backend/src/class_os/infrastructure/collaboration_transport.py": {
       "sha256": "d92b4a336f0e59865f3ee966e75d9eaaae05fb93addb7fc84af99dfd2238b378"
@@ -3505,10 +3505,10 @@
       "sha256": "4aa67271ab808bd1c09ff058d8edbb5934f8c73ad7bc55210bdf9ff9440ba0b5"
     },
     "backend/tests/test_collaboration_runtime.py": {
-      "sha256": "5ee2bfc04592536252577194b93b51e7c72e2c7abff1dcd0676038b75bcce579"
+      "sha256": "465e55f5e92bf1bf2f98112f17668f73873fb15f0ed1b7a5133b7ec5efdf7066"
     },
     "backend/tests/test_collaboration_values.py": {
-      "sha256": "a2bfd5c46f2242425de845d26e18357b6182e2e45dc9f611bef08cfd5e7f272b"
+      "sha256": "979ebcce11c62b58c0be2d7cd00cdcf7a7801546076eb0d72aa4216261b9e2dc"
     },
     "backend/tests/test_collaboration_web.py": {
       "sha256": "f6416c5deb8de0fe052078ce3a8227d3ae66df9df240bec1f6d01723e9ca12c3"
@@ -3532,7 +3532,7 @@
       "sha256": "71a00cd463b6dea70f38004384e8aae50198d69a77754bf42a494dc397712660"
     },
     "docs/design/two-teacher-material-summary.md": {
-      "sha256": "ad55e4730370179fcb763ed5505d2c396390d6bd3f4393700672d5a325765ff2"
+      "sha256": "df93152790cda49f77a36f9ac5a736c053aa0f0288743bb24a2fc04a9d946339"
     },
     "third_party/licenses/python/a2a-sdk-1.3.0/0.txt": {
       "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"

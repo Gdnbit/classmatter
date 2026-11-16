@@ -1,8 +1,29 @@
 """Read and prepare only. No transport, credentials, approve or commit tool."""
 from uuid import UUID,uuid4
+import re
 from pydantic_ai import ModelRetry
 
 from class_os.domain.collaboration import (MaterialMessage,RequestMaterial,ShareMaterial,SaveCollectedSummary,source_citation)
+
+
+def explicit_material_reply(text, state):
+    """Narrow a literal share-only request, never classify remote prose or old intent.
+
+    Other requests (including edit-then-share) retain the general tool catalog.
+    This only removes mutation tools; it cannot send or approve anything.
+    """
+    for item in state['items']:
+        if item['direction'] != 'incoming' or item['operation'] != 'request' or item['status'] != 'received':
+            continue
+        peer = re.escape(item['peer_name'])
+        prefix = r'(?:请|帮我|请帮我|麻烦|麻烦你)?'
+        verb = r'(?:提供|发送|分享|发|交)'
+        title = r'(?P<title>[^，。！？；\n]+?)'
+        match = (re.fullmatch(prefix+r'(?:把|将)'+title+verb+r'给'+peer+r'[。！]?',text.strip())
+                 or re.fullmatch(prefix+verb+title+r'给'+peer+r'[。！]?',text.strip()))
+        if match and not re.search(r'不要|别|不必|取消|修改|编辑|更新|补充|创建|新建|然后|之后|再',match['title']):
+            return True
+    return False
 
 
 def tools(capture,query,credentials,context,execute,missing_class):
