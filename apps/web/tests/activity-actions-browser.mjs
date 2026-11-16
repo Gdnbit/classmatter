@@ -237,21 +237,42 @@ try {
           const thread = new URL(page.url()).pathname.split('/').at(-1);
           let releaseHistory, fetchedHistory = 0;
           const historyHeld = new Promise(resolve => releaseHistory = resolve);
-          const holdHistory = async route => {
-            // Read genuine QG bytes through the route's owned APIResponse,
-            // never a CDP body handle belonging to a consumed/cancelled fetch.
-            const response = await route.fetch();
-            assert.equal(response.status(), 200);
-            const value = await response.json();
-            assert.equal(value.thread.thread_id, thread);
-            assert(value.turns.some(turn => turn.candidate?.command === 'document.create'
-              && turn.candidate.document_id === turn.action_receipt?.resource_id && turn.action_receipt.version === version
-              && turn.candidate.body.includes('班长交齐，我已核对')));
-            fetchedHistory++; mark('genuine-history-bytes-ready'); await historyHeld;
-            await route.fulfill({ response }).catch(() => mark('superseded-history-fulfill'));
+          const historyTasks = new Set(), historyFailures = [];
+          let historyClosing = false;
+          const holdHistory = route => {
+            const task = (async () => {
+              // Read genuine QG bytes through the route's owned APIResponse,
+              // never a CDP body handle belonging to a consumed/cancelled fetch.
+              // Playwright retries only ECONNRESET, once, for this idempotent
+              // QG GET. HTTP errors/content still fail the unchanged assertions.
+              const response = await route.fetch({ maxRetries: 1, timeout: 30000 });
+              assert.equal(response.status(), 200);
+              const value = await response.json();
+              assert.equal(value.thread.thread_id, thread);
+              assert(value.turns.some(turn => turn.candidate?.command === 'document.create'
+                && turn.candidate.document_id === turn.action_receipt?.resource_id && turn.action_receipt.version === version
+                && turn.candidate.body.includes('班长交齐，我已核对')));
+              fetchedHistory++; mark('genuine-history-bytes-ready'); await historyHeld;
+              await route.fulfill({ response }).catch(() => mark('superseded-history-fulfill'));
+            })().catch(error => {
+              // A redundant poll can still be fetching when we remove this
+              // owned interception. Only its teardown reset/close is expected;
+              // source/status/assertion failures during the scenario still fail.
+              if (!historyClosing || !/ECONNRESET|Target page, context or browser has been closed/.test(error.message))
+                historyFailures.push({ name: error.name, code: error.code || 'history-read-failed' });
+              mark('history-read-interrupted');
+            });
+            historyTasks.add(task);
+            void task.finally(() => historyTasks.delete(task));
+            return task;
           };
           await page.route(history, holdHistory);
-          cleanupHistory = () => page.unroute(history, holdHistory);
+          cleanupHistory = async () => {
+            historyClosing = true;
+            await page.unroute(history, holdHistory);
+            await Promise.all(historyTasks);
+            assert.deepEqual(historyFailures, [], 'Only owned teardown resets may be ignored');
+          };
           try {
             await page.evaluate(() => window.dispatchEvent(new Event('focus')));
             await expect.poll(() => fetchedHistory).toBeGreaterThan(0);

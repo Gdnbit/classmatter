@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "fabfdf96e0ad6931f4d5ce2bd9457da2e3974b4e054c386b11a14d3d11ef0f7b"
+      "sha256": "6dfd123691d8eeecf357aab146afdabf82ec7d7ddc489a197091b41fb833e0c7"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3397,7 +3397,7 @@
       "sha256": "bae496e88ba3625b1e243bec525fc856fd32523415d35041c969842e3ad88551"
     },
     "apps/web/tests/activity-actions-browser.mjs": {
-      "sha256": "a46267ce4e66b795602e2b2c6c86b7c95e5ee28085b0728c3ed84e6461746046"
+      "sha256": "e97defe35ea44c6854d4c3ae40875acdc77ee3ba05ea3d977588c6c95d19a4c7"
     },
     "backend/db/migrations/versions/0031_chat_activity_candidates.py": {
       "sha256": "c429b07321ae86b33c6a802a44ff4edf5fd7896a772721095b0ec3a44a6546ba"
