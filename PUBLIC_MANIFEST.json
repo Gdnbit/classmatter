@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "20728a2268109401cf2b872e7d76859eca01590cf92c182a02cb1de8a3c7a08a"
+      "sha256": "5dc34da10808cd13aee65cdd40baa0468e229ceac3f73e11cdc0f6ea8ea18af6"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1155,7 +1155,7 @@
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
     },
     "backend/src/class_os/infrastructure/agent.py": {
-      "sha256": "4fc03e9154815207c6b74c37f08b913113974c08e62a201ea276e2cffbd86a1a"
+      "sha256": "a3a26776759248a628450a6065256e7f767e412dbdc31c365e319ae58fbf3f3a"
     },
     "backend/src/class_os/infrastructure/agent_memory.py": {
       "sha256": "2042927005c163c2179cbf81f85ac0b3c01d57ca2b22f4d9f39199fe69f2d101"
@@ -3050,7 +3050,7 @@
       "sha256": "48919c1a7d5d36d0149774b86f36d5ce3cf1e9c4fc4ba668ed0ddcd52495f671"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "87a7ce55d0f822541c33a837e75eef24f648eea48f994c16b7c5a9d2e916bb55"
+      "sha256": "4066e00d1bb6e9f6edbf696ffc36f5b06eb16dce8fa3efe37b0aaac9bf70e1b7"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "c4ca14bee94279b47eb1c57af119724eefcc2d06bfc83712eb2757dfcc03d22c"
@@ -3493,7 +3493,7 @@
       "sha256": "168aabbb0a34fd95228f93251a025e1c00803198b3a63fc0bf14fee31494ad9c"
     },
     "backend/src/class_os/infrastructure/collaboration_tools.py": {
-      "sha256": "41ed1aa8ed493244252bbfa804254d817d447b8dd784f6c1eaa2c1610041d4ba"
+      "sha256": "e144413db2834efe37cbdb1c46796c6814bcce7b0a5ebc59721b66a13ad776ff"
     },
     "backend/src/class_os/infrastructure/collaboration_transport.py": {
       "sha256": "d92b4a336f0e59865f3ee966e75d9eaaae05fb93addb7fc84af99dfd2238b378"
@@ -3505,7 +3505,7 @@
       "sha256": "4aa67271ab808bd1c09ff058d8edbb5934f8c73ad7bc55210bdf9ff9440ba0b5"
     },
     "backend/tests/test_collaboration_runtime.py": {
-      "sha256": "9687af88413a1506f293c344960980f53b91fea232f536e0222754c1b289369c"
+      "sha256": "5a0b77e5eee1cda96278c15ae521cdc563f976395566de2afb62bcb00b132407"
     },
     "backend/tests/test_collaboration_values.py": {
       "sha256": "a8f51fabb372c6019d849722ea4694481f7c04752b08b8efc3c65ed0b8963815"

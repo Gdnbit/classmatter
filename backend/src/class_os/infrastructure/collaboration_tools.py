@@ -67,7 +67,11 @@ def tools(capture,query,credentials,context,execute,missing_class):
                          and r['direction']=='incoming'),None)
             if root is None or capture.collaboration_initiative or not capture.mentioned(document_title):
                 return {'status':'needs-information','question':'要提供哪份已有文档？'}
-            if any(r['request_id']==root['request_id'] and r['operation']=='material' for r in data['items']):
+            existing = next((r for r in data['items'] if r['request_id']==root['request_id']
+                             and r['operation']=='material' and r['direction']=='outgoing'),None)
+            if existing:
+                capture.collaboration_reply_answer = ('材料已发送，无需重复提供。' if existing['delivered_at']
+                    else '材料正在发送，请稍后查看。')
                 return {'status':'already-prepared','instruction':'The material is already queued or delivered; do not send another copy.'}
             docs = query.documents(*credentials,root['class_id'],root['term_id'])
             matches = [d for d in docs if d['title']==document_title and d['status']=='draft']

@@ -416,6 +416,11 @@ class PydanticAgentRuntime:
                                  or len(result.output.calls) != 1):
                     raise AgentRejected()
                 answer = (clarification or "下一步已准备，请核对后确认。") if deferred else str(result.output)
+                if (_workspace_actions is not None and _workspace_actions.proposed is None
+                        and _workspace_actions.collaboration_reply_answer is not None):
+                    # The source-bound delivery result is already known. Keep
+                    # provider prose/internal message IDs out of this receipt.
+                    answer = _workspace_actions.collaboration_reply_answer
                 if (answer.strip() == 'NO_SUMMARY' and _workspace_actions is not None
                         and _workspace_actions.summary_context and not _workspace_actions.initiative):
                     answer = '暂时没有需要补充的小结内容。'

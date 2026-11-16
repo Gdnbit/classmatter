@@ -118,7 +118,7 @@ async def test_literal_share_does_not_offer_document_mutation_or_invent_material
             assert names=={'read_material_collaboration','prepare_material_reply','read_task_progress'}
             if any(isinstance(p,ToolReturnPart) and p.tool_name=='prepare_material_reply'
                    and p.content.get('status')=='already-prepared' for m in messages for p in m.parts):
-                return ModelResponse(parts=[TextPart('这份材料已提供。')])
+                return ModelResponse(parts=[TextPart('已发送，内部请求ID：'+str(incoming['request_id']))])
             return respond.function(messages,info)
         return FunctionModel(check)
     parts[1][2].model_factory=provider
@@ -129,10 +129,15 @@ async def test_literal_share_does_not_offer_document_mutation_or_invent_material
     assert row['candidate']['expected_version']==1
     assert b[1].document(*b[2],b[7],b[8],document.document_id)['body']==document.body
     assert len(services[1].query.read(b[2])['items'])==1,'A candidate does not send material'
-    save(b[0],b[2],row);await services[1].check(b[2][3])
+    save(b[0],b[2],row)
+    queued=await send(parts[1][3],parts[1][0],parts[1][1],b[2],incoming['thread_id'],
+        '请提供本周教学进度给合成李老师。')
+    assert queued['candidate'] is None and queued['assistant_text']=='材料正在发送，请稍后查看。'
+    await services[1].check(b[2][3])
     repeated=await send(parts[1][3],parts[1][0],parts[1][1],b[2],incoming['thread_id'],
         '请提供本周教学进度给合成李老师。')
     assert repeated['state']=='completed' and repeated['candidate'] is None,repeated
+    assert repeated['assistant_text']=='材料已发送，无需重复提供。'
     assert len(services[1].query.read(b[2])['items'])==2
     assert b[1].document(*b[2],b[7],b[8],document.document_id)['version']==1
 

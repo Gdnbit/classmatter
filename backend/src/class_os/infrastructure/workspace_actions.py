@@ -48,6 +48,7 @@ class WorkspaceActionCapture:
     collaboration_state: dict | None = None
     collaboration_initiative: bool = False
     collaboration_reply_only: bool = False
+    collaboration_reply_answer: str | None = None
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
