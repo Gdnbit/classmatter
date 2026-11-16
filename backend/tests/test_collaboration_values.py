@@ -7,6 +7,35 @@ from a2a.types import SendMessageRequest
 from class_os.domain.collaboration import Invitation,MaterialMessage,RequestMaterial,ShareMaterial,SaveCollectedSummary,decode_collaboration
 from class_os.domain.workspace_chat import candidate
 from class_os.infrastructure.collaboration_transport import message,decode_request,read_message,unique
+from class_os.infrastructure.collaboration_tools import explicit_material_reply
+
+
+@pytest.mark.parametrize('utterance,expected',[
+    ('把《本周教学进度》提供给合成李老师。',True),
+    ('请提供本周教学进度给合成李老师。',True),
+    ('帮我将《本周教学进度》分享给合成李老师！',True),
+    ('先修改《本周教学进度》，然后提供给合成李老师。',False),
+    ('不要把《本周教学进度》提供给合成李老师。',False),
+    ('请提供修改后的本周教学进度给合成李老师。',False),
+    ('把《本周教学进度》提供给另一位老师。',False),
+    ('《本周教学进度》写了什么？',False),
+])
+def test_share_only_scope_uses_current_literal_intent_and_pending_local_request(utterance,expected):
+    item=dict(direction='incoming',operation='request',status='received',peer_name='合成李老师')
+    assert explicit_material_reply(utterance,{'items':[item]}) is expected
+    assert explicit_material_reply(utterance,{'items':[item|{'status':'material-sent'}]}) is expected
+    for changes in ({'direction':'outgoing'},{'operation':'material'},{'status':'stopped'}):
+        assert not explicit_material_reply(utterance,{'items':[item|changes]})
+
+
+def test_share_only_candidate_boundary_refuses_document_edit_even_if_provider_ignores_tools():
+    from pydantic_ai import ModelRetry
+    from class_os.infrastructure.workspace_actions import WorkspaceActionCapture
+    from class_os.domain.documents import ReviseDocument
+    capture=WorkspaceActionCapture(('把《进度》提供给合成李老师。',),collaboration_reply_only=True)
+    with pytest.raises(ModelRetry,match='only shares'):
+        capture.propose(ReviseDocument(uuid4(),uuid4(),uuid4(),1,'进度','invented material','markdown'))
+    assert capture.proposed is None
 
 
 def test_closed_commands_and_official_a2a_message_roundtrip():

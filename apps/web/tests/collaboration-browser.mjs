@@ -22,6 +22,8 @@ try {
     await page.getByRole('button', { name: '设置', exact: true }).click();
     const settings = page.getByRole('dialog', { name: '设置', exact: true });
     await settings.getByLabel('我的称呼', { exact: true }).fill(i ? '合成王老师' : '合成李老师');
+    await expect(settings.getByLabel('设置中切换班级', { exact: true })).not.toHaveValue('');
+    await expect(settings.getByLabel('我的称呼', { exact: true })).toHaveValue(i ? '合成王老师' : '合成李老师');
     await settings.getByRole('button', { name: '生成协作邀请', exact: true }).click();
     await settings.getByRole('button', { name: '复制邀请', exact: true }).click();
     await expect(settings.getByRole('status').filter({ hasText: '已复制邀请' })).toBeVisible();
@@ -72,9 +74,17 @@ try {
   await confirm(a, request);
   const pathA = new URL(a.url()).pathname;
   await expect(a.getByRole('region', { name: '材料协作', exact: true })).toContainText('等待补充', { timeout: 25000 });
+  await a.getByRole('button', { name: '新对话', exact: true }).click();
+  const waiting = a.locator('.r1-attention').getByText('等待别人', { exact: true }).locator('..');
+  await expect(waiting).toContainText('合成王老师');
+  await expect(waiting.getByText('暂无事项', { exact: true })).toHaveCount(0);
+  await a.getByRole('region', { name: '聊天列表', exact: true }).getByRole('button').filter({ hasText: '请向合成王老师收集' }).click();
   await b.getByLabel('输入消息').fill('另一条未发送的草稿');
   const inbox = b.getByRole('region', { name: '聊天列表', exact: true }).getByRole('button').filter({ hasText: '合成李老师：收集：本周数学教学进度' });
   await inbox.waitFor({ timeout: 25000 });
+  const needsAction = b.locator('.r1-attention').getByText('需要我处理', { exact: true }).locator('..');
+  await expect(needsAction).toContainText('合成李老师');
+  await expect(needsAction.getByText('暂无事项', { exact: true })).toHaveCount(0);
   await expect(b.getByLabel('输入消息')).toHaveValue('另一条未发送的草稿');
   assert.equal(new URL(b.url()).pathname, '/', 'Inbound material request must not steal focus');
   await inbox.click();

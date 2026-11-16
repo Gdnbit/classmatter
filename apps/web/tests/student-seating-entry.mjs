@@ -3,10 +3,14 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-const server = await createServer({ server: { middlewareMode: true }, appType: 'custom', optimizeDeps: { noDiscovery: true, include: [] } });
+const cacheDir = mkdtempSync(join(tmpdir(), 'classmatter-student-render-'));
+const server = await createServer({ cacheDir, server: { middlewareMode: true, hmr: false }, appType: 'custom', optimizeDeps: { noDiscovery: true, include: [] } });
 const { StudentViewSwitcher } = await server.ssrLoadModule('/src/shell/StudentPresentation.tsx');
-test.after(() => server.close());
+test.after(async () => { await server.close(); rmSync(cacheDir, { recursive: true, force: true }); });
 const render = props => renderToStaticMarkup(createElement(StudentViewSwitcher, { current: '清单', onSelect() {}, ...props }));
 const tab = (html, label) => html.match(new RegExp(`<button[^>]*>${label}</button>`))[0];
 

@@ -47,6 +47,8 @@ class WorkspaceActionCapture:
     thread_id: object = None
     collaboration_state: dict | None = None
     collaboration_initiative: bool = False
+    collaboration_reply_only: bool = False
+    collaboration_reply_answer: str | None = None
 
     def mentioned(self, value):
         return bool(value) and any(value in message for message in self.user_messages)
@@ -65,6 +67,10 @@ class WorkspaceActionCapture:
         return scope in self.complete_record_read_scopes and scope in self.complete_task_read_scopes
 
     def propose(self, command):
+        if self.collaboration_reply_only:
+            from class_os.domain.collaboration import ShareMaterial
+            if type(command) is not ShareMaterial:
+                raise ModelRetry('This human request only shares an existing document. Use prepare_material_reply; do not rewrite or create documents.')
         if self.collaboration_initiative:
             from class_os.domain.collaboration import SaveCollectedSummary
             if type(command) is not SaveCollectedSummary:

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Classroom, Session } from './api'
 import { collaborationClient, type Invitation, type MaterialItem, type Peer } from './collaboration'
 
@@ -9,6 +9,9 @@ export function CollaborationSettings({ session, classroom, disabled, onError }:
   const [invitation, setInvitation] = useState<Invitation | null>(null), [adding, setAdding] = useState(false)
   const [checked, setChecked] = useState<Invitation | null>(null), [revoking, setRevoking] = useState<Peer | null>(null)
   const [busy, setBusy] = useState(false), [status, setStatus] = useState('')
+  // Class loading must not erase the name or a workspace-level invitation.
+  // Recheck an unconfirmed contact before binding a different class.
+  useEffect(() => { setChecked(null) }, [classroom?.class_id, classroom?.term_id])
   const active = useRef(true)
   useEffect(() => {
     active.current = true
@@ -101,7 +104,9 @@ export function CollaborationThread({ session, thread }: { session: Session; thr
   </section>
 }
 
-export function CollaborationWaiting({ session, onSelect }: { session: Session; onSelect: (thread: string) => void }) {
+export function CollaborationWaiting({ session, onSelect, hasTasks, children }: {
+  session: Session; onSelect: (thread: string) => void; hasTasks: boolean; children: ReactNode
+}) {
   const [items, setItems] = useState<MaterialItem[]>([])
   useEffect(() => {
     const abort = new AbortController(); let pending = false
@@ -118,7 +123,7 @@ export function CollaborationWaiting({ session, onSelect }: { session: Session; 
     void update(); const timer = setInterval(() => void update(), 8000)
     return () => { abort.abort(); clearInterval(timer) }
   }, [session.csrf_token])
-  return <>{items.map(item => <button className="r1-attention-item" key={item.request_id} onClick={() => onSelect(item.thread_id)}>
+  return <>{children}{items.map(item => <button className="r1-attention-item" key={item.request_id} onClick={() => onSelect(item.thread_id)}>
     <span>{item.title} · {item.peer_name}</span><span aria-hidden="true">›</span>
-  </button>)}</>
+  </button>)}{!hasTasks && items.length === 0 && <p className="r1-muted">暂无事项</p>}</>
 }

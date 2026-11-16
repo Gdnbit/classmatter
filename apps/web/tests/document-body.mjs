@@ -3,12 +3,16 @@ import assert from 'node:assert/strict';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { createServer } from 'vite';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
-const server = await createServer({ server: { middlewareMode: true }, appType: 'custom' });
+const cacheDir = mkdtempSync(join(tmpdir(), 'classmatter-document-render-'));
+const server = await createServer({ cacheDir, server: { middlewareMode: true, hmr: false }, appType: 'custom', optimizeDeps: { noDiscovery: true, include: [] } });
 const { DocumentBody } = await server.ssrLoadModule('/src/runtime/DocumentBody.tsx');
 const { ChangeComparison } = await server.ssrLoadModule('/src/runtime/ChangeComparison.tsx');
 const render = (body, format = 'markdown') => renderToStaticMarkup(createElement(DocumentBody, { body, format }));
-test.after(() => server.close());
+test.after(async () => { await server.close(); rmSync(cacheDir, { recursive: true, force: true }); });
 
 test('existing Markdown becomes readable headings, lists, tables and inert checkboxes', () => {
   const body = '# 班级小结\n\n- 已收齐**展示作品**\n- 下周继续\n\n| 事项 | 结果 |\n| --- | --- |\n| 核对 | 完成 |\n\n- [x] 已核对';

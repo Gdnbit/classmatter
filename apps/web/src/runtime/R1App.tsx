@@ -929,7 +929,7 @@ export default function R1App() {
     <button onClick={() => navigation.setConversation("", "", "")}>返回当前实例</button>
   </section></div>
 
-  const taskCards = (items: TaskItem[]) =>
+  const taskCards = (items: TaskItem[], showEmpty = true) =>
     items.length ? (
       items.map((item) => (
         <button
@@ -952,9 +952,9 @@ export default function R1App() {
           <span>›</span>
         </button>
       ))
-    ) : (
+    ) : showEmpty ? (
       <p className="r1-muted">暂无事项</p>
-    )
+    ) : null
   return (
     <div className="r1-shell connected-runtime">
       <WorkbenchFrame workspaceClassName="r1-main" sidebar={
@@ -1136,20 +1136,22 @@ export default function R1App() {
                     <button className="r1-attention-item" key={item.thread_id} onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>
                       <span>{item.title}</span><span aria-hidden="true">›</span>
                     </button>)}
-                  {taskCards(attention.needsAction)}
+                  {taskCards(attention.needsAction, !workspaceConversation.listing?.data.some(item => item.summary_attention))}
                 </>,
                 <>
-                  <p className="r1-muted">
+                  {duplicates.length === 0 && <p className="r1-muted">
                     暂无待提醒事项
-                  </p>
+                  </p>}
                   {duplicates.length > 0 && (
                     <button onClick={() => setPage("students")}>
                       {duplicates.length} 组标识重复候选待核对
                     </button>
                   )}
                 </>,
-                <>{taskCards(attention.waiting)}{classroomProfile && <CollaborationWaiting session={session}
-                  onSelect={thread => { setError(''); workspaceConversation.select(thread) }} />}</>,
+                <>{classroomProfile ? <CollaborationWaiting session={session} hasTasks={attention.waiting.length > 0}
+                  onSelect={thread => { setError(''); workspaceConversation.select(thread) }}>
+                  {taskCards(attention.waiting, false)}
+                </CollaborationWaiting> : taskCards(attention.waiting)}</>,
               ]}</AttentionColumns>
               <div className="r1-quick">
                 <button
@@ -1604,7 +1606,7 @@ export default function R1App() {
       {settingsOpen && <R1Dialog titleId="r1-settings-title" busy={busy || exitBusy} onDismiss={() => setSettingsOpen(false)}>
         <div className="r1-settings-heading"><h2 id="r1-settings-title">设置</h2><button aria-label="关闭设置" disabled={busy || exitBusy} onClick={() => setSettingsOpen(false)}><X size={18} /></button></div>
         <div className="r1-settings-content">
-              {classroomProfile && <CollaborationSettings key={`${session.csrf_token}:${classroom?.class_id}:${classroom?.term_id}`} session={session} classroom={classroom} disabled={busy || workspaceBusy} onError={fail} />}
+              {classroomProfile && <CollaborationSettings key={session.csrf_token} session={session} classroom={classroom} disabled={busy || workspaceBusy} onError={fail} />}
               <section className="r1-card">
                 <h2>当前班级与学期</h2>
                 <button disabled={!classroom || busy || refreshing} onClick={event => { auditOpener.current = event.currentTarget; setSettingsOpen(false); void action(async () => {

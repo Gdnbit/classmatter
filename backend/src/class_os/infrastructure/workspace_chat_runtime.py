@@ -75,6 +75,10 @@ class WorkspaceChatRuntime:
                 recall_reader=lambda keyword: self.query.recall(credentials, thread_id, keyword, before=ticket['ordinal']),
                 classroom_enabled=self.business.store.database.profile == 'classroom-work-d4',
                 summary_context=summary_context, initiative=initiative,thread_id=thread_id,collaboration_initiative=collaboration)
+            if capture.classroom_enabled and not initiative and not collaboration:
+                from .collaboration_tools import explicit_material_reply
+                material_state = await anyio.to_thread.run_sync(lambda: self.sdk.query.collaboration(credentials,thread_id=thread_id))
+                capture.collaboration_reply_only = explicit_material_reply(ticket['user_text'],material_state)
             pending, completed = [], False
             request = AgentRequest(conversation.conversation_id, ticket["user_text"], Mode.CHAT)
             phase = "sdk_dispatch"
