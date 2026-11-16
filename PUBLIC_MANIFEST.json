@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "5dc34da10808cd13aee65cdd40baa0468e229ceac3f73e11cdc0f6ea8ea18af6"
+      "sha256": "fabfdf96e0ad6931f4d5ce2bd9457da2e3974b4e054c386b11a14d3d11ef0f7b"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3493,7 +3493,7 @@
       "sha256": "168aabbb0a34fd95228f93251a025e1c00803198b3a63fc0bf14fee31494ad9c"
     },
     "backend/src/class_os/infrastructure/collaboration_tools.py": {
-      "sha256": "e144413db2834efe37cbdb1c46796c6814bcce7b0a5ebc59721b66a13ad776ff"
+      "sha256": "012721676a4d135088c6d5a98aa07d3b9f72858cd0387041b134833ff758795f"
     },
     "backend/src/class_os/infrastructure/collaboration_transport.py": {
       "sha256": "d92b4a336f0e59865f3ee966e75d9eaaae05fb93addb7fc84af99dfd2238b378"
@@ -3505,7 +3505,7 @@
       "sha256": "4aa67271ab808bd1c09ff058d8edbb5934f8c73ad7bc55210bdf9ff9440ba0b5"
     },
     "backend/tests/test_collaboration_runtime.py": {
-      "sha256": "5a0b77e5eee1cda96278c15ae521cdc563f976395566de2afb62bcb00b132407"
+      "sha256": "4befad89ef2f5c8ce50b48a578046ff03addaeea93aae884271bbe5e7c27d088"
     },
     "backend/tests/test_collaboration_values.py": {
       "sha256": "a8f51fabb372c6019d849722ea4694481f7c04752b08b8efc3c65ed0b8963815"

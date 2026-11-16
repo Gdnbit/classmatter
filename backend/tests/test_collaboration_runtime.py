@@ -116,8 +116,9 @@ async def test_literal_share_does_not_offer_document_mutation_or_invent_material
             names={tool.name for tool in info.function_tools}
             observed.append(names)
             assert names=={'read_material_collaboration','prepare_material_reply','read_task_progress'}
-            if any(isinstance(p,ToolReturnPart) and p.tool_name=='prepare_material_reply'
-                   and p.content.get('status')=='already-prepared' for m in messages for p in m.parts):
+            if any(isinstance(p,ToolReturnPart) and p.tool_name=='read_material_collaboration'
+                   and any(r['operation']=='material' and r['direction']=='outgoing' for r in p.content['items'])
+                   for m in messages for p in m.parts):
                 return ModelResponse(parts=[TextPart('已发送，内部请求ID：'+str(incoming['request_id']))])
             return respond.function(messages,info)
         return FunctionModel(check)
