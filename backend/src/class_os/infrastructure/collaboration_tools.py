@@ -13,7 +13,8 @@ def explicit_material_reply(text, state):
     This only removes mutation tools; it cannot send or approve anything.
     """
     for item in state['items']:
-        if item['direction'] != 'incoming' or item['operation'] != 'request' or item['status'] != 'received':
+        if (item['direction'] != 'incoming' or item['operation'] != 'request'
+                or item['status'] not in ('received','material-sent')):
             continue
         peer = re.escape(item['peer_name'])
         prefix = r'(?:请|帮我|请帮我|麻烦|麻烦你)?'

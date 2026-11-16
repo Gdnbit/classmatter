@@ -23,7 +23,8 @@ from class_os.infrastructure.collaboration_tools import explicit_material_reply
 def test_share_only_scope_uses_current_literal_intent_and_pending_local_request(utterance,expected):
     item=dict(direction='incoming',operation='request',status='received',peer_name='合成李老师')
     assert explicit_material_reply(utterance,{'items':[item]}) is expected
-    for changes in ({'direction':'outgoing'},{'operation':'material'},{'status':'stopped'},{'status':'material-sent'}):
+    assert explicit_material_reply(utterance,{'items':[item|{'status':'material-sent'}]}) is expected
+    for changes in ({'direction':'outgoing'},{'operation':'material'},{'status':'stopped'}):
         assert not explicit_material_reply(utterance,{'items':[item|changes]})
 
 
