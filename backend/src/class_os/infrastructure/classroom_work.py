@@ -33,6 +33,17 @@ class ClassroomTransaction(WorkspaceChatTransaction):
             raise CommandRejected()
         return value
 
+    def _score_revision(self, binding, exam_id, student_id):
+        return self._connection.execute(text('''SELECT version,created_at,status,score,reason
+            FROM class_os.exam_result_revision WHERE workspace_id=:workspace_id AND exam_id=:e
+            AND student_id=:s ORDER BY version DESC LIMIT 1'''),
+            {**binding, 'e': exam_id, 's': student_id}).mappings().one_or_none()
+
+    def read_score_comparison(self, binding, command):
+        self._classroom_context(binding, command.class_id, command.term_id)
+        exam = self._exam(binding, command.class_id, command.term_id, command.exam_id)
+        return exam, self._score_revision(binding, command.exam_id, command.student_id)
+
     def _layout(self, binding, class_id, term_id, layout_id=None):
         row = self._connection.execute(text('''SELECT * FROM class_os.class_seating WHERE workspace_id=:workspace_id
             AND owner_id=:actor_id AND class_id=:c AND term_id=:t
@@ -57,9 +68,7 @@ class ClassroomTransaction(WorkspaceChatTransaction):
         if type(command) is RecordScore:
             exam = self._exam(binding, command.class_id, command.term_id, command.exam_id)
             enrollment = self._enrollment(binding, command.class_id, command.term_id, command.student_id)
-            previous = self._connection.execute(text('''SELECT version,created_at FROM class_os.exam_result_revision
-                WHERE workspace_id=:workspace_id AND exam_id=:e AND student_id=:s ORDER BY version DESC LIMIT 1'''),
-                {**binding, 'e': command.exam_id, 's': command.student_id}).mappings().one_or_none()
+            previous = self._score_revision(binding, command.exam_id, command.student_id)
             if (command.expected_version != (previous['version'] if previous else 0) or now < exam['updated_at']
                     or previous and now < previous['created_at']
                     or command.score is not None and score_value(command.score) > exam['maximum_score']):

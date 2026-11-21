@@ -150,7 +150,9 @@ try {
       await expect(input).toHaveValue(retainedDraft);
     }
     const card = history.getByRole('region', { name: '对话中的操作候选' }).filter({ has: page.getByRole('heading', { name: title, exact: true }) });
-    await card.getByRole('heading', { name: title, exact: true }).waitFor();
+    await card.getByRole('heading', { name: title, exact: true }).waitFor().catch(async error => {
+      throw new Error(JSON.stringify({ title, body: await page.getByRole('main').innerText(), errors, modelRuns: starts.length }), { cause: error });
+    });
     if (retried) {
       assert.equal(starts.length, retried.beforeRetry + 1);
       assert.equal(sends.length, retried.beforeSends + 1);

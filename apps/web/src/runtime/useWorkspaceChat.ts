@@ -8,7 +8,7 @@ import { supportsReasoning, type Reasoning } from './composer-capture'
 type Props = { enabled: boolean; personalEnabled?: boolean; session: Session | null; threadId: string; canInteract: boolean; refreshSignal: unknown;
   onSelect: (id: string) => void; onSaved: (id: string) => void; onBusy: (busy: boolean) => void; onDraft: (dirty: boolean) => void; onError: (error: unknown) => void; onPreview: (preview: ChatPreview) => void }
 const active = (turn?: ChatTurn) => !!turn && (turn.state === "queued" || turn.state === "running")
-type LocalThread = { text: string; reasoning: Reasoning; editVersion: number; busy: boolean; saving: boolean; status: string; recordingFile: File | null; recordingActive: boolean; pending: {thread: string; request: string; text: string; editVersion: number} | null; stream: AbortController | null }
+type LocalThread = { text: string; reasoning: Reasoning; editVersion: number; busy: boolean; saving: boolean; status: string; recordingFile: File | null; recordingActive: boolean; pending: {thread: string; request: string; text: string; editVersion: number} | null; accepted: ChatTurn | null; stream: AbortController | null }
 const hasUnsentContent = (state: LocalThread) => !!state.text.trim() || !!state.pending || !!state.recordingFile || state.recordingActive
 function clearSentDraft(state: LocalThread, sent: { text: string; editVersion: number }) {
   if (state.text === sent.text && state.editVersion === sent.editVersion) { state.text = ""; state.editVersion++ }
@@ -22,7 +22,7 @@ export function useWorkspaceChat(props: Props) {
   const changed = () => redraw(value => value + 1)
   function local(thread = selected.current) {
     let state = threads.current.get(thread)
-    if (!state) { state = { text: "", reasoning: 'default', editVersion: 0, busy: false, saving: false, status: "", recordingFile: null, recordingActive: false, pending: null, stream: null }; threads.current.set(thread, state) }
+    if (!state) { state = { text: "", reasoning: 'default', editVersion: 0, busy: false, saving: false, status: "", recordingFile: null, recordingActive: false, pending: null, accepted: null, stream: null }; threads.current.set(thread, state) }
     return state
   }
   const [history, setHistory] = useState<ChatHistory | null>(null), [listing, setListing] = useState<ChatListing | null>(null)
@@ -42,8 +42,9 @@ export function useWorkspaceChat(props: Props) {
     const list = await api.listing()
     if (generation === epoch.current && serial === listingRead.current) { setListing(list); return list }
   }
-  async function refresh(thread = selected.current, background = false) {
+  async function refresh(thread = selected.current, background = false, readModel = true) {
     if (!identity) return null
+    readModel = readModel || !model || readyScope !== identity
     const generation = epoch.current, currentView = ++view.current, serial = ++listingRead.current, key = scopeRef.current, controller = new AbortController()
     reader.current?.abort(); reader.current = controller
     // Revalidating an already checked snapshot must not disable a button
@@ -54,13 +55,19 @@ export function useWorkspaceChat(props: Props) {
       const api = client()
       const session = latest.current.session
       if (!session) return null
-      const [list, saved, modelStatus] = await Promise.all([api.listing(controller.signal), thread && !local(thread).saving ? api.history(thread, controller.signal) : Promise.resolve(null), getModelStatus(session, controller.signal)])
+      const [list, saved, modelStatus] = await Promise.all([api.listing(controller.signal), thread && !local(thread).saving ? api.history(thread, controller.signal) : Promise.resolve(null),
+        readModel ? getModelStatus(session, controller.signal) : Promise.resolve(null)])
       if (controller.signal.aborted || generation !== epoch.current || currentView !== view.current || thread !== selected.current || !navigator.onLine) return null
       if (serial === listingRead.current) setListing(list)
       refreshRevision.current++
-      setHistory(saved); setModel(modelStatus); setFresh(!local(thread).saving); setReadyScope(key)
+      setHistory(saved)
+      if (readModel) setModel(modelStatus)
+      setFresh(!local(thread).saving); setReadyScope(key)
       return saved
     } catch (error) { if (controller.signal.aborted || generation !== epoch.current) return null; setFresh(false); throw error }
+    finally {
+      if (reader.current === controller) { reader.current = null; foreground.current?.resume() }
+    }
   }
   const refreshRef = useRef(refresh); refreshRef.current = refresh
   async function loadView(thread: string) {
@@ -78,6 +85,9 @@ export function useWorkspaceChat(props: Props) {
       if (saved?.turns.length && !active(saved.turns.at(-1)) && !local(thread).pending) { local(thread).status = ""; changed() }
       return saved
     } catch (error) { if (!controller.signal.aborted && generation === epoch.current) report(error, thread); return null }
+    finally {
+      if (reader.current === controller) { reader.current = null; foreground.current?.resume() }
+    }
   }
   async function refreshAfter(thread: string, generation: number) {
     if (generation !== epoch.current) return null
@@ -120,7 +130,7 @@ export function useWorkspaceChat(props: Props) {
     if (!identity) return
     const controller = createQueryRefresh({ read: async () => { await refreshRef.current(undefined, true) },
       invalidate: () => { view.current++; reader.current?.abort(); setFresh(false); local().status = "连接已断开，恢复后请刷新对话。"; changed() },
-      fail: report, available: () => navigator.onLine && document.visibilityState === "visible", idle: () => idle.current,
+      fail: report, available: () => navigator.onLine && document.visibilityState === "visible", idle: () => idle.current && reader.current === null,
       now: () => performance.now(), schedule: (callback, delay) => window.setTimeout(callback, delay), cancel: timer => window.clearTimeout(timer as number) })
     foreground.current = controller
     const offline = () => controller.offline(), reload = () => controller.request()
@@ -155,12 +165,16 @@ export function useWorkspaceChat(props: Props) {
     finally { if (generation === epoch.current) { state.busy = false; changed() } }
   }
   const freshScope = fresh && readyScope === identity
-  const last = history?.turns.at(-1)
+  const lastSaved = history?.turns.at(-1)
+  const accepted = state.accepted && lastSaved?.request_id !== state.accepted.request_id ? state.accepted : null
+  const last = accepted ?? lastSaved
   async function runSaved(thread: string, turn: ChatTurn, generation: number, api: ReturnType<typeof workspaceChatClient>) {
     const state = local(thread), controller = new AbortController(); state.stream = controller
     try {
       await api.start(thread, turn.request_id, controller.signal, kind => {
-        if (generation === epoch.current) { state.status = kind.startsWith("tool.") ? "正在整理…" : "正在回复…"; changed() }
+        const status = kind.startsWith("tool.") ? "正在整理…" : "正在回复…"
+        if (generation !== epoch.current) return
+        if (state.status !== status) { state.status = status; changed() }
       }, supportsReasoning(model) && state.reasoning !== 'default' ? state.reasoning : undefined)
     } catch (error) {
       if (generation === epoch.current && !controller.signal.aborted) {
@@ -198,9 +212,11 @@ export function useWorkspaceChat(props: Props) {
         const result = await api.send(target.thread, target.request, target.text)
         if (generation !== epoch.current) return
         if (result.turn.request_id !== target.request || result.turn.user_text !== target.text) throw new Error("输入保存响应不匹配")
-        savedInput = true; state.pending = null; state.saving = false
+        savedInput = true; state.pending = null; state.saving = false; state.accepted = result.turn
         clearSentDraft(state, target)
-        changed(); await refreshAfter(thread, generation)
+        changed()
+        // The send response already confirms the exact input. Start the model
+        // without competing reads; the final answer still comes from QG.
         if (generation === epoch.current && navigator.onLine) await runSaved(thread, result.turn, generation, api)
       } catch (error) {
         if (generation === epoch.current) { state.status = "暂时无法确认发送结果，请先刷新对话。"; changed() }
@@ -216,13 +232,14 @@ export function useWorkspaceChat(props: Props) {
             savedInput = true
           }
           if (restored?.turns.find(row => row.request_id === target.request)?.state === "completed") state.status = ""
+          state.accepted = null
           changed(); if (!wasCurrent) await refreshListing()
         }
       }
     }, target.thread)
   }
   async function stop() {
-    const target = history?.turns.at(-1), thread = selected.current
+    const target = last, thread = selected.current
     if (!target || !active(target) || !thread) return
     const generation = epoch.current, api = client()
     try {
@@ -244,9 +261,14 @@ export function useWorkspaceChat(props: Props) {
     if (thread && !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(thread)) return null
     return local(thread)
   }
-  const pendingThreads = [...threads.current.entries()].flatMap(([id, item]) => id && item.pending && !listing?.data.some(row => row.thread_id === id)
-    ? [{ thread_id: id, title: item.pending.text.slice(0, 40) }] : [])
-  return { history, listing, pendingThreads, model, text, setText, working, anyWorking, listingBusy: listingLoading.current, fresh: freshScope, refreshRevision: refreshRevision.current, status, pendingSend, send, lastActive: active(last),
+  const listed = new Set(listing?.data.map(row => row.thread_id))
+  const pendingThreads = [...threads.current.entries()].flatMap(([id, item]) => {
+    if (!id || listed.has(id)) return []
+    if (item.pending) return [{ thread_id: id, title: item.pending.text.slice(0, 40), confirmed: false }]
+    const title = item.accepted?.user_text?.split(/\r?\n/).map(line => line.trim()).find(Boolean)
+    return title ? [{ thread_id: id, title: title.slice(0, 80), confirmed: true }] : []
+  })
+  return { history, listing, pendingThreads, model, text, setText, working, anyWorking, listingBusy: listingLoading.current, fresh: freshScope, refreshRevision: refreshRevision.current, status, pendingSend, acceptedText: accepted?.user_text, send, lastActive: active(last),
     draftKey: identity + '/' + selected.current, reasoning: state.reasoning,
     recordingFile: state.recordingFile,
     markRecording: (key: string, value: boolean) => {
@@ -272,6 +294,7 @@ export function useWorkspaceChat(props: Props) {
     canSend: props.canInteract && model?.mode !== "stale" && freshScope && !working && !pendingSend && !active(last) && (!history || history.thread.status === "active") && navigator.onLine,
     canAct: props.canInteract && freshScope && !working && history?.thread.status === 'active',
     stop, refresh: () => void refreshRef.current().catch(report),
+    refreshOutcome: () => { if (identity) void refreshRef.current(undefined, false, false).catch(report) },
     continueTask: (turn: ChatTurn) => {
       if (turn.turn_id === history?.turns.at(-1)?.turn_id && turn.action_receipt && !active(last))
         return send("继续完成上面的任务，只处理尚未完成的步骤。")

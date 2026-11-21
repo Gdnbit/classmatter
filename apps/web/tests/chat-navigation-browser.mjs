@@ -47,7 +47,24 @@ try {
   await page.goto(base);
   await page.getByLabel('密码', { exact: true }).fill('synthetic-test-passphrase-2026');
   await page.getByRole('button', { name: '登录', exact: true }).click();
-  await send('会话甲'); await answer('会话甲').waitFor(); const a = new URL(page.url()).pathname;
+  const historyPath = /\/workspace-chat\/threads\/[a-f0-9-]+$/;
+  let releaseHistory, heldHistory = false, deliverHistory = Promise.resolve();
+  const historyGate = new Promise(resolve => { releaseHistory = resolve; });
+  const holdHistory = route => {
+    heldHistory = true;
+    deliverHistory = historyGate.then(() => route.continue());
+    return deliverHistory;
+  };
+  await page.route(historyPath, holdHistory, { times: 1 });
+  try {
+    await send('会话甲');
+    await waitState(state => state.calls.includes('会话甲') && heldHistory);
+  } finally {
+    releaseHistory();
+    await deliverHistory;
+    await page.unroute(historyPath, holdHistory);
+  }
+  await answer('会话甲').waitFor(); const a = new URL(page.url()).pathname;
   assert.equal(await input.inputValue(), '');
   await sidebar.getByRole('button', { name: '新对话', exact: true }).click();
   await send('会话乙'); await answer('会话乙').waitFor(); const b = new URL(page.url()).pathname;

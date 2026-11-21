@@ -74,12 +74,12 @@ def build_change_preview(tx, binding, payload, now):
                 for r in range(1, command.rows + 1) for c in range(1, command.columns + 1)])
     elif operation == 'score.record':
         from decimal import Decimal
-        exam = tx.read_exams(binding, command.class_id, command.term_id, command.exam_id)
-        previous = next((row for row in exam['results'] if row['student_id'] == command.student_id), None)
+        exam, previous = tx.read_score_comparison(binding, command)
         field('title', exam['title'], exam['title'])
         field('subject', exam['subject'], exam['subject'])
         field('student', student(command.student_id), student(command.student_id))
-        field('score', previous['score'] if previous else None, format(Decimal(command.score), '.2f') if command.score is not None else None)
+        field('score', str(previous['score']) if previous and previous['score'] is not None else None,
+              format(Decimal(command.score), '.2f') if command.score is not None else None)
         field('status', previous['status'] if previous else 'not-recorded', command.status)
         field('reason', previous['reason'] if previous else None, command.reason)
     elif operation.startswith('document.'):

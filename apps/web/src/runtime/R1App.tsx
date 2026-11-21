@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react"
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent } from "react"
 import { localDateTimeToUtc } from "./local-time"
-import { GradesWorkspace, SeatingWorkspace } from './ClassroomWorkspace'
 import {
   ArrowUp,
   ClipboardList,
@@ -59,7 +58,7 @@ import { DurableHistory, DurableComposer } from "./DurableConversation"
 import { AttributionLabel } from "./AttributionLabel"
 import { DurableExit } from "./DurableExit"
 import { WorkSummary } from "./WorkSummary"
-import { DocumentsWorkspace, type DocumentDraftContent } from "./DocumentsWorkspace"
+import type { DocumentDraftContent } from "./DocumentsWorkspace"
 import { WorkbenchFrame } from "@/shell/WorkbenchFrame"
 import { SidebarFrame } from "@/shell/Sidebar/SidebarFrame"
 import { AttentionColumns } from "@/shell/AttentionColumns"
@@ -67,6 +66,10 @@ import { StudentPageTitle, StudentViewSwitcher, StudentProfileHeader } from "@/s
 import { WorkHeading, WorkTabs, WorkItemButton } from "@/shell/WorkPresentation"
 import "./connected-workbench.css"
 import { actionName, userMessage } from "./user-facing"
+
+const GradesWorkspace = lazy(() => import('./ClassroomWorkspace').then(module => ({ default: module.GradesWorkspace })))
+const SeatingWorkspace = lazy(() => import('./ClassroomWorkspace').then(module => ({ default: module.SeatingWorkspace })))
+const DocumentsWorkspace = lazy(() => import('./DocumentsWorkspace').then(module => ({ default: module.DocumentsWorkspace })))
 
 const kinds: Record<string, string> = {
   ordinary_fact: "普通事实",
@@ -203,6 +206,7 @@ export default function R1App() {
   const alive = useRef(true)
   const termLoad = useRef(0)
   const loading = useRef(0)
+  const classRead = useRef<AbortController | null>(null)
   const connectivity = useRef(0)
   const interactionBlocked = busy || confirmLogout || durableBusy || durableDraft || exitBusy || !!form || !!pending || !!issuedCodes || !!auditPage || !!runningAgent.current
   const navigationBlocked = summaryDraft || documentDraft || classroomDraft || documentBusy || interactionBlocked
@@ -284,6 +288,7 @@ export default function R1App() {
     if ((reason instanceof ApiError && reason.status === 401) || reason instanceof IdentityOutcomeUnknown) {
       setConfirmLogout(false)
       loading.current++
+      classRead.current?.abort()
       runningAgent.current?.abort()
       setSession(null)
       setQueryFresh(false)
@@ -337,6 +342,7 @@ export default function R1App() {
       })
     return () => {
       alive.current = false
+      classRead.current?.abort()
     }
   }, [fail])
 
@@ -345,13 +351,18 @@ export default function R1App() {
       if (!session || runtimeProfile === "loading" || runtimeProfile === "failed") return
       foregroundRefresh.current?.discardPending()
       const generation = ++loading.current
+      const controller = new AbortController()
+      classRead.current?.abort()
+      classRead.current = controller
+      const { signal } = controller
       const connectionGeneration = connectivity.current
       setRefreshing(true)
       setQueryFresh(false)
       try {
       const history = await request<{ data: Classroom[] }>(
-        `${workspace(session)}/classes`,
+        `${workspace(session)}/classes`, undefined, undefined, signal,
       )
+      if (signal.aborted || generation !== loading.current || !alive.current) return
       const deepClass = durableProfile && navigation.route.conversationClassId
         ? history.data.find(item => item.class_id === navigation.route.conversationClassId && item.term_id === navigation.route.conversationTermId) : undefined
       if (durableProfile && navigation.route.conversationClassId && !deepClass && chosen === undefined)
@@ -374,10 +385,10 @@ export default function R1App() {
       if (target) {
         const base = scope(session, target)
         const [roster, events, ids, dupes] = await Promise.all([
-          request<{ data: Student[] }>(`${base}/students`),
-          durableProfile ? d1Client(session, target).activity() : request<{ data: Activity }>(`${base}/activity`),
-          request<{ data: Identifier[] }>(`${base}/identifiers`),
-          request<{ data: Duplicate[] }>(`${base}/duplicates`),
+          request<{ data: Student[] }>(`${base}/students`, undefined, undefined, signal),
+          durableProfile ? d1Client(session, target).activity(signal) : request<{ data: Activity }>(`${base}/activity`, undefined, undefined, signal),
+          request<{ data: Identifier[] }>(`${base}/identifiers`, undefined, undefined, signal),
+          request<{ data: Duplicate[] }>(`${base}/duplicates`, undefined, undefined, signal),
         ])
         data = {
           roster: roster.data,
@@ -404,6 +415,8 @@ export default function R1App() {
           throw new Error("读取当前班级数据未完成；屏幕可能保留上次快照，请重新读取后再变更。已有可信提交回执仍表示已保存，不要重复新建。")
         }
       } finally {
+        controller.abort()
+        if (classRead.current === controller) classRead.current = null
         if (generation === loading.current && alive.current) setRefreshing(false)
       }
     },
@@ -568,7 +581,8 @@ export default function R1App() {
     await acceptReceipt(receipt, String(pending.proposal.payload.command))
   }
   async function acceptReceipt(receipt: CommandReceipt, command: string) {
-    if (command.startsWith('exam.') || command.startsWith('score.') || command.startsWith('seat.')) setClassroomRevision(value => value + 1)
+    const classroomChange = command.startsWith('exam.') || command.startsWith('score.') || command.startsWith('seat.')
+    if (classroomChange) setClassroomRevision(value => value + 1)
     if (command.startsWith("model_configuration.")) {
       runningAgent.current?.abort(); setConversationId(""); setMessages([]); setMessage(""); setAgentStatus("")
       setModelRevision(value => value + 1)
@@ -583,6 +597,12 @@ export default function R1App() {
     navigation.clearTask()
     setReplacingIdentifier(null)
     setNotice("已保存")
+    // Exam/score/seat commands affect their own projection and the chat
+    // receipt. The shared roster, facts, tasks and identifiers are unchanged.
+    if (classroomChange && queryFresh && !refreshing && navigator.onLine) {
+      workspaceConversation.refreshOutcome()
+      return
+    }
     await reload()
   }
   async function checkCommit() {
@@ -602,23 +622,26 @@ export default function R1App() {
   }
   const editable = !!classroom && classroom.status !== "archived" && !refreshing && queryFresh
   const selected = students.find((item) => item.student_id === selectedStudent)
-  const matchingStudents = searchStudents(students, search)
-  const selectedFollowUps = studentFollowUps(activity?.tasks || [], selected?.student_id || "")
+  const matchingStudents = useMemo(() => searchStudents(students, search), [students, search])
+  const selectedFollowUps = useMemo(() => studentFollowUps(activity?.tasks || [], selected?.student_id || ""), [activity?.tasks, selected?.student_id])
   const canEditStudent = editable && selected?.status !== "inactive"
+  const studentNames = useMemo(() => new Map(students.map(item => [item.student_id, item.name])), [students])
   const studentName = (id: string | null) =>
-    students.find((item) => item.student_id === id)?.name ||
+    (id && studentNames.get(id)) ||
     (id ? "已停用学生 / 查看历史" : "班级工作")
-  const latest = (activity?.records || []).filter(
-    (item, index, array) =>
-      !array
-        .slice(0, index)
-        .some((previous) => previous.record_id === item.record_id),
-  )
-  const records = selectedStudent
+  const latest = useMemo(() => {
+    const seen = new Set<string>()
+    return (activity?.records || []).filter(item => {
+      if (seen.has(item.record_id)) return false
+      seen.add(item.record_id)
+      return true
+    })
+  }, [activity?.records])
+  const records = useMemo(() => selectedStudent
     ? latest.filter((item) => item.student_id === selectedStudent)
-    : latest
-  const tasks = filterWorkTasks(activity?.tasks || [], selectedStudent, workFilter)
-  const attention = projectAttention(activity?.tasks || [])
+    : latest, [latest, selectedStudent])
+  const tasks = useMemo(() => filterWorkTasks(activity?.tasks || [], selectedStudent, workFilter), [activity?.tasks, selectedStudent, workFilter])
+  const attention = useMemo(() => projectAttention(activity?.tasks || []), [activity?.tasks])
   const openTasks = attention.open
 
   function open(next: Form) {
@@ -1037,7 +1060,7 @@ export default function R1App() {
         </button>
 
           {workspaceMode && workspaceConversation.pendingThreads.map(item => <button className="conversation-item" key={`pending-${item.thread_id}`} disabled={navigationBlocked}
-            onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.title} · 待确认</button>)}
+            onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.title}{!item.confirmed && " · 待确认"}</button>)}
           {workspaceMode && workspaceConversation.listing?.data.map(item => <button className={`conversation-item${navigation.route.conversationId === item.thread_id ? " active" : ""}`} key={item.thread_id}
             disabled={navigationBlocked}
             onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>{item.summary_attention && <span className="r1-chat-attention" role="img" aria-label="有待处理的小结">●</span>}
@@ -1526,7 +1549,7 @@ export default function R1App() {
             </>
           )}
           {(page === 'grades' || page === 'seating') && (classroomProfile && classroom
-            ? <div key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}/${page}`}>
+            ? <Suspense fallback={<p role="status">正在加载…</p>}><div key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}/${page}`}>
                 {page === 'grades' ? <GradesWorkspace session={session} classroom={classroom} students={students}
                   canWrite={editable && !busy && !form && !pending} revision={classroomRevision} refreshSignal={activity} previewOpen={!!pending}
                   onDirty={setClassroomDraft} onError={fail} onAsk={text => { if (!workspaceConversation.text.trim()) workspaceConversation.setText(text); setPage('conversation') }}
@@ -1535,10 +1558,10 @@ export default function R1App() {
                   canWrite={editable && !busy && !form && !pending} revision={classroomRevision} refreshSignal={activity} previewOpen={!!pending}
                   onDirty={setClassroomDraft} onError={fail} onAsk={text => { if (!workspaceConversation.text.trim()) workspaceConversation.setText(text); setPage('conversation') }}
                   onPreview={(value, displayNames) => setPending({ proposal: value, key: crypto.randomUUID(), displayNames })} />}
-              </div>
+              </div></Suspense>
             : <section><h1>{page === 'grades' ? '成绩' : '座位'}</h1><p>{classroomProfile ? '请先在对话中建立班级。' : '此功能暂不可用。'}</p></section>)}
           {page === "documents" && (workbenchProfile && classroom
-            ? <DocumentsWorkspace key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`}
+            ? <Suspense fallback={<p role="status">正在加载…</p>}><DocumentsWorkspace key={`${session.csrf_token}/${classroom.class_id}/${classroom.term_id}`}
                 session={session} classroom={classroom} documentId={navigation.route.documentId}
                 canWrite={editable && !busy && !form && !pending && queryFresh && !refreshing}
                 canEdit={classroom.status !== "archived" && !busy && !form && !pending}
@@ -1546,7 +1569,7 @@ export default function R1App() {
                 onInitialDraftUsed={() => setDocumentSeed(null)}
                 onSelect={id => { setDocumentSeed(null); navigation.setDocument(id) }} onSaved={id => { setDocumentSeed(null); navigation.adoptDocument(id) }}
                 onDirtyChange={setDocumentDraft} onBusyChange={setDocumentBusy} onError={fail}
-                onReauthenticate={() => open("reauth")} />
+                onReauthenticate={() => open("reauth")} /></Suspense>
             : <section className="r1-card"><h1>数据与内容</h1><p>文档需要同实例文档服务与当前班级学期。当前入口未启用；没有加载样例文档或另建数据。</p></section>)}
 
         </div>

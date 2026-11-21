@@ -10,7 +10,7 @@ import pytest
 import uvicorn
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, ToolReturnPart
-from sqlalchemy import text
+from sqlalchemy import event, text
 from class_os.infrastructure.agent import PydanticAgentRuntime
 from class_os.interfaces.http.workspace_chat import create_workspace_chat_app
 from class_os.interfaces.http.settings import Settings
@@ -75,6 +75,23 @@ def test_original_chat_multistep_grades_seats_same_world_and_failures(classroom_
         if result.returncode:
             pytest.fail(f'Original classroom browser failed ({sdk.last_failure_type}); calls={len(calls)}\n{result.stdout}{result.stderr}')
         assert len(calls) == 7 and sdk.active == 0
+        from class_os.application.workspace_chat import WorkspaceChatQueryGateway
+        chats = WorkspaceChatQueryGateway(query.identity, store, clock=lambda: clock[0])
+        chat = chats.listing(auth)["data"][0]["thread_id"]
+        receipt_reads = []
+
+        def count_receipt_reads(_connection, _cursor, statement, _parameters, _context, _many):
+            if "JOIN class_os.command_proposal p" in statement and "a.receipt_id=r.receipt_id" in statement:
+                receipt_reads.append(statement)
+
+        with_receipts = store.database.engine
+        event.listen(with_receipts, "before_cursor_execute", count_receipt_reads)
+        try:
+            turns = chats.history(auth, chat)["turns"]
+        finally:
+            event.remove(with_receipts, "before_cursor_execute", count_receipt_reads)
+        assert len([turn for turn in turns if turn["action_receipt"]]) == 6
+        assert len(receipt_reads) == 1
         with owner.transaction(read_only=True) as connection:
             assert connection.execute(text('SELECT count(*) FROM class_os.class_exam')).scalar_one() == 1
             assert connection.execute(text('SELECT count(*) FROM class_os.exam_result_revision')).scalar_one() == 3

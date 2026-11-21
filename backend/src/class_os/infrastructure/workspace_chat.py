@@ -1,4 +1,5 @@
 """Fixed D3 chat SQL inside the existing serialized QG/BCG transaction."""
+import json
 from uuid import UUID, uuid4
 
 from sqlalchemy import text
@@ -7,6 +8,17 @@ from class_os.application.roster import CommandRejected
 from class_os.domain.roster import identifiers, name
 from class_os.domain.workspace_chat import input_hash, message, candidate_hash, validate_turn, ACTIVE, TERMINAL, LEASE, MAX_TURNS
 from .workbench import WorkbenchTransaction
+
+
+# Both history and single-turn views require the same exact proposal and audit
+# match. The bounded history page resolves its receipts in one round trip.
+_ACTION_RECEIPT = """SELECT r.receipt_id,r.resource_id,r.resource_version AS version
+    FROM class_os.command_receipt r JOIN class_os.command_proposal p ON p.workspace_id=r.workspace_id AND p.proposal_id=r.proposal_id
+    JOIN class_os.business_audit a ON a.workspace_id=r.workspace_id AND a.receipt_id=r.receipt_id
+    WHERE r.workspace_id=:workspace_id AND r.actor_id=:actor_id AND p.actor_id=:actor_id
+    AND p.state='committed' AND p.payload_hash=t.candidate_hash AND r.payload_hash=t.candidate_hash AND p.payload=t.candidate
+    AND a.actor_id=:actor_id AND a.action='command.commit' AND a.outcome='allowed'
+    AND a.resource_id=r.resource_id AND a.resource_version=r.resource_version LIMIT 1"""
 
 
 class WorkspaceChatTransaction(WorkbenchTransaction):
@@ -18,7 +30,6 @@ class WorkspaceChatTransaction(WorkbenchTransaction):
         if self._store.database.profile == 'classroom-work-d4':
             from class_os.domain.workspace_chat import CANDIDATES
             if payload.get('command') in CANDIDATES:
-                import json
                 legacy = self._connection.execute(text('''SELECT t.thread_id,t.request_id
                     FROM class_os.workspace_chat_turn t JOIN class_os.workspace_chat_thread h USING(workspace_id,thread_id)
                     WHERE t.workspace_id=:workspace_id AND h.owner_id=:actor_id AND h.status='active'
@@ -89,15 +100,20 @@ class WorkspaceChatTransaction(WorkbenchTransaction):
         header = self.chat_header(binding, thread_id)
         if before is not None and (type(before) is not int or not 1 <= before <= MAX_TURNS):
             raise CommandRejected()
-        rows = [dict(row) for row in self._connection.execute(text("""SELECT * FROM class_os.workspace_chat_turn
+        rows = [dict(row) for row in self._connection.execute(text("""WITH page AS (
+            SELECT * FROM class_os.workspace_chat_turn
             WHERE workspace_id=:workspace_id AND thread_id=:thread AND (CAST(:before AS integer) IS NULL OR ordinal<:before)
-            ORDER BY ordinal DESC LIMIT 21"""), {**binding, "thread": thread_id, "before": before}).mappings()]
+            ORDER BY ordinal DESC LIMIT 21)
+            SELECT t.*, r.receipt_id AS matched_receipt_id, r.resource_id AS matched_resource_id, r.version AS matched_version
+            FROM page t LEFT JOIN LATERAL (""" + _ACTION_RECEIPT + """) r ON t.candidate IS NOT NULL
+            ORDER BY t.ordinal DESC"""), {**binding, "thread": thread_id, "before": before}).mappings()]
         for row in rows:
             validate_turn(row, cleared=header["status"] == "cleared")
             if header["status"] != "cleared" and input_hash(binding["workspace_id"], binding["actor_id"], thread_id, row["user_text"]) != row["input_hash"]:
                 raise CommandRejected()
-            row["action_receipt"] = self.chat_action_receipt(binding, row)
-        import json
+            receipt = {"receipt_id": row.pop("matched_receipt_id"), "resource_id": row.pop("matched_resource_id"),
+                       "version": row.pop("matched_version")}
+            row["action_receipt"] = receipt if receipt["receipt_id"] is not None else None
         selected, size = [], 0
         for row in rows[:20]:
             added = len(json.dumps(row, default=str, ensure_ascii=False).encode('utf-8'))
@@ -146,14 +162,9 @@ class WorkspaceChatTransaction(WorkbenchTransaction):
     def chat_action_receipt(self, binding, row):
         if row["candidate"] is None:
             return None
-        import json
-        result = self._connection.execute(text("""SELECT r.receipt_id,r.resource_id,r.resource_version AS version
-            FROM class_os.command_receipt r JOIN class_os.command_proposal p ON p.workspace_id=r.workspace_id AND p.proposal_id=r.proposal_id
-            JOIN class_os.business_audit a ON a.workspace_id=r.workspace_id AND a.receipt_id=r.receipt_id
-            WHERE r.workspace_id=:workspace_id AND r.actor_id=:actor_id AND p.actor_id=:actor_id
-            AND p.state='committed' AND p.payload_hash=:hash AND r.payload_hash=:hash AND p.payload=CAST(:payload AS jsonb)
-            AND a.actor_id=:actor_id AND a.action='command.commit' AND a.outcome='allowed'
-            AND a.resource_id=r.resource_id AND a.resource_version=r.resource_version LIMIT 1"""),
+        result = self._connection.execute(text("""SELECT r.*
+            FROM (SELECT CAST(:hash AS text) AS candidate_hash, CAST(:payload AS jsonb) AS candidate) t
+            CROSS JOIN LATERAL (""" + _ACTION_RECEIPT + """) r"""),
             {**binding, "hash": row["candidate_hash"], "payload": json.dumps(row["candidate"], ensure_ascii=False)}).mappings().one_or_none()
         return dict(result) if result else None
 

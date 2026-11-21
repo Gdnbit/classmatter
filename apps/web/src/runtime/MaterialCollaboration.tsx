@@ -2,6 +2,20 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import type { Classroom, Session } from './api'
 import { collaborationClient, type Invitation, type MaterialItem, type Peer } from './collaboration'
 
+function refreshVisibleCollaboration(update: () => Promise<void>) {
+  const refresh = () => {
+    if (document.visibilityState === 'visible' && navigator.onLine) void update()
+  }
+  const timer = window.setInterval(refresh, 8000)
+  document.addEventListener('visibilitychange', refresh)
+  window.addEventListener('online', refresh)
+  return () => {
+    window.clearInterval(timer)
+    document.removeEventListener('visibilitychange', refresh)
+    window.removeEventListener('online', refresh)
+  }
+}
+
 export function CollaborationSettings({ session, classroom, disabled, onError }: {
   session: Session; classroom: Classroom | null; disabled: boolean; onError: (error: unknown) => void
 }) {
@@ -86,8 +100,8 @@ export function CollaborationThread({ session, thread }: { session: Session; thr
       finally { pending = false }
     }
     void update()
-    const timer = setInterval(() => void update(), 8000)
-    return () => { abort.abort(); clearInterval(timer) }
+    const dispose = refreshVisibleCollaboration(update)
+    return () => { abort.abort(); dispose() }
   }, [session.csrf_token, thread, retry])
   const labels = { queued: '等待发送', 'retry-needed': '发送未完成', delivered: '等待补充', received: '待提供材料', 'material-received': '材料已收到', 'material-sent': '材料已发送', saved: '小结已保存', stopped: '已停止协作' }
   if (!items.length && !failed) return null
@@ -120,8 +134,9 @@ export function CollaborationWaiting({ session, onSelect, hasTasks, children }: 
       } catch { /* Existing thread retains its visible delivery status and recovery action. */ }
       finally { pending = false }
     }
-    void update(); const timer = setInterval(() => void update(), 8000)
-    return () => { abort.abort(); clearInterval(timer) }
+    void update()
+    const dispose = refreshVisibleCollaboration(update)
+    return () => { abort.abort(); dispose() }
   }, [session.csrf_token])
   return <>{children}{items.map(item => <button className="r1-attention-item" key={item.request_id} onClick={() => onSelect(item.thread_id)}>
     <span>{item.title} · {item.peer_name}</span><span aria-hidden="true">›</span>

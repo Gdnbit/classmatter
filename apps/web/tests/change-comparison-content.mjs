@@ -1,5 +1,7 @@
 // Exact business text and positions, independent of block-layout line breaks.
-export function comparisonContent(side) {
+export async function comparisonContent(side) {
+  await side.waitFor();
+  await side.locator('[data-document-loading]').first().waitFor({ state: 'hidden' });
   return side.evaluate(node => ({
     heading: node.querySelector('h3')?.textContent,
     empty: node.querySelector('.change-empty')?.textContent ?? null,
