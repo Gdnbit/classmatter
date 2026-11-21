@@ -26,15 +26,17 @@ try {
     await input.fill(question);
     await page.getByRole('button', { name: '发送消息', exact: true }).click();
     const answer = page.getByRole('article', { name: '助手回复', exact: true }).nth(index);
-    await answer.getByText(expected, { exact: false }).waitFor({ timeout: 20000 });
+    // The plain-text fallback can already contain the answer while Markdown
+    // loads. Compare the same rendered state on both sides of the reload.
+    const rendered = answer.locator('.document-markdown:not(:has([data-document-loading]))');
+    await rendered.getByText(expected, { exact: false }).waitFor({ timeout: 20000 });
     assert((await answer.innerText()).includes(locator));
     const before = await answer.innerText();
     const path = new URL(page.url()).pathname;
     await page.reload();
     await input.waitFor();
-    const reloaded = page.getByRole('article', { name: '助手回复', exact: true }).nth(index);
-    await reloaded.getByText(expected, { exact: false }).waitFor();
-    assert.equal(await reloaded.innerText(), before);
+    await rendered.getByText(expected, { exact: false }).waitFor();
+    assert.equal(await answer.innerText(), before);
     assert.equal(new URL(page.url()).pathname, path);
     assert.equal(await page.getByRole('region', { name: '对话中的操作候选' }).count(), 0);
     if (index === 0) {
