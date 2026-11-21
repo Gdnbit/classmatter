@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "f33db79b785cfdbcf2b7ef0454e580b59b42306ef880368fe5f0646f9b1a4ffe"
+      "sha256": "7c2e0e58acfa976faf8239a747696e9c5bab0015e7e6bbdfc501bc6a1589dab1"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3475,7 +3475,7 @@
       "sha256": "19a8f36fbaf05ea1d85b47b7161d00d7d02d47c8648d1b177f7e69e1d792da75"
     },
     "apps/web/tests/collaboration-browser.mjs": {
-      "sha256": "857c78440c11ec430e620738fe7dcde7c847879c15b7946507d4cfff6345cc1b"
+      "sha256": "4ccd6e966eaf5a41d8e13f0bfdea2beb429f5f9af6ee64507bf20aeaf7dd9c8d"
     },
     "backend/db/migrations/versions/0034_collaboration.py": {
       "sha256": "3b92dc2228cbb05817e81d52306607c6ba70bff5e60c68cbeda381a3baa2ca5e"
@@ -3511,7 +3511,7 @@
       "sha256": "a8f51fabb372c6019d849722ea4694481f7c04752b08b8efc3c65ed0b8963815"
     },
     "backend/tests/test_collaboration_web.py": {
-      "sha256": "f6416c5deb8de0fe052078ce3a8227d3ae66df9df240bec1f6d01723e9ca12c3"
+      "sha256": "33577a4c1f40d2d21a6839bd1b87a5b5b73b0ce53ebac31d02cce51eb83ada42"
     },
     "contracts/http/collaboration-add-peer.v1.schema.json": {
       "sha256": "d2c88fb00df0f2613d9b172e4eab39b0d1b6cee48621ec5471ae2fa7452bd6d9"

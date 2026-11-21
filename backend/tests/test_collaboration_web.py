@@ -51,7 +51,8 @@ def test_original_two_teacher_interfaces_collect_share_preview_and_save(two_clas
             env=dict(os.environ,CLASS_OS_TEST_URL_A=addresses[0],CLASS_OS_TEST_URL_B=addresses[1]),capture_output=True,
             text=True,encoding='utf-8',timeout=180,creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
         (root/'test-results/collaboration-browser.log').write_text(result.stdout+result.stderr,encoding='utf-8')
-        assert result.returncode==0,(result.stderr[-7000:],failures)
+        if result.returncode:
+            pytest.fail(f'{result.stderr[-7000:]}\nServer failures: {failures!r}', pytrace=False)
         assert not failures,failures
         docs=a[1].documents(*a[2],a[7],a[8])
         assert len(docs)==1 and docs[0]['version']==1

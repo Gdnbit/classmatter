@@ -18,7 +18,12 @@ try {
     await expect(page.getByLabel('输入消息')).toBeEnabled();
   }
   const [a, b] = pages, invitations = [];
+  async function show(page) {
+    await page.bringToFront();
+    await expect.poll(() => page.evaluate(() => document.visibilityState)).toBe('visible');
+  }
   for (const [i, page] of pages.entries()) {
+    await show(page);
     await page.getByRole('button', { name: '设置', exact: true }).click();
     const settings = page.getByRole('dialog', { name: '设置', exact: true });
     await settings.getByLabel('我的称呼', { exact: true }).fill(i ? '合成王老师' : '合成李老师');
@@ -34,6 +39,7 @@ try {
     await settings.getByRole('button', { name: '关闭设置', exact: true }).click();
   }
   for (const [i, page] of pages.entries()) {
+    await show(page);
     await page.getByRole('button', { name: '设置', exact: true }).click();
     const settings = page.getByRole('dialog', { name: '设置', exact: true });
     await settings.getByRole('button', { name: '添加同事', exact: true }).click();
@@ -67,6 +73,9 @@ try {
     await expect(dialog).toHaveCount(0);
     await expect(current.getByRole('status').filter({ hasText: '已保存' })).toBeVisible();
   }
+  // In the workbench only the visible page polls collaboration status. Model
+  // each teacher bringing their window forward before reading or acting on it.
+  await show(a);
   await send(a, '请向合成王老师收集本周数学教学进度，补入小结。');
   const request = card(a, '收集同事材料');
   await request.waitFor({ timeout: 25000 });
@@ -79,6 +88,7 @@ try {
   await expect(waiting).toContainText('合成王老师');
   await expect(waiting.getByText('暂无事项', { exact: true })).toHaveCount(0);
   await a.getByRole('region', { name: '聊天列表', exact: true }).getByRole('button').filter({ hasText: '请向合成王老师收集' }).click();
+  await show(b);
   await b.getByLabel('输入消息').fill('另一条未发送的草稿');
   const inbox = b.getByRole('region', { name: '聊天列表', exact: true }).getByRole('button').filter({ hasText: '合成李老师：收集：本周数学教学进度' });
   await inbox.waitFor({ timeout: 25000 });
@@ -99,6 +109,7 @@ try {
   await expect(reply).toContainText('数学完成第三单元，周五已核对练习。');
   await expect(reply.getByLabel('待确认的结果', { exact: true })).toContainText('合成李老师');
   await confirm(b, reply);
+  await show(a);
   const summary = card(a, '保存班级工作小结');
   await summary.waitFor({ timeout: 25000 });
   await expect(summary).toContainText('合成王老师提供：《本周教学进度》（第1版）');
@@ -117,6 +128,7 @@ try {
   await a.setViewportSize({ width: 390, height: 844 });
   assert(await a.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1));
   await a.screenshot({ path: '../../test-results/collaboration-summary-narrow.png', fullPage: true });
+  await show(b);
   await b.getByRole('button', { name: '设置', exact: true }).click();
   const settingsB = b.getByRole('dialog', { name: '设置', exact: true });
   await settingsB.getByRole('button', { name: '停止协作', exact: true }).click();
