@@ -165,6 +165,7 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
     held_history = None
     history_read_started = asyncio.Event()
     release_history = asyncio.Event()
+    request_failures = []
 
     class HoldFixtureHistory:
         def __init__(self, app):
@@ -174,9 +175,15 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
             if scope.get("method") == "GET" and scope.get("path") == held_history:
                 history_read_started.set()
                 await asyncio.wait_for(release_history.wait(), timeout=20)
-            await self.app(scope, receive, send)
+            try:
+                await self.app(scope, receive, send)
+            except Exception as error:
+                frames = traceback.extract_tb(error.__traceback__)
+                request_failures.append((scope.get("method"), type(error).__name__, getattr(getattr(error, "orig", None), "sqlstate", None),
+                    [(Path(frame.filename).name, frame.name, frame.lineno) for frame in frames if "class_os" in frame.filename][-8:]))
+                raise
 
-    app.add_middleware(HoldFixtureHistory)
+    app.user_middleware.append(Middleware(HoldFixtureHistory))
 
     @app.post("/__fixture__/hold-history/{thread_id}")
     async def hold_history(thread_id: UUID):
@@ -212,11 +219,19 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
         while not server.started:
             assert thread.is_alive() and time.monotonic() < deadline
             time.sleep(.05)
-        result = subprocess.run(['node', 'tests/persistent-chat-browser.mjs'], cwd=root / 'apps/web',
-            env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}'), capture_output=True,
-            text=True, encoding='utf-8', timeout=240, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
-        (root / 'test-results/ui-v3-browser-details.log').write_text(result.stdout + result.stderr, encoding='utf-8')
-        assert result.returncode == 0, result.stdout + result.stderr
+        detail_log = root / 'test-results/ui-v3-browser-details.log'
+        # Keep every browser assertion's own deadline. This outer budget covers
+        # the entire journey, including repeated navigations and screenshots.
+        try:
+            result = subprocess.run(['node', 'tests/persistent-chat-browser.mjs'], cwd=root / 'apps/web',
+                env=dict(os.environ, CLASS_OS_TEST_URL=f'http://127.0.0.1:{port}'), capture_output=True,
+                text=True, encoding='utf-8', timeout=420 if os.name == 'nt' else 240,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+        except subprocess.TimeoutExpired as error:
+            detail_log.write_bytes((error.stdout or b'') + (error.stderr or b''))
+            pytest.fail(f'Browser journey exceeded {error.timeout}s; see {detail_log.name}; {request_failures!r}')
+        detail_log.write_text(result.stdout + result.stderr, encoding='utf-8')
+        assert result.returncode == 0, result.stdout + result.stderr + repr(request_failures)
         assert len(calls) == len(mapping) + 7
         assert len(failed_once) == 4
         assert sdk.active == 0

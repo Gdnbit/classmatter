@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "99bb0c47914aa76d12aab12146e283b385b65a72667248a2117873a2e8313433"
+      "sha256": "dbdf88507c6fdc2714193a9d0177644d1731f4dd3729c7b8b77ef825331e39a7"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1245,7 +1245,7 @@
       "sha256": "da1f283ce87c1b60b8c8a6deb3cd591a22eeccca9a3398da16d087b367ea36a6"
     },
     "backend/tests/conftest.py": {
-      "sha256": "51064ad95f733137ce78715849165c564a30a6af2b3b6a774bd20c0a206e4cef"
+      "sha256": "b4f6d5b2b491d5fb4080514cac8b11805790c1c66907f7e14ea1fa95301a6e78"
     },
     "backend/tests/test_0015_to_0016_upgrade.py": {
       "sha256": "0f4269e0768e23b91438285f560cfcf0696856d59ce68784871f61509a9282d4"
@@ -3032,7 +3032,7 @@
       "sha256": "4363324a0fa0f86124edce4c166283dffa59741e83a9ab76ed04bfbbfff07cc3"
     },
     "apps/web/tests/persistent-chat-browser.mjs": {
-      "sha256": "aad332ff779196c30f306a96c802b83f1ac1a135c3fb2356a872356e4e0ec580"
+      "sha256": "4d5ab1e2bdfb76bebc1a3e35ba01ecc27cecc9d2bd82a7a02f1ce4f6a9f0d737"
     },
     "apps/web/tests/workspace-chat.mjs": {
       "sha256": "48926ed66e8f265c78387f52fe98b06e6586361fc76f5aeca449b429eb213a61"
@@ -3071,7 +3071,7 @@
       "sha256": "0e829d563beae520775256e25cdb6b3f28e9263c7bcba9795eb0804f235b7241"
     },
     "backend/tests/test_persistent_chat_web.py": {
-      "sha256": "945c09fa0a8388e62502bdb71b3f18cf49e0ce27aac2fc0d8b0cc1c7721e72ab"
+      "sha256": "8b14ec0f4fbc9e8992783281901ecaa217a052f8f0f610d4a056a00a31d7352b"
     },
     "backend/tests/test_workspace_chat_runtime.py": {
       "sha256": "797fca772a26e04550ecb9baba5cb78f536a0a3fb3ac4a0c9ea4326eb38b54c7"

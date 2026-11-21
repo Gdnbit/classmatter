@@ -234,6 +234,7 @@ try {
     await expect.poll(() => comparisonContent(comparison.getByLabel('修改前', { exact: true }))).toEqual(oldContent);
     await expect.poll(() => comparisonContent(comparison.getByLabel('已保存的结果', { exact: true }))).toEqual(changes.at(-1).newContent);
     assert.equal(new URL(page.url()).pathname, path);
+    console.log(`PASS preview, save and reload: ${title}`);
   }
   const cards = history.getByRole('region', { name: '变更前后对比', exact: true });
   for (let index = 0; index < changes.length; index++) {
@@ -274,6 +275,7 @@ try {
   assert.equal(starts.length, messages.length + 6);
   assert.equal(commits.length, messages.length);
   assert.equal(new Set(commits).size, messages.length);
+  console.log('PASS saved content across workbench views and task continuation');
   // A different client advances this thread while the retry's fresh read is
   // held. It must invalidate the old failed target without sending anything.
   await input.fill('合成陈旧失败'); await page.getByRole('button', { name: '发送消息', exact: true }).click();
