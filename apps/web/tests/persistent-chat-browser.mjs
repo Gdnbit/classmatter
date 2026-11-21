@@ -297,7 +297,13 @@ try {
   assert.equal(starts.length, beforeStaleRetry); assert.equal(commits.length, messages.length);
   await input.fill('');
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: '切换模型', exact: true }).click();
+  await page.getByRole('button', { name: '切换模型', exact: true }).click().catch(async error => {
+    const response = await page.request.get(threadUrl, { headers });
+    const value = await response.json();
+    const composer = await page.locator('form.r1-composer').evaluate(node => ({ ...node.dataset }));
+    throw new Error(JSON.stringify({ composer, main: await page.getByRole('main').innerText(), errors,
+      historyStatus: response.status(), states: value.turns?.map(turn => turn.state), modelRuns: starts.length }), { cause: error });
+  });
   const mobileMenu = await page.getByRole('region', { name: '选择模型', exact: true }).boundingBox();
   assert(mobileMenu.x >= 0 && mobileMenu.x + mobileMenu.width <= 390);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

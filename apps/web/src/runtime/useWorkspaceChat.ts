@@ -198,11 +198,19 @@ export function useWorkspaceChat(props: Props) {
     await operate(async (generation, thread, api, state) => {
       if (retry) {
         // A retry is a new model attempt, never a replay of an uncertain save.
+        const readView = view.current
         const saved = await api.history(thread), current = saved.turns.at(-1)
         if (generation !== epoch.current) return
         if (saved.thread.status !== 'active' || current?.request_id !== retry.request_id || current.state !== 'failed'
             || current.candidate || current.action_receipt || current.user_text !== target.text) {
-          await refreshAfter(thread, generation); return
+          // This read already provides the current authorized result. A second
+          // listing/history/model fan-out would keep a rejected retry busy.
+          if (thread === selected.current && readView === view.current && navigator.onLine) {
+            setHistory(saved); setFresh(true); state.status = ""
+          } else if (thread === selected.current) {
+            foreground.current?.request()
+          }
+          return
         }
       }
       state.pending = target; state.saving = true; state.status = "正在发送…"; changed()
