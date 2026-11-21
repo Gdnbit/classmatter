@@ -9,7 +9,7 @@ import json
 import asyncio
 import traceback
 from contextlib import asynccontextmanager
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 import uvicorn
@@ -162,6 +162,41 @@ def test_original_ui_persistent_chat_actions_and_same_world_views(workspace_chat
         probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
     root = Path(__file__).resolve().parents[2]
     app = create_workspace_chat_app(Settings(port=port), worker=commands, query=query, sdk=sdk)
+    held_history = None
+    history_read_started = asyncio.Event()
+    release_history = asyncio.Event()
+
+    class HoldFixtureHistory:
+        def __init__(self, app):
+            self.app = app
+
+        async def __call__(self, scope, receive, send):
+            if scope.get("method") == "GET" and scope.get("path") == held_history:
+                history_read_started.set()
+                await asyncio.wait_for(release_history.wait(), timeout=20)
+            await self.app(scope, receive, send)
+
+    app.add_middleware(HoldFixtureHistory)
+
+    @app.post("/__fixture__/hold-history/{thread_id}")
+    async def hold_history(thread_id: UUID):
+        nonlocal held_history
+        held_history = f"/api/workspaces/{credentials[3]}/workspace-chat/threads/{thread_id}"
+        history_read_started.clear()
+        release_history.clear()
+        return {"held": True}
+
+    @app.get("/__fixture__/blocked-history")
+    async def blocked_history():
+        return {"blocked": history_read_started.is_set()}
+
+    @app.post("/__fixture__/release-history")
+    async def release_held_history():
+        nonlocal held_history
+        held_history = None
+        release_history.set()
+        return {"released": True}
+
     @app.post('/__fixture__/legacy-pending-preview')
     def legacy_pending_preview():
         # This route exists only in this disposable test server, never product.

@@ -278,23 +278,34 @@ try {
   // held. It must invalidate the old failed target without sending anything.
   await input.fill('合成陈旧失败'); await page.getByRole('button', { name: '发送消息', exact: true }).click();
   const staleRetry = history.getByRole('button', { name: '重试回复', exact: true });
+  // This part exercises a concurrent retry, after the original run actually
+  // fails and the persisted history is read back.
+  await staleRetry.waitFor();
   await expect(staleRetry).toBeEnabled(); await input.fill('并发核对时保留的草稿');
   const identity = await (await page.request.get(base + '/api/identity/session')).json();
   const threadUrl = `${base}/api/workspaces/${identity.subject.workspace_id}/workspace-chat/threads/${path.split('/').at(-1)}`;
   const headers = { origin: base, 'x-class-os-csrf': identity.csrf_token };
-  let releaseRead, markRead;
-  const heldRead = new Promise(resolve => { releaseRead = resolve; }), readStarted = new Promise(resolve => { markRead = resolve; });
-  await page.route(threadUrl, async route => { markRead(); await heldRead; await route.fulfill({ response: await route.fetch() }); }, { times: 1 });
   const beforeStaleRetry = starts.length;
-  await staleRetry.click(); await readStarted;
-  const otherId = crypto.randomUUID();
-  const other = await page.request.post(threadUrl + '/turns', { headers, data: { request_id: otherId, text: '合成已撤回新消息' } });
-  assert.equal(other.status(), 200);
-  assert.equal((await page.request.post(threadUrl + `/turns/${otherId}/cancel`, { headers, data: { expected_version: (await other.json()).turn.version } })).status(), 200);
-  releaseRead();
+  const beforeStaleSends = sends.length;
+  // Pause matching GETs inside the owned HTTP fixture. Foreground sync may
+  // start at the same time, and the browser may legitimately abort old reads.
+  const held = await page.request.post(base + '/__fixture__/hold-history/' + path.split('/').at(-1));
+  assert.equal(held.status(), 200);
+  try {
+    await staleRetry.click();
+    await expect.poll(async () => (await (await page.request.get(base + '/__fixture__/blocked-history')).json()).blocked).toBe(true);
+    const otherId = crypto.randomUUID();
+    const other = await page.request.post(threadUrl + '/turns', { headers, data: { request_id: otherId, text: '合成已撤回新消息' } });
+    assert.equal(other.status(), 200);
+    assert.equal((await page.request.post(threadUrl + `/turns/${otherId}/cancel`, { headers, data: { expected_version: (await other.json()).turn.version } })).status(), 200);
+  } finally {
+    assert.equal((await page.request.post(base + '/__fixture__/release-history')).status(), 200);
+  }
   await expect(staleRetry).toHaveCount(0);
+  await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-working', 'false');
+  await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-pending', 'false');
   await expect(input).toHaveValue('并发核对时保留的草稿');
-  assert.equal(starts.length, beforeStaleRetry); assert.equal(commits.length, messages.length);
+  assert.equal(starts.length, beforeStaleRetry); assert.equal(sends.length, beforeStaleSends); assert.equal(commits.length, messages.length);
   await input.fill('');
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole('button', { name: '切换模型', exact: true }).click().catch(async error => {

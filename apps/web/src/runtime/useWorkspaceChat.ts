@@ -227,7 +227,14 @@ export function useWorkspaceChat(props: Props) {
         // without competing reads; the final answer still comes from QG.
         if (generation === epoch.current && navigator.onLine) await runSaved(thread, result.turn, generation, api)
       } catch (error) {
-        if (generation === epoch.current) { state.status = "暂时无法确认发送结果，请先刷新对话。"; changed() }
+        if (generation === epoch.current) {
+          const rejectedRetry = !!retry && !savedInput && error instanceof ApiError && error.status === 409
+          // A definite rejection cannot be recovered by replaying the old
+          // retry as a new message. Preserve the user's current draft.
+          if (rejectedRetry) state.pending = null
+          state.status = rejectedRetry ? "对话已变化，请重新核对。" : "暂时无法确认发送结果，请先刷新对话。"
+          changed()
+        }
         throw error
       } finally {
         if (generation === epoch.current) {
