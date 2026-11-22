@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "0e16bb2d2593fbfd637cf4c3b53547fe94860aa97969b607925e44073c444d8c"
+      "sha256": "e4d5ecfa4273d4b07aab3617ecaf774934b16307fea5e510a07729424190b091"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -3011,7 +3011,7 @@
       "sha256": "441f74bd146cc0c1e92f127705120ac4b1f2ce47efa38e1871c765929e56a062"
     },
     "apps/desktop/tests/workspace-chat-integration.cjs": {
-      "sha256": "0b5c11123f12ebd41f58a27b9a10c5fe8cc1227096752ce98c3ef97c64e2c5b7"
+      "sha256": "ef51e2ba8183c7d2513d48a3596b3d27c76e751e89c045de33e6f32c93c1ea19"
     },
     "apps/web/scripts/generate-workspace-chat.mjs": {
       "sha256": "e4ca815d5374668a110fdfea11e902b1caa5e60c8e8adee5b71cce92a93fc94d"

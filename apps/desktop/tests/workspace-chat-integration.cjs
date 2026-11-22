@@ -118,9 +118,11 @@ async function launch() {
   await page.reload(); await page.getByLabel('输入消息').waitFor();
   assert.equal(await app.evaluate(({ app }) => app.__classmatterDraftCheck.prompts.length), 4);
   console.log('PASS native draft lifecycle');
-  step = 'native restart and persisted chat';
+  step = 'close first native window';
   await app.close(); app = null;
+  step = 'second native startup';
   page = await launch();
+  step = 'restore persisted chat after restart';
   await page.getByRole('button', { name: '合成桌面重启持久聊天', exact: true }).click();
   await page.getByRole('region', { name: '已保存的对话' }).getByText('合成桌面重启持久聊天', { exact: true }).waitFor();
   await page.getByRole('region', { name: '已保存的对话' }).locator('article.assistant').waitFor();
@@ -142,10 +144,10 @@ async function launch() {
   assert.deepEqual(failures, [], 'Original desktop requests must not hide server failures');
   assert.deepEqual(errors, []);
 } catch (error) {
-  console.error('Native regression failed during: ' + step);
+  console.error('Native regression failed during: ' + step, error);
   throw error;
 } finally {
   if (app) await app.close();
   fs.writeFileSync(file, original);
   clearTimeout(watchdog);
-} })().catch(error => { console.error(error); process.exitCode = 1; });
+} })().catch(() => { process.exitCode = 1; });
