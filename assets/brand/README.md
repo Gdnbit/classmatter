@@ -19,3 +19,9 @@
 确认目标文件 SHA-256、字节数与来源一致；确认 `git check-ignore` 命中且 `git ls-files` 不含两张 PNG；公开内容仍通过原有默认拒绝、secret scan、文档/链接校验。此单元没有 Requirement、Eval、Task、Gate、数据库、Provider 或依赖变化。
 
 回滚公开说明与忽略规则不会自动删除本地原件；需要整理时先备份图片，不使用仓库清理命令删除未跟踪资产。本地原件不是运行数据，也不加入业务备份包。
+
+## GitHub 展示封面
+
+2026-11-22 为 GitHub 主页及分享卡片制作了独立封面。以原长颈鹿与书本标识作参考，使用 ImageGen 生成中英文字标版面，再导出为 1280 × 640 JPEG。成品 SHA-256 为 `599588debd0388e1d2942bfdf124017ff66463f7630ae0e776da57608f3b6b6d`。
+
+封面由 GitHub 仓库的 Social preview 设置托管，两份首页引用同一张[公开封面](https://repository-images.githubusercontent.com/1424619394/0730fa01-db22-4b12-a757-ab2bddf0e601)。如更换封面，请同时更新首页引用并复核公开页面。Git 继续只存品牌登记文本，桌面图标与原图留档独立维护。
