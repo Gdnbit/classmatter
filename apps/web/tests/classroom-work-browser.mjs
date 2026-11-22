@@ -29,24 +29,29 @@ try {
   const comparisons = [];
   async function failedForegroundRead(card) {
     const button = card.getByRole('button', { name: '预览这项操作', exact: true });
+    const composer = page.locator('form.r1-composer');
     const historyPath = /\/workspace-chat\/threads\/[a-f0-9-]+$/;
     let failed = false;
     const rejectRead = async route => { failed = true; await route.fulfill({ status: 503, json: { detail: 'Synthetic query outage' } }); };
     const proposals = writes.filter(url => url.endsWith('/proposal')).length;
-    await page.waitForTimeout(5100);
+    await expect(composer).toHaveAttribute('data-chat-working', 'false');
+    await expect(composer).toHaveAttribute('data-chat-fresh', 'true');
     await page.route(historyPath, rejectRead);
     try {
       await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-      await expect.poll(() => failed).toBe(true);
-      await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'false');
+      await expect.poll(() => failed, { timeout: 12000 }).toBe(true);
+      await expect(composer).toHaveAttribute('data-chat-fresh', 'false');
       await expect(button).toBeDisabled();
       assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals);
       await expect(page.getByRole('dialog')).toHaveCount(0);
     } finally { await page.unroute(historyPath, rejectRead); }
     await page.getByRole('button', { name: '重试', exact: true }).click();
-    await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'true');
+    await expect(composer).toHaveAttribute('data-chat-fresh', 'true');
     await expect(button).toBeEnabled();
     assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals);
+    // Finish the first scenario before simulating the next pointer gesture.
+    // Removing its stale alert during the click would move the conversation.
+    await expect(page.getByRole('button', { name: '关闭错误', exact: true })).toBeHidden();
   }
   async function previewDuringForegroundRead(card) {
     const button = card.getByRole('button', { name: '预览这项操作', exact: true });
@@ -57,16 +62,27 @@ try {
       const response = await route.fetch(); assert.equal(response.status(), 200);
       held = true; await barrier; await route.fulfill({ response });
     })(); return delivered; };
-    // The foreground controller coalesces events for at most five seconds.
-    // Make a real revalidation overlap pointer down/up without a new timeout.
-    await page.waitForTimeout(5100);
-    await page.route(historyPath, holdRead);
+    // Hold the first response across the click. A later authoritative read
+    // may supersede that view and must be allowed to finish.
+    await button.scrollIntoViewIfNeeded();
+    const bounds = await button.boundingBox();
+    assert(bounds);
+    const pointer = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+    await page.mouse.move(pointer.x, pointer.y);
+    await page.route(historyPath, holdRead, { times: 1 });
     await button.evaluate(node => node.addEventListener('pointerdown', () => window.dispatchEvent(new Event('focus')), { once: true }));
+    const proposals = writes.filter(url => url.endsWith('/proposal')).length;
     try {
-      await button.click({ delay: 600 });
-      await expect.poll(() => held).toBe(true);
+      await page.mouse.down();
+      await expect.poll(() => held, { timeout: 12000 }).toBe(true);
+      await expect(button).toBeEnabled();
+      assert(await button.evaluate((element, { x, y }) => element.contains(document.elementFromPoint(x, y)), pointer),
+        'Background reading must keep the preview button under the pointer');
+      await page.mouse.up();
+      await expect.poll(() => writes.filter(url => url.endsWith('/proposal')).length).toBe(proposals + 1);
       await page.getByRole('dialog', { name: '确认这次变更', exact: true }).waitFor();
       await expect(page.getByRole('dialog').getByRole('alert')).toHaveCount(0);
+      assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals + 1);
     } finally { release(); await delivered; await page.unroute(historyPath, holdRead); }
   }
   for (const title of ['建立考试', '记录成绩', '建立座位表', '安排座位', '安排座位', '交换座位']) {
@@ -164,6 +180,11 @@ try {
   await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
   await grades.getByRole('row').filter({ hasText: '合成学生0' }).filter({ hasText: '86.00' }).waitFor();
   await page.screenshot({ path: '../../test-results/classroom-grades.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(grades.getByRole('button', { name: '编辑合成学生0的成绩', exact: true })).toBeInViewport();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await page.screenshot({ path: '../../test-results/classroom-grades-mobile.png' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   const beforeSeatingNavigation = writes.length;
   await page.getByRole('button', { name: '学生', exact: true }).click();
   const views = page.getByRole('tablist', { name: '学生视图切换' });
@@ -176,6 +197,7 @@ try {
   await seats.getByRole('button', { name: '1排1座 合成学生1', exact: true }).waitFor();
   assert.equal(writes.length, beforeSeatingNavigation, 'Opening the existing view must not write or invoke the model');
   await seats.getByRole('button', { name: '1排1座 合成学生1', exact: true }).click();
+  await expect(seats.getByRole('button', { name: '1排1座 合成学生1', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await seats.getByRole('button', { name: '1排2座 合成学生0', exact: true }).click();
   await confirm();
   await seats.getByRole('button', { name: '1排1座 合成学生0', exact: true }).waitFor();

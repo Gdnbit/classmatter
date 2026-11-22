@@ -69,7 +69,7 @@ export function GradesWorkspace(p: Props) {
         {!exams.length && <option value="">暂无考试</option>}{exams.map(exam => <option key={exam.exam_id} value={exam.exam_id}>{exam.title} · {exam.subject}</option>)}
       </select>
       <input aria-label="搜索成绩中的学生" placeholder="搜索学生" value={search} onChange={event => setSearch(event.target.value)} />
-      <button onClick={() => p.onAsk('帮我建立一次考试。')} disabled={!!draft}>新建考试</button>
+      <button className="r1-primary" onClick={() => p.onAsk('帮我建立一次考试。')} disabled={!!draft}>新建考试</button>
     </div>
     {loading ? <p role="status">正在读取成绩…</p> : failed ? <p>暂时无法读取成绩，请刷新重试。</p> : !exams.length ? <p>尚无考试。</p> : results && <>
       <p>{results.scored_count} 人已录入 · 平均分 {results.average ?? '暂无'}</p>
@@ -80,8 +80,8 @@ export function GradesWorkspace(p: Props) {
           return <div className="sheet-row" role="row" key={student.student_id} style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
             <span role="cell">{student.name}</span><span role="cell">{result?.score ?? '—'}</span>
             <span role="cell">{statusNames[result?.status ?? 'not-recorded']}</span>
-            <button disabled={!p.canWrite || !!draft || previewing || student.status !== 'active'} aria-label={`编辑${student.name}的成绩`}
-              onClick={() => setDraft({ student, version: result?.version ?? 0, score: result?.score ?? '', status: result?.status ?? 'scored', reason: '' })}>编辑</button>
+            <span role="cell"><button disabled={!p.canWrite || !!draft || previewing || student.status !== 'active'} aria-label={`编辑${student.name}的成绩`}
+              onClick={() => setDraft({ student, version: result?.version ?? 0, score: result?.score ?? '', status: result?.status ?? 'scored', reason: '' })}>编辑</button></span>
           </div>
         })}
       </div>
@@ -133,16 +133,18 @@ export function SeatingWorkspace(p: Props) {
   }
   return <section className="seat-workspace" aria-label="座位图">
     <div className="seat-header"><h1>座位</h1></div>
-    {loading ? <p role="status">正在读取座位…</p> : failed ? <p>暂时无法读取座位，请刷新重试。</p> : !layout ? <><p>尚无座位表。</p><button onClick={() => p.onAsk('帮我建立教室座位表。')}>建立座位表</button></> : <>
+    {loading ? <p role="status">正在读取座位…</p> : failed ? <p>暂时无法读取座位，请刷新重试。</p> : !layout ? <><p>尚无座位表。</p><button className="r1-primary" onClick={() => p.onAsk('帮我建立教室座位表。')}>建立座位表</button></> : <>
       <div className="r1-toolbar"><select aria-label="安排座位的学生" value={assigning} onChange={event => { setAssigning(event.target.value); setSelected(null) }} disabled={previewing}>
         <option value="">选择两处座位交换</option>{p.students.filter(student => student.status === 'active').map(student => <option key={student.student_id} value={student.student_id}>{student.name}</option>)}</select>
         {selected && <button onClick={() => setSelected(null)}>取消选择</button>}
       </div>
-      <div className="seat-grid">{seatsByRow.map((seats, r) => <div className="seat-row" key={r} style={{ gridTemplateColumns: `repeat(${layout.columns}, minmax(68px, 1fr))` }}>
+      <div className="seat-grid">{seatsByRow.map((seats, r) => <div className="seat-row" key={r}
+        style={{ gridTemplateColumns: `repeat(${layout.columns}, minmax(68px, 1fr))`, minWidth: layout.columns * 78 }}>
         {seats.map(cell => {
           const position = { row: cell.row_index, column: cell.column_index }, name = cell.student_id ? names[cell.student_id] || '未在当前名单中' : '空座'
           return <button key={cell.column_index} className={`seat${selected?.row === position.row && selected.column === position.column ? ' selected' : ''}`}
-            disabled={!p.canWrite || previewing} aria-label={`${position.row}排${position.column}座 ${name}`} draggable={!!cell.student_id && p.canWrite && !previewing}
+            disabled={!p.canWrite || previewing} aria-label={`${position.row}排${position.column}座 ${name}`}
+            aria-pressed={selected?.row === position.row && selected.column === position.column} draggable={!!cell.student_id && p.canWrite && !previewing}
             onDragStart={event => { drag.current = { ...position, version: layout.version }; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', 'seat') }}
             onDragEnd={() => { drag.current = null }} onDragOver={event => { if (drag.current && p.canWrite) event.preventDefault() }}
             onDrop={event => { event.preventDefault(); const source = drag.current; drag.current = null; if (source?.version === layout.version) swap(source, position) }}

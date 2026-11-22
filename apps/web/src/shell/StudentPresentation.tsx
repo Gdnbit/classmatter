@@ -3,10 +3,10 @@ import { ChevronLeft, Users } from "lucide-react"
 
 // Original prototype presentation only. Callers supply authorized projections
 // and actions; no fixtures, domain mutations or identity matching live here.
-export function StudentPageTitle({ title, description }: { title: string; description: string }) {
+export function StudentPageTitle({ title, description, connected = false }: { title: string; description?: string; connected?: boolean }) {
   return <div className="surface-title">
     <span className="surface-icon"><Users size={22} /></span>
-    <div><p className="eyebrow">班级学生</p><h1>{title}</h1>{description && <p>{description}</p>}</div>
+    <div>{!connected && <p className="eyebrow">班级学生</p>}<h1>{title}</h1>{description && <p>{description}</p>}</div>
   </div>
 }
 
@@ -38,14 +38,14 @@ export function StudentRosterTable({ rows, columns, selectedId, onSelect, disabl
   </div>
 }
 
-export function StudentProfileHeader({ name, identity, description, onBack, actions }: {
-  name: string; identity: string; description: string; onBack: () => void; actions: ReactNode
+export function StudentProfileHeader({ name, identity, description, onBack, actions, connected = false }: {
+  name: string; identity: string; description?: string; onBack: () => void; actions: ReactNode; connected?: boolean
 }) {
   return <>
     <button className="back-link" onClick={onBack}><ChevronLeft size={16} /> 返回学生列表</button>
     <header className="student-profile-head">
       <span className="profile-avatar">{name[0]}</span>
-      <div><p className="eyebrow">学生详情</p><h1>{name}</h1><p>{identity}</p><p>{description}</p></div>
+      <div>{!connected && <p className="eyebrow">学生详情</p>}<h1>{name}</h1><p>{identity}</p>{description && <p>{description}</p>}</div>
       {actions}
     </header>
   </>
