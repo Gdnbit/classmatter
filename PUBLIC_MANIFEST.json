@@ -3,7 +3,7 @@
   "purpose": "Reviewed public snapshot; additions/content mutations fail until explicit review",
   "files": {
     "backend/tests/test_checkpoint_capacity.py": {
-      "sha256": "bcd620c5201f7b68f4d19b05e21f09d14fc3ea8f964e9299f4210566f2ce78d4"
+      "sha256": "09aa23bc80f44363f0fc24833badc020a755621382ed839a63246206404ff95e"
     },
     "backend/db/migrations/versions/0033_builtin_class_work.py": {
       "sha256": "9568827ff421102008ae695229f58e3fd72eb116afc6ad5bb72bba429016d6b1"
@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "1b76dfcf5d4bf13c98b27859f76d80fc5e71a48c579aae57ac9b5e6b893ab381"
+      "sha256": "5cdd8952d60eb9e21d5dd6842cbe62d1e19a039f6a28a3316eec2c8484ad1b03"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1017,7 +1017,7 @@
       "sha256": "51bfee0c564708f42efd96b6cb5ad707e720a6a84348317adfdab276d735d723"
     },
     "backend/README.md": {
-      "sha256": "23c7d25501538b55433e0aeed8ff9c7fefc035079b5df439f01352fab49f071f"
+      "sha256": "994599f8d183e412462b3464283a2deec27288c39e4492983da6c1bc645853d7"
     },
     "backend/db/migrations/env.py": {
       "sha256": "b2393f310d1d8a05229c29757dbd885fb275ca6bf7e87c81fa84270863b6edec"
@@ -1182,7 +1182,7 @@
       "sha256": "a4c31c1888e62b110079d19319ebbbd6d2757d7835e45b75683e03a52385364c"
     },
     "backend/src/class_os/infrastructure/operator_backup.py": {
-      "sha256": "86f9d4742a275443af8b8fe631801a33f68dca8515d38f805fe541a193b93792"
+      "sha256": "22811092c422987bedf9f644be189410151a6bdf9af4e5b8afb7ac6def6817cb"
     },
     "backend/src/class_os/infrastructure/persistence/__init__.py": {
       "sha256": "43fde57fdf4c97fb50216ebd5f7491d20f7998192506fb510a12444674b02432"

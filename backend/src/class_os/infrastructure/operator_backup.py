@@ -160,8 +160,8 @@ class SyntheticBackup:
         except Exception:
             raise BackupRejected() from None
 
-    @staticmethod
-    def _state(connection, *, profile="r1", legacy_classroom=False, checkpoint_revision=None):
+    @classmethod
+    def _state(cls, connection, *, profile="r1", legacy_classroom=False, checkpoint_revision=None, inventory_kind=None):
         head, _ = schema_profile(profile)
         if legacy_classroom:
             if profile != 'classroom-work-d4':
@@ -178,6 +178,9 @@ class SyntheticBackup:
                 or connection.execute(text("SELECT data_mode FROM class_os.database_state WHERE singleton=true")).scalar_one() != "synthetic-only"):
             raise BackupRejected()
         validate_role_guards(connection, profile=profile, legacy_classroom=legacy_classroom, prior_summary=prior_summary, prior_builtin=prior_builtin)
+        # Bound the registered rows and bytes before semantic checks load
+        # document and conversation contents into the operator process.
+        inventory = cls._inventory(connection, profile=profile, kind=inventory_kind) if inventory_kind else None
         if profile != "r1":
             from .conversation_integrity import validate_conversation_integrity
             validate_conversation_integrity(connection)
@@ -198,6 +201,7 @@ class SyntheticBackup:
             if head == '0034':
                 from .collaboration_store import validate_collaboration_integrity
                 validate_collaboration_integrity(connection)
+        return inventory
 
     @staticmethod
     def _inventory(connection, *, profile="r1", kind=None):
@@ -262,15 +266,13 @@ class SyntheticBackup:
                 connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
                 if not connection.execute(text("SELECT pg_try_advisory_xact_lock_shared(607103003)")).scalar_one():
                     raise BackupRejected()
-                self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom, checkpoint_revision=self.checkpoint_revision)
                 if connection.execute(text("SELECT pg_database_size(current_database())")).scalar_one() > 32 * MIB:
                     raise BackupRejected()
+                inventory = self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom,
+                                        checkpoint_revision=self.checkpoint_revision, inventory_kind=self.kind)
                 snapshot = connection.execute(text("SELECT pg_export_snapshot()")).scalar_one()
                 if not re.fullmatch(r"[0-9A-Fa-f-]{1,80}", snapshot):
                     raise BackupRejected()
-                # Bound logical data before a subprocess captures the archive;
-                # a physically small TOAST-compressed DB may expand substantially.
-                inventory = self._inventory(connection, profile=self.profile, kind=self.kind)
                 archive = self._pg("pg_dump", database.engine.url.database, "--format=custom", "--no-large-objects", f"--snapshot={snapshot}")
                 if not archive.startswith(b"PGDMP") or len(archive) > ARCHIVE_LIMIT:
                     raise BackupRejected()
@@ -381,8 +383,9 @@ class SyntheticBackup:
             restored = Database(database.engine.url.set(database=temporary), migration=True, profile=self.profile)
             try:
                 with restored.transaction(read_only=True) as connection:
-                    self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom, checkpoint_revision=self.checkpoint_revision)
-                    if self._inventory(connection, profile=self.profile, kind=packet["kind"]) != packet["inventory"]:
+                    inventory = self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom,
+                                            checkpoint_revision=self.checkpoint_revision, inventory_kind=packet["kind"])
+                    if inventory != packet["inventory"]:
                         raise BackupRejected()
                     if current is not None:
                         from .conversation_integrity import validate_restriction_snapshot

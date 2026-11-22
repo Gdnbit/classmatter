@@ -81,8 +81,7 @@ def test_prior_kinds_remain_readable_and_keep_their_original_row_caps(checkpoint
             checkpoint._open(UUID(changed['id']))
 
 
-@pytest.mark.db
-def test_grown_document_history_restores_without_weakening_v2(checkpoint, classroom_work):
+def grow_documents(classroom_work, count):
     _, _, _, owner, _, store, _, class_id, term_id, _ = classroom_work
     with owner.transaction() as connection:
         # Compressible synthetic documents cross the logical limit independently
@@ -91,13 +90,19 @@ def test_grown_document_history_restores_without_weakening_v2(checkpoint, classr
             INSERT INTO class_os.working_document
                 (workspace_id,document_id,owner_id,class_id,term_id,status,version,created_at,updated_at)
             SELECT workspace_id,gen_random_uuid(),owner_id,:class_id,:term_id,'draft',1,now(),now()
-            FROM class_os.owner_account CROSS JOIN generate_series(1,52)
+            FROM class_os.owner_account CROSS JOIN generate_series(1,:count)
             RETURNING workspace_id,document_id,owner_id,created_at)
             INSERT INTO class_os.working_document_revision
                 (workspace_id,document_id,version,status,title,body,format,operation,created_by,created_at)
             SELECT workspace_id,document_id,1,'draft','Synthetic capacity fixture',
                 repeat('课堂材料', 21000),'plain-text','document.create',owner_id,created_at FROM docs
-            """), {"class_id": class_id, "term_id": term_id})
+            """), {"class_id": class_id, "term_id": term_id, "count": count})
+    return owner, store
+
+
+@pytest.mark.db
+def test_grown_document_history_restores_without_weakening_v2(checkpoint, classroom_work):
+    owner, store = grow_documents(classroom_work, 52)
     with owner.transaction(read_only=True) as connection:
         before = checkpoint._inventory(connection, profile='classroom-work-d4')
         assert before['working_document_revision']['rows'] == 52
@@ -114,6 +119,24 @@ def test_grown_document_history_restores_without_weakening_v2(checkpoint, classr
         checkpoint.check(legacy_id)
     with owner.transaction(read_only=True) as connection:
         assert checkpoint._inventory(connection, profile='classroom-work-d4') == before
+
+
+@pytest.mark.db
+def test_oversized_documents_reject_before_body_validation_and_dump(checkpoint, classroom_work, monkeypatch):
+    from class_os.infrastructure import documents
+
+    owner, _ = grow_documents(classroom_work, 90)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('Over-budget data must be rejected before reading document bodies or dumping')
+
+    monkeypatch.setattr(documents, 'validate_document_integrity', forbidden)
+    monkeypatch.setattr(checkpoint, '_pg', forbidden)
+    with pytest.raises(BackupRejected):
+        checkpoint.create()
+    assert not (checkpoint.runtime.root / 'backups').exists()
+    with owner.transaction(read_only=True) as connection:
+        assert connection.execute(text('SELECT count(*) FROM class_os.working_document_revision')).scalar_one() == 90
 
 
 @pytest.mark.parametrize('profile,kind,rows,size', [
