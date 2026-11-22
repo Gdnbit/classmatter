@@ -49,6 +49,9 @@ try {
     await expect(composer).toHaveAttribute('data-chat-fresh', 'true');
     await expect(button).toBeEnabled();
     assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals);
+    // Finish the first scenario before simulating the next pointer gesture.
+    // Removing its stale alert during the click would move the conversation.
+    await expect(page.getByRole('button', { name: '关闭错误', exact: true })).toBeHidden();
   }
   async function previewDuringForegroundRead(card) {
     const button = card.getByRole('button', { name: '预览这项操作', exact: true });
@@ -59,16 +62,27 @@ try {
       const response = await route.fetch(); assert.equal(response.status(), 200);
       held = true; await barrier; await route.fulfill({ response });
     })(); return delivered; };
-    // The foreground controller coalesces events for at most five seconds.
-    // Make a real revalidation overlap pointer down/up without a new timeout.
-    await page.waitForTimeout(5100);
-    await page.route(historyPath, holdRead);
+    // Hold the first response across the click. A later authoritative read
+    // may supersede that view and must be allowed to finish.
+    await button.scrollIntoViewIfNeeded();
+    const bounds = await button.boundingBox();
+    assert(bounds);
+    const pointer = { x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2 };
+    await page.mouse.move(pointer.x, pointer.y);
+    await page.route(historyPath, holdRead, { times: 1 });
     await button.evaluate(node => node.addEventListener('pointerdown', () => window.dispatchEvent(new Event('focus')), { once: true }));
+    const proposals = writes.filter(url => url.endsWith('/proposal')).length;
     try {
-      await button.click({ delay: 600 });
-      await expect.poll(() => held).toBe(true);
+      await page.mouse.down();
+      await expect.poll(() => held, { timeout: 12000 }).toBe(true);
+      await expect(button).toBeEnabled();
+      assert(await button.evaluate((element, { x, y }) => element.contains(document.elementFromPoint(x, y)), pointer),
+        'Background reading must keep the preview button under the pointer');
+      await page.mouse.up();
+      await expect.poll(() => writes.filter(url => url.endsWith('/proposal')).length).toBe(proposals + 1);
       await page.getByRole('dialog', { name: '确认这次变更', exact: true }).waitFor();
       await expect(page.getByRole('dialog').getByRole('alert')).toHaveCount(0);
+      assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals + 1);
     } finally { release(); await delivered; await page.unroute(historyPath, holdRead); }
   }
   for (const title of ['建立考试', '记录成绩', '建立座位表', '安排座位', '安排座位', '交换座位']) {

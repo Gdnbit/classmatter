@@ -65,7 +65,9 @@ function SavedDocumentExports({ turn, context }: { turn: ChatTurn; context: Docu
   return <DocumentExportActions value={{ document_id: candidate.document_id, title: candidate.title, version: receipt.version }}
     api={documentClient(context.session, candidate)} enabled={true} unsaved={false} onError={context.onError} />
 }
-export function WorkspaceChatHistory({ state: s, documentExports }: { state: WorkspaceChatController; documentExports?: DocumentExports }) {
+export function WorkspaceChatHistory({ state: s, documentExports, onRetry }: {
+  state: WorkspaceChatController; documentExports?: DocumentExports; onRetry: () => void
+}) {
   return <section aria-label="已保存的对话">
     {s.history?.thread.status === "cleared" && <p>此对话已清空</p>}
     {documentExports && s.history?.thread.status === 'active' && <CollaborationThread key={`${documentExports.session.csrf_token}:${s.history.thread.thread_id}`} session={documentExports.session} thread={s.history.thread.thread_id} />}
@@ -96,7 +98,7 @@ export function WorkspaceChatHistory({ state: s, documentExports }: { state: Wor
         <p className="r1-muted" role="status">{states.running}</p></>}
     </div>
     {/* Normal progress belongs to the turn; only stale reads need a recovery action. */}
-    {s.status && !s.fresh && !s.working && !s.pendingSend && <div role="status" className="r1-toolbar"><span>暂时无法更新对话</span><button onClick={s.refresh}>重试</button></div>}
+    {s.status && !s.fresh && !s.working && !s.pendingSend && <div role="status" className="r1-toolbar"><span>暂时无法更新对话</span><button onClick={onRetry}>重试</button></div>}
     {s.pendingSend && <button disabled={s.working} onClick={() => void s.recoverSend()}>恢复消息</button>}
   </section>
 }

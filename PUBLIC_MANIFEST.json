@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "4ab5582bc0b60e046919f8dacdc13d4aad82643cf3875fd4539bffadcbfe3f59"
+      "sha256": "bb20ebe3a20aa9db0acf0cee38866bc007dd7e2d2d62ea0e615f17617f3e9a05"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -855,7 +855,7 @@
       "sha256": "a1eefaa3a1085e59a7857ab3d485491c465f9db63de095c9b7ac0f8408001b5c"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "c3040913d6a55e920b23aecb271c9f655c6b6312f3a39491c998c1596b2f01b3"
+      "sha256": "99b9ba9bd4314a2add8beb43c720f265208495e98e1890496d886ebbc90f0cec"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "2bccc19ae001e98e669f3bbb7b6f3cd2b968893b2d85e27544e0ef6caca80fbe"
@@ -3017,7 +3017,7 @@
       "sha256": "e4ca815d5374668a110fdfea11e902b1caa5e60c8e8adee5b71cce92a93fc94d"
     },
     "apps/web/src/runtime/WorkspaceChat.tsx": {
-      "sha256": "ebd4338cea2a2d1f0a4faa4ee3e0fc1dff15440aa309f8c4efbe75f3864ae311"
+      "sha256": "4a3b6a719f519838caecb4c24f7ff1c118535924213fdc5ef8207c3e1d598cfe"
     },
     "apps/web/src/runtime/useWorkspaceChat.ts": {
       "sha256": "ef466b45b12d20b6aa5967ac4c40537377e61e1fc70e03bcdee37ba212df75c5"
@@ -3170,7 +3170,7 @@
       "sha256": "85cca2acddaadd29aca547380b0bf0475fb16565b1c71029081e57affb8efbb2"
     },
     "apps/web/tests/classroom-work-browser.mjs": {
-      "sha256": "892ccc840697adcb2493b9e51fc780a3f590b894c501de09edcc4096b8c2a943"
+      "sha256": "f2ffab13142fb119fdb85a5d688e8805cfaee63ac49265f0dbd4cff655820e40"
     },
     "apps/web/tests/classroom-work.mjs": {
       "sha256": "48d744c93faa1feaaa804c598284769118bb46523e2f903125bcb795618549f3"

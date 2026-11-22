@@ -1227,6 +1227,7 @@ export default function R1App() {
               </div>
               </div></div>
               {workspaceMode && (conversationStarted || workspaceConversation.status) && <WorkspaceChatHistory state={workspaceConversation}
+                onRetry={() => { setError(""); workspaceConversation.refresh() }}
                 documentExports={classroomProfile ? { session, onError: fail } : undefined} />}
               {!workspaceMode && durableProfile && <DurableHistory state={durable} canWrite={editable && !busy && !form && !pending}
                 onDraft={title => { setDraftTitle(title); setRecord(null); open("task") }} />}
