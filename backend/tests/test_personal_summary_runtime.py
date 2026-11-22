@@ -117,6 +117,28 @@ GOAL_LABEL = '回执名单'
 GOAL_REPLY = '回执名单是合成甲、合成乙。'
 
 
+def test_goal_draft_attributes_only_the_exact_teacher_reply():
+    from pydantic_ai import ModelRetry
+    from class_os.domain.documents import CreateDocument
+    from class_os.infrastructure.workspace_actions import WorkspaceActionCapture
+
+    class_id, term_id = uuid4(), uuid4()
+    scope = {(class_id, term_id)}
+    material = '合成甲、合成乙。'
+    line = f'老师补充：{GOAL_LABEL}：{material}'
+    capture = WorkspaceActionCapture((), initiative=True, completed_tools=['read_summary_delegation'],
+        complete_record_read_scopes=scope, complete_task_read_scopes=scope,
+        summary_context={'kind': 'goal', 'style': 'standard', 'class_id': class_id, 'term_id': term_id,
+            'deliverable': GOAL_DELIVERABLE, 'required_material': GOAL_LABEL, 'goal_material': material})
+    for body in (line + '已全部交齐。', '材料表写的是' + line, line + '\n' + line + '已全部交齐。'):
+        with pytest.raises(ModelRetry, match='one separate'):
+            capture.propose(CreateDocument(uuid4(), class_id, term_id, GOAL_DELIVERABLE, body))
+        assert capture.proposed is None
+    body = f'## 待核对\n\n{line}'
+    result = capture.propose(CreateDocument(uuid4(), class_id, term_id, GOAL_DELIVERABLE, body))
+    assert result['status'] == 'uncommitted-candidate' and result['command']['body'] == body
+
+
 def goal_factory(request):
     def respond(messages, info):
         if request.text == GOAL_REQUEST:

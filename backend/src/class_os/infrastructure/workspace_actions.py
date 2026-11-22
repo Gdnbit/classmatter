@@ -100,10 +100,13 @@ class WorkspaceActionCapture:
                     'Only done tasks belong under 已完成; only in-progress tasks belong under 进行中. '
                     'Keep not-started/waiting tasks outside these sections and preserve their actual status. No task was changed.')
             requirement = scope['required_material']
-            if goal and (not scope['goal_material'] or 'read_summary_delegation' not in self.completed_tools
-                    or f'老师补充：{requirement}：{scope["goal_material"]}' not in command.body):
-                raise ModelRetry('Read the confirmed goal material. If it is missing, use ask_summary_question. '
-                    'Otherwise preserve the complete answer in a separate “老师补充：材料名：老师原话” line.')
+            if goal:
+                prefix = f'老师补充：{requirement}：'
+                attributed = [line for line in command.body.splitlines() if line.lstrip().startswith(prefix)]
+                if (not scope['goal_material'] or 'read_summary_delegation' not in self.completed_tools
+                        or attributed != [prefix + scope['goal_material']]):
+                    raise ModelRetry('Read the confirmed goal material. If it is missing, use ask_summary_question. '
+                        'Otherwise preserve the complete answer in one separate “老师补充：材料名：老师原话” line.')
             supplied = goal or (requirement and any(re.search(re.escape(requirement) + r'\s*(?:是|为|：|:)', message)
                 for message in self.user_messages))
             if supplied and (requirement not in command.body or '老师补充' not in command.body):
