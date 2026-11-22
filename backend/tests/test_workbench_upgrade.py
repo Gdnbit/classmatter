@@ -108,11 +108,15 @@ def owned_upgrade(tmp_path, request):
         services.worker.commit(*credentials, proposal.proposal_id, uuid4())
         thread = uuid4()
         services.worker.create_conversation(*credentials, classroom.class_id, classroom.term_id, thread, uuid4(), '合成原对话')
-        sdk = DurableChatRuntime(services.worker, services.query, PydanticAgentRuntime(services.query))
+        # Seed preserved history on the actual PG fixture. Its latency is not
+        # an assertion about production model or desktop startup time.
+        model = PydanticAgentRuntime(services.query, timeout=30)
+        sdk = DurableChatRuntime(services.worker, services.query, model)
         async def turn():
             events = [event async for event in sdk.stream(credentials, classroom.class_id, classroom.term_id,
                 thread, uuid4(), '合成升级前消息', 'chat')]
-            assert any(event.type == 'run.completed' for event in events)
+            assert any(event.type == 'run.completed' for event in events), (
+                [event.type for event in events], model.last_failure_type)
         asyncio.run(turn())
         value = Owned(runtime, classroom, student_id, thread, services.owner_id, services.restrictions.workspace_id, password)
         services.close(); services = None

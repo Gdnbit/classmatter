@@ -86,7 +86,15 @@ test('unexpected child death notifies the host without respawning or replaying',
     await assert.rejects(service.start(),/already_started/);
   } finally {await service.stop();}
 });
-for(const mode of ['wrong','not-ready','oversize','exit']) test(`startup ${mode} fails closed and stops only its child`,async()=>{
+test('owned readiness may take longer than a proof while staying inside the startup deadline',async()=>{
+  const {service}=await fixture('delayed-ready');
+  try {
+    assert.equal(await service.start(),service.origin);
+    assert.equal(service.state,'ready');
+  } finally {await service.stop();}
+});
+
+for(const mode of ['wrong','wrong-after-ready','not-ready','oversize','exit']) test(`startup ${mode} fails closed and stops only its child`,async()=>{
   const {service,child}=await fixture(mode);
   await assert.rejects(service.start(),/Desktop service unavailable/);
   assert.equal(service.state,'stopped');

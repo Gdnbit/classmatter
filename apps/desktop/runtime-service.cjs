@@ -75,18 +75,24 @@ class OwnedService {
         else if (this.state === 'starting') this.state = 'failed';
       });
       const deadline = performance.now() + this.timeout;
-      const budget=()=>{
+      const budget=(limit=500)=>{
         const remaining=deadline-performance.now();
         if(remaining<=0)throw new Error('service_start_failed');
-        return Math.min(500,remaining);
+        return Math.min(limit,remaining);
+      };
+      const verifyOwnership=async()=>{
+        const challenge = randomBytes(32).toString('hex');
+        const proof = await readJSON(this.origin, '/health/desktop', {'x-classmatter-challenge': challenge},budget());
+        if (!validProof(proof, key, challenge)) throw new Error('service_identity_mismatch');
       };
       while (performance.now() < deadline && this.state === 'starting') {
         try {
-          const challenge = randomBytes(32).toString('hex');
-          const proof = await readJSON(this.origin, '/health/desktop', {'x-classmatter-challenge': challenge},budget());
-          if (!validProof(proof, key, challenge)) throw new Error('service_identity_mismatch');
-          const ready = await readJSON(this.origin, '/health/ready',{},budget());
+          await verifyOwnership();
+          // Schema and restriction checks can take longer than a lightweight
+          // challenge. Allow the authenticated service the remaining budget.
+          const ready = await readJSON(this.origin, '/health/ready',{},budget(this.timeout));
           if (ready.schema_version !== 'class-os.health.v1' || ready.mode !== 'synthetic-development' || ready.service !== 'class-os-api' || ready.status !== 'ready' || ['database','identity','business_gateways'].some(name => ready.components?.[name] !== 'connected')) throw new Error('service_not_ready');
+          await verifyOwnership();
           if (performance.now() >= deadline || this.state !== 'starting' || this.child.exitCode !== null || this.child.signalCode !== null) throw new Error('service_exited');
           this.state = 'ready';
           return this.origin;

@@ -87,9 +87,15 @@ class LocalRuntime:
     def run(self, binary, *arguments, input=None):
         config = self.configuration()
         path = Path(config["pg_bin"]) / (binary + ".exe")
-        result = subprocess.run([str(path), *map(str, arguments)], input=input,
-                                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                timeout=45, creationflags=subprocess.CREATE_NO_WINDOW)
+        # Fresh Windows catalog creation and the initial disk sync can exceed
+        # the steady-state lifecycle deadline, especially with a cold cache.
+        timeout = 150 if binary == "initdb" else 45
+        try:
+            result = subprocess.run([str(path), *map(str, arguments)], input=input,
+                                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                                    timeout=timeout, creationflags=subprocess.CREATE_NO_WINDOW)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError(f"Local PostgreSQL {binary} timed out after {timeout}s; no automatic reset attempted") from None
         if result.returncode:
             raise RuntimeError(f"Local PostgreSQL {binary} failed; no automatic reset attempted")
 
@@ -136,7 +142,7 @@ class LocalRuntime:
             encoding="utf-8")
         self.start()
         try:
-            with self.admin() as connection:
+            with self.admin(initializing=True) as connection:
                 for role in ROLES[1:]:
                     connection.execute(sql.SQL("CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE PASSWORD {}")
                                        .format(sql.Identifier("class_os_" + role), sql.Literal(self.password(role))))
@@ -148,11 +154,11 @@ class LocalRuntime:
         finally:
             self.stop()
 
-    def admin(self):
+    def admin(self, *, initializing=False):
         config = self.configuration()
         return psycopg.connect(host="127.0.0.1", port=config["port"], user="class_os_local_root",
                                password=self.password("root"), dbname="postgres", autocommit=True,
-                               connect_timeout=3)
+                               connect_timeout=10 if initializing else 3)
 
     def start(self):
         config = self.configuration()
