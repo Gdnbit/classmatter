@@ -192,9 +192,14 @@ def test_d4_native_chat_grades_seats_survive_application_restart(owned_upgrade):
     assert built.returncode == 0, built.stdout + built.stderr
     with socket.socket() as probe:
         probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
-    result = subprocess.run(['node', 'tests/workspace-chat-integration.cjs'], cwd=desktop,
-        env=dict(os.environ, CLASSMATTER_TEST_RUNTIME_ROOT=str(current.root), CLASSMATTER_TEST_SERVICE_PORT=str(port), CLASSMATTER_TEST_PROFILE='classroom-work-d4'),
-        capture_output=True, text=True, encoding='utf-8', timeout=180, creationflags=flags)
+    try:
+        result = subprocess.run(['node', 'tests/workspace-chat-integration.cjs'], cwd=desktop,
+            env=dict(os.environ, CLASSMATTER_TEST_RUNTIME_ROOT=str(current.root), CLASSMATTER_TEST_SERVICE_PORT=str(port), CLASSMATTER_TEST_PROFILE='classroom-work-d4'),
+            capture_output=True, text=True, encoding='utf-8', timeout=300, creationflags=flags)
+    except subprocess.TimeoutExpired as error:
+        output = [value.decode('utf-8', errors='replace') if isinstance(value, bytes) else value
+                  for value in (error.stdout, error.stderr) if value]
+        pytest.fail('Native journey exceeded its total deadline.\n' + '\n'.join(output), pytrace=False)
     assert result.returncode == 0, result.stdout + result.stderr
 
 

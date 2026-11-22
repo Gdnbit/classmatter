@@ -3,6 +3,7 @@ import os
 import json
 from pathlib import Path
 import secrets
+import subprocess
 
 import httpx
 import pytest
@@ -54,6 +55,40 @@ def test_runtime_descriptor_never_reinterprets_another_profile(tmp_path, profile
     if profile == "conversation-d1":
         with pytest.raises(ValueError):
             compose(Settings(), runtime)
+
+
+@pytest.mark.parametrize(("binary", "timeout"), [("initdb", 150), ("postgres", 45), ("pg_ctl", 45)])
+def test_owned_pg_timeout_identifies_stage_and_preserves_the_root(tmp_path, monkeypatch, binary, timeout):
+    from class_os.infrastructure import local_runtime
+
+    runtime = LocalRuntime(tmp_path)
+    marker = tmp_path / "preserve"
+    marker.write_bytes(b"existing fixture")
+    monkeypatch.setattr(runtime, "configuration", lambda: {"pg_bin": str(tmp_path)})
+    monkeypatch.setattr(local_runtime.subprocess, "CREATE_NO_WINDOW", 0, raising=False)
+    calls = []
+
+    def expires(args, **options):
+        calls.append(options["timeout"])
+        assert "--no-sync" not in args
+        raise subprocess.TimeoutExpired(args, options["timeout"])
+
+    monkeypatch.setattr(local_runtime.subprocess, "run", expires)
+    with pytest.raises(RuntimeError, match=rf"{binary} timed out after {timeout}s"):
+        runtime.run(binary, "-D", runtime.cluster)
+    assert calls == [timeout]
+    assert marker.read_bytes() == b"existing fixture"
+
+
+def test_initial_admin_connection_has_its_own_bounded_deadline(tmp_path, monkeypatch):
+    from class_os.infrastructure import local_runtime
+
+    runtime = LocalRuntime(tmp_path)
+    monkeypatch.setattr(runtime, "configuration", lambda: {"port": 5555})
+    monkeypatch.setattr(runtime, "password", lambda role: "disposable fixture password")
+    monkeypatch.setattr(local_runtime.psycopg, "connect", lambda **options: options["connect_timeout"])
+    assert runtime.admin() == 3
+    assert runtime.admin(initializing=True) == 10
 
 
 @pytest.mark.db

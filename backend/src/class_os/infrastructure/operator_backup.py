@@ -32,8 +32,14 @@ CATALOG_LIMIT = 128
 CATALOG_BYTES = 64 * MIB
 D4_KIND_V1 = 'classmatter.owned-classroom-work-backup.v1'
 D4_KIND_V2 = 'classmatter.owned-classroom-work-backup.v2'
-# Version the D4 row budget; v1 and every byte/physical/archive bound stay fixed.
-D4_MAX_ROWS = 50000
+D4_KIND_V3 = 'classmatter.owned-classroom-work-backup.v3'
+LEGACY_INVENTORY_LIMITS = (10_000, 12 * MIB)
+# Preserve the bounds of existing packets when checking an older restore.
+D4_INVENTORY_LIMITS = {
+    D4_KIND_V1: LEGACY_INVENTORY_LIMITS,
+    D4_KIND_V2: (50_000, 12 * MIB),
+    D4_KIND_V3: (50_000, 20 * MIB),
+}
 
 
 class BackupRejected(Exception):
@@ -81,7 +87,8 @@ class SyntheticBackup:
                      "conversation-d1": "classmatter.owned-conversation-backup.v1",
                      "workbench-d2": "classmatter.owned-workbench-backup.v1",
                      "workspace-chat-d3": "classmatter.owned-workspace-chat-backup.v1",
-                     "classroom-work-d4": D4_KIND_V2}[profile]
+                     "classroom-work-d4": D4_KIND_V3}[profile]
+        self.accepted_kinds = tuple(D4_INVENTORY_LIMITS) if profile == 'classroom-work-d4' else (self.kind,)
         self.runtime, self.codec = runtime, codec
 
     def _binding(self):
@@ -153,8 +160,8 @@ class SyntheticBackup:
         except Exception:
             raise BackupRejected() from None
 
-    @staticmethod
-    def _state(connection, *, profile="r1", legacy_classroom=False, checkpoint_revision=None):
+    @classmethod
+    def _state(cls, connection, *, profile="r1", legacy_classroom=False, checkpoint_revision=None, inventory_kind=None):
         head, _ = schema_profile(profile)
         if legacy_classroom:
             if profile != 'classroom-work-d4':
@@ -171,6 +178,9 @@ class SyntheticBackup:
                 or connection.execute(text("SELECT data_mode FROM class_os.database_state WHERE singleton=true")).scalar_one() != "synthetic-only"):
             raise BackupRejected()
         validate_role_guards(connection, profile=profile, legacy_classroom=legacy_classroom, prior_summary=prior_summary, prior_builtin=prior_builtin)
+        # Bound the registered rows and bytes before semantic checks load
+        # document and conversation contents into the operator process.
+        inventory = cls._inventory(connection, profile=profile, kind=inventory_kind) if inventory_kind else None
         if profile != "r1":
             from .conversation_integrity import validate_conversation_integrity
             validate_conversation_integrity(connection)
@@ -191,10 +201,15 @@ class SyntheticBackup:
             if head == '0034':
                 from .collaboration_store import validate_collaboration_integrity
                 validate_collaboration_integrity(connection)
+        return inventory
 
     @staticmethod
-    def _inventory(connection, *, profile="r1"):
+    def _inventory(connection, *, profile="r1", kind=None):
         result, total = {}, 0
+        max_rows, max_bytes = (
+            D4_INVENTORY_LIMITS[kind or D4_KIND_V3]
+            if profile == 'classroom-work-d4' else LEGACY_INVENTORY_LIMITS
+        )
         _, tables = schema_profile(profile)
         if profile == 'classroom-work-d4' and connection.execute(text(
                 'SELECT version_num FROM class_os.alembic_version')).scalar_one() in ('0029','0030','0031','0032','0033'):
@@ -210,7 +225,7 @@ class SyntheticBackup:
             # Closed source registry, never a caller/model-selected identifier.
             rows, size = connection.execute(text(f"SELECT count(*),coalesce(sum(octet_length(to_jsonb(t)::text)),0) FROM class_os.{table} t")).one()
             total += size
-            if rows > (D4_MAX_ROWS if profile == 'classroom-work-d4' else 10000) or total > 12 * MIB:
+            if rows > max_rows or total > max_bytes:
                 raise BackupRejected()
             # A D3 component check during D4 upgrade must retain its exact
             # historical projection, excluding the D4-only presentation column.
@@ -251,15 +266,13 @@ class SyntheticBackup:
                 connection.exec_driver_sql("SET TRANSACTION ISOLATION LEVEL REPEATABLE READ")
                 if not connection.execute(text("SELECT pg_try_advisory_xact_lock_shared(607103003)")).scalar_one():
                     raise BackupRejected()
-                self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom, checkpoint_revision=self.checkpoint_revision)
                 if connection.execute(text("SELECT pg_database_size(current_database())")).scalar_one() > 32 * MIB:
                     raise BackupRejected()
+                inventory = self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom,
+                                        checkpoint_revision=self.checkpoint_revision, inventory_kind=self.kind)
                 snapshot = connection.execute(text("SELECT pg_export_snapshot()")).scalar_one()
                 if not re.fullmatch(r"[0-9A-Fa-f-]{1,80}", snapshot):
                     raise BackupRejected()
-                # Bound logical data before a subprocess captures the archive;
-                # a physically small TOAST-compressed DB may expand substantially.
-                inventory = self._inventory(connection, profile=self.profile)
                 archive = self._pg("pg_dump", database.engine.url.database, "--format=custom", "--no-large-objects", f"--snapshot={snapshot}")
                 if not archive.startswith(b"PGDMP") or len(archive) > ARCHIVE_LIMIT:
                     raise BackupRejected()
@@ -301,7 +314,7 @@ class SyntheticBackup:
             if self.profile != "r1":
                 fields |= {"schema_profile", "activation_allowed"}
             if (type(packet) is not dict or set(packet) != fields
-                    or packet["kind"] not in ((self.kind, D4_KIND_V1) if self.profile == 'classroom-work-d4' else (self.kind,))
+                    or packet["kind"] not in self.accepted_kinds
                     or packet["id"] != str(artifact)
                     or packet["head"] != self.head or packet["binding"] != self._binding()
                     or (self.profile != "r1" and (packet["schema_profile"] != self.profile or packet["activation_allowed"] is not False))
@@ -310,9 +323,10 @@ class SyntheticBackup:
                     or type(packet["archive"]) is not str or len(packet["archive"]) > 24 * MIB
                     or type(packet["inventory"]) is not dict or set(packet["inventory"]) != self.tables):
                 raise BackupRejected()
+            max_rows, _ = D4_INVENTORY_LIMITS.get(packet['kind'], LEGACY_INVENTORY_LIMITS)
             for value in packet["inventory"].values():
                 if (type(value) is not dict or set(value) != {"rows", "sha256"} or type(value["rows"]) is not int
-                        or not 0 <= value["rows"] <= (D4_MAX_ROWS if packet['kind'] == D4_KIND_V2 else 10000)
+                        or not 0 <= value["rows"] <= max_rows
                         or type(value["sha256"]) is not str or not re.fullmatch(r"[0-9a-f]{64}", value["sha256"])):
                     raise BackupRejected()
             archive = base64.b64decode(packet["archive"], validate=True)
@@ -369,8 +383,9 @@ class SyntheticBackup:
             restored = Database(database.engine.url.set(database=temporary), migration=True, profile=self.profile)
             try:
                 with restored.transaction(read_only=True) as connection:
-                    self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom, checkpoint_revision=self.checkpoint_revision)
-                    if self._inventory(connection, profile=self.profile) != packet["inventory"]:
+                    inventory = self._state(connection, profile=self.profile, legacy_classroom=self.legacy_classroom,
+                                            checkpoint_revision=self.checkpoint_revision, inventory_kind=packet["kind"])
+                    if inventory != packet["inventory"]:
                         raise BackupRejected()
                     if current is not None:
                         from .conversation_integrity import validate_restriction_snapshot

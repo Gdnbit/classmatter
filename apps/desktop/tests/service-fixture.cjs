@@ -4,6 +4,7 @@ const { createHmac } = require('node:crypto');
 const [port, mode] = process.argv.slice(2);
 const key = process.env.CLASSMATTER_DESKTOP_PROCESS_KEY;
 if (mode === 'exit') process.exit(2);
+let readinessSent = false;
 const server = http.createServer((request, response) => {
   response.setHeader('Content-Type','application/json');
   function send(value) {
@@ -13,15 +14,20 @@ const server = http.createServer((request, response) => {
       const interval = setInterval(() => response.write(' '), 40);
       const timer = setTimeout(() => { clearInterval(interval); response.end(value); }, 2600);
       response.once('close', () => { clearInterval(interval); clearTimeout(timer); });
+    } else if (mode === 'delayed-ready' && request.url === '/health/ready') {
+      const timer = setTimeout(() => response.end(value), 700);
+      response.once('close', () => clearTimeout(timer));
     } else response.end(value);
   }
   if (mode === 'oversize') { response.end('x'.repeat(4096)); return; }
   if (request.url === '/health/desktop') {
     const challenge = request.headers['x-classmatter-challenge'];
-    const proof = createHmac('sha256',Buffer.from(mode === 'wrong' ? 'ff'.repeat(32) : key,'hex')).update('classmatter.desktop.v1:'+challenge).digest('hex');
+    const wrong = mode === 'wrong' || (mode === 'wrong-after-ready' && readinessSent);
+    const proof = createHmac('sha256',Buffer.from(wrong ? 'ff'.repeat(32) : key,'hex')).update('classmatter.desktop.v1:'+challenge).digest('hex');
     send(JSON.stringify({schema_version:'classmatter.desktop-proof.v1',mode:'synthetic-only',challenge,proof}));
   } else {
     response.statusCode = mode === 'not-ready' ? 503 : 200;
+    readinessSent = true;
     send(JSON.stringify({schema_version:'class-os.health.v1',service:'class-os-api',mode:'synthetic-development',status:'ready',components:{database:'connected',identity:'connected',business_gateways:'connected'}}));
   }
 });
