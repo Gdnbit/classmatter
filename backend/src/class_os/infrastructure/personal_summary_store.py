@@ -5,7 +5,8 @@ from uuid import uuid5
 from sqlalchemy import text
 
 from class_os.application.roster import CommandRejected
-from class_os.domain.personal_summary import SummaryDelegation, TITLE, SUMMARY_TITLE, INITIATIVE_REQUEST, source_basis
+from class_os.domain.personal_summary import (GOAL_RETRY_ACK, GOAL_TITLE, INITIATIVE_REQUEST, SUMMARY_TITLE, TITLE, SummaryDelegation,
+    goal_material_reply, goal_recovery_basis, source_basis)
 from .classroom_work import ClassroomTransaction
 
 
@@ -15,24 +16,82 @@ class PersonalSummaryTransaction(ClassroomTransaction):
                         and row['version'] == initiative['document_version']), None)
         if program is None:
             raise CommandRejected()
+        if program.get('kind') == 'goal':
+            _, program['goal_material'] = self._goal_material(binding, program)
+            program['goal_retry'] = self._goal_retry(binding, program)
         try:
             basis, _ = source_basis(program, self.activity(binding['workspace_id'], program['class_id'], program['term_id'], now))
         except ValueError:
             raise CommandRejected() from None
-        if basis != initiative['basis_hash']:
+        if basis != initiative['basis_hash'] and not (program.get('kind') == 'goal'
+                and goal_recovery_basis(basis) == initiative['basis_hash']):
             raise CommandRejected()
+        return program
+
+    def _goal_material(self, binding, program, *, before=None):
+        keys = {**binding, 'document': program['document_id'], 'version': program['version'],
+                'thread': program['thread_id'], 'label': program['required_material'], 'before': before}
+        ordinal = self._connection.execute(text('''SELECT max(q.ordinal) FROM class_os.personal_summary_attempt p
+            JOIN class_os.workspace_chat_turn q ON q.workspace_id=p.workspace_id AND q.thread_id=p.thread_id
+              AND q.request_id=p.waiting_request_id
+            WHERE p.workspace_id=:workspace_id AND p.owner_id=:actor_id AND p.document_id=:document
+              AND p.document_version=:version AND p.thread_id=:thread AND p.answer_required AND q.state='completed'
+              AND (CAST(:before AS integer) IS NULL OR q.ordinal<:before)'''), keys).scalar_one()
+        if ordinal is None:
+            return False, ''
+        replies = self._connection.execute(text('''SELECT t.user_text FROM class_os.workspace_chat_turn t
+            WHERE t.workspace_id=:workspace_id AND t.thread_id=:thread AND t.ordinal>:ordinal AND t.state='completed'
+              AND left(t.user_text,char_length(:label))=:label
+              AND (CAST(:before AS integer) IS NULL OR t.ordinal<:before)
+            ORDER BY t.ordinal DESC LIMIT 20'''), {**keys, 'ordinal': ordinal}).scalars()
+        return True, next((answer for reply in replies if (answer := goal_material_reply(reply, keys['label']))), '')
+
+    def _goal_delivered(self, binding, program):
+        latest = self._connection.execute(text('''SELECT t.candidate,t.candidate_hash FROM class_os.personal_summary_attempt p
+            JOIN class_os.workspace_chat_turn t USING(workspace_id,thread_id,request_id)
+            WHERE p.workspace_id=:workspace_id AND p.owner_id=:actor_id AND p.document_id=:document
+              AND p.document_version=:version AND p.thread_id=:thread AND t.state='completed'
+              AND t.candidate->>'command'='document.create' AND t.candidate->>'title'=:title
+            ORDER BY t.ordinal DESC LIMIT 1'''), {**binding, 'document': program['document_id'], 'version': program['version'],
+            'thread': program['thread_id'], 'title': program['deliverable']}).mappings().one_or_none()
+        return latest is not None and self.chat_action_receipt(binding, latest) is not None
+
+    def _goal_retry(self, binding, program):
+        retry = self._connection.execute(text('''SELECT request_id FROM class_os.workspace_chat_turn
+            WHERE workspace_id=:workspace_id AND thread_id=:thread AND ordinal>:ordinal AND state='completed'
+              AND user_text='继续整理班级工作小结。' AND assistant_text=:ack
+            ORDER BY ordinal DESC LIMIT 1'''), {**binding, 'thread': program['thread_id'],
+            'ordinal': program['confirmed_ordinal'], 'ack': GOAL_RETRY_ACK}).scalar_one_or_none()
+        return str(retry) if retry else ''
+
+    def _document_title_exists(self, binding, class_id, term_id, title):
+        return self._connection.execute(text('''SELECT EXISTS(
+            SELECT 1 FROM class_os.working_document d JOIN class_os.working_document_revision r
+            USING(workspace_id,document_id,version,status)
+            WHERE d.workspace_id=:workspace_id AND d.class_id=:class AND d.term_id=:term AND r.title=:title)'''),
+            {**binding, 'class': class_id, 'term': term_id, 'title': title}).scalar_one()
 
     def validate_document(self, binding, command, now):
         result = super().validate_document(binding, command, now)
         from class_os.domain.workspace_chat import candidate_hash
-        if command.canonical().get('command') in ('document.create', 'document.revise'):
+        payload = command.canonical()
+        if payload.get('command') in ('document.create', 'document.revise'):
+            digest = candidate_hash(payload)
+            if payload['command'] == 'document.create' and payload['title'] == GOAL_TITLE and self._document_title_exists(
+                    binding, command.class_id, command.term_id, GOAL_TITLE):
+                raise CommandRejected()
             matches = self._connection.execute(text('''SELECT p.* FROM class_os.personal_summary_attempt p
                 JOIN class_os.workspace_chat_turn t USING(workspace_id,thread_id,request_id)
                 WHERE p.workspace_id=:workspace_id AND p.owner_id=:actor_id AND t.candidate_hash=:hash
                 ORDER BY p.created_at DESC LIMIT 1'''),
-                {**binding, 'hash': candidate_hash(command.canonical())}).mappings().one_or_none()
+                 {**binding, 'hash': digest}).mappings().one_or_none()
             if matches:
-                self._current_basis(binding, matches, now)
+                program = self._current_basis(binding, matches, now)
+                if program.get('kind') == 'goal' and (payload['command'] != 'document.create'
+                        or payload['title'] != program['deliverable'] or not program['goal_material']
+                        or self._goal_delivered(binding, program)
+                        or self._document_title_exists(binding, program['class_id'], program['term_id'], program['deliverable'])):
+                    raise CommandRejected()
         return result
 
     def _initiative(self, binding, thread_id, request_id):
@@ -78,7 +137,9 @@ class PersonalSummaryTransaction(ClassroomTransaction):
             if not latest:
                 continue
             pending = latest['state'] == 'completed' and latest['candidate'] is not None and self.chat_action_receipt(binding, latest) is None
-            if latest['answer_required'] and latest['question_state'] == 'completed':
+            if latest['answer_required'] and latest['question_state'] == 'completed' and program.get('kind') == 'goal':
+                pending = pending or not self._goal_material(binding, program)[1]
+            elif latest['answer_required'] and latest['question_state'] == 'completed':
                 answered = self._connection.execute(text('''SELECT EXISTS(SELECT 1 FROM class_os.workspace_chat_turn t
                     WHERE t.workspace_id=:workspace_id AND t.thread_id=:thread AND t.ordinal>:ordinal AND t.state='completed'
                     AND t.candidate->>'title'=:summary_title AND t.candidate->>'command' IN ('document.create','document.revise')
@@ -92,13 +153,15 @@ class PersonalSummaryTransaction(ClassroomTransaction):
             row['summary_attention'] = row['thread_id'] in attention
 
     def summary_programs(self, binding, *, include_paused=False):
-        rows = self._connection.execute(text('''SELECT d.document_id,d.class_id,d.term_id,d.version,r.body
+        statement = text('''SELECT d.document_id,d.class_id,d.term_id,d.version,r.body,r.title
             FROM class_os.working_document d JOIN class_os.working_document_revision r
             USING(workspace_id,document_id,version,status)
             WHERE d.workspace_id=:workspace_id AND d.owner_id=:actor_id AND d.status='draft' AND r.title=:title
-            ORDER BY d.document_id LIMIT 11'''), {**binding, 'title': TITLE}).mappings().all()
+            ORDER BY d.document_id LIMIT 11''')
+        rows = self._connection.execute(statement, {**binding, 'title': TITLE}).mappings().all()
         if len(rows) > 10:
             raise CommandRejected()
+        rows += self._connection.execute(statement, {**binding, 'title': GOAL_TITLE}).mappings().all()[:10]
         result = []
         for value in rows:
             row = dict(value)
@@ -106,6 +169,9 @@ class PersonalSummaryTransaction(ClassroomTransaction):
                 parsed = SummaryDelegation.parse(row['body'])
             except ValueError:
                 continue  # A similarly named ordinary document is not executable.
+            goal = bool(parsed.deliverable)
+            if goal != (row['title'] == GOAL_TITLE):
+                continue
             context = self.class_context(binding['workspace_id'], row['class_id'], row['term_id'])
             if (parsed.state != 'enabled' and not include_paused) or not context or context['status'] != 'active' or context['term_status'] != 'active':
                 continue
@@ -127,9 +193,11 @@ class PersonalSummaryTransaction(ClassroomTransaction):
                 {**binding, 'document': str(row['document_id']), 'include_inactive': include_paused}).mappings().all()
             for turn in turns:
                 receipt = self.chat_action_receipt(binding, turn)
-                if receipt and receipt['resource_id'] == row['document_id']:
+                if receipt and receipt['resource_id'] == row['document_id'] and (not goal or receipt['version'] == row['version']):
                     row.update(thread_id=turn['thread_id'], chat_status=turn['chat_status'], style=parsed.style, state=parsed.state,
                                required_material=parsed.required_material)
+                    if goal:
+                        row.update(kind='goal', deliverable=parsed.deliverable, confirmed_ordinal=turn['ordinal'])
                     result.append(row)
                     break
         return result
@@ -137,17 +205,31 @@ class PersonalSummaryTransaction(ClassroomTransaction):
     def summary_context(self, binding, thread_id, request_id):
         current = self._chat_turn(binding, thread_id, request_id)
         direct = self._initiative(binding, thread_id, request_id)
+        retry = current['origin'] == 'user' and current['user_text'] == '继续整理班级工作小结。'
+        if direct is None and retry:
+            latest = self._connection.execute(text('''SELECT p.*,t.state FROM class_os.personal_summary_attempt p
+                JOIN class_os.workspace_chat_turn t USING(workspace_id,thread_id,request_id)
+                WHERE p.workspace_id=:workspace_id AND p.owner_id=:actor_id AND p.thread_id=:thread
+                ORDER BY t.ordinal DESC LIMIT 1'''), {**binding, 'thread': thread_id}).mappings().one_or_none()
+            if latest and latest['state'] in ('failed', 'unknown'):
+                for program in self.summary_programs(binding):
+                    if (program.get('kind') == 'goal' and program['document_id'] == latest['document_id']
+                            and program['version'] == latest['document_version'] and not self._goal_delivered(binding, program)):
+                        return {**program, 'goal_receiving': 'retry'}
         if direct is None:
             previous = self._connection.execute(text('''SELECT t.request_id FROM class_os.workspace_chat_turn t
                 JOIN class_os.personal_summary_attempt p ON p.workspace_id=t.workspace_id
                   AND p.thread_id=t.thread_id AND p.waiting_request_id=t.request_id
                 WHERE t.workspace_id=:workspace_id AND t.thread_id=:thread AND t.ordinal<:ordinal
                 AND t.state='completed' AND p.owner_id=:actor_id AND p.answer_required
-                AND NOT EXISTS(SELECT 1 FROM class_os.workspace_chat_turn a WHERE a.workspace_id=t.workspace_id
+                AND (EXISTS(SELECT 1 FROM class_os.working_document_revision r WHERE r.workspace_id=p.workspace_id
+                    AND r.document_id=p.document_id AND r.version=p.document_version AND r.title=:goal_title)
+                  OR NOT EXISTS(SELECT 1 FROM class_os.workspace_chat_turn a WHERE a.workspace_id=t.workspace_id
                   AND a.thread_id=t.thread_id AND a.ordinal>t.ordinal AND a.ordinal<:ordinal AND a.state='completed'
-                  AND a.candidate->>'title'=:summary_title AND a.candidate->>'command' IN ('document.create','document.revise'))
+                  AND a.candidate->>'title'=:summary_title AND a.candidate->>'command' IN ('document.create','document.revise')))
                 ORDER BY t.ordinal DESC LIMIT 1'''),
-                {**binding, 'thread': thread_id, 'ordinal': current['ordinal'], 'summary_title': SUMMARY_TITLE}).scalar_one_or_none()
+                {**binding, 'thread': thread_id, 'ordinal': current['ordinal'], 'summary_title': SUMMARY_TITLE,
+                 'goal_title': GOAL_TITLE}).scalar_one_or_none()
             if previous:
                 direct = self._connection.execute(text('''SELECT * FROM class_os.personal_summary_attempt
                     WHERE workspace_id=:workspace_id AND owner_id=:actor_id AND thread_id=:thread
@@ -164,6 +246,13 @@ class PersonalSummaryTransaction(ClassroomTransaction):
             return None
         for program in self.summary_programs(binding):
             if program['document_id'] == direct['document_id'] and program['version'] == direct['document_version']:
+                if program.get('kind') == 'goal':
+                    if current['origin'] == 'user':
+                        reply = goal_material_reply(current['user_text'], program['required_material'])
+                        if reply and not self._goal_delivered(binding, program) and self._goal_material(binding, program, before=current['ordinal'])[0]:
+                            return {**program, 'goal_receiving': 'material'}
+                        return None
+                    _, program['goal_material'] = self._goal_material(binding, program)
                 return {**program, 'basis_hash': direct['basis_hash'], 'initiative': current['origin'] == 'personal-agent'}
         if current['origin'] == 'user':
             return None  # An old paused question must not block ordinary chat.
@@ -173,8 +262,17 @@ class PersonalSummaryTransaction(ClassroomTransaction):
         program = next((row for row in self.summary_programs(binding) if row['document_id'] == document_id), None)
         if program is None:
             return None
+        goal = program.get('kind') == 'goal'
+        if goal:
+            if self._goal_delivered(binding, program):
+                return None
+            waiting, program['goal_material'] = self._goal_material(binding, program)
+            if waiting and not program['goal_material']:
+                return None
+            program['goal_retry'] = self._goal_retry(binding, program)
         projection = self.activity(binding['workspace_id'], program['class_id'], program['term_id'], now)
         basis, useful = source_basis(program, projection)
+        recovery = goal_recovery_basis(basis) if goal else None
         values = {**binding, 'document': document_id, 'basis': basis, 'thread': program['thread_id'], 'now': now}
         # A queued initiative has not entered the SDK and may safely resume.
         # A running/unknown attempt is never blindly dispatched after a crash.
@@ -185,13 +283,17 @@ class PersonalSummaryTransaction(ClassroomTransaction):
         for row in active:
             previous = self._initiative(binding, row['thread_id'], row['request_id'])
             if row['state'] == 'queued':
-                if previous['basis_hash'] == basis:
+                if previous['basis_hash'] in (basis, recovery):
                     return self._chat_turn(binding, row['thread_id'], row['request_id'])
                 self.chat_cancel(binding, row['thread_id'], row['request_id'], row['version'], now)
             elif now >= row['lease_until']:
                 self.chat_finish(binding, row, 'unknown', None, None, now)
             else:
                 return None
+        if goal and self._connection.execute(text('''SELECT t.state FROM class_os.personal_summary_attempt p
+                JOIN class_os.workspace_chat_turn t USING(workspace_id,thread_id,request_id)
+                WHERE p.workspace_id=:workspace_id AND p.document_id=:document AND p.basis_hash=:basis'''), values).scalar_one_or_none() == 'unknown':
+            basis = values['basis'] = recovery  # At most one automatic recovery for identical persisted sources.
         if not useful or self._connection.execute(text('''SELECT EXISTS(SELECT 1 FROM class_os.personal_summary_attempt
             WHERE workspace_id=:workspace_id AND document_id=:document AND basis_hash=:basis)
             OR EXISTS(SELECT 1 FROM class_os.workspace_chat_turn WHERE workspace_id=:workspace_id
@@ -257,7 +359,8 @@ def validate_summary_integrity(connection):
     for row in rows:
         if row['owner_id'] != row['document_owner'] or row['owner_id'] != row['chat_owner']:
             raise ValueError('Initiative owner mismatch')
-        if row['title'] != TITLE or SummaryDelegation.parse(row['body']).state != 'enabled':
+        delegation = SummaryDelegation.parse(row['body'])
+        if row['title'] != (GOAL_TITLE if delegation.deliverable else TITLE) or delegation.state != 'enabled':
             raise ValueError('Initiative is not rooted in a standing instruction')
         if row['request_id'] != uuid5(row['document_id'], row['basis_hash']):
             raise ValueError('Initiative identity mismatch')

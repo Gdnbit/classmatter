@@ -1,4 +1,5 @@
 """Original UI, actual HTTP/SDK/QG/BCG/PG; no external provider or user data."""
+from contextlib import contextmanager
 from datetime import timedelta
 import os
 from pathlib import Path
@@ -16,7 +17,8 @@ from class_os.domain.personal_summary import SummaryDelegation
 from class_os.interfaces.http.workspace_chat import create_workspace_chat_app
 from class_os.interfaces.http.settings import Settings
 from class_os.interfaces.http.web import mount_web
-from test_personal_summary_runtime import assembly, materials, classroom_work, workspace_chat, roster, identity
+from test_personal_summary_runtime import (GOAL_DELIVERABLE, GOAL_LABEL, GOAL_REPLY, GOAL_REQUEST,
+    assembly, goal_factory, materials, classroom_work, workspace_chat, roster, identity)
 
 
 @pytest.mark.db
@@ -79,3 +81,47 @@ def test_original_ui_proactive_summary_feedback_and_refresh(classroom_work):
     finally:
         server.should_exit = True; thread.join(timeout=12)
         assert not thread.is_alive()
+
+
+@pytest.mark.db
+def test_original_ui_goal_resumes_after_service_restart(classroom_work):
+    business, query, auth, _, clock, _, _, class_id, term_id, _ = classroom_work
+    root = Path(__file__).resolve().parents[2]
+
+    @contextmanager
+    def running_service():
+        _, _, sdk, _, _, _ = assembly(classroom_work)
+        sdk.model_factory = goal_factory
+        with socket.socket() as probe:
+            probe.bind(('127.0.0.1', 0)); port = probe.getsockname()[1]
+        app = create_workspace_chat_app(Settings(port=port), worker=business, query=query, sdk=sdk)
+        app.state.personal_summary.interval = 1
+        mount_web(app, root / 'apps/web/dist')
+        server = uvicorn.Server(uvicorn.Config(app, host='127.0.0.1', port=port, proxy_headers=False,
+            access_log=False, log_level='error', timeout_graceful_shutdown=5))
+        thread = threading.Thread(target=server.run, daemon=True); thread.start()
+        try:
+            deadline = time.monotonic() + 10
+            while not server.started:
+                assert thread.is_alive() and time.monotonic() < deadline
+                time.sleep(.05)
+            yield f'http://127.0.0.1:{port}'
+        finally:
+            server.should_exit = True; thread.join(timeout=12)
+            assert not thread.is_alive() and not app.state.personal_summary.sessions
+
+    for phase in ('start', 'resume'):
+        with running_service() as base:
+            result = subprocess.run(['node', 'tests/personal-goal-browser.mjs'], cwd=root / 'apps/web',
+                env=dict(os.environ, CLASS_OS_TEST_URL=base, CLASS_OS_GOAL_PHASE=phase, CLASS_OS_GOAL_REQUEST=GOAL_REQUEST,
+                    CLASS_OS_GOAL_REPLY=GOAL_REPLY, CLASS_OS_GOAL_DELIVERABLE=GOAL_DELIVERABLE, CLASS_OS_GOAL_LABEL=GOAL_LABEL),
+                capture_output=True, text=True, encoding='utf-8', timeout=105, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            if result.returncode:
+                pytest.fail(result.stdout + result.stderr, pytrace=False)
+        clock[0] += timedelta(minutes=2)
+
+    documents = query.documents(*auth, class_id, term_id)
+    delivered = [row for row in documents if row['title'] == GOAL_DELIVERABLE]
+    assert len(delivered) == 1 and delivered[0]['version'] == 1
+    saved = query.document(*auth, class_id, term_id, delivered[0]['document_id'])
+    assert saved['body'].endswith('老师补充：回执名单：合成甲、合成乙。')
