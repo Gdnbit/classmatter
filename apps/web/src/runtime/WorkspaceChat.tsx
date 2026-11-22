@@ -71,7 +71,6 @@ export function WorkspaceChatHistory({ state: s, documentExports }: { state: Wor
     {documentExports && s.history?.thread.status === 'active' && <CollaborationThread key={`${documentExports.session.csrf_token}:${s.history.thread.thread_id}`} session={documentExports.session} thread={s.history.thread.thread_id} />}
     {s.history?.next_before && <button disabled={s.working} onClick={() => void s.moreHistory()}>加载更早消息</button>}
     <div className="r1-messages">
-      {s.pendingSend && !s.history?.turns.some(turn => turn.request_id === s.pendingSend?.request) && <article className="user" aria-label="你的消息"><p>{s.pendingSend.text}</p></article>}
       {s.history?.turns.filter(turn => !(turn.origin === 'personal-agent' && turn.state === 'completed' && !turn.candidate && !turn.answer_required)).map(turn => <div key={turn.turn_id}>
         {(turn.origin ?? 'user') === 'user' && turn.user_text && <article className="user" aria-label="你的消息"><p>{turn.user_text}</p></article>}
         {turn.assistant_text && <article className="assistant" aria-label="助手回复"><DocumentBody body={turn.assistant_text} format="markdown" /><AnswerActions text={turn.assistant_text} duration={turn.duration_ms} /></article>}
@@ -92,9 +91,12 @@ export function WorkspaceChatHistory({ state: s, documentExports }: { state: Wor
             : <button className="r1-primary" disabled={!s.canAct} onClick={() => void s.preview(turn)}>预览这项操作</button>}
         </section>}
       </div>)}
+      {s.pendingSend && !s.history?.turns.some(turn => turn.request_id === s.pendingSend?.request) && <article className="user" aria-label="你的消息"><p>{s.pendingSend.text}</p></article>}
+      {s.acceptedText && <><article className="user" aria-label="你的消息"><p>{s.acceptedText}</p></article>
+        <p className="r1-muted" role="status">{states.running}</p></>}
     </div>
     {/* Normal progress belongs to the turn; only stale reads need a recovery action. */}
-    {s.history && s.status && !s.fresh && !s.working && !s.pendingSend && <div role="status" className="r1-toolbar"><span>暂时无法更新对话</span><button onClick={s.refresh}>重试</button></div>}
+    {s.status && !s.fresh && !s.working && !s.pendingSend && <div role="status" className="r1-toolbar"><span>暂时无法更新对话</span><button onClick={s.refresh}>重试</button></div>}
     {s.pendingSend && <button disabled={s.working} onClick={() => void s.recoverSend()}>恢复消息</button>}
   </section>
 }

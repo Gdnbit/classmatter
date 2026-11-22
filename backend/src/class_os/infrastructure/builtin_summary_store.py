@@ -180,10 +180,11 @@ class BuiltinSummaryTransaction(PersonalSummaryTransaction):
         return WorkspaceChatTransaction.chat_finish(self, binding, ticket, state, answer, proposed, now,
                                                     duration_ms, input_tokens, output_tokens)
 
-    def chat_list(self, binding, *, offset=0):
-        result = super().chat_list(binding, offset=offset)
-        for program in self.summary_programs(binding):
-            if program.get('kind') != 'builtin':
+    def _project_summary_attention(self, binding, result, programs):
+        super()._project_summary_attention(binding, result, programs)
+        page_threads = {row['thread_id'] for row in result['data']}
+        for program in programs:
+            if program.get('kind') != 'builtin' or program['thread_id'] not in page_threads:
                 continue
             latest = self._connection.execute(text('''SELECT t.* FROM class_os.workspace_chat_turn t
                 WHERE t.workspace_id=:workspace_id AND t.thread_id=:thread AND
@@ -205,7 +206,6 @@ class BuiltinSummaryTransaction(PersonalSummaryTransaction):
             for row in result['data']:
                 if row['thread_id'] == program['thread_id']:
                     row['summary_attention'] = row['summary_attention'] or bool(pending)
-        return result
 
 
 def validate_builtin_summary_integrity(connection):

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { Classroom, Session, Student } from './api'
 import { classroomClient, type ClassroomCommand, type ClassroomPreview, type Exam, type ExamResults, type ScoreStatus, type Seating } from './classroom-work'
 import { R1Dialog } from './R1Dialog'
@@ -10,31 +10,46 @@ const statusNames: Record<ScoreStatus, string> = { scored: '已录入', absent: 
 
 export function GradesWorkspace(p: Props) {
   const [exams, setExams] = useState<Exam[]>([]), [selected, setSelected] = useState(''), [results, setResults] = useState<ExamResults | null>(null)
-  const [loading, setLoading] = useState(true), [truncated, setTruncated] = useState(false), [search, setSearch] = useState('')
+  const [listing, setListing] = useState(true), [readingResults, setReadingResults] = useState(false)
+  const [truncated, setTruncated] = useState(false), [search, setSearch] = useState('')
   const [failed, setFailed] = useState(false)
   const [draft, setDraft] = useState<{ student: Student; version: number; score: string; status: ScoreStatus; reason: string } | null>(null)
   const [previewing, setPreviewing] = useState(false), generation = useRef(0), latest = useRef(p); latest.current = p
+  const listingPending = useRef(true)
   const api = classroomClient(p.session, p.classroom)
+  const examId = exams.some(exam => exam.exam_id === selected) ? selected : exams[0]?.exam_id || ''
+  const loading = listing || readingResults || !!examId && !failed && results?.exam_id !== examId
+  const scores = useMemo(() => new Map(results?.results.map(row => [row.student_id, row])), [results])
+  useEffect(() => () => { generation.current++ }, [])
   useEffect(() => { setDraft(null) }, [p.revision])
   useEffect(() => { p.onDirty(!!draft); return () => p.onDirty(false) }, [!!draft, p.onDirty])
   useEffect(() => {
     if (draft) return
+    const controller = new AbortController()
+    listingPending.current = true
+    setListing(true); setFailed(false); setResults(null)
+    void api.exams(controller.signal).then(value => {
+      if (controller.signal.aborted) return
+      setExams(value.exams); setTruncated(value.truncated)
+      setSelected(previous => value.exams.some(exam => exam.exam_id === previous) ? previous : '')
+    }).catch(error => {
+      if (!controller.signal.aborted) { setExams([]); setFailed(true); latest.current.onError(error) }
+    }).finally(() => {
+      if (!controller.signal.aborted) { listingPending.current = false; setListing(false) }
+    })
+    return () => controller.abort()
+  }, [p.revision, p.refreshSignal, !!draft, p.session.csrf_token, p.classroom.class_id, p.classroom.term_id])
+  useEffect(() => {
+    if (draft || listing || listingPending.current || !examId) { setReadingResults(false); return }
     const controller = new AbortController(), current = ++generation.current
-    setLoading(true); setFailed(false); setResults(null)
-    void (async () => {
-      const listing = await api.exams(controller.signal)
-      if (current !== generation.current) return
-      setExams(listing.exams); setTruncated(listing.truncated)
-      const id = listing.exams.some(exam => exam.exam_id === selected) ? selected : listing.exams[0]?.exam_id || ''
-      if (id !== selected) { setSelected(id); return }
-      if (id) {
-        const value = await api.results(id, controller.signal)
-        if (current === generation.current) setResults(value)
-      }
-    })().catch(error => { if (!controller.signal.aborted && current === generation.current) { setFailed(true); latest.current.onError(error) } })
-      .finally(() => { if (!controller.signal.aborted && current === generation.current) setLoading(false) })
-    return () => { generation.current++; controller.abort() }
-  }, [selected, p.revision, p.refreshSignal, !!draft, p.session.csrf_token, p.classroom.class_id, p.classroom.term_id])
+    setReadingResults(true); setFailed(false)
+    void api.results(examId, controller.signal).then(value => {
+      if (!controller.signal.aborted) setResults(value)
+    }).catch(error => {
+      if (!controller.signal.aborted) { setFailed(true); latest.current.onError(error) }
+    }).finally(() => { if (!controller.signal.aborted) setReadingResults(false) })
+    return () => { if (generation.current === current) generation.current++; controller.abort() }
+  }, [examId, listing, !!draft, p.session.csrf_token, p.classroom.class_id, p.classroom.term_id])
   async function preview() {
     if (!draft || !results || !p.canWrite || loading || previewing) return
     const current = generation.current
@@ -48,9 +63,9 @@ export function GradesWorkspace(p: Props) {
     finally { if (current === generation.current) setPreviewing(false) }
   }
   return <section className="classroom-grades" aria-label="成绩表格">
-    <div className="surface-title"><div><h1>成绩</h1>{results && <p>{results.title} · {results.subject} · 满分 {results.maximum_score}</p>}</div></div>
+    <div className="surface-title"><div><h1>成绩</h1>{!loading && !failed && results && <p>{results.title} · {results.subject} · 满分 {results.maximum_score}</p>}</div></div>
     <div className="r1-toolbar">
-      <select aria-label="选择考试" value={selected} disabled={!!draft || previewing} onChange={event => setSelected(event.target.value)}>
+      <select aria-label="选择考试" value={examId} disabled={!!draft || previewing || listing} onChange={event => { setFailed(false); setResults(null); setSelected(event.target.value) }}>
         {!exams.length && <option value="">暂无考试</option>}{exams.map(exam => <option key={exam.exam_id} value={exam.exam_id}>{exam.title} · {exam.subject}</option>)}
       </select>
       <input aria-label="搜索成绩中的学生" placeholder="搜索学生" value={search} onChange={event => setSearch(event.target.value)} />
@@ -61,7 +76,7 @@ export function GradesWorkspace(p: Props) {
       <div className="sheet-grid" role="table" aria-label="学生成绩">
         <div className="sheet-row" role="row" style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>{['姓名', '成绩', '状态', '操作'].map(label => <span role="columnheader" key={label}>{label}</span>)}</div>
         {p.students.filter(student => !search || student.name.includes(search)).map(student => {
-          const result = results.results.find(row => row.student_id === student.student_id)
+          const result = scores.get(student.student_id)
           return <div className="sheet-row" role="row" key={student.student_id} style={{ gridTemplateColumns: '2fr 1fr 1fr 1fr' }}>
             <span role="cell">{student.name}</span><span role="cell">{result?.score ?? '—'}</span>
             <span role="cell">{statusNames[result?.status ?? 'not-recorded']}</span>
@@ -88,7 +103,13 @@ export function SeatingWorkspace(p: Props) {
   const [failed, setFailed] = useState(false)
   const [selected, setSelected] = useState<{row: number; column: number} | null>(null), [assigning, setAssigning] = useState(''), [previewing, setPreviewing] = useState(false)
   const drag = useRef<{row: number; column: number; version: number} | null>(null), generation = useRef(0), latest = useRef(p); latest.current = p
-  const api = classroomClient(p.session, p.classroom), names = Object.fromEntries(p.students.map(student => [student.student_id, student.name]))
+  const api = classroomClient(p.session, p.classroom)
+  const names = useMemo(() => Object.fromEntries(p.students.map(student => [student.student_id, student.name])), [p.students])
+  const seatsByRow = useMemo(() => {
+    const rows = Array.from({ length: layout?.rows ?? 0 }, () => [] as Seating['seats'])
+    for (const cell of layout?.seats ?? []) rows[cell.row_index - 1]?.push(cell)
+    return rows
+  }, [layout])
   useEffect(() => {
     const controller = new AbortController(), current = ++generation.current
     setLoading(true); setFailed(false); setSelected(null); drag.current = null
@@ -117,8 +138,8 @@ export function SeatingWorkspace(p: Props) {
         <option value="">选择两处座位交换</option>{p.students.filter(student => student.status === 'active').map(student => <option key={student.student_id} value={student.student_id}>{student.name}</option>)}</select>
         {selected && <button onClick={() => setSelected(null)}>取消选择</button>}
       </div>
-      <div className="seat-grid">{Array.from({ length: layout.rows }, (_, r) => <div className="seat-row" key={r} style={{ gridTemplateColumns: `repeat(${layout.columns}, minmax(68px, 1fr))` }}>
-        {layout.seats.filter(cell => cell.row_index === r + 1).map(cell => {
+      <div className="seat-grid">{seatsByRow.map((seats, r) => <div className="seat-row" key={r} style={{ gridTemplateColumns: `repeat(${layout.columns}, minmax(68px, 1fr))` }}>
+        {seats.map(cell => {
           const position = { row: cell.row_index, column: cell.column_index }, name = cell.student_id ? names[cell.student_id] || '未在当前名单中' : '空座'
           return <button key={cell.column_index} className={`seat${selected?.row === position.row && selected.column === position.column ? ' selected' : ''}`}
             disabled={!p.canWrite || previewing} aria-label={`${position.row}排${position.column}座 ${name}`} draggable={!!cell.student_id && p.canWrite && !previewing}

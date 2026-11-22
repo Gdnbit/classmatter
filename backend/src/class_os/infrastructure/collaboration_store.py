@@ -300,14 +300,21 @@ class CollaborationTransaction(BuiltinSummaryTransaction):
     def chat_list(self, binding, *, offset=0):
         result = super().chat_list(binding,offset=offset)
         rows = self._collaboration_rows(binding)
+        page_threads = {row['thread_id'] for row in result['data']}
+        material_requests = {row['request_id'] for row in rows if row['operation'] == 'material'}
+        pending_threads = {row['thread_id'] for row in rows
+                           if row['direction'] == 'incoming' and row['operation'] == 'request'
+                           and row['peer_status'] == 'active' and row['request_id'] not in material_requests}
+        incoming_materials = [row for row in rows if row['thread_id'] in page_threads
+                              and row['direction'] == 'incoming' and row['operation'] == 'material'
+                              and row['peer_status'] == 'active']
+        if incoming_materials:
+            saved = set(self._connection.execute(text('''SELECT request_id FROM class_os.collaboration_summary
+                WHERE workspace_id=:workspace_id AND request_id=ANY(CAST(:requests AS uuid[]))'''),
+                {**binding, 'requests': list({row['request_id'] for row in incoming_materials})}).scalars())
+            pending_threads.update(row['thread_id'] for row in incoming_materials if row['request_id'] not in saved)
         for row in result['data']:
-            requests = [r for r in rows if r['thread_id']==row['thread_id'] and r['direction']=='incoming' and r['operation']=='request']
-            pending = any(r['peer_status']=='active' and not any(m['request_id']==r['request_id'] and m['operation']=='material' for m in rows) for r in requests)
-            material = any(r['thread_id']==row['thread_id'] and r['direction']=='incoming' and r['operation']=='material'
-                and r['peer_status']=='active'
-                and not self._connection.execute(text('''SELECT EXISTS(SELECT 1 FROM class_os.collaboration_summary
-                    WHERE workspace_id=:workspace_id AND request_id=:root)'''),{**binding,'root':r['request_id']}).scalar_one() for r in rows)
-            row['summary_attention'] = row.get('summary_attention',False) or pending or material
+            row['summary_attention'] = row.get('summary_attention', False) or row['thread_id'] in pending_threads
         return result
 
 

@@ -150,7 +150,9 @@ try {
       await expect(input).toHaveValue(retainedDraft);
     }
     const card = history.getByRole('region', { name: '对话中的操作候选' }).filter({ has: page.getByRole('heading', { name: title, exact: true }) });
-    await card.getByRole('heading', { name: title, exact: true }).waitFor();
+    await card.getByRole('heading', { name: title, exact: true }).waitFor().catch(async error => {
+      throw new Error(JSON.stringify({ title, body: await page.getByRole('main').innerText(), errors, modelRuns: starts.length }), { cause: error });
+    });
     if (retried) {
       assert.equal(starts.length, retried.beforeRetry + 1);
       assert.equal(sends.length, retried.beforeSends + 1);
@@ -232,6 +234,7 @@ try {
     await expect.poll(() => comparisonContent(comparison.getByLabel('修改前', { exact: true }))).toEqual(oldContent);
     await expect.poll(() => comparisonContent(comparison.getByLabel('已保存的结果', { exact: true }))).toEqual(changes.at(-1).newContent);
     assert.equal(new URL(page.url()).pathname, path);
+    console.log(`PASS preview, save and reload: ${title}`);
   }
   const cards = history.getByRole('region', { name: '变更前后对比', exact: true });
   for (let index = 0; index < changes.length; index++) {
@@ -272,30 +275,48 @@ try {
   assert.equal(starts.length, messages.length + 6);
   assert.equal(commits.length, messages.length);
   assert.equal(new Set(commits).size, messages.length);
+  console.log('PASS saved content across workbench views and task continuation');
   // A different client advances this thread while the retry's fresh read is
   // held. It must invalidate the old failed target without sending anything.
   await input.fill('合成陈旧失败'); await page.getByRole('button', { name: '发送消息', exact: true }).click();
   const staleRetry = history.getByRole('button', { name: '重试回复', exact: true });
+  // This part exercises a concurrent retry, after the original run actually
+  // fails and the persisted history is read back.
+  await staleRetry.waitFor();
   await expect(staleRetry).toBeEnabled(); await input.fill('并发核对时保留的草稿');
   const identity = await (await page.request.get(base + '/api/identity/session')).json();
   const threadUrl = `${base}/api/workspaces/${identity.subject.workspace_id}/workspace-chat/threads/${path.split('/').at(-1)}`;
   const headers = { origin: base, 'x-class-os-csrf': identity.csrf_token };
-  let releaseRead, markRead;
-  const heldRead = new Promise(resolve => { releaseRead = resolve; }), readStarted = new Promise(resolve => { markRead = resolve; });
-  await page.route(threadUrl, async route => { markRead(); await heldRead; await route.fulfill({ response: await route.fetch() }); }, { times: 1 });
   const beforeStaleRetry = starts.length;
-  await staleRetry.click(); await readStarted;
-  const otherId = crypto.randomUUID();
-  const other = await page.request.post(threadUrl + '/turns', { headers, data: { request_id: otherId, text: '合成已撤回新消息' } });
-  assert.equal(other.status(), 200);
-  assert.equal((await page.request.post(threadUrl + `/turns/${otherId}/cancel`, { headers, data: { expected_version: (await other.json()).turn.version } })).status(), 200);
-  releaseRead();
+  const beforeStaleSends = sends.length;
+  // Pause matching GETs inside the owned HTTP fixture. Foreground sync may
+  // start at the same time, and the browser may legitimately abort old reads.
+  const held = await page.request.post(base + '/__fixture__/hold-history/' + path.split('/').at(-1));
+  assert.equal(held.status(), 200);
+  try {
+    await staleRetry.click();
+    await expect.poll(async () => (await (await page.request.get(base + '/__fixture__/blocked-history')).json()).blocked).toBe(true);
+    const otherId = crypto.randomUUID();
+    const other = await page.request.post(threadUrl + '/turns', { headers, data: { request_id: otherId, text: '合成已撤回新消息' } });
+    assert.equal(other.status(), 200);
+    assert.equal((await page.request.post(threadUrl + `/turns/${otherId}/cancel`, { headers, data: { expected_version: (await other.json()).turn.version } })).status(), 200);
+  } finally {
+    assert.equal((await page.request.post(base + '/__fixture__/release-history')).status(), 200);
+  }
   await expect(staleRetry).toHaveCount(0);
+  await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-working', 'false');
+  await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-pending', 'false');
   await expect(input).toHaveValue('并发核对时保留的草稿');
-  assert.equal(starts.length, beforeStaleRetry); assert.equal(commits.length, messages.length);
+  assert.equal(starts.length, beforeStaleRetry); assert.equal(sends.length, beforeStaleSends); assert.equal(commits.length, messages.length);
   await input.fill('');
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: '切换模型', exact: true }).click();
+  await page.getByRole('button', { name: '切换模型', exact: true }).click().catch(async error => {
+    const response = await page.request.get(threadUrl, { headers });
+    const value = await response.json();
+    const composer = await page.locator('form.r1-composer').evaluate(node => ({ ...node.dataset }));
+    throw new Error(JSON.stringify({ composer, main: await page.getByRole('main').innerText(), errors,
+      historyStatus: response.status(), states: value.turns?.map(turn => turn.state), modelRuns: starts.length }), { cause: error });
+  });
   const mobileMenu = await page.getByRole('region', { name: '选择模型', exact: true }).boundingBox();
   assert(mobileMenu.x >= 0 && mobileMenu.x + mobileMenu.width <= 390);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);

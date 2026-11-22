@@ -58,8 +58,15 @@ class PersonalSummaryTransaction(ClassroomTransaction):
 
     def chat_list(self, binding, *, offset=0):
         result = super().chat_list(binding, offset=offset)
+        if result['data']:
+            self._project_summary_attention(binding, result, self.summary_programs(binding))
+        return result
+
+    def _project_summary_attention(self, binding, result, programs):
         attention = set()
-        for program in self.summary_programs(binding):
+        for program in programs:
+            if program.get('kind') == 'builtin':
+                continue
             latest = self._connection.execute(text('''SELECT t.*,p.answer_required,q.ordinal AS question_ordinal,
                 q.state AS question_state FROM class_os.personal_summary_attempt p
                 JOIN class_os.workspace_chat_turn t USING(workspace_id,thread_id,request_id)
@@ -83,7 +90,6 @@ class PersonalSummaryTransaction(ClassroomTransaction):
                 attention.add(latest['thread_id'])
         for row in result['data']:
             row['summary_attention'] = row['thread_id'] in attention
-        return result
 
     def summary_programs(self, binding, *, include_paused=False):
         rows = self._connection.execute(text('''SELECT d.document_id,d.class_id,d.term_id,d.version,r.body

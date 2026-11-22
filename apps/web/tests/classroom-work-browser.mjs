@@ -5,11 +5,12 @@ const base = process.env.CLASS_OS_TEST_URL;
 if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(base || '')) throw new Error('Owned synthetic fixture required');
 const browser = await chromium.launch({ headless: true, ...(process.platform === 'win32' ? { channel: 'msedge' } : {}) });
 try {
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [], runs = [], writes = [];
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } }), errors = [], external = [], runs = [], writes = [], reads = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('request', request => {
     if (/^https?:/.test(request.url()) && !request.url().startsWith(base + '/')) external.push(request.url());
     if (request.method() === 'POST' && request.url().endsWith('/events')) runs.push(request.url());
+    if (request.method() === 'GET') reads.push(new URL(request.url()).pathname);
     if (!['GET', 'HEAD'].includes(request.method())) writes.push(request.url());
   });
   await page.goto(base);
@@ -70,7 +71,9 @@ try {
   }
   for (const title of ['建立考试', '记录成绩', '建立座位表', '安排座位', '安排座位', '交换座位']) {
     const card = page.getByRole('region', { name: '对话中的操作候选' }).filter({ has: page.getByRole('heading', { name: title, exact: true }) }).last();
-    await card.getByRole('button', { name: '预览这项操作', exact: true }).waitFor();
+    await card.getByRole('button', { name: '预览这项操作', exact: true }).waitFor().catch(async error => {
+      throw new Error(JSON.stringify({ title, body: await page.getByRole('main').innerText(), errors, modelRuns: runs.length }), { cause: error });
+    });
     const comparison = card.getByRole('region', { name: '变更前后对比', exact: true });
     await comparison.waitFor();
     const before = await comparisonContent(comparison.getByLabel('修改前', { exact: true }));
@@ -96,7 +99,7 @@ try {
       await route.fulfill({ response });
     };
     if (comparisons.length === 1) {
-      await page.route(historyPath, holdHistory);
+      await page.route(historyPath, holdHistory, { times: 1 });
     }
     await page.reload();
     // History restoration is an async read, not a five-second content mutation.
@@ -124,10 +127,14 @@ try {
   await page.getByText('六步已完成，没有重复操作。', { exact: true }).waitFor();
   assert.equal(runs.length, 7);
   const conversation = page.url();
+  const beforeGrades = reads.length;
   await page.getByLabel('更多功能', { exact: true }).click();
   await page.getByRole('button', { name: '成绩', exact: true }).click();
   const grades = page.getByRole('region', { name: '成绩表格', exact: true });
   await grades.getByRole('row').filter({ hasText: '合成学生0' }).filter({ hasText: '80.00' }).waitFor();
+  const gradeReads = reads.slice(beforeGrades).filter(path => path.includes('/exams'));
+  assert.equal(gradeReads.filter(path => path.endsWith('/exams')).length, 1);
+  assert.equal(gradeReads.filter(path => /\/exams\/[a-f0-9-]+$/.test(path)).length, 1);
   await grades.getByRole('button', { name: '编辑合成学生0的成绩', exact: true }).click();
   await page.getByLabel('分数', { exact: true }).fill('81');
   await page.getByLabel('成绩更正原因', { exact: true }).fill('合成复核');
@@ -137,8 +144,11 @@ try {
   await page.route('**/commands/commit', async route => { await route.fetch(); await route.abort('failed'); }, { times: 1 });
   await page.getByRole('dialog').getByRole('button', { name: '明确批准并提交', exact: true }).click();
   await page.getByRole('dialog').getByRole('alert').waitFor();
+  const beforeRecovery = reads.length;
   await page.getByRole('button', { name: '核对提交结果', exact: true }).click();
   await grades.getByRole('row').filter({ hasText: '合成学生0' }).filter({ hasText: '81.00' }).waitFor();
+  assert.equal(reads.slice(beforeRecovery).filter(path => /\/(students|identifiers|duplicates|activity)$/.test(path)).length, 0,
+    'A score receipt refreshes scores and its chat receipt without reloading unrelated class data');
   await page.reload();
   await grades.getByRole('row').filter({ hasText: '合成学生0' }).filter({ hasText: '81.00' }).waitFor();
   await grades.getByRole('button', { name: '编辑合成学生0的成绩', exact: true }).click();

@@ -12,7 +12,7 @@
       "sha256": "3f6f45dc8b3ed785d4001b5e08870ea589e25bf577d0ff4b1b194aa8b4b55946"
     },
     "backend/src/class_os/infrastructure/builtin_summary_store.py": {
-      "sha256": "f5151d8095f1151438a73b5f4015c8fa71a5b7cd10c97903a501a2428f2550e1"
+      "sha256": "9a92dce9b302a0a444e77a9816f631dc697d0a8eb16065b65432f26cf0cca04b"
     },
     "backend/tests/test_builtin_summary_runtime.py": {
       "sha256": "1ad562a3625782811970ee5118ddd25df7d038d145b596c6ba5dec2d31a3e7e3"
@@ -33,7 +33,7 @@
       "sha256": "b5ff664a5992b8b3ff8c01258b509065ea9e4de191d7018b070194454ac0dcb8"
     },
     "backend/src/class_os/infrastructure/personal_summary_store.py": {
-      "sha256": "f9b324503b1c572016080de4623cbe822627e201ff6cf4216d3c11fe3dc3aece"
+      "sha256": "4d9be5a281abb5587864289f8a52963fe03e0b5ce25c2c87f940d58c5824ad84"
     },
     "backend/src/class_os/infrastructure/personal_summary_tools.py": {
       "sha256": "5d1a945f7b7693ab2642f04fd90433c178a4c2bf516d2be95eb2457a9ffe659e"
@@ -93,13 +93,13 @@
       "sha256": "5a02904df0e62422924158bed748011d188b66ca36ff31d3ffcedd0f6affd325"
     },
     "apps/web/src/runtime/DocumentBody.tsx": {
-      "sha256": "a7d4b25fc33e5c62bbd96033b02c80f8b08eb769198c595e74230340e6126d38"
+      "sha256": "1454bae8183311371a8e23866f9b4f38ff66f2afa94ec279bf8428fbe0fffedf"
     },
     "apps/web/src/runtime/document-body.css": {
       "sha256": "53dfadef480a915685e6126a86fa8f06d872f345d95434e7b5df8523e007ff03"
     },
     "apps/web/tests/document-body.mjs": {
-      "sha256": "f49d96878955ca6d8628edfa30a8a1aa6b59f9e48991501d31f21daeb629267b"
+      "sha256": "99bc4d2d43241416259833c5b48f2c45bf7deab6bc7ed07928f636962e101491"
     },
     "infra/ci/ubuntu.mirrors": {
       "sha256": "908eac5647cae6fc835ef4df2190aa6258dd95f507341ecd8cecd92660a18e04"
@@ -528,7 +528,7 @@
       "sha256": "dfa19a05d78f4661f2589e6fdaec2cd8bd5f7b201f8f211b82afeab0a3f927e4"
     },
     "apps/web/src/runtime/StudentDirectory.tsx": {
-      "sha256": "236b6e2f77ef5743836db1f80ecc1c8428d1cc34cdb1723561a7ffedfcd8708b"
+      "sha256": "7975934c0c86105f1321e9c6f817dfd6b5484946176f7465d661cd93fc161fab"
     },
     "apps/web/src/runtime/navigation.ts": {
       "sha256": "01fd7d6e311d076d533c2fd3594380695bce6d8610bb83e2be02d288008426e8"
@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "6dfd123691d8eeecf357aab146afdabf82ec7d7ddc489a197091b41fb833e0c7"
+      "sha256": "7c2e0e58acfa976faf8239a747696e9c5bab0015e7e6bbdfc501bc6a1589dab1"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -855,7 +855,7 @@
       "sha256": "a1eefaa3a1085e59a7857ab3d485491c465f9db63de095c9b7ac0f8408001b5c"
     },
     "apps/web/src/runtime/R1App.tsx": {
-      "sha256": "87be3482e53c8adac7be14fda1bb26a9ca27503d7761b04d383aabce600d3825"
+      "sha256": "7a08638a8105eddc76568e15c8f403486a91c90b0746d7db1d7da49e1e5bbf8b"
     },
     "apps/web/src/runtime/R1Dialog.tsx": {
       "sha256": "2bccc19ae001e98e669f3bbb7b6f3cd2b968893b2d85e27544e0ef6caca80fbe"
@@ -1245,7 +1245,7 @@
       "sha256": "da1f283ce87c1b60b8c8a6deb3cd591a22eeccca9a3398da16d087b367ea36a6"
     },
     "backend/tests/conftest.py": {
-      "sha256": "51064ad95f733137ce78715849165c564a30a6af2b3b6a774bd20c0a206e4cef"
+      "sha256": "b4f6d5b2b491d5fb4080514cac8b11805790c1c66907f7e14ea1fa95301a6e78"
     },
     "backend/tests/test_0015_to_0016_upgrade.py": {
       "sha256": "0f4269e0768e23b91438285f560cfcf0696856d59ce68784871f61509a9282d4"
@@ -3017,10 +3017,10 @@
       "sha256": "e4ca815d5374668a110fdfea11e902b1caa5e60c8e8adee5b71cce92a93fc94d"
     },
     "apps/web/src/runtime/WorkspaceChat.tsx": {
-      "sha256": "dd1ca1fa7be107cc0269417e422f15ebcfa0e459378f2419c0418f9a91d9b1de"
+      "sha256": "ebd4338cea2a2d1f0a4faa4ee3e0fc1dff15440aa309f8c4efbe75f3864ae311"
     },
     "apps/web/src/runtime/useWorkspaceChat.ts": {
-      "sha256": "ebdbbb647aa19554209678366bce38626b57cd4f4e8de01c386b57515b2667f1"
+      "sha256": "ef466b45b12d20b6aa5967ac4c40537377e61e1fc70e03bcdee37ba212df75c5"
     },
     "apps/web/src/runtime/workspace-chat-validators.cjs": {
       "sha256": "9845a0cb6c4073bff07409274bf5f65a75f90dd675882acda58fefdf84fbfa5a"
@@ -3029,10 +3029,10 @@
       "sha256": "c3f576f69608c8f602575e656d3c05ba8b2325c412ce3d47e7a688fdbf032247"
     },
     "apps/web/src/runtime/workspace-chat.ts": {
-      "sha256": "27ade2f178022e1c959689f267c77855501dbe8ebbe408d188ad8f7ab03f5a22"
+      "sha256": "4363324a0fa0f86124edce4c166283dffa59741e83a9ab76ed04bfbbfff07cc3"
     },
     "apps/web/tests/persistent-chat-browser.mjs": {
-      "sha256": "56604ee11b5860afc60a8ee16378bd4b614d302018ccfbbe5427ebe92cd0b545"
+      "sha256": "4d5ab1e2bdfb76bebc1a3e35ba01ecc27cecc9d2bd82a7a02f1ce4f6a9f0d737"
     },
     "apps/web/tests/workspace-chat.mjs": {
       "sha256": "48926ed66e8f265c78387f52fe98b06e6586361fc76f5aeca449b429eb213a61"
@@ -3053,7 +3053,7 @@
       "sha256": "4066e00d1bb6e9f6edbf696ffc36f5b06eb16dce8fa3efe37b0aaac9bf70e1b7"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
-      "sha256": "c4ca14bee94279b47eb1c57af119724eefcc2d06bfc83712eb2757dfcc03d22c"
+      "sha256": "c918f169cb170128661e16b654a4f9fb50e2b14c084a7a364ba5d1b6268b23bf"
     },
     "backend/src/class_os/infrastructure/workspace_chat_runtime.py": {
       "sha256": "2d53214d6a35c788c5a46e89cccd2dffbf13730cb41e491a383bec71a574a6b0"
@@ -3071,7 +3071,7 @@
       "sha256": "0e829d563beae520775256e25cdb6b3f28e9263c7bcba9795eb0804f235b7241"
     },
     "backend/tests/test_persistent_chat_web.py": {
-      "sha256": "c27e7a1ea5786e8f58879dd933010a1cfe415887d4853bf13425cbf6d4a86fc2"
+      "sha256": "8b14ec0f4fbc9e8992783281901ecaa217a052f8f0f610d4a056a00a31d7352b"
     },
     "backend/tests/test_workspace_chat_runtime.py": {
       "sha256": "797fca772a26e04550ecb9baba5cb78f536a0a3fb3ac4a0c9ea4326eb38b54c7"
@@ -3152,13 +3152,13 @@
       "sha256": "d2541f6bfdf87ad0980f9e8a905a2386fe2ef97c13dca73959003787ec603334"
     },
     "apps/web/tests/chat-navigation-browser.mjs": {
-      "sha256": "79ae34d8d0e0374abe31ab49eee16d4123e91d78b85cfe3843f8af3e1991b5aa"
+      "sha256": "3f988af1016371d617cc743b96da4092b513f0d59b740cd97071e02233d1944e"
     },
     "apps/web/scripts/generate-classroom-work.mjs": {
       "sha256": "0876f2b10e4deac1001d4c96d11ccb069ddb9c36957e83b596b3b9f63f607d84"
     },
     "apps/web/src/runtime/ClassroomWorkspace.tsx": {
-      "sha256": "a45bb6dc6d53b17de061e73a32b159851ed2bf15e4a8c1e8be2ade3ecd43c4a5"
+      "sha256": "95eb630a26a176b3417cffd47661664853a354d0e7ec84b9495c914f451035a2"
     },
     "apps/web/src/runtime/classroom-work-validators.cjs": {
       "sha256": "e7721df05f6297955b5976b41e39a152a2a0b5eee5fa6632a46b0f807e142205"
@@ -3170,7 +3170,7 @@
       "sha256": "85cca2acddaadd29aca547380b0bf0475fb16565b1c71029081e57affb8efbb2"
     },
     "apps/web/tests/classroom-work-browser.mjs": {
-      "sha256": "5f2c895c66dc0750e7e67975f1c1303f0345c6dd041366c41525e084ed390c42"
+      "sha256": "30ee78c9c8cbbcf1a640afe2c85c68afc86b7bf8e2902c588818c6c66b301598"
     },
     "apps/web/tests/classroom-work.mjs": {
       "sha256": "48d744c93faa1feaaa804c598284769118bb46523e2f903125bcb795618549f3"
@@ -3191,7 +3191,7 @@
       "sha256": "78f420598f12132dd7befe7c57babb47b9c499f041b180af690a9667012521b5"
     },
     "backend/src/class_os/infrastructure/classroom_work.py": {
-      "sha256": "e6b9eae1dd8601d0b22d4d5903285ddd679272d35f7f2b8174270b7127bb0a74"
+      "sha256": "c16f3e5cb2437b422970919f5be5ae5c7da524d69c48a25cb29585f0a6d21b11"
     },
     "backend/src/class_os/interfaces/http/classroom_work.py": {
       "sha256": "34e729b2513f8077d08fbcfd4d7c1ead557720362f17dd6646aa8b9f9a9b672a"
@@ -3209,7 +3209,7 @@
       "sha256": "e344c328a434ca28c6fc8a678924e392fae52d8bbdabc6b7ba1bc919ddbc3402"
     },
     "backend/tests/test_classroom_work_web.py": {
-      "sha256": "4b8dff4f9281cde6093298607c8c8d43f6f5863210a205b07dcee03724aef638"
+      "sha256": "fe651d17372d01579d1c654a5ebb66f912d30310de332d680ea14a63142b15e6"
     },
     "contracts/classroom-tools/catalog.v1.json": {
       "sha256": "437b0d6b09ceef1ed8a69664cf6fc1801dfd1460cd7629a63829f5af962f765c"
@@ -3361,7 +3361,7 @@
       "sha256": "9ae98f59e518982c8743aa0028f282c9e414c7611f9d4755a614de9f2172f143"
     },
     "backend/src/class_os/infrastructure/change_preview.py": {
-      "sha256": "d95cda0461507004ddb649ee7dc2c25f450904d2f672a2d508394828a708cddd"
+      "sha256": "4d7cd71ee16b912619457d434a9c5d3b6b1d1dfc727f59835b6cc29fdc196bda"
     },
     "backend/tests/test_change_preview.py": {
       "sha256": "22cab093c12bedf1b11dca4836e4fe61f1c82873e56e8db4f0c62183ccc61ce6"
@@ -3370,7 +3370,7 @@
       "sha256": "b4ace318666b2bc3f7a7983d1a68c6bfe5100263d173fb00940b6e90ac66b50c"
     },
     "apps/web/tests/change-comparison-content.mjs": {
-      "sha256": "96357b4b28d873d7e7179c8d64999ccf1be41cb43e91e2101be087391ca2e76e"
+      "sha256": "4ec399ff339044f41ecefe4bf7625fb9a6a5a53e5d6c8101883828309d78cfec"
     },
     "backend/provider_stability.py": {
       "sha256": "f248d2b23d0b620278d01e0ef783d0fe5e99ef56bf176d2d779c4ac416c785c4"
@@ -3451,7 +3451,7 @@
       "sha256": "d162f47e8522e1c2184c3c1a19a40a029d0c145e6df937562a7c797039c4d980"
     },
     "apps/web/tests/policy-knowledge-browser.mjs": {
-      "sha256": "333c48949fb1611964db9fd90a753c020aca7f6f2180b66f4f43d8c0d65afcb0"
+      "sha256": "725f838fa0b0f5eae0305c6629a79b04318b1db9b8512cce4a1938f1739a5202"
     },
     "backend/src/class_os/application/policy_knowledge.py": {
       "sha256": "2afcda9240e8626df78fa13bdb453922336eee5a010a6bd6f2fc1ae3dfe47b31"
@@ -3469,13 +3469,13 @@
       "sha256": "ccd9f7fdb4fbf00551a3f1e7eb22428e5e2d0caaeb47df1ea46c266bb667be3a"
     },
     "apps/web/src/runtime/MaterialCollaboration.tsx": {
-      "sha256": "7d3b6ec93407b2748d3d8ec09acd7bda80353a9b08791a92b5e8ee19b7ad2d36"
+      "sha256": "7cf01acc0cd8fd93743a47c6b979ce4b4e85e3dc0eab9d15d103042fd01a0c1c"
     },
     "apps/web/src/runtime/collaboration.ts": {
       "sha256": "19a8f36fbaf05ea1d85b47b7161d00d7d02d47c8648d1b177f7e69e1d792da75"
     },
     "apps/web/tests/collaboration-browser.mjs": {
-      "sha256": "857c78440c11ec430e620738fe7dcde7c847879c15b7946507d4cfff6345cc1b"
+      "sha256": "4ccd6e966eaf5a41d8e13f0bfdea2beb429f5f9af6ee64507bf20aeaf7dd9c8d"
     },
     "backend/db/migrations/versions/0034_collaboration.py": {
       "sha256": "3b92dc2228cbb05817e81d52306607c6ba70bff5e60c68cbeda381a3baa2ca5e"
@@ -3490,7 +3490,7 @@
       "sha256": "e4e947ec04ffb9bd9fa03ac378c03882f3b697453b6b4ac49d1055901dfd5634"
     },
     "backend/src/class_os/infrastructure/collaboration_store.py": {
-      "sha256": "168aabbb0a34fd95228f93251a025e1c00803198b3a63fc0bf14fee31494ad9c"
+      "sha256": "eff610fbfe34ed1483370f5906e913ff7abbac83d9b24770ebeab87e789841fc"
     },
     "backend/src/class_os/infrastructure/collaboration_tools.py": {
       "sha256": "012721676a4d135088c6d5a98aa07d3b9f72858cd0387041b134833ff758795f"
@@ -3511,7 +3511,7 @@
       "sha256": "a8f51fabb372c6019d849722ea4694481f7c04752b08b8efc3c65ed0b8963815"
     },
     "backend/tests/test_collaboration_web.py": {
-      "sha256": "f6416c5deb8de0fe052078ce3a8227d3ae66df9df240bec1f6d01723e9ca12c3"
+      "sha256": "33577a4c1f40d2d21a6839bd1b87a5b5b73b0ce53ebac31d02cce51eb83ada42"
     },
     "contracts/http/collaboration-add-peer.v1.schema.json": {
       "sha256": "d2c88fb00df0f2613d9b172e4eab39b0d1b6cee48621ec5471ae2fa7452bd6d9"
@@ -3560,6 +3560,9 @@
     },
     "third_party/licenses/python/pyjwt-2.15.1/0.txt": {
       "sha256": "797a7a20231d4c433e9f1911db1731d06b5828b98f499819a034f7c0f56f5ce5"
+    },
+    "apps/web/src/runtime/MarkdownBody.tsx": {
+      "sha256": "6d7dd744ca234ce3e46b8b9d401c16f51d4e6d4944d39bbd5e842d3294d69102"
     }
   }
 }

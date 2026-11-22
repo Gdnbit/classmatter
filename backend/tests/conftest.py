@@ -47,7 +47,31 @@ def postgres_cluster(request):
             if result.returncode:
                 raise RuntimeError(f"Disposable PostgreSQL {name} failed")
 
-        run("initdb", "-D", data, "-U", "class_os_test_root", "--auth=trust", "--encoding=UTF8", "--locale=C")
+        # Windows can spend longer than the pg_ctl budget bootstrapping the
+        # catalogs. This cluster is freshly created and discarded by the test
+        # session. Skipping its initial directory sync does not disable fsync
+        # for transactions after the real server starts.
+        init_args = [str(pg_root / ("initdb" + suffix)), "-D", str(data),
+                     "-U", "class_os_test_root", "--auth=trust", "--encoding=UTF8", "--locale=C"]
+        if suffix:
+            init_args.append("--no-sync")
+        init_timeout = 150 if suffix else 45
+        init_stages = (
+            b"creating configuration files", b"running bootstrap script",
+            b"performing post-bootstrap initialization", b"syncing data to disk",
+        )
+
+        def init_stage(output):
+            return next((stage.decode("ascii") for stage in reversed(init_stages) if stage in (output or b"")),
+                        "before catalog bootstrap")
+
+        try:
+            result = subprocess.run(init_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=init_timeout,
+                                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        except subprocess.TimeoutExpired as error:
+            raise RuntimeError(f"Disposable PostgreSQL initdb timed out after {init_timeout}s: {init_stage(error.stdout)}") from None
+        if result.returncode:
+            raise RuntimeError(f"Disposable PostgreSQL initdb failed (exit {result.returncode}): {init_stage(result.stdout)}")
         running = False
         socket_options = "" if suffix else " -c unix_socket_directories="
         try:
