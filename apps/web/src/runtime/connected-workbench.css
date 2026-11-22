@@ -152,7 +152,8 @@
 .connected-runtime .r1-page-scroll {
   padding: clamp(22px, 4dvh, 44px) max(var(--cm-gutter), calc((100% - var(--cm-content)) / 2)) 36px;
 }
-.connected-runtime .r1-page-scroll > :is(.surface, .seat-workspace) { padding: 0; min-height: 0; }
+.connected-runtime .r1-page-scroll > .surface,
+.connected-runtime .r1-page-scroll .seat-workspace { padding: 0; min-height: 0; }
 .connected-runtime :is(.r1-heading, .surface-title, .seat-header) h1 {
   color: var(--cm-text);
   font-size: clamp(25px, 3vw, 34px);

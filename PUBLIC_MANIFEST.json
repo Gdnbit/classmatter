@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "7b2690b18abd0d8f9320837d061c568be56d8b486a68b87df47b46472166a996"
+      "sha256": "4ab5582bc0b60e046919f8dacdc13d4aad82643cf3875fd4539bffadcbfe3f59"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -999,7 +999,7 @@
       "sha256": "507d510cee982bdd2b6af4169e3701fb42642c849558155cdbdf0339d5442885"
     },
     "apps/web/tests/runtime.mjs": {
-      "sha256": "2d8b18754064f01ceb050a668b46684f10e903fb24d2fceaf36adc887315acdd",
+      "sha256": "be919caddac8aa2ac6acf0898a8aa09f4bb8c43e1eb0c4a1b79c291b2e182562",
       "reviewed_pattern_exceptions": [
         {
           "rule": "email-shape",
@@ -2837,7 +2837,7 @@
       "sha256": "1562151016965324c1cdaa9a2f7621d4dab4516988fc9873f8c4a93e97edb817"
     },
     "apps/web/src/runtime/connected-workbench.css": {
-      "sha256": "5a9419d46c0b009dac0ef76d61da46ab5ed4ef76a392cc426531ab93dda04087"
+      "sha256": "7026664d20e17009e5fbc1268cfc0e5a1ebff32ebadbfb9fae083fef3a02943f"
     },
     "apps/web/src/shell/Sidebar/SidebarFrame.tsx": {
       "sha256": "828ab6e8ef56fd1f831237573912792eab8cca2eda08f2319dff56040248e67a"

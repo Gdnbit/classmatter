@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { readFile } from 'node:fs/promises';
@@ -30,6 +30,10 @@ async function closeSettings() {
 async function ensureSettingsControl(name) {
   const control = page.getByRole('button', { name, exact: true });
   if (!await control.isVisible()) await page.getByRole('button', { name: '设置', exact: true }).click();
+}
+async function expectCurrentClass(label) {
+  const selected = page.getByLabel('设置中切换班级', { exact: true }).locator('option:checked');
+  await expect(selected).toHaveText(label, { timeout: 8000 });
 }
 async function classControl() {
   const control = page.getByRole('button', { name: '建立班级与学期', exact: true });
@@ -121,7 +125,7 @@ try {
   await page.getByRole('dialog').waitFor({ state: 'hidden' });
   await page.reload();
   await page.getByRole('button', { name: '设置', exact: true }).click();
-  await page.locator('.r1-card p').filter({ hasText: /^合成浏览器班更名 · 合成学期$/ }).waitFor();
+  await expectCurrentClass('合成浏览器班更名 · 合成学期');
   let metadataPreviews = 0;
   const countMetadataPreviews = request => { if (request.method() === 'POST' && request.url().endsWith('/commands/preview')) metadataPreviews++; };
   page.on('request', countMetadataPreviews);
@@ -176,7 +180,7 @@ try {
     await page.getByRole('dialog').waitFor({ state: 'hidden' });
     await page.reload();
     await page.getByRole('button', { name: '设置', exact: true }).click();
-    await page.locator('.r1-card p').filter({ hasText: new RegExp(`^合成浏览器班更名 · ${name}$`) }).waitFor();
+    await expectCurrentClass(`合成浏览器班更名 · ${name}`);
   }
   await closeSettings();
   await page.getByRole('button', { name: '学生', exact: true }).click();
