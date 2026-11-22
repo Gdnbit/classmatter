@@ -14,6 +14,10 @@ import {
   LogOut,
   RefreshCw,
   FileText,
+  CircleAlert,
+  CircleCheck,
+  Clock3,
+  History,
 } from "lucide-react"
 import {
   ApiError,
@@ -138,10 +142,22 @@ export default function R1App() {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [moreOpen, setMoreOpen] = useState(false)
   const moreRoot = useRef<HTMLDetailsElement>(null)
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const historyPanel = useRef<HTMLElement>(null)
+  const historyTrigger = useRef<HTMLButtonElement>(null)
   const [modelRevision, setModelRevision] = useState(0)
   const [modelUncertain, setModelUncertain] = useState(false)
   const [session, setSession] = useState<Session | null>(null)
-  useEffect(() => { setSettingsOpen(false); setMoreOpen(false) }, [session?.csrf_token])
+  useEffect(() => { setSettingsOpen(false); setMoreOpen(false); setHistoryOpen(false) }, [session?.csrf_token])
+  useEffect(() => {
+    if (!historyOpen) return
+    historyPanel.current?.focus()
+    const dismiss = (event: PointerEvent) => {
+      if (event.target instanceof Node && !historyPanel.current?.contains(event.target) && !historyTrigger.current?.contains(event.target)) setHistoryOpen(false)
+    }
+    document.addEventListener("pointerdown", dismiss)
+    return () => document.removeEventListener("pointerdown", dismiss)
+  }, [historyOpen])
   useEffect(() => {
     if (!moreOpen) return
     const close = (event: PointerEvent) => { if (!moreRoot.current?.contains(event.target as Node)) setMoreOpen(false) }
@@ -994,7 +1010,7 @@ export default function R1App() {
           ] as const).map(([id, label, Icon]) => (
             <button
               key={id}
-              aria-current={page === id && (id !== "students" || studentView === "list") ? "page" : undefined}
+              aria-current={page === id ? "page" : undefined}
               onClick={() => {
                 termLoad.current++
                 setTermMetadata(null)
@@ -1028,7 +1044,14 @@ export default function R1App() {
             {!openTasks.length && <p className="sidebar-empty">暂无未完成事件</p>}
           </div>
         </section>
-        <section className="chat-history" aria-label="聊天列表">
+        <section id="r1-chat-history" ref={historyPanel} className={`chat-history${historyOpen ? " mobile-history-open" : ""}`} aria-label="聊天列表" tabIndex={-1}
+          onKeyDown={event => {
+            if (event.key === "Escape" && historyOpen) { setHistoryOpen(false); historyTrigger.current?.focus() }
+          }} onClick={event => {
+            if (historyOpen && event.target instanceof Element && event.target.closest(".new-chat, .conversation-item")) {
+              setHistoryOpen(false); historyTrigger.current?.focus()
+            }
+          }}>
           <p className="side-kicker">聊天</p>
         <button
           className="new-chat"
@@ -1102,6 +1125,10 @@ export default function R1App() {
           >
             <RefreshCw size={16} />
           </button></>}
+          <button className="r1-mobile-history-trigger" ref={historyTrigger} type="button" aria-label="聊天记录"
+            aria-controls="r1-chat-history" aria-expanded={historyOpen} onClick={() => { setMoreOpen(false); setHistoryOpen(value => !value) }}>
+            <History size={18} aria-hidden="true" />
+          </button>
         </header>
       }>
         {error && !form && !pending && (
@@ -1124,7 +1151,7 @@ export default function R1App() {
             <button disabled={busy || documentBusy || refreshing} onClick={() => { setError(""); setNotice(""); void reload(documentDraft ? classroom : undefined).catch(fail) }}>重新读取数据</button>
           </div>
         )}
-        <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : ""}${page === "conversation" && workspaceMode && !conversationStarted ? " r1-conversation-home" : ""}`}
+        <div ref={conversationViewport} className={`r1-scroll${page === "conversation" ? " r1-conversation-scroll" : " r1-page-scroll"}${page === "conversation" && workspaceMode && !conversationStarted ? " r1-conversation-home" : ""}`}
           onWheel={event => { if (page === "conversation" && event.deltaY < 0) followingConversation.current = false }}
           onKeyDown={event => {
             if (page === "conversation" && ["PageUp", "Home", "ArrowUp"].includes(event.key)
@@ -1143,9 +1170,8 @@ export default function R1App() {
         }}>
           {page === "unavailable" && <section className="r1-card">
             <h1>此功能暂不可用</h1>
-            <p>请使用左侧已开放的功能。</p>
             <button onClick={() => setPage("conversation")}>返回对话</button>
-            <button onClick={() => { setSelectedStudent(""); setPage("students") }}>查看已接入的学生</button>
+            <button onClick={() => { setSelectedStudent(""); setPage("students") }}>查看学生</button>
           </section>}
           {page === "conversation" && (
             <>
@@ -1153,7 +1179,9 @@ export default function R1App() {
               <div className="r1-heading">
                 <h1>今天想处理什么？</h1>
               </div>
-              <AttentionColumns className="r1-attention">{[
+              <AttentionColumns className="r1-attention" headingIcons={[
+                <CircleCheck size={17} aria-hidden="true" />, <CircleAlert size={17} aria-hidden="true" />, <Clock3 size={17} aria-hidden="true" />,
+              ]}>{[
                 <>
                   {workspaceConversation.listing?.data.filter(item => item.summary_attention).map(item =>
                     <button className="r1-attention-item" key={item.thread_id} onClick={() => { setError(""); workspaceConversation.select(item.thread_id) }}>
@@ -1184,7 +1212,7 @@ export default function R1App() {
                     open("record")
                   }}
                 >
-                  记录事实
+                  <FileText size={16} aria-hidden="true" />记录事实
                 </button>
                 <button
                   disabled={!classroom || !editable}
@@ -1193,9 +1221,9 @@ export default function R1App() {
                     open("task")
                   }}
                 >
-                  建立跟进
+                  <Plus size={16} aria-hidden="true" />建立跟进
                 </button>
-                <button onClick={() => setPage("students")}>查看学生</button>
+                <button onClick={() => setPage("students")}><Users size={16} aria-hidden="true" />查看学生</button>
               </div>
               </div></div>
               {workspaceMode && (conversationStarted || workspaceConversation.status) && <WorkspaceChatHistory state={workspaceConversation}
@@ -1250,36 +1278,43 @@ export default function R1App() {
                   navigation.setDocument("new")
                   return true
                 } : undefined} />}
-              <h2>任务</h2>
-              {taskCards(openTasks)}
-              <h2>最近事实</h2>
-              {latest.slice(0, 10).map((item) => (
-                <RecordCard
-                  key={item.record_id}
-                  item={item}
-                  name={studentName(item.student_id)}
-                  editable={editable}
-                  canCreateTask={editable && students.some(student => student.student_id === item.student_id && student.status !== "inactive")}
-                  onCorrect={() => {
-                    setRecord(item)
-                    open("revise")
-                  }}
-                  onTask={() => {
-                    setRecord(item)
-                    open("task")
-                  }}
-                />
-              ))}
+              <div className="r1-overview-columns">
+                <section aria-labelledby="r1-overview-tasks">
+                  <h2 id="r1-overview-tasks">任务</h2>
+                  {taskCards(openTasks)}
+                </section>
+                <section aria-labelledby="r1-overview-records">
+                  <h2 id="r1-overview-records">最近事实</h2>
+                  {!latest.length && <p className="r1-muted">暂无记录</p>}
+                  {latest.slice(0, 10).map((item) => (
+                    <RecordCard
+                      key={item.record_id}
+                      item={item}
+                      name={studentName(item.student_id)}
+                      editable={editable}
+                      canCreateTask={editable && students.some(student => student.student_id === item.student_id && student.status !== "inactive")}
+                      onCorrect={() => {
+                        setRecord(item)
+                        open("revise")
+                      }}
+                      onTask={() => {
+                        setRecord(item)
+                        open("task")
+                      }}
+                    />
+                  ))}
+                </section>
+              </div>
             </>
           )}
           {page === "students" && (
             <>
               {selected ? <StudentProfileHeader name={selected.name}
                 identity={`${classroom?.name || ""} · ${selected.status === "inactive" ? "已停用" : "在班"}`}
-                description=""
+                connected
                 onBack={() => { setSelectedStudent(""); setRecord(null); setTask(null) }}
                 actions={<button className="primary" disabled={!canEditStudent || busy} onClick={() => { setRecord(null); open("record") }}>添加记录</button>} />
-                : <StudentPageTitle title="学生" description="" />}
+                : <StudentPageTitle title="学生" connected />}
               {!selected && <StudentViewSwitcher current={studentView === "list" ? "清单" : "表格"} connected
                 onOpenSeating={classroomProfile && classroom ? () => setPage('seating') : undefined}
                 onSelect={view => setStudentView(view === "表格" ? "table" : "list")} />}
@@ -1296,7 +1331,7 @@ export default function R1App() {
                   }}
                 />
                 {search && <button onClick={() => setSearch("")}>清空搜索</button>}
-                <button
+                <button className="r1-primary"
                   disabled={!classroom || !editable}
                   onClick={() => open("student")}
                 >
@@ -1312,7 +1347,7 @@ export default function R1App() {
                     <StudentDirectory students={matchingStudents} activity={activity} identifiers={identifiers} selectedId={selectedStudent} view={studentView} disabled={navigationBlocked}
                       onSelect={id => { setSelectedStudent(id); setRecord(null); setTask(null) }} />
                     {!students.length && (
-                      <p className="r1-muted">尚无学生，添加后即可记录事实。</p>
+                      <p className="r1-muted">暂无学生</p>
                     )}
                     {!!students.length && !matchingStudents.length && (
                       <p className="r1-muted">没有找到学生，请调整搜索条件。</p>
@@ -1438,7 +1473,7 @@ export default function R1App() {
           )}
           {page === "work" && (
             <>
-              <WorkHeading title="工作与跟进" description="" />
+              <WorkHeading title="工作与跟进" connected />
               <WorkTabs current={workFilter} onSelect={id => { setWorkFilter(id as WorkFilter); setTask(null) }} items={[
                 { id: "mine", label: "需要我处理" }, { id: "waiting", label: "等待别人" },
                 { id: "possible", label: "可能遗漏", disabled: true, explanation: "暂不可用" },
@@ -1446,7 +1481,7 @@ export default function R1App() {
                 { id: "closed", label: "已结束（完成 / 取消）" }, { id: "all", label: "全部" },
               ]} />
               <div className="r1-toolbar">
-                <button
+                <button className="r1-primary"
                   disabled={!classroom || !editable}
                   onClick={() => {
                     setRecord(null)
@@ -1486,10 +1521,7 @@ export default function R1App() {
                   <WorkItemButton className="r1-task-title" title={item.title} due={displayTime(item.due_at)}
                     status={`${states[item.status]}${item.overdue ? " · 已逾期" : ""}`}
                     onSelect={() => setTask(task?.task_id === item.task_id ? null : item)} />
-                  <p>
-                    {studentName(item.student_id)} · {displayTime(item.due_at)}{" "}
-
-                  </p>
+                  <p className="r1-muted">{studentName(item.student_id)}</p>
                   {item.source_record_id && (
                     <details>
                       <summary>查看来源事实与历史</summary>
@@ -1649,11 +1681,6 @@ export default function R1App() {
                   setSelectedStudent("")
                   void action(() => reload(target || null))
                 }}><option value="" disabled>尚未建立</option>{classes.map(item => <option value={item.class_id} key={item.class_id}>{item.name} · {item.term_name}{item.status === "archived" ? "（归档只读）" : ""}</option>)}</select></label>
-                <p>
-                  {classroom
-                    ? `${classroom.name} · ${classroom.term_name}`
-                    : "尚未建立"}
-                </p>
                 {classroom && editable && (
                   <button disabled={busy} onClick={() => open("class-edit")}>编辑班级名称</button>
                 )}
@@ -1681,18 +1708,12 @@ export default function R1App() {
               </section>
               <section className="r1-card">
                 <h2>AI 助手</h2>
-                <p>
-                  选择并连接你要使用的模型。
-                </p>
                 <ModelConfigurationForm key={`${session.csrf_token}/${modelRevision}`} session={session} disabled={busy || workspaceBusy} onError={fail}
                   onPreview={command => { setSettingsOpen(false); return action(() => preview(command)) }} onModeChanged={verified => {
                     setModelUncertain(!verified)
                     runningAgent.current?.abort(); setConversationId(""); setMessages([]); setMessage(""); setAgentDraft(null); setAgentRecordNote(null); setRecordNoteQuote(""); setAgentStatus("")
                     setNotice(verified ? "模型状态已更新。" : "模型状态待确认，请刷新模型状态后再试。")
                   }} />
-                <p className="r1-muted">
-
-                </p>
               </section>
               {window.classMatterDesktop?.localOnly !== true && <section className="r1-card"><h2>身份与恢复</h2><p>{localDevelopment ? "确认后重新连接，尚未保存的内容需要重新核对。" : "重新签发恢复码后，旧码失效，其他设备会退出。"}</p><div className="r1-toolbar"><button disabled={busy} onClick={() => open("reauth")}>重新验证身份</button>{!localDevelopment && <><button disabled={busy} onClick={() => open("reissue")}>重新签发离线恢复码</button><button disabled={busy} onClick={() => open("logout-all")}>注销全部设备</button></>}</div></section>}
               {workbenchProfile ? <section className="r1-card"><h2>退出导出</h2><p>完整导出暂不可用。</p></section> : runtimeProfile === "conversation-d1" ? (classroom
@@ -2128,7 +2149,7 @@ function Login({
   }
   if (window.classMatterDesktop?.localOnly === true) return <LocalConnection onSession={onSession} />
   if (window.classMatterDesktop?.development === true) return <main className="r1-auth"><section>
-    <small>班事有谱 · CLASSMATTER</small><h1>继续使用班事有谱</h1>
+    <h1>继续使用班事有谱</h1>
     <p>连接已暂停，请重新进入。</p>
     {error && <p role="alert" className="r1-error">{userMessage(error)}</p>}
     <button disabled={pending || busy} onClick={() => {
@@ -2140,8 +2161,7 @@ function Login({
   return (
     <main className="r1-auth">
       <section>
-        <small>班事有谱 · CLASSMATTER</small>
-        <h1>{mode === "login" ? "回到你的班级工作" : "恢复 owner 访问"}</h1>
+        <h1>{mode === "login" ? "登录班事有谱" : "恢复访问"}</h1>
         {error && (
           <p role="alert" className="r1-error">
             {error}

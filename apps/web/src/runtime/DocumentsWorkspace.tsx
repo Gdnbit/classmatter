@@ -187,12 +187,12 @@ export function DocumentsWorkspace(props: Props) {
   const present = fresh || current !== null
   return <div className="surface connected-documents">
     <div className="surface-title"><span className="surface-icon"><FileText size={22} /></span><div>
-      <p className="eyebrow">工作空间</p><h1>文档</h1><p>班级文档与工作草稿</p>
+      <h1>文档</h1>
     </div></div>
     {error && <p role="alert" className="r1-error">{userMessage(error)}</p>}
     {notice && !pending && <p role="status" className="r1-muted">{notice}</p>}
     <div className="r1-toolbar">
-      <button disabled={!props.canEdit || dirty || busy} onClick={() => props.onSelect("new")}>新建文档</button>
+      <button className="r1-primary" disabled={!props.canEdit || dirty || busy} onClick={() => props.onSelect("new")}>新建文档</button>
       <button disabled={dirty || busy || loading} onClick={() => setRefresh(value => value + 1)}>重新读取文档</button>
       {current && <DocumentExportActions key={current.document_id + ':' + current.version} value={current} api={api}
         enabled={props.canEdit && !dirty && !busy && !loading && !reading} unsaved={dirty} onError={props.onError} />}
@@ -214,14 +214,14 @@ export function DocumentsWorkspace(props: Props) {
         })}>更多文档</button>}
         {present && <><strong>文档结构</strong><button disabled={busy} onClick={() => { setTab("修改后"); setAnchor({ title: "全文", offset: 0, length: 0 }) }}>全文</button>
           {outline.map(item => <button key={item.offset} disabled={busy} onClick={() => { setTab("修改后"); setAnchor(item) }}>{item.title}</button>)}
-          <p></p></>}
+          </>}
       </aside>
       <article>
         {loading && <p role="status">正在加载文档…</p>}
-        {!documentId && <p>从左侧选择文档，或新建工作草稿。</p>}
+        {!documentId && <p>请选择文档</p>}
         {present && <>
           <div className="doc-tabs" aria-label="文档视图">{["原文", "修改后", "修订记录"].map(value => <button key={value}
-            className={tab === value ? "active" : ""} onClick={() => setTab(value)}>{value}</button>)}</div>
+            aria-pressed={tab === value} className={tab === value ? "active" : ""} onClick={() => setTab(value)}>{value}</button>)}</div>
           {anchor && <p className="document-anchor">当前章节：{anchor.title}</p>}
           {tab === "原文" && <><h2>{current?.title || "尚未保存"}</h2><div className="document-text">{current
             ? <DocumentBody body={current.body} format={current.format} /> : "尚无已保存原文。"}</div></>}
@@ -232,9 +232,11 @@ export function DocumentsWorkspace(props: Props) {
               <option value="plain-text">普通文本</option><option value="markdown">排版文本</option></select></label>
             <label>文档正文<textarea ref={textEditor} aria-label="文档正文" value={body} maxLength={100000} readOnly={!writable}
               onChange={event => { setBody(event.target.value); setAnchor(null); setEdited(true) }} /></label>
-            <p className="r1-muted">{body.length} / 100000 字符 · 离开前请保存。</p>
-            <button className="document-save" disabled={!props.canWrite || !writable || !title.trim() || (!fresh && !edited)}
-              onClick={() => void run(() => preview(fresh ? "document.create" : "document.revise"))}>保存草稿</button>
+            <footer className="document-edit-actions">
+              <span className="r1-muted">{body.length} / 100000 字符</span>
+              <button className="document-save r1-primary" disabled={!props.canWrite || !writable || !title.trim() || (!fresh && !edited)}
+                onClick={() => void run(() => preview(fresh ? "document.create" : "document.revise"))}>保存草稿</button>
+            </footer>
           </>}
           {tab === "修订记录" && <section aria-label="已保存文档版本">
             {!history && <p>尚无已保存版本。</p>}
@@ -252,7 +254,7 @@ export function DocumentsWorkspace(props: Props) {
           </section>}
         </>}
       </article>
-      <aside aria-label="文档版本与来源"><strong>版本与来源</strong><p>工作草稿</p>
+      <aside aria-label="文档版本与来源"><strong>版本与来源</strong>
         {current && <><p>版本 {current.version} · {current.status === "archived" ? "已归档，只读" : "可审阅草稿"}</p>
           <p>保存时间：{time(current.created_at)}</p>
           <button disabled={busy || dirty || !props.canWrite} onClick={() => void run(() => preview(current.status === "archived" ? "document.restore" : "document.archive"))}>

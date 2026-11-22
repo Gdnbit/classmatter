@@ -29,22 +29,24 @@ try {
   const comparisons = [];
   async function failedForegroundRead(card) {
     const button = card.getByRole('button', { name: '预览这项操作', exact: true });
+    const composer = page.locator('form.r1-composer');
     const historyPath = /\/workspace-chat\/threads\/[a-f0-9-]+$/;
     let failed = false;
     const rejectRead = async route => { failed = true; await route.fulfill({ status: 503, json: { detail: 'Synthetic query outage' } }); };
     const proposals = writes.filter(url => url.endsWith('/proposal')).length;
-    await page.waitForTimeout(5100);
+    await expect(composer).toHaveAttribute('data-chat-working', 'false');
+    await expect(composer).toHaveAttribute('data-chat-fresh', 'true');
     await page.route(historyPath, rejectRead);
     try {
       await page.evaluate(() => window.dispatchEvent(new Event('focus')));
-      await expect.poll(() => failed).toBe(true);
-      await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'false');
+      await expect.poll(() => failed, { timeout: 12000 }).toBe(true);
+      await expect(composer).toHaveAttribute('data-chat-fresh', 'false');
       await expect(button).toBeDisabled();
       assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals);
       await expect(page.getByRole('dialog')).toHaveCount(0);
     } finally { await page.unroute(historyPath, rejectRead); }
     await page.getByRole('button', { name: '重试', exact: true }).click();
-    await expect(page.locator('form.r1-composer')).toHaveAttribute('data-chat-fresh', 'true');
+    await expect(composer).toHaveAttribute('data-chat-fresh', 'true');
     await expect(button).toBeEnabled();
     assert.equal(writes.filter(url => url.endsWith('/proposal')).length, proposals);
   }
@@ -164,6 +166,11 @@ try {
   await page.getByRole('dialog').getByRole('button', { name: '取消', exact: true }).click();
   await grades.getByRole('row').filter({ hasText: '合成学生0' }).filter({ hasText: '86.00' }).waitFor();
   await page.screenshot({ path: '../../test-results/classroom-grades.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(grades.getByRole('button', { name: '编辑合成学生0的成绩', exact: true })).toBeInViewport();
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await page.screenshot({ path: '../../test-results/classroom-grades-mobile.png' });
+  await page.setViewportSize({ width: 1440, height: 1000 });
   const beforeSeatingNavigation = writes.length;
   await page.getByRole('button', { name: '学生', exact: true }).click();
   const views = page.getByRole('tablist', { name: '学生视图切换' });
@@ -176,6 +183,7 @@ try {
   await seats.getByRole('button', { name: '1排1座 合成学生1', exact: true }).waitFor();
   assert.equal(writes.length, beforeSeatingNavigation, 'Opening the existing view must not write or invoke the model');
   await seats.getByRole('button', { name: '1排1座 合成学生1', exact: true }).click();
+  await expect(seats.getByRole('button', { name: '1排1座 合成学生1', exact: true })).toHaveAttribute('aria-pressed', 'true');
   await seats.getByRole('button', { name: '1排2座 合成学生0', exact: true }).click();
   await confirm();
   await seats.getByRole('button', { name: '1排1座 合成学生0', exact: true }).waitFor();

@@ -1,10 +1,10 @@
 import { ChevronRight, ClipboardList } from "lucide-react"
 import "./work-presentation.css"
 
-export function WorkHeading({ title, description }: { title: string; description: string }) {
+export function WorkHeading({ title, description, connected = false }: { title: string; description?: string; connected?: boolean }) {
   return <div className="surface-title">
     <span className="surface-icon"><ClipboardList size={22} /></span>
-    <div><p className="eyebrow">工作空间</p><h1>{title}</h1><p>{description}</p></div>
+    <div>{!connected && <p className="eyebrow">工作空间</p>}<h1>{title}</h1>{description && <p>{description}</p>}</div>
   </div>
 }
 

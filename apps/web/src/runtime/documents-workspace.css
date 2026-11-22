@@ -1,10 +1,47 @@
-.connected-documents .document-layout { margin-top: 18px; }
+.connected-documents .document-layout {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) minmax(0, 3.5fr) minmax(140px, 1fr);
+  margin-top: 18px;
+}
 .document-exports { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.connected-documents .document-layout > aside {
+  min-width: 0;
+  background: var(--cm-soft);
+  border-color: var(--cm-line);
+  padding: 14px;
+}
+.connected-documents .document-layout > aside > strong { display: block; margin: 5px 0 10px; }
 .connected-documents .document-layout > aside button { width: 100%; text-align: left; overflow-wrap: anywhere; }
+.connected-documents .document-layout > aside button.selected-outline { background: var(--cm-selected); color: var(--cm-action-hover); }
+.connected-documents .document-layout article { min-width: 0; padding: clamp(16px, 2.4vw, 26px); }
 .connected-documents .document-layout small { display: block; margin-top: 4px; }
 .connected-documents .document-layout label { display: grid; gap: 8px; margin: 16px 0; }
 .connected-documents input, .connected-documents select, .connected-documents textarea { width: 100%; box-sizing: border-box; }
-.connected-documents textarea { min-height: 340px; resize: vertical; line-height: 1.8; }
+.connected-documents textarea {
+  min-height: clamp(200px, 34dvh, 360px);
+  resize: vertical;
+  line-height: 1.75;
+  border: 1px solid var(--cm-line);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--cm-soft);
+}
+.document-edit-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--cm-line);
+}
 .document-text { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 48vh; overflow: auto; }
-@media (max-width: 980px) { .connected-documents .document-layout > aside:last-child { display: block; grid-column: 1 / -1; } }
-@media (max-width: 767px) { .connected-documents .document-layout > aside { display: block; padding: 16px; } }
+@media (max-width: 1120px) {
+  .connected-documents .document-layout { grid-template-columns: minmax(140px, 1fr) minmax(0, 3fr); }
+  .connected-documents .document-layout > aside:last-child { display: block; grid-column: 1 / -1; border-top: 1px solid var(--cm-line); }
+}
+@media (max-width: 767px) {
+  .connected-documents .document-layout { grid-template-columns: minmax(0, 1fr); }
+  .connected-documents .document-layout > aside { display: block; }
+  .connected-documents .document-layout > aside:first-child { max-height: 180px; overflow-y: auto; border-bottom: 1px solid var(--cm-line); }
+}

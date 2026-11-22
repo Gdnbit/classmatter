@@ -28,6 +28,7 @@ try {
   async function assertFixedHome(width, height) {
     await page.setViewportSize({ width, height });
     await page.locator('.r1-conversation-home').waitFor();
+    await expect(page.getByRole('navigation', { name: '主要工作组件' }).getByRole('button', { name: '学生', exact: true })).toBeInViewport();
     await page.locator('.r1-welcome').evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished)));
     const bounds = await page.evaluate(() => {
       const home = document.querySelector('.r1-conversation-home');
@@ -49,7 +50,8 @@ try {
     await page.mouse.wheel(0, 600);
     assert.equal(await page.locator('.r1-conversation-home').evaluate(element => element.scrollTop), 0);
   }
-  for (const [width, height] of [[1440, 900], [1280, 720], [1024, 600], [390, 844]]) await assertFixedHome(width, height);
+  for (const [width, height] of [[1440, 900], [1280, 720], [1024, 600], [744, 700], [320, 680], [390, 844]]) await assertFixedHome(width, height);
+  await page.screenshot({ path: '../../test-results/connected-home-mobile.png' });
   await page.setViewportSize({ width: 1440, height: 1000 });
   assert.equal(await page.locator('nav[aria-label="主要工作组件"] > button').count(), 4);
   assert.equal(await page.locator('.sidebar .scope').count(), 0);
@@ -244,12 +246,15 @@ try {
   }
   await page.getByRole('button', { name: '学生', exact: true }).click();
   await page.getByRole('region', { name: '学生清单', exact: true }).getByRole('button', { name: /合成学生乙/ }).waitFor();
+  await page.screenshot({ path: '../../test-results/connected-students.png' });
   assert(!/内部 ID|状态 \/ 版本|共享实体/.test(await page.getByRole('main').innerText()));
   await page.getByRole('region', { name: '学生清单', exact: true }).getByRole('button', { name: /合成学生乙/ }).click();
   assert(!/[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}/.test(await page.getByRole('main').innerText()));
+  await page.screenshot({ path: '../../test-results/connected-student-detail.png' });
   await page.getByRole('button', { name: '返回学生列表', exact: true }).click();
   await page.getByRole('button', { name: '工作', exact: true }).click();
   await page.getByRole('main').getByRole('button', { name: /合成收集签字回执/ }).waitFor();
+  await page.screenshot({ path: '../../test-results/connected-work.png' });
   await page.getByLabel('按状态筛选任务').selectOption('closed');
   await page.getByRole('region', { name: '事件', exact: true }).getByRole('button', { name: /合成收集签字回执/ }).click();
   await page.getByRole('button', { name: '编辑标题与截止时间', exact: true }).waitFor();
@@ -263,7 +268,11 @@ try {
   await page.getByRole('button', { name: '设置', exact: true }).click();
   const settings = page.getByRole('dialog', { name: '设置', exact: true });
   assert(!/可替换 AI|R1 实现|数据库|原型|后台调度/.test(await settings.innerText()));
+  await page.screenshot({ path: '../../test-results/connected-settings.png' });
   await settings.getByRole('button', { name: '关闭设置', exact: true }).click();
+  await page.getByRole('button', { name: '总览', exact: true }).click();
+  await page.getByRole('heading', { name: '最近事实', exact: true }).waitFor();
+  await page.screenshot({ path: '../../test-results/connected-overview.png' });
   await page.goto(base + path);
   await history.getByText('合成普通聊天已回复，不需要班级。', { exact: true }).first().waitFor();
   assert.equal(starts.length, messages.length + 5);
@@ -321,7 +330,26 @@ try {
   assert(mobileMenu.x >= 0 && mobileMenu.x + mobileMenu.width <= 390);
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await page.keyboard.press('Escape');
-  await page.getByRole('button', { name: '新对话', exact: true }).count().then(count => assert.equal(count, 0)); // Mobile hides the history group.
+  const mobileHistoryTrigger = page.getByRole('button', { name: '聊天记录', exact: true });
+  const mobileHistory = page.getByRole('region', { name: '聊天列表', exact: true });
+  await expect(mobileHistory).toBeHidden();
+  await mobileHistoryTrigger.click();
+  await expect(mobileHistoryTrigger).toHaveAttribute('aria-expanded', 'true');
+  await expect(mobileHistory).toBeFocused();
+  await page.screenshot({ path: '../../test-results/connected-history-mobile.png' });
+  await page.keyboard.press('Escape');
+  await expect(mobileHistory).toBeHidden();
+  await expect(mobileHistoryTrigger).toBeFocused();
+  await input.fill('窄屏切换时保留的草稿');
+  await mobileHistoryTrigger.click();
+  await mobileHistory.getByRole('button', { name: '新对话', exact: true }).click();
+  await expect(mobileHistory).toBeHidden();
+  await page.getByRole('heading', { name: '今天想处理什么？', exact: true }).waitFor();
+  await mobileHistoryTrigger.click();
+  await mobileHistory.getByRole('button', { name: '合成普通聊天，不涉及班级', exact: true }).click();
+  await page.waitForURL(base + path);
+  await expect(mobileHistory).toBeHidden();
+  await expect(input).toHaveValue('窄屏切换时保留的草稿');
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.getByRole('button', { name: '新对话', exact: true }).click();
   await page.getByRole('heading', { name: '今天想处理什么？', exact: true }).waitFor();
