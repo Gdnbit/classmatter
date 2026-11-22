@@ -49,7 +49,7 @@ class PersonalSummaryService:
                     logging.getLogger(__name__).warning('Material collaboration check stopped: %s',type(error).__name__)
             programs = await anyio.to_thread.run_sync(lambda: self.runtime.query.summary_programs(credentials))
             for program in programs:
-                if program.get('kind') in ('builtin', 'goal') and not self._provider_ready(credentials):
+                if program.get('kind') in ('builtin', 'goal') and not self._builtin_model_ready(credentials):
                     continue
                 turn = await anyio.to_thread.run_sync(lambda: self.runtime.business.summary_claim(credentials,
                     program['program_id'] if program.get('kind') == 'builtin' else program['document_id']))
@@ -74,7 +74,7 @@ class PersonalSummaryService:
             self.checking.discard(workspace_id)
             self.tasks.discard(task)
 
-    def _provider_ready(self, credentials):
+    def _builtin_model_ready(self, credentials):
         state = self.runtime.sdk.provider_state
         # A custom factory is not proof of an activated provider. Dedicated
         # owned fixtures inject this state explicitly; unrelated browser tests

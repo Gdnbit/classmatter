@@ -30,7 +30,7 @@
       "sha256": "286133041ac12bbc9f55ad99ae1c7b025cc4069a2da6d838bd13150afc762926"
     },
     "backend/src/class_os/infrastructure/personal_summary_runtime.py": {
-      "sha256": "2c13d7a2d0736121c4717f2f28ee86dbab1d58cfd3df62dd4335437da92804b5"
+      "sha256": "4f9be7cb8a3d50b5edb42b9fc274c7bde70e71c681c2697e29e5eec6b0be48f5"
     },
     "backend/src/class_os/infrastructure/personal_summary_store.py": {
       "sha256": "286d37bdcb7c643cbdbd373804a7995f8565cf5e1cce35b0fe40fe97972bd38b"
@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "715fb673bf24378e9006660b934926b5d36e7defb57f625883986bb9e1d689f0"
+      "sha256": "83246ea0ca9484c819eeabc66534227d890ff717560611bb97cb9ed05d623d67"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
