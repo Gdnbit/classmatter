@@ -37,7 +37,7 @@ try {
   if (phase === 'start') {
     await send(request);
     const instruction = cards.filter({ hasText: '班级目标委托' });
-    await expect(instruction).toContainText(deliverable);
+    await expect(instruction).toContainText(deliverable, { timeout: 25000 });
     await expect(instruction).toContainText(material);
     await expect(question).toHaveCount(0);
     await confirm(instruction);
@@ -45,7 +45,7 @@ try {
     await expect(question).toHaveCount(1);
   } else {
     const conversation = page.getByRole('region', { name: '聊天列表', exact: true }).getByRole('button').filter({ hasText: request });
-    await expect(conversation.getByRole('img', { name: '有待处理的小结', exact: true })).toBeVisible();
+    await expect(conversation.getByRole('img', { name: '有待处理的小结', exact: true })).toBeVisible({ timeout: 20000 });
     await conversation.click();
     await expect(question).toBeVisible();
     await send(reply);

@@ -3565,7 +3565,7 @@
       "sha256": "6d7dd744ca234ce3e46b8b9d401c16f51d4e6d4944d39bbd5e842d3294d69102"
     },
     "apps/web/tests/personal-goal-browser.mjs": {
-      "sha256": "658cc8b44a7b4e7f67c7c72228b3aa4855f037bce3bc8ee4e5cd4db8e4e83c5b"
+      "sha256": "2b9ffc70f52672db153dec3b434f3d7998137f396eb235ebdb67ea71407d057a"
     }
   }
 }
