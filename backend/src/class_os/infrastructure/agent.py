@@ -317,6 +317,7 @@ class PydanticAgentRuntime:
                                 agent.instructions(lambda: "A follow-up task's progress, waiting state, completion or cancellation belongs to prepare_task (action edit/complete/cancel), not prepare_record. Read current tasks to identify the existing title. Keep an explicitly quoted follow-up note in evidence; never turn task workflow notes into a new student fact. prepare_record is only for a new already-occurred ordinary student event. Neither tool saves anything: show the actual candidate for human review, never say that a state or note was already saved.")
                                 agent.instructions(lambda: "Keep notes the user explicitly excluded out of generated documents, including footnotes or explanations that repeat the excluded content. Read current fact and task sources before drafting a factual work summary.")
                                 agent.instructions(lambda: "Class work-summary preparation is built in; never require an enabling phrase or a prior delegation. Read applicable summary rules before preparing it. Do not presume a class-meeting topic or other mandatory input. Only when the user explicitly gives lasting feedback, asks to pause/resume, or delegates a custom ongoing requirement, use prepare_summary_delegation with the exact current human quote. It prepares preferences for confirmation, never saves them. A one-off 'this time' request must not change long-term preferences.")
+                                agent.instructions(lambda: 'For an explicit ongoing class goal with one named summary and one required material, use prepare_summary_delegation with the entire exact current human request, deliverable and required_material. Ask for missing details. The goal starts only after confirmation and completes when the named summary is saved.')
                                 agent.instructions(lambda: 'For collecting materials from a colleague, first read_material_collaboration. '
                                     'Only confirmed contacts and this chat\'s exact request IDs are usable. '
                                     'prepare_material_request prepares a human-confirmed request; prepare_material_reply prepares an existing document to share. '
@@ -334,7 +335,12 @@ class PydanticAgentRuntime:
                                         'If the document is missing or ambiguous, ask which existing document to share. Nothing is sent until human confirmation.')
                                 if _workspace_actions.summary_context is not None and (_workspace_actions.initiative or focused_summary):
                                     scope = _workspace_actions.summary_context
-                                    agent.instructions(lambda: ('This turn follows a built-in preparation task, not a claimed human mandate: '
+                                    if scope.get('kind') == 'goal':
+                                        agent.instructions(lambda: 'Read read_summary_delegation, read_class_records() and read_class_work(kind="tasks") without filters. '
+                                            'Use the confirmed deliverable title exactly once, in prepare_document with action=create. If the goal tool has no teacher_material, call ask_summary_question naming the required_material and do not draft. '
+                                            'When material is present, put the entire exact answer on its own line in the form 老师补充：材料名：老师原话 outside 已完成. Follow the returned style and report actual task status and recorded facts without inventing any. Do not edit an existing document or modify facts or tasks.')
+                                    else:
+                                        agent.instructions(lambda: ('This turn follows a built-in preparation task, not a claimed human mandate: '
                                         if scope.get('kind') == 'builtin' else 'This turn is grounded in confirmed teacher summary preferences: ')
                                         + scope['body'] + '. Read all ordinary records with read_class_records() and all tasks with read_class_work(kind="tasks") this turn, without student/search filters. A class name is not a fact-text search. Filtered or truncated results cannot establish what is missing. Decide whether the new material provides useful summary work. '
                                         'Prepare only a truthful editable document titled 班级工作小结, reusing the current document if present. '
@@ -359,6 +365,8 @@ class PydanticAgentRuntime:
                             @agent.output_validator
                             def confirmed_candidate_exists(ctx: RunContext[None], output):
                                 scope = _workspace_actions.summary_context
+                                if isinstance(output, str) and scope and scope.get('kind') == 'goal':
+                                    raise ModelRetry('Use ask_summary_question for the missing goal material or prepare_document for the actual named deliverable.')
                                 if (isinstance(output, str) and scope and _workspace_actions.proposed is None
                                         and (_workspace_actions.initiative or focused_summary or scope.get('resuming'))
                                         and output.strip() != 'NO_SUMMARY'):

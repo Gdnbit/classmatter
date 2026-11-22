@@ -44,8 +44,7 @@ class BuiltinSummaryTransaction(PersonalSummaryTransaction):
                 {**binding, 'class': builtin['class_id'], 'term': builtin['term_id'], 'title': PREFERENCE_TITLE}).scalars()
             for body in bodies:
                 try:
-                    SummaryDelegation.parse(body)
-                    has_preference = True
+                    has_preference = has_preference or not SummaryDelegation.parse(body).deliverable
                 except ValueError:
                     pass
         if builtin and not has_preference:

@@ -9,7 +9,7 @@ from sqlalchemy import text
 
 from class_os.application.workspace_chat import WorkspaceChatBusinessGateway, WorkspaceChatQueryGateway
 from class_os.domain.activity import CreateRecord, CreateTask, ChangeTask
-from class_os.domain.personal_summary import TITLE, SUMMARY_TITLE, SummaryDelegation
+from class_os.domain.personal_summary import GOAL_TITLE, INITIATIVE_REQUEST, TITLE, SUMMARY_TITLE, SummaryDelegation
 from class_os.domain.workspace_chat import candidate
 from class_os.infrastructure.agent import PydanticAgentRuntime
 from class_os.infrastructure.workspace_chat_runtime import WorkspaceChatRuntime
@@ -93,7 +93,7 @@ async def send(runtime, chats, history, auth, thread, text_value):
     events = [event async for event in runtime.stream_queued(auth, thread, request)]
     row = history.turn(auth, thread, request)[1]
     assert row['state'] == 'completed', (row, runtime.sdk.last_failure_type)
-    assert any(event.type == 'run.completed' for event in events)
+    assert events[0].type == 'run.started' and events[-1].type == 'run.completed'
     return row
 
 
@@ -109,6 +109,149 @@ def materials(fixture):
     task = CreateTask('task.create', uuid4(), c, t, '合成作品核对', None, students[0], record.record_id)
     commit(record); commit(task)
     return record, task
+
+
+GOAL_REQUEST = '请持续跟进这个目标，核对回执名单后准备活动回执小结。'
+GOAL_DELIVERABLE = '活动回执小结'
+GOAL_LABEL = '回执名单'
+GOAL_REPLY = '回执名单是合成甲、合成乙。'
+
+
+def goal_factory(request):
+    def respond(messages, info):
+        if request.text == GOAL_REQUEST:
+            return ModelResponse(parts=[ToolCallPart('prepare_summary_delegation', {'quote': request.text,
+                'required_material': GOAL_LABEL, 'deliverable': GOAL_DELIVERABLE})])
+        if request.text != INITIATIVE_REQUEST:
+            return ModelResponse(parts=[TextPart('已了解。')])
+        latest_user = max(i for i, m in enumerate(messages) if any(isinstance(p, UserPromptPart) for p in m.parts))
+        returns = {p.tool_name: p.content for m in messages[latest_user:] for p in m.parts if isinstance(p, ToolReturnPart)}
+        if 'read_class_records' not in returns:
+            return ModelResponse(parts=[ToolCallPart('read_class_records', {})])
+        if 'read_class_work' not in returns:
+            return ModelResponse(parts=[ToolCallPart('read_class_work', {'kind': 'tasks'})])
+        if 'read_summary_delegation' not in returns:
+            return ModelResponse(parts=[ToolCallPart('read_summary_delegation', {})])
+        instruction = returns['read_summary_delegation']
+        assert instruction['deliverable'] == GOAL_DELIVERABLE
+        assert {tool.name for tool in info.function_tools} <= {'read_class_work', 'read_class_records', 'read_summary_delegation',
+            'ask_summary_question', 'prepare_document', 'read_task_progress'}
+        if not instruction['teacher_material']:
+            return ModelResponse(parts=[ToolCallPart('ask_summary_question', {'question': '回执名单是什么？'})])
+        body = f'## 待核对\n\n老师补充：{GOAL_LABEL}：{instruction["teacher_material"]}'
+        return ModelResponse(parts=[ToolCallPart('prepare_document', {'action': 'create', 'title': GOAL_DELIVERABLE,
+            'body': body})])
+    return FunctionModel(respond)
+
+
+@pytest.mark.db
+async def test_named_goal_resumes_once_after_restart_and_stops_on_saved_receipt(classroom_work):
+    from class_os.application.roster import CommandRejected
+    from class_os.domain.documents import ReviseDocument
+    from class_os.domain.workspace_chat import LEASE
+    from class_os.infrastructure.personal_summary_store import validate_summary_integrity
+
+    business, query, auth, owner, clock, _, commit, c, t, _ = classroom_work
+    thread = uuid4()
+
+    def start():
+        chats, history, sdk, runtime, service, _ = assembly(classroom_work)
+        sdk.model_factory = goal_factory
+        service.sessions[auth[3]] = auth
+        return chats, history, sdk, runtime, service
+
+    chats, history, _, runtime, service = start()
+    proposed = await send(runtime, chats, history, auth, thread, GOAL_REQUEST)
+    assert proposed['candidate']['title'] == GOAL_TITLE
+    await service.check(auth[3])
+    assert len(history.history(auth, thread)['turns']) == 1
+    save(business, auth, proposed)
+    goal = next(row for row in history.summary_programs(auth) if row.get('kind') == 'goal')
+    await service.check(auth[3])
+    question = history.history(auth, thread)['turns'][-1]
+    assert question['origin'] == 'personal-agent' and question['answer_required'] and GOAL_LABEL in question['assistant_text']
+    assert not question['candidate'] and query.documents(*auth, c, t)[0]['title'] == GOAL_TITLE
+    await service.close()
+
+    chats, history, _, runtime, service = start()
+    clock[0] += timedelta(minutes=2)
+    await send(runtime, chats, history, auth, uuid4(), GOAL_REPLY)  # Other chat cannot answer.
+    await send(runtime, chats, history, auth, thread, '回执名单是不确定。')
+    await service.check(auth[3])
+    assert [row['request_id'] for row in history.history(auth, thread)['turns'] if row['origin'] == 'personal-agent'] == [question['request_id']]
+    received = await send(runtime, chats, history, auth, thread, GOAL_REPLY)
+    assert received['assistant_text'].startswith('已收到补充材料') and not received['candidate']
+    interrupted = chats.summary_claim(auth, goal['document_id'])
+    assert interrupted and chats.claim(auth, thread, interrupted['request_id'])
+    await service.close()
+
+    chats, history, sdk, runtime, service = start()
+    clock[0] += LEASE + timedelta(seconds=1)
+    await service.check(auth[3])
+    assert history.turn(auth, thread, interrupted['request_id'])[1]['state'] == 'unknown'
+    draft = history.history(auth, thread)['turns'][-1]
+    assert draft['request_id'] != interrupted['request_id'] and draft['origin'] == 'personal-agent'
+    assert draft['candidate']['title'] == GOAL_DELIVERABLE
+    assert draft['candidate']['body'].endswith('老师补充：回执名单：合成甲、合成乙。')
+    assert draft['change_preview'] and not draft['action_receipt']
+    stale = business.preview(*auth, candidate(draft['candidate']))
+    approval = business.approve(*auth, stale.proposal_id, stale.payload_hash)
+    materials(classroom_work)
+    with pytest.raises(CommandRejected):
+        business.commit(*auth, stale.proposal_id, uuid4(), approval)
+    clock[0] += timedelta(minutes=2)
+    def temporarily_unavailable(_):
+        def respond(messages, info):
+            raise TimeoutError('synthetic transient model outage')
+        return FunctionModel(respond)
+    sdk.model_factory = temporarily_unavailable
+    await service.check(auth[3])
+    failed = history.history(auth, thread)['turns'][-1]
+    assert failed['state'] == 'failed' and not failed['candidate']
+    sdk.model_factory = goal_factory
+    resume = await send(runtime, chats, history, auth, thread, '继续整理班级工作小结。')
+    assert resume['assistant_text'] == '我会重新核对这个目标。'
+    clock[0] += timedelta(minutes=2)
+    await service.check(auth[3])
+    fresh = history.history(auth, thread)['turns'][-1]
+    assert fresh['request_id'] != draft['request_id'] and fresh['change_preview']
+    save(business, auth, fresh)
+    await service.close()
+
+    chats, history, _, _, service = start()
+    clock[0] += timedelta(minutes=2)
+    await service.check(auth[3])
+    assert history.history(auth, thread)['turns'][-1]['request_id'] == fresh['request_id']
+    receipt = history.turn(auth, thread, fresh['request_id'])[1]['action_receipt']
+    assert receipt and query.document(*auth, c, t, receipt['resource_id'])['body'] == fresh['candidate']['body']
+    assert len([row for row in query.documents(*auth, c, t) if row['title'] == GOAL_DELIVERABLE]) == 1
+    with owner.transaction(read_only=True) as connection:
+        validate_summary_integrity(connection)
+    commit(ReviseDocument(goal['document_id'], c, t, goal['version'], GOAL_TITLE,
+        SummaryDelegation(required_material='另一个材料', deliverable='未经对话确认的交付件').body(), 'markdown'))
+    assert not any(row.get('kind') == 'goal' for row in history.summary_programs(auth))
+    await service.check(auth[3])
+    assert history.history(auth, thread)['turns'][-1]['request_id'] == fresh['request_id']
+    await service.close()
+
+
+@pytest.mark.db
+async def test_concurrent_goal_setup_cannot_activate_a_second_goal(classroom_work):
+    from class_os.application.roster import CommandRejected
+
+    business, _, auth, _, _, _, _, _, _, _ = classroom_work
+    chats, history, sdk, runtime, _, _ = assembly(classroom_work)
+    sdk.model_factory = goal_factory
+    thread = uuid4()
+    original = await send(runtime, chats, history, auth, thread, GOAL_REQUEST)
+    competing = await send(runtime, chats, history, auth, uuid4(), GOAL_REQUEST)
+    stale = business.preview(*auth, candidate(competing['candidate']))
+    approval = business.approve(*auth, stale.proposal_id, stale.payload_hash)
+    save(business, auth, original)
+    with pytest.raises(CommandRejected):
+        business.commit(*auth, stale.proposal_id, uuid4(), approval)
+    goals = [row for row in history.summary_programs(auth) if row.get('kind') == 'goal']
+    assert len(goals) == 1 and goals[0]['thread_id'] == thread
 
 
 @pytest.mark.db
