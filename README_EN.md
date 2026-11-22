@@ -1,146 +1,51 @@
 <div align="center">
+  <img src="https://repository-images.githubusercontent.com/1424619394/0730fa01-db22-4b12-a757-ab2bddf0e601" width="760" alt="ClassMatter, with the giraffe and notebook mark">
 
-<h1>ClassMatter · 班事有谱</h1>
-
-<p><strong>Every class matter matters.</strong></p>
-
-<p>An <strong>Agent-native Personal Class OS</strong> for homeroom teachers.<br>Turn scattered records and follow-ups into coherent, traceable working memory.</p>
-
-<p>
-<a href="README.md">简体中文</a> ·
-<a href="#-product-philosophy">Philosophy</a> ·
-<a href="#-capabilities">Capabilities</a> ·
-<a href="#-system-design">Architecture</a> ·
-<a href="#-quick-start">Quick Start</a> ·
-<a href="#-documentation">Docs</a>
-</p>
-
-<p>
-<a href="LICENSE"><img alt="License: Apache-2.0" src="https://img.shields.io/badge/license-Apache--2.0-64748b"></a>
-<a href=".github/workflows/synthetic-ci.yml"><img alt="Synthetic CI" src="https://github.com/Gdnbit/classmatter/actions/workflows/synthetic-ci.yml/badge.svg"></a>
-<img alt="Stage: Pre-alpha" src="https://img.shields.io/badge/stage-pre--alpha-64748b">
-</p>
-
+  <h1>ClassMatter · 班事有谱</h1>
+  <p><strong>An open-source classroom workbench for teachers</strong></p>
+  <p>Record what happened, see what needs attention, and turn finished work into a summary.</p>
+  <p>
+    <a href="README.md">简体中文</a> ·
+    <a href="#everyday-work">Everyday work</a> ·
+    <a href="#quick-start">Quick start</a> ·
+    <a href="#docs-and-contributing">Docs and contributing</a>
+  </p>
+  <p>
+    <a href="LICENSE"><img alt="Apache-2.0 license" src="https://img.shields.io/badge/License-Apache--2.0-285b4d"></a>
+    <a href="https://github.com/Gdnbit/classmatter/actions/workflows/synthetic-ci.yml"><img alt="Windows and Ubuntu CI" src="https://github.com/Gdnbit/classmatter/actions/workflows/synthetic-ci.yml/badge.svg?branch=main"></a>
+  </p>
 </div>
 
----
+## Everyday work
 
-## ✦ Why ClassMatter?
+Start the day with **Needs my attention**, **Might need a reminder**, and **Waiting on others**. Record an event in chat when it happens. At the end of the week, use the records and follow-ups you already have to draft a summary. The same item is available from chat, the student record, and the work view.
 
-A homeroom teacher manages more than forms and spreadsheets. An absence, conversation or new instruction may lead to a follow-up, deadline, handoff or later correction.
+> “Create a follow-up to collect the permission slips by Friday.”
+>
+> “Swap these two students’ seats and show me the layout first.”
+>
+> “Draft a summary of the classroom work we finished this week.”
 
-The real challenge is often **fragmented information, disconnected actions, unclear responsibility and lost context**.
+Review the draft or compare the before and after states in chat. Confirm to save, then see the result on the original page.
 
-> **ClassMatter is an external working memory for class affairs.** Instead of creating another ledger to maintain, we want every record to become a useful starting point for the next action.
+| Classroom work | How ClassMatter helps |
+| --- | --- |
+| **Record events and follow through** | Start with a message or voice transcription. Link students, notes, and deadlines, then see progress, waiting items, and student timelines. |
+| **Manage classes, grades, and seating** | Use the roster and gradebook in the same workspace. Compare seating layouts before applying a change. |
+| **Prepare summaries and documents** | Draft from existing records, request materials from paired colleagues, edit documents, browse revisions, and export to Word or PowerPoint. |
+| **Find the source** | Ask a question in chat, search the knowledge library, and follow citations to the source material. |
 
-<div align="center">
+## Quick start
 
-**Record → Task → Today → Student Timeline → Correction & Audit**
-
-</div>
-
-## ✦ Product philosophy
-
-Six principles shape how ClassMatter works and how it grows.
-
-| | |
-| :--- | :--- |
-| **01 · Work around the matter** <p>Not another table</p> | Connect records, subjects, sources, time, tasks and outcomes. A matter should remain actionable after its first entry. |
-| **02 · Reduce passive responsibility pressure** <p>More than fewer clicks</p> | Clarify what needs action, why, who owns it, when it is due and where the evidence lives. An incoming message is not an accepted responsibility. |
-| **03 · Keep epistemic boundaries** <p>Evidence is not inference</p> | Domain Fact, Observation, Claim, Evidence, AI Inference and Draft are not interchangeable. Chat memory must not turn a hypothesis into a formal fact. |
-| **04 · AI helps; people decide** <p>Assistance is not authority</p> | The Agent can retrieve, explain and draft. Trusted gateways own permissions, deterministic rules, risk, approval and committed changes. |
-| **05 · Grow from a stable core** <p>Governed, not improvised</p> | Evolve from Stable Kernel through Domain Packs and Controlled Extensions; no unbounded fact table or Agent-driven schema mutation. |
-| **06 · Optimize for net burden** <p>Not demo speed</p> | Measure review, error correction, backlog, onboarding and maintenance alongside time saved. Remove automation that does not deliver net value. |
-
-**The goal is not to make teachers remember more. It is to give important work a reliable place to live.**
-
-<details>
-<summary><strong>Why isn't AI memory the source of truth?</strong></summary>
-
-Context, conversation memory, Knowledge/RAG and Domain Fact have different authority, origin, purpose and lifecycle. Models can help interpret information; durable facts require stable domain rules, source tracking, versioning and governed corrections.
-
-See [long-term requirements](docs/specs/class-os-v1/long-term-requirements.md) and [architecture decisions](docs/specs/class-os-v1/architecture-decision.md).
-
-</details>
-
-## ✦ Capabilities
-
-### The working record-to-follow-up slice
-
-| Scenario | Implemented engineering |
-| :--- | :--- |
-| **Class workspace** | Single-owner local login, class/term and student roster |
-| **Structured records** | Typed student events, stable IDs and source/time context |
-| **Follow-up and recall** | Task, Today and Student Timeline |
-| **Trusted correction** | Preview, risk-dependent approval, version control and audit |
-| **Agent assistance** | Replaceable Pydantic AI query/draft adapter; no autonomous approval or canonical writes |
-
-These behaviors are backed by source, contracts, migrations and synthetic regression tests, not just UI mockups.
-
-### A full Class OS direction
-
-**Class operations:** imports, grades and analysis, seating, dormitories and groups.  
-**Coordination:** reports, communication drafts, handoffs, commitments, cases and workflows.  
-**Intelligence:** channel capture, entity resolution, Knowledge/RAG and governed domain extensions.
-
-The wider [v1 requirements](docs/specs/class-os-v1/requirements.md) and [long-term direction](docs/specs/class-os-v1/long-term-requirements.md) are a product blueprint, not a claim that every module already ships.
-
-### From routine follow-ups to safer handoffs
-
-Some class matters remain open after a conversation: a follow-up is pending, a message was sent without verified receipt, or another authorized professional needs to take over. A reliable system must distinguish **recorded vs. acted on** and **delivered vs. accepted**, while respecting the school's actual responsibilities.
-
-We are documenting 20 synthetic business scenarios, including absence, family communication, peer conflict, boarding-school handoffs, and sensitive student-safety incidents. The aim is to reduce avoidable omissions and handoff gaps—not to predict every incident, issue medical diagnoses, or guarantee legal immunity.
-
-- [Business scenario catalog (Chinese)](docs/product/scenario-catalog.md)
-- [Student safety and duty-of-care workflows (Chinese)](docs/product/student-safety-and-duty-workflows.md)
-
-> **Scope:** Discovery/Future only. R1 does not support sensitive student mental-health records, multi-role handoffs, automated crisis alerts, or emergency response. Immediate real-world emergencies follow the school's approved offline procedures first.
-
-**Evidence-led governance:** Applicable statutes, regulations, judicial interpretations, decided cases and approved school procedures are reviewed separately. Every rule proposal requires jurisdiction, legal source, effective date, responsible actor and human approval. [Source hierarchy and traceability (Chinese)](docs/product/legal-evidence-and-rule-hierarchy.md).
-
-## ✦ System design
-
-### Agent-native without giving the model business authority
-
-```mermaid
-flowchart LR
-    U["Teacher · Today / Timeline"] --> API["Trusted Web / API"]
-    U --> AI["Agent · read / draft"]
-    AI --> Q["Query Gateway"]
-    API --> Q
-    API --> B["Business Command Gateway"]
-    API --> I["Identity Security Boundary"]
-    Q --> D["Domain · facts and rules"]
-    B --> V["Validate → preview → approve → commit"]
-    V --> D
-    D --> DB[("PostgreSQL · version and audit")]
-    I --> DB
-```
-
-**The model interprets; the domain validates; the teacher decides.**
-
-| Layer | Technology and design |
-| :--- | :--- |
-| **Web** | React 19 · TypeScript · Vite · Tailwind CSS |
-| **Backend** | Python 3.13 · FastAPI · PostgreSQL 18 |
-| **Agent** | Pydantic AI · Tool / provider adapters · read/draft boundary |
-| **Architecture** | Layered modular monolith · QG / BCG / ISB · idempotency and audit |
-| **Quality** | Contracts and evals · disposable real-DB regression · Windows / Ubuntu CI |
-
-[Architecture](docs/specs/class-os-v1/architecture.md) · [ADRs](docs/specs/class-os-v1/architecture-decision.md) · [Engineering overview](docs/ENGINEERING_OVERVIEW.md)
-
-## ✦ Quick start
-
-The supported persistent local runtime currently targets **Windows** with PowerShell 7, Node.js 22–24, pnpm 11.19.0, Python 3.13, uv 0.11.7 and PostgreSQL 18.6 binaries. Local credentials use DPAPI.
+Build the Windows desktop app from source. You’ll need PowerShell 7, Node.js 22–24, pnpm 11.19.0, Python 3.13, uv, and PostgreSQL 18.6. The commands below start a fresh workspace. To bring an existing workspace forward, follow the [backup and upgrade guide](apps/desktop/README.md).
 
 ```powershell
-# Prepare dependencies and a fresh developer instance (skip prepare-chat if it exists)
-cd backend
+git clone https://github.com/Gdnbit/classmatter.git
+cd classmatter/backend
 uv sync --frozen
-uv run --frozen python local.py prepare-chat --profile conversation-d1 --pg-root '<PostgreSQL18 installation directory>'
+uv run --frozen python local.py prepare-chat --profile conversation-d1 --pg-root '<PostgreSQL 18.6 installation directory>'
 uv run --frozen python local.py upgrade-classroom --profile workspace-chat-d3
 
-# Build and open the standalone development workbench
 cd ../apps/web
 pnpm install --frozen-lockfile
 cd ../desktop
@@ -149,42 +54,12 @@ pnpm build
 pnpm start
 ```
 
-`prepare-chat` only prepares a fresh D3 development workspace and refuses an existing directory. Then run `uv run --frozen python local.py upgrade-classroom --profile workspace-chat-d3` to verify a complete checkpoint and upgrade the same workspace to D4. Existing D3 instances only need this upgrade; close the app/service first. Existing D1/D2 instances use the [desktop upgrade guide](apps/desktop/README.md). No Owner reset, password setup or data clearing occurs. The original UI supports persistent chat, reviewed task continuation, basic exams/results and seating. Imports, scheduling solvers, unattended work and complete portable exit remain unfinished. Configure and test a provider in Settings for actual AI capabilities. Closing the app preserves its database; use `local.py stop --profile classroom-work-d4` and the same profile's `start` before relaunch. Only synthetic development data is currently admitted.
+Connect and enable your model in desktop settings. Start with a conversation and attach a class when the task calls for it.
 
-<details>
-<summary><strong>Verification, mock mode and supported boundaries</strong></summary>
+## Docs and contributing
 
-```powershell
-python scripts/public_guard.py --require-license
-pwsh ./scripts/verify.ps1 -Suite docs
-pwsh ./scripts/verify.ps1 -Suite web
-pwsh ./scripts/verify.ps1 -Suite backend
-pwsh ./scripts/verify.ps1 -Suite all -PostgresRoot '<PostgreSQL18 installation directory>'
-```
+- [Desktop setup and upgrades](apps/desktop/README.md) · [Backend development](backend/README.md) · [Documentation index](docs/README.md)
+- [Product requirements](docs/specs/class-os-v1/requirements.md) · [Architecture](docs/specs/class-os-v1/architecture.md) · [Implementation and verification](docs/implementation-ledger.md)
+- [Contributing](CONTRIBUTING.md) · [Report an issue](https://github.com/Gdnbit/classmatter/issues) · [Security reports](SECURITY.md)
 
-The full suite requires disposable PostgreSQL, browser and relevant spike dependencies. Vite alone is not the persistent service; `VITE_CLASS_OS_DEMO=true` enables synthetic mock mode. Existing installations require explicit migration; do not copy `.local-runtime/` across hosts.
-
-The open-source edition is **Pre-alpha · Synthetic Development**. Real student records, production deployments, formal R1 approval and complete cross-host exit/recovery require separate evidence and admission.
-
-</details>
-
-## ✦ Documentation
-
-| Explore | Start here |
-| :--- | :--- |
-| **Product and workflows** | [Requirements](docs/specs/class-os-v1/requirements.md) · [Business flows](docs/specs/class-os-v1/business-flow.md) |
-| **Architecture choices** | [Architecture](docs/specs/class-os-v1/architecture.md) · [ADRs](docs/specs/class-os-v1/architecture-decision.md) |
-| **Long-term direction and value** | [Evolution](docs/specs/class-os-v1/long-term-requirements.md) · [Acceptance](docs/specs/class-os-v1/acceptance.md) |
-| **Agent-owned work & runtime research (Future; Chinese)** | [Work / attention design](docs/product/agent-owned-work-and-attention.md) · [Pydantic AI vs Pi](docs/research/2026-10-22-pydantic-ai-pi-runtime-assessment.md) · [Synthetic evaluation plan](docs/research/2026-10-22-agent-runtime-and-work-evaluation-plan.md) |
-| **Contribution and security** | [Contributing](CONTRIBUTING.md) · [Security](SECURITY.md) · [Public audit](docs/PUBLIC_AUDIT.md) |
-
----
-
-<div align="center">
-
-<strong>Not more to remember. A better place for important work to live.</strong>
-
-<p><sub>Open Source · Apache-2.0 · Copyright © 2026 Gdnbit<br>
-<a href="LICENSE">License</a> · <a href="NOTICE">Notices</a> · <a href="README.md">简体中文</a></sub></p>
-
-</div>
+ClassMatter is open source under the [Apache-2.0 license](LICENSE). Copyright © 2026 Gdnbit. [Notices](NOTICE)

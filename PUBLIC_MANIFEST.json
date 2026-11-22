@@ -492,7 +492,7 @@
       "sha256": "e11e6fa4013d8afe36f60f71b401a3866a2dc4c18ecac25b1b8d7b948f99b542"
     },
     "assets/brand/README.md": {
-      "sha256": "8bc45498fe07cd7caaecb3c80eedca0e37468f1dff9e89201addc9de4f730d38"
+      "sha256": "b41b15499218a27bb627104c7dbcd59005c8aef5b5863c8b4cc595577b6a3f9e"
     },
     "backend/src/class_os/infrastructure/conversation_integrity.py": {
       "sha256": "f6556be26eb33b83076f4ca2f6a1728c4dc113c189a4a6d5e607fc205e13cc40"
@@ -771,10 +771,10 @@
       "sha256": "73437596ac1a4c4a5e03d96b5b5cc2d8db47e0d88782a44c3e4ce1da320b0d05"
     },
     "README.md": {
-      "sha256": "2a9d4dce4352c7bfb1fb2d66cfbbaaf6f6fddabf2f8a8608f9084bb3ed7f3173"
+      "sha256": "b028d5dade61cb1dbfea3dec1f29bc22b2bc64febf69c7da51d42803530b8edd"
     },
     "README_EN.md": {
-      "sha256": "5b71d47b8f65b9d541df76e9720995df55e57ebdf3aa32ae615a4e3143ad0eb9"
+      "sha256": "fe9370f12b1c73acaa3d2a3c6daebc9451a43dae210f5d5d8ac1d101e7209711"
     },
     "SECRET_SCAN_REVIEW.json": {
       "sha256": "1386be7238755ec040e905b36c22e77634005bb7c8ff1bbbcbc51b8ca6f7d1b3"
