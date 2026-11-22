@@ -538,7 +538,7 @@
     },
     {
       "name": "prepare_summary_delegation",
-      "description": "Only for explicit ongoing delegation or long-term feedback about class work summaries. Quote the exact current human request. 'This time' is not a permanent preference. Prepare a readable instruction document for the existing human confirmation; never saves or enables itself. Preserve omitted prior settings. Pause only on an explicit stop request.",
+      "description": "Prepare explicit ongoing class-summary preferences or a class goal to deliver one named summary after checking one named material. For a goal, quote the entire current human request and provide its exact deliverable title and material. Preserve omitted settings. Pause only on an explicit stop. Always requires human confirmation.",
       "parameters_json_schema": {
         "additionalProperties": false,
         "properties": {
@@ -570,6 +570,17 @@
             "default": null
           },
           "required_material": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "deliverable": {
             "anyOf": [
               {
                 "type": "string"

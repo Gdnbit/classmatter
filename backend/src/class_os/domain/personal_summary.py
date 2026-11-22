@@ -9,6 +9,8 @@ from markdown_it import MarkdownIt
 
 TITLE = '班级小结委托'
 SUMMARY_TITLE = '班级工作小结'
+GOAL_TITLE = '班级目标委托'
+GOAL_RETRY_ACK = '我会重新核对这个目标。'
 INITIATIVE_REQUEST = '依据已确认的班级小结委托，检查最新材料；有值得整理的新内容才准备“班级工作小结”，没有新价值保持安静。'
 STYLES = {'standard': '按已完成、进行中、待核对整理', 'three-points': '三条要点'}
 STATES = {'enabled': '持续整理', 'paused': '暂停整理'}
@@ -65,6 +67,7 @@ class SummaryDelegation:
     state: str = 'enabled'
     style: str = 'standard'
     required_material: str = ''
+    deliverable: str = ''
 
     def __post_init__(self):
         if self.state not in STATES or self.style not in STYLES:
@@ -73,8 +76,19 @@ class SummaryDelegation:
                 or self.required_material != self.required_material.strip()
                 or any(ord(char) < 32 for char in self.required_material)):
             raise ValueError('Invalid summary requirement')
+        if (type(self.deliverable) is not str or len(self.deliverable) > 80
+                or self.deliverable != self.deliverable.strip()
+                or any(ord(char) < 32 for char in self.deliverable)
+                or self.deliverable in (TITLE, GOAL_TITLE, SUMMARY_TITLE)
+                or self.deliverable and not self.required_material):
+            raise ValueError('Invalid goal deliverable')
 
     def body(self):
+        if self.deliverable:
+            return (f'# {GOAL_TITLE}\n\n- 交付件：{self.deliverable}\n'
+                    f'- 状态：{STATES[self.state]}\n- 格式：{STYLES[self.style]}\n'
+                    f'- 需要核对：{self.required_material}\n'
+                    '- 完成条件：确认保存交付件；不自动提交或对外发送')
         return ('# 班级小结委托\n\n- 目的：持续根据已登记的普通事实与任务准备小结草稿\n'
                 f'- 状态：{STATES[self.state]}\n- 格式：{STYLES[self.style]}\n'
                 f'- 需要核对：{self.required_material or "无额外材料"}\n'
@@ -84,6 +98,13 @@ class SummaryDelegation:
     def parse(cls, body):
         if type(body) is not str:
             raise ValueError('Invalid summary delegation')
+        goal = re.fullmatch(r'# 班级目标委托\n\n- 交付件：([^\n]{1,80})\n'
+            r'- 状态：(持续整理|暂停整理)\n- 格式：(按已完成、进行中、待核对整理|三条要点)\n'
+            r'- 需要核对：([^\n]{1,160})\n- 完成条件：确认保存交付件；不自动提交或对外发送', body)
+        if goal:
+            deliverable, state, style, required = goal.groups()
+            return cls(next(key for key, value in STATES.items() if value == state),
+                       next(key for key, value in STYLES.items() if value == style), required, deliverable)
         match = re.fullmatch(r'# 班级小结委托\n\n- 目的：持续根据已登记的普通事实与任务准备小结草稿\n'
             r'- 状态：(持续整理|暂停整理)\n- 格式：(按已完成、进行中、待核对整理|三条要点)\n'
             r'- 需要核对：([^\n]{1,160})\n- 保存：核对后确认，不自动提交或对外发送', body)
@@ -93,6 +114,21 @@ class SummaryDelegation:
         return cls(next(key for key, value in STATES.items() if value == state),
                    next(key for key, value in STYLES.items() if value == style),
                    '' if required == '无额外材料' else required)
+
+
+def goal_material_reply(text, label):
+    match = re.fullmatch(re.escape(label) + r'\s*(?:是|为|：|:)\s*([^\r\n]{1,300})', text or '')
+    if not match:
+        return ''
+    value = match[1].strip()
+    if (not any(char.isalnum() for char in value) or value.endswith(('？', '?'))
+            or value.startswith(('不确定', '不知道', '还没有', '待确认', '未核实', '没拿到'))):
+        return ''
+    return value
+
+
+def goal_recovery_basis(basis):
+    return sha256(('goal-recovery:' + basis).encode('ascii')).hexdigest()
 
 
 def source_basis(document, activity):
@@ -114,4 +150,7 @@ def source_basis(document, activity):
     payload = {'mandate': str(document.get('program_id') or document['document_id']), 'version': document['version'],
                'context': document.get('context_basis', ''),
                'body': document['body'], 'records': records, 'tasks': tasks}
-    return sha256(rfc8785.dumps(payload)).hexdigest(), bool(records or tasks)
+    if document.get('kind') == 'goal':
+        payload['teacher_material'] = document['goal_material']
+        payload['teacher_retry'] = document['goal_retry']
+    return sha256(rfc8785.dumps(payload)).hexdigest(), bool(records or tasks or document.get('kind') == 'goal')

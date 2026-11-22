@@ -79,12 +79,14 @@ class WorkspaceActionCapture:
         candidate(payload)
         from class_os.domain.personal_summary import SUMMARY_TITLE
         scope = self.summary_context
+        goal = bool(scope and scope.get('kind') == 'goal')
+        summary_title = scope.get('deliverable', SUMMARY_TITLE) if scope else SUMMARY_TITLE
         if self.initiative:
             if (scope is None or type(command) not in (CreateDocument, ReviseDocument)
-                    or command.title != SUMMARY_TITLE or command.class_id != scope['class_id']
-                    or command.term_id != scope['term_id']):
+                    or command.title != summary_title or command.class_id != scope['class_id']
+                    or command.term_id != scope['term_id'] or goal and type(command) is not CreateDocument):
                 raise ModelRetry('The standing instruction only permits a work-summary draft in its own class. No other change was prepared.')
-        if (scope and type(command) in (CreateDocument, ReviseDocument) and command.title == SUMMARY_TITLE
+        if (scope and type(command) in (CreateDocument, ReviseDocument) and command.title == summary_title
                 and command.class_id == scope['class_id'] and command.term_id == scope['term_id']):
             scope_key = (scope['class_id'], scope['term_id'])
             if not self.summary_sources_read(scope_key):
@@ -98,8 +100,15 @@ class WorkspaceActionCapture:
                     'Only done tasks belong under 已完成; only in-progress tasks belong under 进行中. '
                     'Keep not-started/waiting tasks outside these sections and preserve their actual status. No task was changed.')
             requirement = scope['required_material']
-            supplied = requirement and any(re.search(re.escape(requirement) + r'\s*(?:是|为|：|:)', message)
-                for message in self.user_messages)
+            if goal:
+                prefix = f'老师补充：{requirement}：'
+                attributed = [line for line in command.body.splitlines() if line.lstrip().startswith(prefix)]
+                if (not scope['goal_material'] or 'read_summary_delegation' not in self.completed_tools
+                        or attributed != [prefix + scope['goal_material']]):
+                    raise ModelRetry('Read the confirmed goal material. If it is missing, use ask_summary_question. '
+                        'Otherwise preserve the complete answer in one separate “老师补充：材料名：老师原话” line.')
+            supplied = goal or (requirement and any(re.search(re.escape(requirement) + r'\s*(?:是|为|：|:)', message)
+                for message in self.user_messages))
             if supplied and (requirement not in command.body or '老师补充' not in command.body):
                 raise ModelRetry('Retain the supplied '+requirement+' as 老师补充, not a registered student fact or a completed activity. Do not infer its purpose or time.')
             if supplied:
@@ -331,8 +340,11 @@ class WorkspaceActionCapture:
                 if current is None:
                     return missing_class
                 scope = (current.class_id, current.term_id)
-                from class_os.domain.personal_summary import SUMMARY_TITLE
-                if (self.summary_context and title == SUMMARY_TITLE
+                from class_os.domain.personal_summary import GOAL_TITLE, SUMMARY_TITLE
+                if self.classroom_enabled and GOAL_TITLE in (title, new_title):
+                    return {'status': 'managed-goal', 'instruction': 'Only the goal delegation tool can prepare this instruction.'}
+                summary_title = bool(self.summary_context and title == self.summary_context.get('deliverable', SUMMARY_TITLE) and not new_title)
+                if (summary_title
                         and scope == (self.summary_context['class_id'], self.summary_context['term_id'])
                         and not self.summary_sources_read(scope)):
                     return {'status': 'read-summary-sources-first',
@@ -351,8 +363,6 @@ class WorkspaceActionCapture:
                 if any(identifier.lower().split('-')[0] in body.lower() for identifier in self.source_identifiers):
                     return {'status': 'readable-citations-required',
                         'instruction': 'Keep internal record/task identifiers, including shortened prefixes, out of the document. Cite the actual student, date, fact text, task title and result in readable language. Do not change the facts or add excluded notes. Nothing was prepared or saved.'}
-                from class_os.domain.personal_summary import SUMMARY_TITLE
-                summary_title = bool(self.summary_context and title == SUMMARY_TITLE and not new_title)
                 if not summary_title and (not self.mentioned(title) or new_title and not self.mentioned(new_title)):
                     return {"status": "needs-information", "question": "文档的新标题是什么？" if self.mentioned(title) else "要处理哪份文档？", "instruction": "Ask for the document title. Explain that generated prose needs review."}
                 if action == "create":
@@ -397,13 +407,15 @@ class WorkspaceActionCapture:
                 """Only ask about the standing summary instruction's explicitly required material after reading current facts and tasks. Pause with one short question. Never invent a missing requirement or modify a task."""
                 def validate():
                     scope = self.summary_context
-                    if not scope or not scope['required_material'] or scope['required_material'] not in question or len(question) > 240:
+                    if (not scope or not scope['required_material'] or scope.get('goal_material')
+                            or scope['required_material'] not in question or len(question) > 240):
                         raise ModelRetry('Ask only for the explicit required material; otherwise prepare the sourced draft or report that nothing useful changed.')
                     if not self.summary_sources_read((scope['class_id'], scope['term_id'])):
                         raise ModelRetry('Read all current ordinary facts and tasks without student/search filters or truncation before asking for missing material.')
                     return {'status': 'waiting-for-summary-material'}
                 await execute('ask_summary_question', validate)
-                self.clarification = question
+                self.clarification = (f'请补充{self.summary_context["required_material"]}。可以直接回复“{self.summary_context["required_material"]}是……”。'
+                    if self.summary_context.get('kind') == 'goal' else question)
                 raise CallDeferred()
             return (tuple(activity[2] if tool is prepare_task else tool for tool in base) + activity[:2]
                 + tools(self, query, credentials, context, execute, missing_class) + (recall_this_chat, search_policy_knowledge)

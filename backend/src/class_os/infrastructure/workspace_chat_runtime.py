@@ -22,7 +22,7 @@ class WorkspaceChatRuntime:
             raise ValueError("Exact workspace chat composition required")
         self.business, self.query, self.sdk = business, query, sdk
 
-    async def stream_queued(self, credentials, thread_id, request_id, *, reasoning=None):
+    async def stream_queued(self, credentials, thread_id, request_id, *, reasoning=None, interrupted=None):
         diagnostic = RunDiagnostics(self.sdk.diagnostics, request_id)
         try:
             ticket = await anyio.to_thread.run_sync(lambda: self.business.claim(credentials, thread_id, request_id))
@@ -51,6 +51,19 @@ class WorkspaceChatRuntime:
             current = next((row for row in history["turns"] if row["request_id"] == request_id), None)
             if current is None or current["state"] != "running" or current["version"] != ticket["version"]:
                 raise AgentRejected()
+            summary_context = await anyio.to_thread.run_sync(lambda: self.query.summary_context(credentials, thread_id, request_id))
+            if summary_context and summary_context.get('goal_receiving'):
+                from class_os.domain.personal_summary import GOAL_RETRY_ACK
+                answer = (GOAL_RETRY_ACK if summary_context['goal_receiving'] == 'retry' else '已收到补充材料，我会继续准备这份小结。')
+                stored = await finish('completed', answer)
+                settled = True
+                yield event('run.started', {'mode': 'chat'})
+                if stored['state'] == 'completed':
+                    yield event('message.delta', {'text': stored['assistant_text'], 'source_refs': []})
+                    yield event('run.completed', {})
+                else:
+                    yield event('run.failed', {'code': 'run_expired'})
+                return
             conversation = await anyio.to_thread.run_sync(lambda: self.sdk.workspace_conversation(credentials))
             previous, total = [], 0
             for row in reversed([row for row in history["turns"] if row["ordinal"] < ticket["ordinal"] and row["state"] == "completed"]):
@@ -67,7 +80,6 @@ class WorkspaceChatRuntime:
             # when many short continuations pushed it outside the SDK window.
             intent = [row['user_text'] for row in history['turns'] if row['ordinal'] < ticket['ordinal']
                       and row['state'] == 'completed' and row.get('origin', 'user') == 'user']
-            summary_context = await anyio.to_thread.run_sync(lambda: self.query.summary_context(credentials, thread_id, request_id))
             initiative = ticket.get('origin') == 'personal-agent'
             collaboration = ticket.get('origin') == 'collaboration'
             capture = WorkspaceActionCapture(tuple(intent + ([] if initiative or collaboration else [ticket['user_text']])),
@@ -108,7 +120,7 @@ class WorkspaceChatRuntime:
                 yield event(item.type, payload)
         except asyncio.CancelledError:
             with suppress(Exception):
-                await finish("cancelled")
+                await finish('unknown' if interrupted is not None and interrupted() else 'cancelled')
             settled = True
             raise
         except Exception as error:
