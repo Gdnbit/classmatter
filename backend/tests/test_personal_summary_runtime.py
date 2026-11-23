@@ -117,6 +117,43 @@ GOAL_LABEL = '回执名单'
 GOAL_REPLY = '回执名单是合成甲、合成乙。'
 
 
+@pytest.mark.parametrize('text', [
+    '不要持续跟进这个目标，核对回执名单后准备活动回执小结。',
+    '昨天持续跟进这个目标，核对回执名单后准备活动回执小结。',
+    '我只想举例：请持续跟进这个目标，核对回执名单后准备活动回执小结。',
+    '请持续跟进这个目标，核对回执名单后准备活动回执小结，可以吗？',
+    '核对回执名单后准备活动回执小结。',
+])
+def test_goal_setup_focus_excludes_reports_questions_and_one_off_requests(text):
+    from class_os.domain.personal_summary import is_explicit_goal_setup
+
+    assert is_explicit_goal_setup(GOAL_REQUEST)
+    assert not is_explicit_goal_setup(text)
+
+
+@pytest.mark.db
+async def test_explicit_goal_cannot_finish_with_a_prose_promise(classroom_work):
+    _, query, auth, _, _, _, _, class_id, term_id, _ = classroom_work
+    chats, history, sdk, runtime, _, _ = assembly(classroom_work)
+    requests = []
+
+    def model(request):
+        def respond(messages, info):
+            requests.append([tool.name for tool in info.function_tools])
+            if len(requests) == 1:
+                return ModelResponse(parts=[TextPart('我已准备好持续跟进，请提供相关任务。')])
+            assert any(isinstance(part, RetryPromptPart) for message in messages for part in message.parts)
+            return ModelResponse(parts=[ToolCallPart('prepare_summary_delegation', {'quote': request.text,
+                'required_material': GOAL_LABEL, 'deliverable': GOAL_DELIVERABLE})])
+        return FunctionModel(respond)
+
+    sdk.model_factory = model
+    result = await send(runtime, chats, history, auth, uuid4(), GOAL_REQUEST)
+    assert requests == [['prepare_summary_delegation'], ['prepare_summary_delegation']]
+    assert result['candidate']['title'] == GOAL_TITLE and result['change_preview']
+    assert result['action_receipt'] is None and not query.documents(*auth, class_id, term_id)
+
+
 def test_goal_draft_attributes_only_the_exact_teacher_reply():
     from pydantic_ai import ModelRetry
     from class_os.domain.documents import CreateDocument
@@ -149,17 +186,20 @@ def goal_factory(request):
         latest_user = max(i for i, m in enumerate(messages) if any(isinstance(p, UserPromptPart) for p in m.parts))
         returns = {p.tool_name: p.content for m in messages[latest_user:] for p in m.parts if isinstance(p, ToolReturnPart)}
         if 'read_class_records' not in returns:
-            return ModelResponse(parts=[ToolCallPart('read_class_records', {})])
+            assert [tool.name for tool in info.function_tools] == ['read_class_records']
+            return ModelResponse(parts=[ToolCallPart('read_class_records', {'search': GOAL_LABEL})])
         if 'read_class_work' not in returns:
-            return ModelResponse(parts=[ToolCallPart('read_class_work', {'kind': 'tasks'})])
+            assert [tool.name for tool in info.function_tools] == ['read_class_work']
+            return ModelResponse(parts=[ToolCallPart('read_class_work', {'kind': 'documents', 'search': GOAL_LABEL})])
         if 'read_summary_delegation' not in returns:
+            assert [tool.name for tool in info.function_tools] == ['read_summary_delegation']
             return ModelResponse(parts=[ToolCallPart('read_summary_delegation', {})])
         instruction = returns['read_summary_delegation']
         assert instruction['deliverable'] == GOAL_DELIVERABLE
-        assert {tool.name for tool in info.function_tools} <= {'read_class_work', 'read_class_records', 'read_summary_delegation',
-            'ask_summary_question', 'prepare_document', 'read_task_progress'}
         if not instruction['teacher_material']:
+            assert [tool.name for tool in info.function_tools] == ['ask_summary_question']
             return ModelResponse(parts=[ToolCallPart('ask_summary_question', {'question': '回执名单是什么？'})])
+        assert [tool.name for tool in info.function_tools] == ['prepare_document']
         body = f'## 待核对\n\n老师补充：{GOAL_LABEL}：{instruction["teacher_material"]}'
         return ModelResponse(parts=[ToolCallPart('prepare_document', {'action': 'create', 'title': GOAL_DELIVERABLE,
             'body': body})])

@@ -16,6 +16,16 @@ STYLES = {'standard': '按已完成、进行中、待核对整理', 'three-point
 STATES = {'enabled': '持续整理', 'paused': '暂停整理'}
 
 
+def is_explicit_goal_setup(text):
+    """Recognize the supported imperative without taking action or inferring fields."""
+    return (re.search(r'不[要用必]|无需|不想|别|不再|假设|举例|引用|这次|仅本次|[？?]', text) is None
+            and re.fullmatch(
+                r'\s*(?:请(?:你|您)?|帮我|请帮我)?\s*(?:持续\s*)?(?:跟进|推进)(?:这个|这项|本班的)?目标'
+                r'[，,:：]\s*(?:先)?(?:核对|查验|确认)[^，,。！？；;\r\n]{1,160}?后'
+                r'(?:再)?(?:准备|整理|生成)[^，,。！？；;\r\n]{1,80}小结[。！!]?\s*',
+                text) is not None)
+
+
 def _section_texts(body):
     """Read Markdown hierarchy, not regex-shaped headings in code examples."""
     tokens = MarkdownIt('commonmark').parse(body)

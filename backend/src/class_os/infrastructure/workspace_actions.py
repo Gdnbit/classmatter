@@ -66,6 +66,12 @@ class WorkspaceActionCapture:
     def summary_sources_read(self, scope):
         return scope in self.complete_record_read_scopes and scope in self.complete_task_read_scopes
 
+    @property
+    def confirmed_goal_scope(self):
+        if self.initiative and self.summary_context and self.summary_context.get('kind') == 'goal':
+            return self.summary_context
+        return None
+
     def propose(self, command):
         if self.collaboration_reply_only:
             from class_os.domain.collaboration import ShareMaterial
@@ -215,6 +221,9 @@ class WorkspaceActionCapture:
 
         async def read_class_work(kind: Literal["class", "students", "tasks", "documents"] = "class", search: str = "") -> dict:
             """Only when the user's request concerns class data, read current authorized class information. Never writes."""
+            if self.confirmed_goal_scope is not None:
+                # Confirmed goals require the entire bound term's task projection.
+                kind, search = 'tasks', ''
             def read():
                 current = context()
                 if current is None:

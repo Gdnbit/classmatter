@@ -5,7 +5,7 @@ from uuid import uuid4
 from pydantic_ai import ModelRetry
 
 from class_os.domain.documents import CreateDocument, ReviseDocument
-from class_os.domain.personal_summary import GOAL_TITLE, SummaryDelegation, TITLE
+from class_os.domain.personal_summary import GOAL_TITLE, SummaryDelegation, TITLE, is_explicit_goal_setup
 
 
 def tools(capture, query, credentials, context, execute, missing_class):
@@ -22,6 +22,8 @@ def tools(capture, query, credentials, context, execute, missing_class):
         """Prepare explicit ongoing class-summary preferences or a class goal to deliver one named summary after checking one named material. For a goal, quote the entire current human request and provide its exact deliverable title and material. Preserve omitted settings. Pause only on an explicit stop. Always requires human confirmation."""
         def prepare():
             request = capture.user_messages[-1] if capture.user_messages else ''
+            if is_explicit_goal_setup(request) and not deliverable:
+                raise ModelRetry('This request names a class goal. Provide the exact deliverable title and required material named by the user.')
             if capture.summary_context and not re.search(r'以后|今后|持续|长期|暂停|停止|不再|恢复|重新开始', request):
                 raise ModelRetry('A confirmed summary delegation already applies. This human answer or retry is not a new delegation. '
                     'Read current facts/tasks and prepare the summary, or use ask_summary_question for its missing required material.')
