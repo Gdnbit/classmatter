@@ -27,7 +27,7 @@
       "sha256": "64aa0d9cf0e28d43c7c6934b5350f6f2a69ec1414442d0cc59da6f90ce35efd2"
     },
     "backend/src/class_os/domain/personal_summary.py": {
-      "sha256": "286133041ac12bbc9f55ad99ae1c7b025cc4069a2da6d838bd13150afc762926"
+      "sha256": "c7ad9ca6c5fb3c455bcf1426ad0b9f0ba167c44952eb2e78d64485c7ae6b38d3"
     },
     "backend/src/class_os/infrastructure/personal_summary_runtime.py": {
       "sha256": "4f9be7cb8a3d50b5edb42b9fc274c7bde70e71c681c2697e29e5eec6b0be48f5"
@@ -36,13 +36,13 @@
       "sha256": "286d37bdcb7c643cbdbd373804a7995f8565cf5e1cce35b0fe40fe97972bd38b"
     },
     "backend/src/class_os/infrastructure/personal_summary_tools.py": {
-      "sha256": "41e4a89ddaa5ec8352ef85fe110b12c4780f9f68c91c0b31ebbaf50676842cfb"
+      "sha256": "26dbbdbda3f0ff0f9953b1f777566c82bfc52b9f0dda3d8148fce0554fe5bd78"
     },
     "backend/tests/test_personal_summary_live.py": {
       "sha256": "a53ea5281bd684f9f730f6943235f35bf5aeb21cee8f5f87fcea939450dea842"
     },
     "backend/tests/test_personal_summary_runtime.py": {
-      "sha256": "b3f321c591cdb207bd062204b1d2995788269873afa7ad2eec111133ca46f3cc"
+      "sha256": "425a5ed7cea58e3fc626543d992056f577d1afa665b11b66ee17c3a84e6681dc"
     },
     "backend/tests/test_personal_summary_values.py": {
       "sha256": "2189d6614a8dfb7687c7eb8ce357b2797981f2b0c0a1885180898c63ec42ba49"
@@ -621,7 +621,7 @@
       "sha256": "4c41a6d96b52e7ab3e8442a53a0a31614cb6f0a6ad0d36b07acf5371bc611aa6"
     },
     "docs/implementation-ledger.md": {
-      "sha256": "e4d5ecfa4273d4b07aab3617ecaf774934b16307fea5e510a07729424190b091"
+      "sha256": "5ed76357bc76610d2a07b18e94b76fd66429305ae9974bf2faf3188841761bad"
     },
     "apps/desktop/tests/acceptance.cjs": {
       "sha256": "30b8c02f15bf03636012a64fb6a503142a1aff464f74b3f5068fa78e227ba193"
@@ -1155,7 +1155,7 @@
       "sha256": "204480318a6d9417a2072346096b424c761cf0b8b968b42c9e906e2803f64176"
     },
     "backend/src/class_os/infrastructure/agent.py": {
-      "sha256": "8b7face5eb8ba9393615f7207784d73b09081c50872898ffa3c6542477d89cd9"
+      "sha256": "e8f4bf8fefef85b99fe923cfe6cbfe83beae6c68d58390b1c37f5d8af7d437ad"
     },
     "backend/src/class_os/infrastructure/agent_memory.py": {
       "sha256": "2042927005c163c2179cbf81f85ac0b3c01d57ca2b22f4d9f39199fe69f2d101"
@@ -3050,7 +3050,7 @@
       "sha256": "48919c1a7d5d36d0149774b86f36d5ce3cf1e9c4fc4ba668ed0ddcd52495f671"
     },
     "backend/src/class_os/infrastructure/workspace_actions.py": {
-      "sha256": "36bca99c5f80441bdaba06d102f970230b1cdefdd3e7634736cc36bf105fc815"
+      "sha256": "52c133915a48983b24b8b2980880bcc2bf88048b615d735235dfd46dd8116d48"
     },
     "backend/src/class_os/infrastructure/workspace_chat.py": {
       "sha256": "c918f169cb170128661e16b654a4f9fb50e2b14c084a7a364ba5d1b6268b23bf"
@@ -3403,7 +3403,7 @@
       "sha256": "c429b07321ae86b33c6a802a44ff4edf5fd7896a772721095b0ec3a44a6546ba"
     },
     "backend/src/class_os/infrastructure/activity_actions.py": {
-      "sha256": "ae0f3117691c9b044faadbaa783189b65eeef21a2f2467084c2572b5137ab04d"
+      "sha256": "d4f4d801cb944f6586cc9517c1e795d69a5feaefa3a82d44235596405b201ab2"
     },
     "backend/tests/test_activity_actions_web.py": {
       "sha256": "48c4f7495a630713b387ca2af68e18e4913a97289469b538f082b313c1b9d518"

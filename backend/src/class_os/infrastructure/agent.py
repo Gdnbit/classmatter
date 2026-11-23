@@ -26,8 +26,9 @@ class WorkspaceStepPolicy(AbstractCapability):
     """Configure the mature SDK per step; never executes tools or business writes."""
     id = 'workspace-step-policy'
 
-    def __init__(self, capture, continuation):
+    def __init__(self, capture, continuation, *, goal_setup=False):
         self.capture, self.continuation, self.repair_step = capture, continuation, None
+        self.goal_setup = goal_setup
 
     async def after_model_request(self, ctx, *, request_context, response):
         # Observe the whole SDK tool batch before execution, including a read
@@ -37,6 +38,21 @@ class WorkspaceStepPolicy(AbstractCapability):
             self.capture.record_read_requested = True
         return response
 
+    def required_goal_tool(self):
+        if self.goal_setup and 'prepare_summary_delegation' not in self.capture.completed_tools:
+            return 'prepare_summary_delegation'
+        scope = self.capture.confirmed_goal_scope
+        if scope is None:
+            return None
+        key = (scope['class_id'], scope['term_id'])
+        if key not in self.capture.complete_record_read_scopes:
+            return 'read_class_records'
+        if key not in self.capture.complete_task_read_scopes:
+            return 'read_class_work'
+        if 'read_summary_delegation' not in self.capture.completed_tools:
+            return 'read_summary_delegation'
+        return 'prepare_document' if scope['goal_material'] else 'ask_summary_question'
+
     async def prepare_tools(self, ctx, tool_defs):
         # The SDK filters both the advertised schema and executable toolset.
         # Ground continuations and failed preparations in actual receipts,
@@ -44,6 +60,9 @@ class WorkspaceStepPolicy(AbstractCapability):
         if self.capture.classroom_enabled and (self.capture.repair_requires_progress
                 or self.continuation and 'read_task_progress' not in self.capture.completed_tools):
             return [tool for tool in tool_defs if tool.name == 'read_task_progress']
+        selected = self.required_goal_tool()
+        if selected:
+            return [tool for tool in tool_defs if tool.name == selected]
         return tool_defs
 
     def get_model_settings(self):
@@ -54,6 +73,9 @@ class WorkspaceStepPolicy(AbstractCapability):
                 return {'tool_choice': ['read_task_progress']}
             if self.continuation and ctx.run_step == 1:
                 return {'tool_choice': ['read_task_progress']}
+            selected = self.required_goal_tool()
+            if selected:
+                return {'tool_choice': [selected]}
             if ctx.run_step == self.repair_step:
                 return {'tool_choice': 'required'}
             return {'tool_choice': 'auto'}
@@ -247,12 +269,17 @@ class PydanticAgentRuntime:
                         return {"status": "unverified-user-note", "note_quote": candidate.note_quote}
                     tools.append(record_note_draft)
                 expected = for_mode(request.mode, request.draft_kind)
+                goal_setup = False
                 if _workspace_actions is not None:
                     from .workspace_tool_contracts import catalog as workspace_catalog
+                    from class_os.domain.personal_summary import is_explicit_goal_setup
                     tools = list(_workspace_actions.tools(self.query, credentials, current_memory, emit))
                     expected = workspace_catalog(_workspace_actions.classroom_enabled)
                     summary_scope = _workspace_actions.summary_context
                     from class_os.application.policy_knowledge import requires_policy_search
+                    goal_setup = (_workspace_actions.classroom_enabled and not _workspace_actions.initiative
+                        and not _workspace_actions.collaboration_initiative and not _workspace_actions.collaboration_reply_only
+                        and not requires_policy_search(request.text) and is_explicit_goal_setup(request.text))
                     focused_summary = bool(summary_scope and not requires_policy_search(request.text)
                         and not re.search(r'以后|今后|持续|长期|暂停|停止|不再|不要|不用', request.text)
                         and (request.text == '继续整理班级工作小结。'
@@ -302,7 +329,8 @@ class PydanticAgentRuntime:
                         current_memory()
                         from .reasoning import reasoning_settings
                         options = reasoning_settings(model, _reasoning)
-                        step_policy = WorkspaceStepPolicy(_workspace_actions, request.text == '继续完成上面的任务，只处理尚未完成的步骤。') if _workspace_actions is not None else None
+                        step_policy = WorkspaceStepPolicy(_workspace_actions,
+                            request.text == '继续完成上面的任务，只处理尚未完成的步骤。', goal_setup=goal_setup) if _workspace_actions is not None else None
                         agent = Agent(model, tools=native_tools,
                                       output_type=[str, DeferredToolRequests] if _workspace_actions is not None and _workspace_actions.classroom_enabled else str,
                                       retries={"tools": 0, "output": 1} if _workspace_actions else 0,
@@ -365,6 +393,9 @@ class PydanticAgentRuntime:
                             @agent.output_validator
                             def confirmed_candidate_exists(ctx: RunContext[None], output):
                                 scope = _workspace_actions.summary_context
+                                if (isinstance(output, str) and goal_setup
+                                        and 'prepare_summary_delegation' not in _workspace_actions.completed_tools):
+                                    raise ModelRetry('Call prepare_summary_delegation with the exact current message, named material and deliverable. The goal requires its own preview before the user confirms.')
                                 if isinstance(output, str) and scope and scope.get('kind') == 'goal':
                                     raise ModelRetry('Use ask_summary_question for the missing goal material or prepare_document for the actual named deliverable.')
                                 if (isinstance(output, str) and scope and _workspace_actions.proposed is None

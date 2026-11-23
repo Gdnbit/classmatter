@@ -34,6 +34,8 @@ def tools(capture, query, credentials, context, execute, missing_class):
     async def read_class_records(student_name: str = '', search: str = '') -> dict:
         """Read confirmed ordinary student facts and source IDs/versions. This is not a complete school search; no health, disciplinary or inferred profiles. Never treats chat as a fact."""
         capture.record_read_requested = True
+        if capture.confirmed_goal_scope is not None:
+            student_name, search = '', ''
         def read():
             current = context()
             if current is None:
