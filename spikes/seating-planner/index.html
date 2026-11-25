@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>座位方案预览 · 班事有谱</title><link rel="icon" href="data:,"><link rel="stylesheet" href="/style.css"><script type="module" src="/app.mjs"></script></head>
+<body>
+<header class="topbar"><strong>班事有谱</strong><span>合成实验工作台</span><span class="boundary">预览草稿 · 不保存正式分配</span></header>
+<main>
+  <div class="page-title"><h1>座位方案预览</h1><p>先设定必须满足的条件，再比较方案。所有学生均为合成 ID。</p></div>
+  <div class="workspace">
+    <aside aria-label="编排条件">
+      <form id="settings">
+        <fieldset><legend>教室与学生</legend>
+          <div class="two"><label>排数<input id="rows" type="number" min="1" max="8" value="3" required></label><label>每排列数<input id="columns" type="number" min="1" max="8" value="4" required></label></div>
+          <label><span id="students-label">合成学生 ID（每行一个）</span><textarea id="students" aria-labelledby="students-label" rows="4" maxlength="900">S001
+S002
+S003
+S004
+S005
+S006
+S007
+S008</textarea></label>
+          <label>不可用座位<input id="blocked" value="3-4" aria-describedby="seat-format"></label><small id="seat-format">使用“排-列”，多个位置用逗号分隔，如 3-4。</small>
+        </fieldset>
+        <fieldset><legend>必须满足的条件</legend>
+          <label><span id="fixed-label">固定座位（每行 ID=排-列）</span><textarea id="fixed" aria-labelledby="fixed-label" rows="2" maxlength="1000">S001=1-1</textarea></label>
+          <label><span id="apart-label">不可相邻（每行两个 ID）</span><textarea id="apart" aria-labelledby="apart-label" rows="2" maxlength="6000">S002,S003</textarea></label>
+          <small>相邻指上下左右；不使用成绩、健康或行为推断。</small>
+        </fieldset>
+        <details><summary>当前方案与比较基准</summary><label><span id="previous-label">当前座位（可选，每行 ID=排-列）</span><textarea id="previous" aria-labelledby="previous-label" rows="5" maxlength="1200">S001=1-1
+S002=1-2
+S003=1-3
+S004=1-4
+S005=2-1
+S006=2-2
+S007=2-3
+S008=2-4</textarea></label><small>移动人数相对这里计算；清空则显示新安排。</small></details>
+        <button class="primary" type="submit">生成候选方案</button>
+        <button id="reset" class="secondary" type="button">恢复合成示例</button>
+      </form>
+    </aside>
+    <section class="preview" aria-label="座位预览">
+      <div class="preview-head"><h2>教室预览</h2><button id="undo" class="secondary" disabled>撤销上次调整</button></div>
+      <p id="status" role="status" aria-live="polite">设置条件后，生成可比较的座位候选。</p>
+      <div id="errors" role="alert" hidden></div>
+      <div id="candidates" class="candidates" role="group" aria-label="候选方案"></div>
+      <p class="help">点选学生再选目标座位，也可拖拽交换。固定与不可相邻条件会再次校验。</p>
+      <div class="classroom"><div class="front">讲台方向</div><div id="seats" class="seats" aria-label="教室座位"></div></div>
+      <div class="legend"><span><i class="swatch"></i>保持原位</span><span><i class="swatch changed"></i>预览调整</span><span>灰色位置不可用</span></div>
+      <section class="changes"><h2>与当前方案的差异</h2><p id="diff-summary">生成候选后显示每位学生的移动位置。</p><div class="table-wrap"><table><caption class="sr-only">座位变更预览</caption><thead><tr><th>学生</th><th>原位置</th><th>预览位置</th></tr></thead><tbody id="diff"></tbody></table></div></section>
+    </section>
+  </div>
+</main>
+<footer>本页只在内存中计算候选；刷新即清除。没有应用、提交或自动保存操作。</footer>
+</body></html>

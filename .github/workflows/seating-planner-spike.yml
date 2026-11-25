@@ -1,0 +1,53 @@
+name: Synthetic seating solver and browser (not release admission)
+"on":
+  push:
+    branches: ["contrib/seating-constraint-preview"]
+  pull_request:
+    paths: ["spikes/seating-planner/**", ".github/workflows/seating-planner-spike.yml", "PUBLIC_MANIFEST.json"]
+permissions:
+  contents: read
+concurrency:
+  group: seating-preview-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  preview:
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: "3.13.12"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version: "22.20.0"
+      - name: Reviewed public content
+        run: |
+          python scripts/public_guard.py --require-license
+          if ($LASTEXITCODE -ne 0) { throw 'Unreviewed content' }
+      - name: Existing locked frontend test tooling
+        run: npm install --global pnpm@11.19.0
+      - name: Locked install
+        working-directory: apps/web
+        run: pnpm install --frozen-lockfile
+      - name: Chromium with owned CI dependencies (Linux)
+        if: matrix.os == 'ubuntu-24.04'
+        working-directory: apps/web
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Chromium (Windows)
+        if: matrix.os == 'windows-2025'
+        working-directory: apps/web
+        run: pnpm exec playwright install chromium
+      - name: Actual solver and browser operation
+        run: pwsh -NoProfile -File spikes/seating-planner/run.ps1
